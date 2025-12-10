@@ -1,12 +1,6 @@
 import sys
-from cli.build.builder import Builder
+import os
 
-def run(args):
-    print(f"Building {args.file}...")
-    builder = Builder()
-    success = builder.build(args.file, args.out)
-    if success:
-        print("Build successful.")
-    else:
-        print("Build failed.")
-        sys.exit(1)
+def build_file(filename):
+    print(f"Build functionality for '{filename}' is coming soon!")
+    # Placeholder for future bytecode compilation logic

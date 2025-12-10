@@ -1,62 +1,141 @@
 # ProXPL Programming Language
 
-ProXPL is a robust, beginner-friendly, and powerful educational programming language designed to bridge the gap between simple scripting and full-scale application development. It offers a clean syntax, strong typing discipline (where helpful), and a rich standard library out of the box.
+<p align="center">
+  <b>A Robust, Beginner-Friendly, and Powerful Educational Programming Language</b>
+</p>
 
-## 🚀 Features
+---
 
-- **Clean Syntax**: Inspired by Python, JavaScript, and C, offering a familiar yet distinct experience.
-- **Rich Standard Library**: **75+ built-in functions** covering I/O, Math, Strings, Collections, Date/Time, and System utilities.
-- **Modern Paradigms**: Supports functions, classes, async/await, and error handling.
-- **Strict Specification**: Defined by a clear specification of 45 keywords, 42 operators, and 12 core data types.
-- **Extensible**: Designed with a modular architecture (Lexer, Parser, VM) suitable for educational study and extension.
+**ProXPL** is designed to bridge the gap between simple scripting and full-scale application development. It offers a clean syntax inspired by Python and Javascript, strong typing discipline, and a rich standard library out of the box.
 
-## 📦 Installation
+Whether you are learning to code, building tools, or exploring compiler theory, ProXPL provides a modern and accessible environment.
 
-To execute ProXPL code, you need Python 3.8+ installed.
+## 🚀 Key Features
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ProgrammerKR/ProXPL.git
-   cd ProXPL
-   ```
+*   **Clean & Modern Syntax**: Familiar curly-brace syntax with Python-like readability.
+*   **Rich Standard Library**: **75+ built-in functions** for I/O, Math, Strings, Collections, Date/Time, and System utilities.
+*   **Strong Core**: Supports functions, classes, async/await, and error handling.
+*   **Zero-Dependency Runtime**: Compiles to standalone executables (via PyInstaller).
+*   **Strict Specification**: Well-defined grammar with 45 keywords, 42 operators, and 12 core data types.
 
-2. Run the tests to verify setup:
-   ```bash
-   python tests/test_specs.py
-   ```
+## 📥 Installation
 
-## ⚡ Quick Start
+### Option 1: Download Binaries (Recommended)
+No Python installation required. Download the latest release for your OS:
 
-Create a file named `hello.prox` with the following content:
+- **Windows**: [Download `prox.exe`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+- **Linux/macOS**: [Download `prox`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+
+Add the downloaded file to your system `PATH` to run it from anywhere.
+
+### Option 2: Install via Pip
+If you have Python 3.8+ installed, you can install ProXPL as a package:
+
+```bash
+pip install .
+```
+*(Run this command in the root directory of the repository)*
+
+### Option 3: Run from Source
+Clone the repository and run directly:
+```bash
+git clone https://github.com/ProgrammerKR/ProXPL.git
+cd ProXPL
+pip install -r requirements.txt  # If any
+python -m cli.main examples/hello.prox
+```
+
+## ⚡ Getting Started
+
+### 1. Your First Program
+Create a file named `hello.prox`:
 
 ```javascript
 // hello.prox
 func main() {
     let name = input("Enter your name: ");
     print("Hello, " + name + "!");
-    
-    // Use standard library
-    let r = random(1, 100);
-    print("Your lucky number is: " + to_string(r));
 }
 
 main();
 ```
 
-Run it (assuming CLI tool is set up, or via python runner):
+### 2. Run It
+Open your terminal and run:
+
 ```bash
-python -m core.main hello.prox
+prox hello.prox
 ```
+
+### 3. Build It (Coming Soon)
+ProXPL handles immediate execution today. Future versions will support compiling to bytecode.
 
 ## 📚 Documentation
 
-Detailed documentation is available in the `docs/` directory:
+Detailed documentation is available to help you master ProXPL:
 
-- [Language Specification](docs/language-spec.md): Keywords, Types, Operators, and Built-ins.
+- **[Language Specification](docs/language-spec.md)**: Explore the complete syntax, keywords, types, and operator reference.
+- **[Standard Library](docs/language-spec.md#standard-library)**: Reference for all built-in functions.
+
+## 📂 Project Structure
+
+```text
+ProXPL/
+├── cli/            # Command-line interface entry points
+├── core/           # Compiler core (Lexer, Parser, AST, VM)
+├── docs/           # Documentation and Specifications
+├── examples/       # Example ProXPL programs
+├── stdlib/         # Standard library implementation
+├── tests/          # Unit and integration tests
+└── scripts/        # Build and utility scripts
+```
+
+## Modules & Packages
+
+ProXPL supports a robust module system using the `use` keyword.
+
+```prox
+// Import standard library module
+use math;
+
+// Import installed package
+use utils/io;
+
+// Import local file
+use my_local_module;
+
+print(PI);
+```
+
+Circular imports are detected and prevent execution. Modules are executed only once.
+
+## Package Manager (PRM)
+
+ProXPL includes **PRM (ProX Repository Manager)** to manage dependencies.
+
+**Commands:**
+- `prm install <package>`: Download and install a package.
+- `prm list`: List installed packages.
+- `prm search <keyword>`: Search the registry.
+- `prm remove <package>`: Uninstall a package.
+
+Example:
+```bash
+python cli/prm.py install utils/io
+```
+(Note: You can alias `prm` to run this script directly)
 
 ## 🛠️ Contributing
 
-We welcome contributors! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
+We welcome contributors! ProXPL is an educational project perfect for learning about compilers and interpreters.
+
+1.  Fork the repository.
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4.  Push to the branch (`git push origin feature/AmazingFeature`).
+5.  Open a Pull Request.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and development process.
 
 ## 📄 License
 

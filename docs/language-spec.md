@@ -10,7 +10,7 @@ ProXPL reserves the following 45 keywords. They cannot be used as identifiers.
 |----------|----------|
 | **Declarations** | `let`, `const`, `func`, `class`, `enum`, `struct`, `interface`, `abstract` |
 | **Control Flow** | `if`, `else`, `while`, `for`, `switch`, `case`, `default`, `break`, `continue`, `return`, `try`, `catch`, `finally`, `throw`, `defer` |
-| **Modules** | `import`, `from`, `export`, `as` |
+| **Modules** | `import`, `from`, `export`, `as`, `use` |
 | **Values** | `true`, `false`, `null`, `void` |
 | **OOP/Types** | `this`, `super`, `static`, `public`, `private`, `protected`, `extends`, `implements` |
 | **Async** | `async`, `await` |
@@ -112,3 +112,31 @@ The standard library includes 75 built-in functions grouped by module.
 
 ### Runtime (5)
 - `type(v)`, `assert(cond, msg)`, `id(v)`, `hash(v)`, `is_instance(v, type)`
+
+## E. Modules and Packages
+
+ProXPL provides a module system to organize code and manage dependencies.
+
+### 1. The `use` Keyword
+Modules are imported using the `use` keyword followed by the module identifier or path.
+
+```prox
+use math;
+use utils/io;
+use libA, libB;
+```
+
+### 2. Resolution Order
+When resolving a module name (e.g., `use mymod`), ProXPL searches in the following order:
+1.  **Current Working Directory**: Checks if `./mymod.prox` exists.
+2.  **Package Directory**: Checks `packages/mymod.prox`.
+3.  **Standard Library**: Checks `stdlib/mymod.prox`.
+
+### 3. Execution Model
+-   Modules are executed exactly once per runtime session.
+-   Subsequent imports of the same module do not re-execute the code.
+-   Circular imports are detected and result in a runtime error to prevent infinite recursion.
+
+### 4. Package Manager (PRM)
+The **ProX Repository Manager (PRM)** is the official package handling tool.
+It manages dependencies in the `packages/` directory using a `registry.json` manifest.

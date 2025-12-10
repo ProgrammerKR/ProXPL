@@ -39,6 +39,7 @@ class TokenType(Enum):
     FROM = auto()
     EXPORT = auto()
     AS = auto()
+    USE = auto()
 
     # Values/Types
     TRUE = auto()
@@ -180,6 +181,7 @@ KEYWORDS: Dict[str, TokenType] = {
     'from': TokenType.FROM,
     'export': TokenType.EXPORT,
     'as': TokenType.AS,
+    'use': TokenType.USE,
     'true': TokenType.TRUE,
     'false': TokenType.FALSE,
     'null': TokenType.NULL,

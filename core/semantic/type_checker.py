@@ -7,7 +7,13 @@ class SemanticError(Exception):
 
 class TypeChecker(ast.ASTVisitor):
     def __init__(self):
-        self.scope_stack = [{}] # Global scope
+        # Global scope with built-ins
+        self.scope_stack = [{
+            'print': 'native_func',
+            'len': 'native_func',
+            'str': 'native_func',
+            'int': 'native_func'
+        }] 
         self.errors = []
         self.in_loop = False
         self.in_func = False
@@ -44,6 +50,9 @@ class TypeChecker(ast.ASTVisitor):
         for stmt in node.statements:
             stmt.accept(self)
         self.pop_scope()
+
+    def visit_use_decl(self, node: ast.UseDecl):
+        pass
 
     def visit_var_decl(self, node: ast.VarDecl):
         try:

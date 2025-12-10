@@ -1,0 +1,6 @@
+// Example: Using the Standard Library
+use math;
+
+print("--- Standard Library Demo ---");
+print("PI is: " + str(PI));
+print("Square root of 16 is: " + str(sqrt(16)));

@@ -1,12 +1,16 @@
 import sys
+import os
 from core.compiler.compiler_pipeline import CompilerPipeline
 
-def run(args):
-    # This might be redundant if main.py handles it, but good for modularity
-    print(f"Executing {args.file}...")
+def run_file(filename):
+    if not os.path.exists(filename):
+        print(f"Error: File '{filename}' not found.")
+        sys.exit(1)
+
+    # print(f"Executing {filename}...")
     pipeline = CompilerPipeline()
     try:
-        with open(args.file, 'r') as f:
+        with open(filename, 'r') as f:
             code = f.read()
         pipeline.run(code)
     except Exception as e:

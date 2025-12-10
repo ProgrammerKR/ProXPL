@@ -23,6 +23,7 @@ class Parser:
         try:
             if self.match(TokenType.FUNC): return self.func_decl("function")
             if self.match(TokenType.CLASS): return self.class_decl()
+            if self.match(TokenType.USE): return self.use_decl()
             if self.match(TokenType.LET, TokenType.CONST): return self.var_decl()
             return self.statement()
         except ParseError as e:
@@ -63,6 +64,29 @@ class Parser:
             init = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';'.")
         return ast.VarDecl(name.value, init, is_const, line=name.line)
+
+    def use_decl(self):
+        modules = []
+        while True:
+            # Allow "utils/io" by consuming tokens until comma/semicolon, or just expect simple identifier?
+            # User requirement: use utils/io
+            # Lexer produces IDENT(utils) SLASH IDENT(io)... NO. Lexer splits them.
+            # So I need to parse a "path" identifier.
+            
+            path_parts = []
+            if self.check(TokenType.IDENTIFIER):
+                path_parts.append(self.advance().value)
+                while self.match(TokenType.SLASH):
+                    path_parts.append(self.consume(TokenType.IDENTIFIER, "Expect module part after '/'.").value)
+            else:
+                 raise ParseError(self.peek(), "Expect module name.")
+            
+            modules.append("/".join(path_parts))
+            
+            if not self.match(TokenType.COMMA): break
+            
+        self.consume(TokenType.SEMICOLON, "Expect ';'.")
+        return ast.UseDecl(modules, line=self.previous().line)
 
     # --- Statements ---
     def statement(self):

@@ -1,0 +1,17 @@
+// fib.prox
+// Calculate Fibonacci sequence
+
+func fib(n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+func main() {
+    print("Calculating Fibonacci of 10...");
+    let result = fib(10);
+    print("Result: " + to_string(result));
+}
+
+main();

@@ -1,0 +1,14 @@
+// Example: Using PRM installed packages
+// Run: python cli/prm.py install utils/io
+// Then: prox examples/prm_demo.prox
+
+use utils/io;
+
+print("--- PRM Demo ---");
+// utils/io provides print_hello() globally
+print_hello(); 
+
+// Using math/advanced if installed
+// use math/advanced;
+// let res = square(5);
+// print("Square of 5 from package is: " + str(res));

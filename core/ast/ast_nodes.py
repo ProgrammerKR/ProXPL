@@ -3,7 +3,7 @@ from typing import List, Optional, Any
 from abc import ABC, abstractmethod
 
 # Base
-@dataclass
+@dataclass(kw_only=True)
 class ASTNode(ABC):
     line: int = 0
     column: int = 0
@@ -112,6 +112,11 @@ class ClassDecl(Stmt):
     def accept(self, v): return v.visit_class_decl(self)
 
 @dataclass
+class UseDecl(Stmt):
+    modules: List[str] # List of module names/paths
+    def accept(self, v): return v.visit_use_decl(self)
+
+@dataclass
 class If(Stmt):
     condition: Expr; then_branch: Stmt; else_branch: Optional[Stmt]
     def accept(self, v): return v.visit_if(self)
@@ -195,6 +200,8 @@ class ASTVisitor(ABC):
     def visit_func_decl(self, n): pass
     @abstractmethod
     def visit_class_decl(self, n): pass
+    @abstractmethod
+    def visit_use_decl(self, n): pass
     @abstractmethod
     def visit_if(self, n): pass
     @abstractmethod
