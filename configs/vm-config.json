@@ -1,6 +1,0 @@
-{
-    "heap_size_mb": 512,
-    "stack_size_kb": 1024,
-    "jit_enabled": true,
-    "gc_threshold_mb": 64
-}

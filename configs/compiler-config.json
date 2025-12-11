@@ -1,6 +1,0 @@
-{
-    "target": "bytecode",
-    "optimization_level": 2,
-    "warnings": true,
-    "strict_mode": false
-}
