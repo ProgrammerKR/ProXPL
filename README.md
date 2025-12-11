@@ -1,14 +1,47 @@
 # ProXPL Programming Language
 
 <p align="center">
-  <b>A Robust, Beginner-Friendly, and Powerful Educational Programming Language</b>
+  <b>A Modern, Educational, Production-Ready Programming Language Compiler</b>
+</p>
+
+<p align="center">
+  <strong>Clean Syntax • Strong Typing • Rich Standard Library • C-Based Runtime</strong>
 </p>
 
 ---
 
-**ProXPL** is designed to bridge the gap between simple scripting and full-scale application development. It offers a clean syntax inspired by Python and Javascript, strong typing discipline, and a rich standard library out of the box.
+## 📋 Table of Contents
 
-Whether you are learning to code, building tools, or exploring compiler theory, ProXPL provides a modern and accessible environment.
+1. [What is ProXPL?](#what-is-proxpl)
+2. [Key Features](#key-features)
+3. [Quick Start](#quick-start)
+4. [Installation](#installation)
+5. [Language Features](#language-features)
+6. [Architecture Overview](#architecture-overview)
+7. [Project Structure](#project-structure)
+8. [Building from Source](#building-from-source)
+9. [Documentation](#documentation)
+10. [Contributing](#contributing)
+11. [Roadmap](#roadmap)
+12. [License](#license)
+
+---
+
+## What is ProXPL?
+
+**ProXPL** is a modern programming language designed for:
+
+- 🎓 **Educational Use**: Learn compiler design, interpreters, and language implementation
+- 🏗️ **System Tools**: Build fast, efficient command-line tools and utilities
+- 📚 **Language Exploration**: Experiment with language design paradigms
+- ⚡ **Production**: Deploy with a powerful, type-safe runtime
+
+ProXPL bridges the gap between **simplicity** (Python-like syntax) and **performance** (C-based runtime). It combines:
+- **Familiar Syntax**: Inspired by Python and JavaScript
+- **Strong Type System**: Compile-time and runtime type checking
+- **Fast Runtime**: Bytecode-compiled and executed on a custom VM
+- **Rich Standard Library**: 75+ built-in functions for common tasks
+- **Modular Architecture**: Clear separation of lexer, parser, compiler, and VM
 
 ## 🚀 Key Features
 
