@@ -1,6 +1,16 @@
-// Example: Using the Standard Library
-use math;
+// Demo of standard library modules (simulating potential stdlib structure)
+// Currently 'utils/io' is mocked in PRM but theoretically could be in stdlib
 
-print("--- Standard Library Demo ---");
-print("PI is: " + str(PI));
-print("Square root of 16 is: " + str(sqrt(16)));
+// use std/math; // Not implemented in current file structure
+// For now, let's use the PRM mock 'math/advanced'
+
+use math/advanced;
+
+func main() {
+    print("Standard Library Demo (Simulated)");
+    
+    let res = cube(3);
+    print("Cube of 3 is: " + res);
+}
+
+main();

@@ -140,3 +140,20 @@ When resolving a module name (e.g., `use mymod`), ProXPL searches in the followi
 ### 4. Package Manager (PRM)
 The **ProX Repository Manager (PRM)** is the official package handling tool.
 It manages dependencies in the `packages/` directory using a `registry.json` manifest.
+
+**Directory Structure:**
+```
+project/
+├── packages/
+│   ├── registry.json
+│   ├── utils/
+│   │   └── io.prox
+│   └── math/
+│       └── advanced.prox
+└── main.prox
+```
+
+**Commands:**
+- `prm install <pkg>`: Fetch and install.
+- `prm update`: Update all packages.
+- `prm list`: View installed packages.

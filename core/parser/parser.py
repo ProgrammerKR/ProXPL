@@ -32,7 +32,8 @@ class Parser:
             return None
 
     def func_decl(self, kind: str):
-        name = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.").value
+        name_token = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        name = name_token.value
         self.consume(TokenType.LPAREN, "Expect '(' after name.")
         params = []
         if not self.check(TokenType.RPAREN):
@@ -42,7 +43,7 @@ class Parser:
         self.consume(TokenType.RPAREN, "Expect ')' after params.")
         self.consume(TokenType.LBRACE, "Expect '{' before body.")
         body = self.block()
-        return ast.FuncDecl(name, params, body, line=name.line)
+        return ast.FuncDecl(name, params, body, line=name_token.line)
 
     def class_decl(self):
         name = self.consume(TokenType.IDENTIFIER, "Expect class name.")
@@ -194,7 +195,9 @@ class Parser:
     def block(self):
         stmts = []
         while not self.check(TokenType.RBRACE) and not self.is_at_end():
-            stmts.append(self.declaration())
+            decl = self.declaration()
+            if decl:
+                stmts.append(decl)
         self.consume(TokenType.RBRACE, "Expect '}'.")
         return stmts
 

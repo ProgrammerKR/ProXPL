@@ -72,12 +72,14 @@ class CompilerPipeline:
                 expanded.append(stmt)
         return expanded
 
-    def run(self, source_code: str):
+    def run(self, source_code: str, raise_errors: bool = False):
         try:
             ir_module = self.compile(source_code)
             print("\n[Running Native VM]...")
             self.vm.run(ir_module)
         except Exception as e:
+            if raise_errors:
+                raise e
             print(f"Pipeline Error: {e}")
 
     def generate_ir_dummy(self, ast_nodes) -> IRModule:
