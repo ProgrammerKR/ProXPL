@@ -1,0 +1,164 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(ProXPL
+    VERSION 0.1.0
+    DESCRIPTION "A Modern, Production-Ready Programming Language"
+    HOMEPAGE_URL "https://github.com/ProgrammerKR/ProXPL"
+    LANGUAGES C
+)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic")
+
+# Optional: Add sanitizers in Debug mode
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -fsanitize=address -fsanitize=undefined")
+endif()
+
+# Version
+set(PROXPL_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(PROXPL_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(PROXPL_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+
+# Include directories
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+# Gather all source files
+file(GLOB_RECURSE SOURCES
+    "src/main.c"
+    "src/lexer/*.c"
+    "src/parser/*.c"
+    "src/runtime/*.c"
+    "src/stdlib/*.c"
+)
+
+# Create main executable
+add_executable(prox ${SOURCES})
+
+# Link math library (needed for math functions)
+target_link_libraries(prox m)
+
+# Set output directory
+set_target_properties(prox PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    VERSION ${PROJECT_VERSION}
+)
+
+# Add compile definitions
+target_compile_definitions(prox PRIVATE
+    PROXPL_VERSION_MAJOR=${PROXPL_VERSION_MAJOR}
+    PROXPL_VERSION_MINOR=${PROXPL_VERSION_MINOR}
+    PROXPL_VERSION_PATCH=${PROXPL_VERSION_PATCH}
+)
+
+# Optional: Test support
+enable_testing()
+
+# Find or build test framework (Unity)
+find_package(Unity QUIET)
+
+if(NOT Unity_FOUND)
+    # If Unity not found, tests are skipped
+    message(STATUS "Unity test framework not found - tests will be skipped")
+    message(STATUS "To install: sudo apt-get install libunity-dev")
+else()
+    # Discover and add test files
+    file(GLOB_RECURSE TEST_SOURCES "tests/unit/*.c" "tests/integration/*.c")
+    
+    if(TEST_SOURCES)
+        foreach(test_file ${TEST_SOURCES})
+            get_filename_component(test_name ${test_file} NAME_WE)
+            add_executable(${test_name} ${test_file})
+            target_link_libraries(${test_name} Unity::Unity)
+            add_test(NAME ${test_name} COMMAND ${test_name})
+        endforeach()
+    endif()
+endif()
+
+# Custom targets
+
+# Make clean
+add_custom_target(clean_all
+    COMMAND ${CMAKE_MAKE_PROGRAM} clean
+    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/clean.cmake"
+)
+
+# Format code
+add_custom_target(format
+    COMMAND clang-format -i ${SOURCES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# Lint code
+add_custom_target(lint
+    COMMAND clang-tidy ${SOURCES} -- -I${CMAKE_SOURCE_DIR}/include
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# Run tests
+add_custom_target(test_run
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+    DEPENDS prox
+)
+
+# Build documentation
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_INPUT_DIR ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
+    set(DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs)
+    
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/Doxyfile.in
+        ${CMAKE_BINARY_DIR}/Doxyfile
+        @ONLY
+    )
+    
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+    )
+else()
+    message(STATUS "Doxygen not found - documentation generation will be skipped")
+    message(STATUS "To install: sudo apt-get install doxygen")
+endif()
+
+# Installation targets
+install(TARGETS prox
+    RUNTIME DESTINATION bin
+)
+
+install(DIRECTORY docs/
+    DESTINATION share/doc/proxpl
+    OPTIONAL
+)
+
+install(FILES README.md LANGUAGE_SPEC.md STDLIB_DOC.md CODING_STANDARD.md
+    DESTINATION share/doc/proxpl
+)
+
+# Print configuration summary
+message(STATUS "")
+message(STATUS "========== ProXPL Build Configuration ==========")
+message(STATUS "Project: ${PROJECT_NAME} ${PROJECT_VERSION}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
+message(STATUS "C Standard: ${CMAKE_C_STANDARD}")
+message(STATUS "Source directory: ${CMAKE_SOURCE_DIR}")
+message(STATUS "Binary directory: ${CMAKE_BINARY_DIR}")
+message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "")
+message(STATUS "Available targets:")
+message(STATUS "  prox          - Main executable")
+message(STATUS "  format        - Format code with clang-format")
+message(STATUS "  lint          - Lint code with clang-tidy")
+message(STATUS "  test_run      - Run all tests")
+message(STATUS "  docs          - Generate documentation (requires Doxygen)")
+message(STATUS "  install       - Install to system")
+message(STATUS "")
+message(STATUS "Quick start:")
+message(STATUS "  cmake .. -DCMAKE_BUILD_TYPE=Release")
+message(STATUS "  make")
+message(STATUS "  ./bin/prox ../examples/hello.prox")
+message(STATUS "")

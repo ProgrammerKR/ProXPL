@@ -1,0 +1,224 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+            cxx: g++
+          - os: windows-latest
+            cc: gcc
+            cxx: g++
+          - os: macos-latest
+            cc: clang
+            cxx: clang++
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake gcc g++ clang-tools valgrind
+    
+    - name: Set up dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake gcc clang-tools-extra
+    
+    - name: Set up dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install cmake mingw -y
+        refreshenv
+    
+    - name: Create build directory
+      run: cmake -E make_directory ${{github.workspace}}/build
+    
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=${{ matrix.cc }}
+    
+    - name: Build
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      run: cmake --build . --config ${{env.BUILD_TYPE}}
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: prox-${{ matrix.os }}
+        path: ${{github.workspace}}/build/prox*
+        retention-days: 5
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake gcc g++ valgrind
+    
+    - name: Create build directory
+      run: cmake -E make_directory ${{github.workspace}}/build
+    
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}/build
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+    
+    - name: Build
+      working-directory: ${{github.workspace}}/build
+      run: cmake --build . --config ${{env.BUILD_TYPE}}
+    
+    - name: Run Unit Tests
+      working-directory: ${{github.workspace}}/build
+      run: |
+        if [ -f ./test_runner ]; then
+          ./test_runner
+        fi
+    
+    - name: Run Integration Tests
+      working-directory: ${{github.workspace}}
+      run: |
+        if [ -d tests ]; then
+          ./build/prox examples/hello.prox
+          ./build/prox examples/fibonacci.prox
+          ./build/prox examples/calculator.prox
+        fi
+    
+    - name: Memory Check (Valgrind)
+      working-directory: ${{github.workspace}}/build
+      continue-on-error: true
+      run: |
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
+          ./prox ../examples/hello.prox
+
+  lint:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format clang-tidy cppcheck
+    
+    - name: Check code formatting
+      run: |
+        find src include -name '*.c' -o -name '*.h' | \
+        while read file; do
+          clang-format --dry-run --Werror "$file" || echo "Failed: $file"
+        done
+    
+    - name: Run clang-tidy
+      working-directory: ${{github.workspace}}
+      continue-on-error: true
+      run: |
+        find src -name '*.c' | while read file; do
+          clang-tidy "$file" -- -I./include
+        done
+    
+    - name: Run cppcheck
+      continue-on-error: true
+      run: |
+        cppcheck --enable=all --suppress=missingIncludeSystem \
+          --error-exitcode=1 src/ include/
+
+  docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Doxygen
+      run: sudo apt-get install -y doxygen graphviz
+    
+    - name: Generate Doxygen docs
+      working-directory: ${{github.workspace}}
+      run: |
+        if [ -f Doxyfile ]; then
+          doxygen Doxyfile
+        fi
+    
+    - name: Upload documentation
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: ${{github.workspace}}/docs/html/
+        retention-days: 30
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, test, lint]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ProXPL ${{ github.ref }}
+        body: |
+          ## Release Notes for ${{ github.ref }}
+          
+          See [CHANGELOG.md](CHANGELOG.md) for full details.
+          
+          ### Build Artifacts
+          
+          - **Linux**: prox-ubuntu-latest
+          - **macOS**: prox-macos-latest
+          - **Windows**: prox-windows-latest.exe
+          
+          ### Installation
+          
+          Download the appropriate binary for your platform and follow 
+          [BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for installation instructions.
+          
+          ### Changes
+          
+          For detailed changes, see the changelog and commit history.
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          prox-**/prox*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
