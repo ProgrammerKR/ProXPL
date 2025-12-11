@@ -1,107 +1,21 @@
-ProXPL Professional License (PPL) – Version 1.0
-------------------------------------------------
+MIT License
 
-Copyright © 2025
-ProgrammerKR (Creator of ProXPL)
-All Rights Reserved.
+Copyright (c) 2025 Prog. Kanishk Raj (ProgrammerKR) & ProXPL Contributors
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Grant of License
---------------------
-You are granted a limited, non-exclusive, non-transferable license to:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-• Download and use the Software.
-• View, study, and execute the Software locally.
-• Use the Software for personal, educational, research, and non-commercial projects.
-• Share unmodified copies of the Software for educational purposes only.
-
-This license does NOT transfer ownership of the Software.
-
-
-2. Permitted Uses
-------------------
-Under this license, you may:
-
-1. Run ProXPL programs and create `.prox` scripts.
-2. Study the source code for educational or research purposes.
-3. Share the original repository link or unmodified archive for teaching/tutorials.
-4. Use ProXPL in non-commercial school or college projects.
-5. Create and share ProXPL packages/modules (without modifying the ProXPL core).
-
-
-3. Restricted Uses (Requires Written Permission)
-------------------------------------------------
-You may NOT:
-
-1. Use ProXPL or its runtime in commercial or for-profit products.
-2. Modify, fork, or distribute modified versions of the Software.
-3. Reupload or host the Software on third-party platforms as your own.
-4. Sell, rent, license, or redistribute ProXPL commercially.
-5. Remove or alter copyright notices.
-6. Claim the language or core technology as your own creation.
-7. Integrate ProXPL into commercial applications, SDKs, engines, or cloud services.
-8. Use ProXPL to train or fine-tune AI/ML models.
-9. Distribute compiled or derivative versions of the interpreter or compiler.
-
-Commercial or redistribution rights require prior written permission from the copyright holder.
-
-
-4. Ownership
--------------
-ProXPL — including its source code, documentation, runtime, compiler,
-standard library, and package manager — is the exclusive intellectual
-property of ProgrammerKR.
-
-No ownership rights are transferred under this license.
-
-
-5. Disclaimer of Warranty
---------------------------
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF:
-
-• MERCHANTABILITY,
-• FITNESS FOR A PARTICULAR PURPOSE,
-• NON-INFRINGEMENT,
-• PERFORMANCE,
-• RELIABILITY.
-
-You use the Software entirely at your own risk.
-
-
-6. Limitation of Liability
----------------------------
-IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR:
-
-• Loss of data,
-• Loss of profits,
-• Business interruption,
-• Or any damages arising from use of the Software,
-
-Even if informed of the possibility of such damages.
-
-
-7. Termination
----------------
-This license is automatically terminated if you:
-
-• Violate any terms,
-• Misuse the Software,
-• Attempt unauthorized commercial use.
-
-Upon termination, you must immediately stop using the Software
-and delete all copies in your possession.
-
-
-8. Commercial Licensing & Contact
-----------------------------------
-For commercial rights, redistribution permissions, enterprise licensing,
-or business inquiries, contact:
-
-ProgrammerKR  
-Creator of ProXPL  
-Email: programmerkr.123@gmail.com
-
-
-END OF LICENSE
-------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
