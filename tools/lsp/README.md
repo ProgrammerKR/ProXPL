@@ -1,0 +1,17 @@
+# ProXPL LSP - Starter Notes
+
+This folder will contain the language server implementation (LSP) supporting:
+- syntax highlighting
+- auto-completion
+- diagnostics
+- go-to-definition
+- signature help
+
+Planned approach
+- Use Node.js + TypeScript with `vscode-languageserver` for rapid development.
+- Alternatively provide a lightweight Python `pygls` server for contributors preferring Python.
+
+Next steps
+1. Add grammar-based parser bindings (re-use `src/parser` AST).  
+2. Implement basic diagnostics by running the existing parser and type checker.
+3. Implement completion/signature by walking the AST and symbol tables.
