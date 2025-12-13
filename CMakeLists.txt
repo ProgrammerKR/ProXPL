@@ -12,3 +12,7 @@ file(GLOB_RECURSE SOURCES "src/*.c")
 
 # Executable
 add_executable(prox ${SOURCES})
+
+# Tests
+enable_testing()
+add_subdirectory(tests)

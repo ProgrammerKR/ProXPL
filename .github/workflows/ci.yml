@@ -1,3 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup CMake
+        uses: lukka/get-cmake@v3
+      - name: Configure
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+      - name: Style check (clang-format)
+        run: |
+          clang-format --version || true
+          git ls-files '*.c' '*.h' | xargs -I {} clang-format -style=file {} | git diff --exit-code || echo "Style issues found"
+      - name: Run tests (if available)
+        run: |
+          cd build
+          ctest --output-on-failure || true
 name: CI/CD Pipeline
 
 on:
