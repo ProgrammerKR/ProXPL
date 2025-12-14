@@ -1,28 +1,43 @@
-cmake_minimum_required(VERSION 3.10)
-project(ProXPL C)
+cmake_minimum_required(VERSION 3.13)
+project(ProXPL)
 
+# Enable C and C++
+enable_language(C CXX)
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Include directories
+# --- LLVM Configuration ---
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+# Include LLVM directories
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
+# Link directories
+link_directories(${LLVM_LIBRARY_DIRS})
+
+# Map generic components to specific libs
+llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo)
+
+# --- Project Source ---
 include_directories(include)
 
-# Source files
-# Source files
-file(GLOB_RECURSE SOURCES "src/*.c")
+# Gather sources
+file(GLOB_RECURSE SOURCES 
+    "src/*.c"
+    "src/compiler/*.cpp"  # Pickup the new backend
+)
 
-# Core library (exposed to tests and tools)
-add_library(prox_core STATIC ${SOURCES})
-target_include_directories(prox_core PUBLIC ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src)
+# --- Executable ---
+add_executable(proxpl ${SOURCES})
 
-# Executable
-add_executable(prox src/main.c)
-target_link_libraries(prox PRIVATE prox_core)
+# Link LLVM and standard libraries
+target_link_libraries(proxpl PRIVATE ${llvm_libs})
 
-# Optional targets: tools and tests
-add_subdirectory(tests)
-add_subdirectory(tools/bench)
-
-# Tests
-enable_testing()
-add_subdirectory(tests)
+if(UNIX)
+    target_link_libraries(proxpl PRIVATE pthread dl z tinfo) 
+endif()

@@ -121,6 +121,9 @@ static char *readFile(const char *path) {
   return buffer;
 }
 
+extern void generateCode(StmtList* statements); // Defined in llvm_backend.cpp
+#include "type_checker.h"
+
 static void runFile(VM *vm, const char *path) {
   char *source = readFile(path);
   if (source == NULL) {
@@ -168,17 +171,30 @@ static void runFile(VM *vm, const char *path) {
   printf("Successfully parsed %d statements from %s\n", statements->count,
          path);
 
-  // TODO: Compile and execute
-  // InterpretResult result = interpret(source);
+  // --- Pipeline Step 2: Type Checking ---
+  printf("Running Type Checker...\n");
+  TypeChecker checker;
+  initTypeChecker(&checker);
+  
+  if (!checkTypes(&checker, statements)) {
+      fprintf(stderr, "Type Checking Failed with %d errors.\n", checker.errorCount);
+      freeTypeChecker(&checker);
+      freeStmtList(statements);
+      free(source);
+      exit(65);
+  }
+  freeTypeChecker(&checker);
+  printf("Type Check Passed.\n");
+
+  // --- Pipeline Step 3: LLVM CodeGen ---
+  printf("Generating LLVM IR...\n");
+  generateCode(statements);
 
   // Free resources
   freeStmtList(statements);
   free(source);
-
-  // Exit based on result
-  // if (result == INTERPRET_COMPILE_ERROR) exit(65);
-  // if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
+
 
 int main(int argc, const char *argv[]) {
   // Initialize VM

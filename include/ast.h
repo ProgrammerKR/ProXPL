@@ -4,6 +4,29 @@
 #include "common.h"
 #include "value.h"
 
+// --- Type System for Static Typing ---
+typedef enum {
+    TYPE_UNKNOWN = 0,
+    TYPE_VOID,
+    TYPE_BOOL,
+    TYPE_INT,
+    TYPE_FLOAT,
+    TYPE_STRING,
+    TYPE_FUNCTION,
+    TYPE_CLASS
+} TypeKind;
+
+typedef struct TypeInfo {
+    TypeKind kind;
+    char* name; // For classes or user types
+    
+    // For functions
+    struct TypeInfo* returnType;
+    struct TypeInfo* paramTypes; // Array or linked list? Let's use array for simplicity if fixed size, or pointer to array.
+                                 // For simplicity in C without templates, let's use a pointer to a dynamically allocated array of TypeInfos.
+    int paramCount;
+} TypeInfo;
+
 // Forward declarations
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;
@@ -171,6 +194,7 @@ typedef struct {
 // Main expression structure
 struct Expr {
   ExprType type;
+  TypeInfo inferredType; // [NEW] For Type Checker
   int line;
   int column;
   union {
@@ -201,6 +225,7 @@ typedef struct {
 typedef struct {
   char *name;
   Expr *initializer;
+  TypeInfo type; // [NEW] Explicit type declaration
   bool is_const;
 } VarDeclStmt;
 
@@ -208,6 +233,7 @@ typedef struct {
   char *name;
   StringList *params;
   StmtList *body;
+  TypeInfo returnType; // [NEW]
 } FuncDeclStmt;
 
 typedef struct {
