@@ -126,7 +126,7 @@ prox hello.prox
 ```
 
 ### 3. Build It (Coming Soon)
-ProXPL handles immediate execution today. Future versions will support compiling to bytecode.
+ProXPL supports compiling to bytecode.
 
 ## 📚 Documentation
 
