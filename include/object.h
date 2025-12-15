@@ -3,12 +3,21 @@
 
 #include "common.h"
 #include "value.h"
+#include "chunk.h" // Required because ObjFunction contains a 'Chunk' struct
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
+
+// Macros for Functions
+#define IS_FUNCTION(value) isObjType(value, OBJ_FUNCTION)
+#define AS_FUNCTION(value) ((ObjFunction *)AS_OBJ(value))
+
+// Macros for Native Functions
+#define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
+#define AS_NATIVE(value) (((ObjNative *)AS_OBJ(value))->function)
 
 typedef enum {
   OBJ_STRING,
@@ -31,7 +40,7 @@ struct ObjString {
 typedef struct {
   Obj obj;
   int arity;
-  Chunk chunk;
+  Chunk chunk; // Requires definition from chunk.h
   ObjString *name;
 } ObjFunction;
 
@@ -53,3 +62,4 @@ static inline bool isObjType(Value value, ObjType type) {
 }
 
 #endif
+
