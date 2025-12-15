@@ -10,25 +10,29 @@ else()
   add_compile_options(-Wall -Wextra)
 endif()
 
-# Include directories
-include_directories(include)
-
-# Source files
+# ===============================
+# Source files (EXCLUDE main.c)
+# ===============================
 file(GLOB_RECURSE PROX_SOURCES "src/*.c")
+list(REMOVE_ITEM PROX_SOURCES "${CMAKE_SOURCE_DIR}/src/main.c")
 
-# Core library
+# ===============================
+# Core library (NO main)
+# ===============================
 add_library(prox_core STATIC ${PROX_SOURCES})
 target_include_directories(prox_core PUBLIC
   ${CMAKE_SOURCE_DIR}/include
   ${CMAKE_SOURCE_DIR}/src
 )
 
-# Main executable
+# ===============================
+# Executable (ONLY main.c)
+# ===============================
 add_executable(prox src/main.c)
 target_link_libraries(prox PRIVATE prox_core)
 
 # ===============================
-# Optional components (OFF by default)
+# Optional components
 # ===============================
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_BENCH "Build benchmarks" OFF)
