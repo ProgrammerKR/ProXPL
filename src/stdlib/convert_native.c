@@ -58,6 +58,71 @@ static Value native_to_string(int argCount, Value* args) {
     } else if (IS_BOOL(args[0])) {
         snprintf(buffer, sizeof(buffer), "%s", AS_BOOL(args[0]) ? "true" : "false");
     } else if (IS_NULL(args[0])) {
+/*
+ * ProXPL Standard Library - Type Conversion Module
+ * Native C implementation of type conversion functions
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "../include/common.h"
+#include "../include/vm.h"
+#include "../include/value.h"
+#include "../include/object.h"
+
+// Helper: Ensure we return NUMBER_VAL, BOOL_VAL, or OBJ_VAL
+// because MSVC cannot implicitly convert int/double to the 'Value' struct.
+
+// to_int(value) - Convert to integer
+static Value native_to_int(int argCount, Value* args) {
+    if (argCount < 1) return NUMBER_VAL(0);
+    
+    if (IS_NUMBER(args[0])) {
+        // Cast to int then back to double to truncate decimals
+        return NUMBER_VAL((double)(int)AS_NUMBER(args[0]));
+    } else if (IS_STRING(args[0])) {
+        const char* str = AS_CSTRING(args[0]);
+        char* endptr;
+        long value = strtol(str, &endptr, 10);
+        return NUMBER_VAL((double)value);
+    } else if (IS_BOOL(args[0])) {
+        return NUMBER_VAL(AS_BOOL(args[0]) ? 1.0 : 0.0);
+    }
+    
+    return NUMBER_VAL(0);
+}
+
+// to_float(value) - Convert to float
+static Value native_to_float(int argCount, Value* args) {
+    if (argCount < 1) return NUMBER_VAL(0.0);
+    
+    if (IS_NUMBER(args[0])) {
+        return args[0];
+    } else if (IS_STRING(args[0])) {
+        const char* str = AS_CSTRING(args[0]);
+        double value = strtod(str, NULL);
+        return NUMBER_VAL(value);
+    } else if (IS_BOOL(args[0])) {
+        return NUMBER_VAL(AS_BOOL(args[0]) ? 1.0 : 0.0);
+    }
+    
+    return NUMBER_VAL(0.0);
+}
+
+// to_string(value) - Convert to string
+static Value native_to_string(int argCount, Value* args) {
+    if (argCount < 1) return OBJ_VAL(copyString("", 0));
+    
+    char buffer[256];
+    
+    if (IS_NUMBER(args[0])) {
+        snprintf(buffer, sizeof(buffer), "%.15g", AS_NUMBER(args[0]));
+    } else if (IS_BOOL(args[0])) {
+        snprintf(buffer, sizeof(buffer), "%s", AS_BOOL(args[0]) ? "true" : "false");
+    } else if (IS_NIL(args[0])) { // Changed IS_NULL to IS_NIL (common convention) or check your header
         snprintf(buffer, sizeof(buffer), "null");
     } else if (IS_STRING(args[0])) {
         return args[0];
@@ -65,47 +130,47 @@ static Value native_to_string(int argCount, Value* args) {
         snprintf(buffer, sizeof(buffer), "<object>");
     }
     
-    return MAKE_OBJ(copyString(buffer, strlen(buffer)));
+    return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
 }
 
 // to_bool(value) - Convert to boolean
 static Value native_to_bool(int argCount, Value* args) {
-    if (argCount < 1) return MAKE_BOOL(false);
+    if (argCount < 1) return BOOL_VAL(false);
     
     if (IS_BOOL(args[0])) {
         return args[0];
-    } else if (IS_NULL(args[0])) {
-        return MAKE_BOOL(false);
+    } else if (IS_NIL(args[0])) {
+        return BOOL_VAL(false);
     } else if (IS_NUMBER(args[0])) {
-        return MAKE_BOOL(AS_NUMBER(args[0]) != 0);
+        return BOOL_VAL(AS_NUMBER(args[0]) != 0);
     } else if (IS_STRING(args[0])) {
-        return MAKE_BOOL(AS_STRING(args[0])->length > 0);
+        return BOOL_VAL(AS_STRING(args[0])->length > 0);
     }
     
-    return MAKE_BOOL(true);
+    return BOOL_VAL(true);
 }
 
 // to_hex(value) - Convert integer to hexadecimal string
 static Value native_to_hex(int argCount, Value* args) {
     if (argCount < 1 || !IS_NUMBER(args[0])) {
-        return MAKE_OBJ(copyString("0x0", 3));
+        return OBJ_VAL(copyString("0x0", 3));
     }
     
     int value = (int)AS_NUMBER(args[0]);
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "0x%x", value);
     
-    return MAKE_OBJ(copyString(buffer, strlen(buffer)));
+    return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
 }
 
 // to_bin(value) - Convert integer to binary string
 static Value native_to_bin(int argCount, Value* args) {
     if (argCount < 1 || !IS_NUMBER(args[0])) {
-        return MAKE_OBJ(copyString("0b0", 3));
+        return OBJ_VAL(copyString("0b0", 3));
     }
     
     int value = (int)AS_NUMBER(args[0]);
-    char buffer[35] = "0b";
+    char buffer[66] = "0b"; // Increased buffer size for safety (32 bits + prefix + null)
     int pos = 2;
     
     if (value == 0) {
@@ -115,7 +180,7 @@ static Value native_to_bin(int argCount, Value* args) {
         int count = 0;
         unsigned int uval = (unsigned int)value;
         
-        while (uval > 0) {
+        while (uval > 0 && count < 32) {
             bits[count++] = uval % 2;
             uval /= 2;
         }
@@ -126,36 +191,36 @@ static Value native_to_bin(int argCount, Value* args) {
     }
     
     buffer[pos] = '\0';
-    return MAKE_OBJ(copyString(buffer, pos));
+    return OBJ_VAL(copyString(buffer, pos));
 }
 
 // char_at(str, index) - Get character at index
 static Value native_char_at(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_NUMBER(args[1])) {
-        return MAKE_NULL();
+        return NULL_VAL; // Assumes NULL_VAL is defined in value.h
     }
     
     ObjString* str = AS_STRING(args[0]);
     int index = (int)AS_NUMBER(args[1]);
     
     if (index < 0 || index >= (int)str->length) {
-        return MAKE_NULL();
+        return NULL_VAL;
     }
     
     char ch[2] = {str->chars[index], '\0'};
-    return MAKE_OBJ(copyString(ch, 1));
+    return OBJ_VAL(copyString(ch, 1));
 }
 
 // len(value) - Get length of string or collection
 static Value native_len(int argCount, Value* args) {
-    if (argCount < 1) return MAKE_NUMBER(0);
+    if (argCount < 1) return NUMBER_VAL(0);
     
     if (IS_STRING(args[0])) {
-        return MAKE_NUMBER((double)AS_STRING(args[0])->length);
+        return NUMBER_VAL((double)AS_STRING(args[0])->length);
     }
     // TODO: Add support for lists, dicts, etc.
     
-    return MAKE_NUMBER(0);
+    return NUMBER_VAL(0);
 }
 
 // Register all conversion functions with the VM
@@ -169,3 +234,4 @@ void register_convert_natives(VM* vm) {
     defineNative(vm, "char_at", native_char_at);
     defineNative(vm, "len", native_len);
 }
+
