@@ -131,7 +131,7 @@ static char *tokenToString(Token token) {
   int len = token.length;
   char *str = (char *)malloc(len + 1);
   memcpy(str, token.start, len);
-  str[len] = '\\0';
+  str[len] = '\0';
   return str;
 }
 
@@ -646,7 +646,7 @@ static Expr *primary(Parser *p) {
     int len = token.length - 2;
     char *str = (char *)malloc(len + 1);
     memcpy(str, token.start + 1, len);
-    str[len] = '\\0';
+    str[len] = '\0';
     Expr *expr =
         createLiteralExpr(OBJ_VAL(copyString(str, len)), token.line, 0);
     free(str);
