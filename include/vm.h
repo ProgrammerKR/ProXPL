@@ -13,9 +13,9 @@ typedef struct {
   uint8_t* ip;
   Value stack[STACK_MAX];
   Value* stackTop;
-  Obj* objects; // <--- This was missing and causing errors in object.c
-  Table strings; // Needed for string interning
-  Table globals; // Needed for global variables
+  Obj* objects; 
+  Table strings; 
+  Table globals; 
 } VM;
 
 typedef enum {
@@ -27,14 +27,15 @@ typedef enum {
 // Global VM instance
 extern VM vm;
 
-void initVM();
-void freeVM();
-InterpretResult interpret(const char* source); // Standard CLOX signature
-void push(Value value);
-Value pop();
+// Updated Signatures to accept VM* pointer
+void initVM(VM* vm);
+void freeVM(VM* vm);
+InterpretResult interpret(VM* vm, const char* source);
+void push(VM* vm, Value value);
+Value pop(VM* vm);
 
-// Native function helper
-void defineNative(const char* name, NativeFn function);
+// Native function helper (Now accepts VM* to match native code calls)
+void defineNative(VM* vm, const char* name, NativeFn function);
 
 #endif
 
