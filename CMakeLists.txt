@@ -11,13 +11,13 @@ else()
 endif()
 
 # ===============================
-# Source files (EXCLUDE main.c)
+# Sources (exclude main.c)
 # ===============================
 file(GLOB_RECURSE PROX_SOURCES "src/*.c")
 list(REMOVE_ITEM PROX_SOURCES "${CMAKE_SOURCE_DIR}/src/main.c")
 
 # ===============================
-# Core library (NO main)
+# Core library
 # ===============================
 add_library(prox_core STATIC ${PROX_SOURCES})
 target_include_directories(prox_core PUBLIC
@@ -25,8 +25,17 @@ target_include_directories(prox_core PUBLIC
   ${CMAKE_SOURCE_DIR}/src
 )
 
+# 🔥 IMPORTANT FIX (math library)
+if (UNIX AND NOT APPLE)
+  target_link_libraries(prox_core m)
+endif()
+
+if (APPLE)
+  target_link_libraries(prox_core m)
+endif()
+
 # ===============================
-# Executable (ONLY main.c)
+# Executable
 # ===============================
 add_executable(prox src/main.c)
 target_link_libraries(prox PRIVATE prox_core)
