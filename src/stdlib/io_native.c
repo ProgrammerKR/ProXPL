@@ -3,13 +3,36 @@
  * Native C implementation of I/O functions
  */
 
-#include "../include/common.h"
-#include "../include/vm.h"
-#include "../include/value.h"
-#include "../include/object.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "common.h"
+#include "vm.h"
+#include "value.h"
+#include "object.h"
+
+// --- Macro Compatibility Layer (CRITICAL FIX) ---
+// This ensures that your MAKE_ macros return the correct 'Value' struct
+// and not an integer, preventing Windows build errors.
+
+#ifndef NIL_VAL
+ #define NIL_VAL ((Value){VAL_NIL, { .number = 0 }})
+#endif
+
+#ifndef BOOL_VAL
+ #define BOOL_VAL(value) ((Value){VAL_BOOL, { .boolean = value }})
+#endif
+
+#undef MAKE_NULL
+#define MAKE_NULL() NIL_VAL
+
+#undef MAKE_BOOL
+#define MAKE_BOOL(x) BOOL_VAL(x)
+
+#undef MAKE_OBJ
+#define MAKE_OBJ(x) ((Value){VAL_OBJ, { .obj = (Obj*)(x) }})
+// ------------------------------------------------
 
 // print(...) - Print values to stdout
 static Value native_print(int argCount, Value* args) {
@@ -33,8 +56,9 @@ static Value native_input(int argCount, Value* args) {
         size_t len = strlen(buffer);
         if (len > 0 && buffer[len-1] == '\n') {
             buffer[len-1] = '\0';
+            len--;
         }
-        return MAKE_OBJ(copyString(buffer, strlen(buffer)));
+        return MAKE_OBJ(copyString(buffer, (int)len));
     }
     
     return MAKE_NULL();
@@ -50,7 +74,7 @@ static Value native_read_file(int argCount, Value* args) {
     const char* path = AS_CSTRING(args[0]);
     FILE* file = fopen(path, "rb");
     if (!file) {
-        fprintf(stderr, "Could not open file: %s\n", path);
+        // Return NULL if file not found instead of crashing/printing
         return MAKE_NULL();
     }
     
@@ -68,7 +92,7 @@ static Value native_read_file(int argCount, Value* args) {
     buffer[bytesRead] = '\0';
     fclose(file);
     
-    Value result = MAKE_OBJ(copyString(buffer, bytesRead));
+    Value result = MAKE_OBJ(copyString(buffer, (int)bytesRead));
     free(buffer);
     return result;
 }
@@ -81,22 +105,21 @@ static Value native_write_file(int argCount, Value* args) {
     }
     
     const char* path = AS_CSTRING(args[0]);
-    
-    // Convert content to string
-    char buffer[4096];
-    if (IS_STRING(args[1])) {
-        snprintf(buffer, sizeof(buffer), "%s", AS_CSTRING(args[1]));
-    } else {
-        // TODO: Convert other types to string
-        snprintf(buffer, sizeof(buffer), "<value>");
-    }
-    
     FILE* file = fopen(path, "w");
     if (!file) {
         return MAKE_BOOL(false);
     }
+
+    if (IS_STRING(args[1])) {
+        // Fast path: Write raw string directly
+        ObjString* strObj = AS_STRING(args[1]);
+        fwrite(strObj->chars, 1, strObj->length, file);
+    } else {
+        // Fallback: simple implementation for non-strings
+        // Note: For full support, you'd want a valueToString helper here
+        fprintf(file, "<non-string value>");
+    }
     
-    fputs(buffer, file);
     fclose(file);
     return MAKE_BOOL(true);
 }
@@ -109,20 +132,18 @@ static Value native_append_file(int argCount, Value* args) {
     }
     
     const char* path = AS_CSTRING(args[0]);
-    
-    char buffer[4096];
-    if (IS_STRING(args[1])) {
-        snprintf(buffer, sizeof(buffer), "%s", AS_CSTRING(args[1]));
-    } else {
-        snprintf(buffer, sizeof(buffer), "<value>");
-    }
-    
     FILE* file = fopen(path, "a");
     if (!file) {
         return MAKE_BOOL(false);
     }
     
-    fputs(buffer, file);
+    if (IS_STRING(args[1])) {
+        ObjString* strObj = AS_STRING(args[1]);
+        fwrite(strObj->chars, 1, strObj->length, file);
+    } else {
+        fprintf(file, "<non-string value>");
+    }
+    
     fclose(file);
     return MAKE_BOOL(true);
 }
@@ -135,3 +156,4 @@ void register_io_natives(VM* vm) {
     defineNative(vm, "write_file", native_write_file);
     defineNative(vm, "append_file", native_append_file);
 }
+
