@@ -1,12 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "memory.h"
 #include "object.h"
 #include "value.h"
 #include "vm.h"
+#include "chunk.h" // <--- ADD THIS (Needed for initChunk)
 
-#define ALLOCATE_OBJ(type, objectType)                                         \
+#define ALLOCATE_OBJ(type, objectType) \
   (type *)allocateObject(sizeof(type), objectType)
 
 static Obj *allocateObject(size_t size, ObjType type) {
@@ -21,7 +23,7 @@ ObjFunction *newFunction() {
   ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
   function->arity = 0;
   function->name = NULL;
-  initChunk(&function->chunk);
+  initChunk(&function->chunk); // Requires chunk.h
   return function;
 }
 
@@ -80,3 +82,4 @@ void printObject(Value value) {
     break;
   }
 }
+
