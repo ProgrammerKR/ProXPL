@@ -3,12 +3,32 @@
  * Native C implementation of mathematical functions
  */
 
-#include "../include/common.h"
-#include "../include/vm.h"
-#include "../include/value.h"
+// CRITICAL FIX: This must be defined BEFORE <math.h> for Windows to see M_E, M_PI
+#define _USE_MATH_DEFINES 
+
+#include "common.h"
+#include "vm.h"
+#include "value.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+
+// --- Compatibility Macros ---
+// These ensure the code works even if your value.h uses different names
+#ifndef NUMBER_VAL
+ #define NUMBER_VAL(x) ((Value){VAL_NUMBER, { .number = (x) }})
+#endif
+
+#ifndef NIL_VAL
+ #define NIL_VAL ((Value){VAL_NIL, { .number = 0 }})
+#endif
+
+// Map user's preferred macro names to standard ones
+#undef MAKE_NUMBER
+#define MAKE_NUMBER(x) NUMBER_VAL(x)
+
+#undef MAKE_NULL
+#define MAKE_NULL() NIL_VAL
 
 // abs(x) - Absolute value
 static Value native_abs(int argCount, Value* args) {
@@ -174,3 +194,4 @@ void register_math_natives(VM* vm) {
     defineNative(vm, "random", native_random);
     defineNative(vm, "randint", native_randint);
 }
+
