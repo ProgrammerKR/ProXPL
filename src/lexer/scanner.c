@@ -144,14 +144,22 @@ static TokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'b':
         return checkKeyword(scanner, 2, 6, "stract", TOKEN_ABSTRACT);
+
       case 's':
-        return checkKeyword(scanner, 2, 0, "", TOKEN_AS);
-      case 's':
+        // "as" or "async"
+        if (scanner->current - scanner->start == 2) {
+          return TOKEN_AS;
+        }
         return checkKeyword(scanner, 2, 3, "ync", TOKEN_ASYNC);
+
       case 'w':
         return checkKeyword(scanner, 2, 3, "ait", TOKEN_AWAIT);
       }
     }
+    break;
+  }
+  return TOKEN_IDENTIFIER;
+}
     break;
   case 'b':
     return checkKeyword(scanner, 1, 4, "reak", TOKEN_BREAK);
