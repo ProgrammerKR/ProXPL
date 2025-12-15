@@ -17,7 +17,7 @@ file(GLOB_RECURSE PROX_SOURCES "src/*.c")
 list(REMOVE_ITEM PROX_SOURCES "${CMAKE_SOURCE_DIR}/src/main.c")
 
 # ===============================
-# Core library
+# Core library (NO system libs)
 # ===============================
 add_library(prox_core STATIC ${PROX_SOURCES})
 target_include_directories(prox_core PUBLIC
@@ -25,20 +25,16 @@ target_include_directories(prox_core PUBLIC
   ${CMAKE_SOURCE_DIR}/src
 )
 
-# 🔥 IMPORTANT FIX (math library)
-if (UNIX AND NOT APPLE)
-  target_link_libraries(prox_core m)
-endif()
-
-if (APPLE)
-  target_link_libraries(prox_core m)
-endif()
-
 # ===============================
-# Executable
+# Executable (link system libs HERE)
 # ===============================
 add_executable(prox src/main.c)
-target_link_libraries(prox PRIVATE prox_core)
+
+if (UNIX)
+  target_link_libraries(prox PRIVATE prox_core m)
+else()
+  target_link_libraries(prox PRIVATE prox_core)
+endif()
 
 # ===============================
 # Optional components
