@@ -26,7 +26,6 @@ jobs:
       - name: Setup CMake
         uses: lukka/get-cmake@latest
 
-      # FIXED: Added 'shell: bash' to make the '\' line continuation work on Windows
       - name: Configure
         shell: bash
         run: |
@@ -35,7 +34,6 @@ jobs:
             -DBUILD_TESTS=OFF \
             -DBUILD_BENCH=OFF
 
-      # FIXED: Added 'shell: bash' here as well for consistency
       - name: Build (verbose)
         shell: bash
         run: cmake --build build --verbose
