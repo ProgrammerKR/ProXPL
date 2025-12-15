@@ -9,7 +9,17 @@
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 
-typedef enum { VAL_BOOL, VAL_NULL, VAL_NUMBER, VAL_OBJ } ValueType;
+typedef enum { 
+  VAL_BOOL, 
+  VAL_NULL, // Kept for backward compatibility
+  VAL_NUMBER, 
+  VAL_OBJ 
+} ValueType;
+
+// --- COMPATIBILITY FIX: Map NIL to NULL ---
+// This fixes the "VAL_NIL undeclared identifier" errors
+#define VAL_NIL VAL_NULL
+// ------------------------------------------
 
 typedef struct {
   ValueType type;
@@ -21,21 +31,29 @@ typedef struct {
 } Value;
 
 // Macros for checking type
-#define IS_BOOL(value) ((value).type == VAL_BOOL)
-#define IS_NULL(value) ((value).type == VAL_NULL)
+#define IS_BOOL(value)   ((value).type == VAL_BOOL)
+#define IS_NULL(value)   ((value).type == VAL_NULL)
 #define IS_NUMBER(value) ((value).type == VAL_NUMBER)
-#define IS_OBJ(value) ((value).type == VAL_OBJ)
+#define IS_OBJ(value)    ((value).type == VAL_OBJ)
+
+// --- COMPATIBILITY FIX: Map IS_NIL to IS_NULL ---
+#define IS_NIL(value)    IS_NULL(value)
+// ------------------------------------------------
 
 // Macros for unwrapping
-#define AS_BOOL(value) ((value).as.boolean)
+#define AS_BOOL(value)   ((value).as.boolean)
 #define AS_NUMBER(value) ((value).as.number)
-#define AS_OBJ(value) ((value).as.obj)
+#define AS_OBJ(value)    ((value).as.obj)
 
 // Macros for creating values
-#define BOOL_VAL(value) ((Value){VAL_BOOL, {.boolean = value}})
-#define NULL_VAL ((Value){VAL_NULL, {.number = 0}})
+#define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
+#define NULL_VAL          ((Value){VAL_NULL, {.number = 0}})
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
-#define OBJ_VAL(object) ((Value){VAL_OBJ, {.obj = (Obj *)object}})
+#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj *)object}})
+
+// --- COMPATIBILITY FIX: Map NIL_VAL to NULL_VAL ---
+#define NIL_VAL           NULL_VAL
+// --------------------------------------------------
 
 // Value Array (for constants, stack etc.)
 typedef struct {
@@ -50,3 +68,4 @@ void freeValueArray(ValueArray *array);
 void printValue(Value value);
 
 #endif
+
