@@ -3,20 +3,42 @@
  * Native C implementation of system functions
  */
 
-#include "../include/common.h"
-#include "../include/vm.h"
-#include "../include/value.h"
-#include "../include/object.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h> // Required for time()
+
+#include "common.h"
+#include "vm.h"
+#include "value.h"
+#include "object.h"
+
+// --- Macro Compatibility Layer ---
+// This ensures that your MAKE_ macros return the correct 'Value' struct
+// and not an integer, fixing the Windows build errors.
+
+#ifndef NIL_VAL
+ #define NIL_VAL ((Value){VAL_NIL, { .number = 0 }})
+#endif
+
+#undef MAKE_NULL
+#define MAKE_NULL() NIL_VAL
+
+#undef MAKE_NUMBER
+#define MAKE_NUMBER(x) ((Value){VAL_NUMBER, { .number = (x) }})
+
+#undef MAKE_OBJ
+#define MAKE_OBJ(x) ((Value){VAL_OBJ, { .obj = (Obj*)(x) }})
+// ---------------------------------
 
 #ifdef _WIN32
-#include <windows.h>
-#define popen _popen
-#define pclose _pclose
+  #include <windows.h>
+  #define popen _popen
+  #define pclose _pclose
+  #define sleep_ms(x) Sleep(x)
 #else
-#include <unistd.h>
+  #include <unistd.h>
+  #define sleep_ms(x) usleep((x) * 1000)
 #endif
 
 // exit(code) - Exit program
@@ -26,7 +48,7 @@ static Value native_exit(int argCount, Value* args) {
         code = (int)AS_NUMBER(args[0]);
     }
     exit(code);
-    return MAKE_NULL(); // Never reached
+    return MAKE_NULL(); // Never reached, but satisfies compiler
 }
 
 // env(name) - Get environment variable
@@ -39,7 +61,7 @@ static Value native_env(int argCount, Value* args) {
     const char* value = getenv(name);
     
     if (value) {
-        return MAKE_OBJ(copyString(value, strlen(value)));
+        return MAKE_OBJ(copyString(value, (int)strlen(value)));
     }
     return MAKE_NULL();
 }
@@ -76,19 +98,29 @@ static Value native_exec(int argCount, Value* args) {
     
     char buffer[4096];
     char* result = (char*)malloc(1);
+    if (!result) {
+        pclose(pipe);
+        return MAKE_NULL();
+    }
     result[0] = '\0';
     size_t totalLen = 0;
     
     while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
         size_t len = strlen(buffer);
-        result = (char*)realloc(result, totalLen + len + 1);
+        char* temp = (char*)realloc(result, totalLen + len + 1);
+        if (!temp) {
+            free(result);
+            pclose(pipe);
+            return MAKE_NULL();
+        }
+        result = temp;
         strcpy(result + totalLen, buffer);
         totalLen += len;
     }
     
     pclose(pipe);
     
-    Value output = MAKE_OBJ(copyString(result, totalLen));
+    Value output = MAKE_OBJ(copyString(result, (int)totalLen));
     free(result);
     return output;
 }
@@ -126,3 +158,4 @@ void register_system_natives(VM* vm) {
     defineNative(vm, "time", native_time);
     defineNative(vm, "sleep", native_sleep);
 }
+
