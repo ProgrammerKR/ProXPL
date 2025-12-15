@@ -1,9 +1,8 @@
-name: ProXPL CI/CD
+name: ProXPL CI
 
 on:
   push:
     branches: [ main, develop ]
-    tags: [ 'v*' ]
   pull_request:
     branches: [ main, develop ]
 
@@ -13,21 +12,20 @@ env:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        cc: [gcc, clang]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup CMake
         uses: lukka/get-cmake@v3
 
       - name: Configure
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: |
-          cmake --build build --config ${{ env.BUILD_TYPE }}
+        run: cmake --build build
