@@ -1,12 +1,16 @@
+/* src/runtime/object.c */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "memory.h"
-#include "object.h"
-#include "value.h"
-#include "vm.h"
-#include "chunk.h" // <--- ADD THIS (Needed for initChunk)
+#include "../include/memory.h"
+#include "../include/object.h"
+#include "../include/value.h"
+#include "../include/vm.h"
+#include "../include/chunk.h" 
+
+// This is the critical fix for the "vm undeclared" error:
+extern VM vm; 
 
 #define ALLOCATE_OBJ(type, objectType) \
   (type *)allocateObject(sizeof(type), objectType)
@@ -14,7 +18,7 @@
 static Obj *allocateObject(size_t size, ObjType type) {
   Obj *object = (Obj *)reallocate(NULL, 0, size);
   object->type = type;
-  object->next = vm.objects;
+  object->next = vm.objects; // Now works because 'vm' is declared extern above
   vm.objects = object;
   return object;
 }
