@@ -2,7 +2,7 @@
 #define PROXPL_API_H
 
 #include "vm.h"
-#include "bytecode.h"
+#include "chunk.h"
 
 /* Public API: Initialize and shutdown the VM */
 void proxpl_vm_init(VM *vm);
