@@ -26,13 +26,17 @@ jobs:
       - name: Setup CMake
         uses: lukka/get-cmake@latest
 
+      # FIXED: Added 'shell: bash' so Windows understands the backslashes '\'
       - name: Configure
+        shell: bash
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DBUILD_TESTS=OFF \
             -DBUILD_BENCH=OFF
 
-      # 🔥 IMPORTANT: Verbose build to expose linker errors
+      # FIXED: Added 'shell: bash' for consistency
       - name: Build (verbose)
+        shell: bash
         run: cmake --build build --verbose
+
