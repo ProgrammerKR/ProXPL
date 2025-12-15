@@ -491,9 +491,8 @@ void freeExpr(Expr *expr) {
     freeExpr(expr->as.set.value);
     break;
   case EXPR_INDEX:
-    freeExpr(expr -\u003eas.index.target);
-    freeExpr(expr -\u003eas.index.index);
-
+    freeExpr(expr->as.index.target);
+    freeExpr(expr->as.index.index);
     break;
   case EXPR_LIST:
     freeExprList(expr->as.list.elements);
