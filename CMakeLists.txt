@@ -1,28 +1,43 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 project(ProXPL C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g")
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+if (MSVC)
+  add_compile_options(/W4)
+else()
+  add_compile_options(-Wall -Wextra)
+endif()
 
 # Include directories
 include_directories(include)
 
 # Source files
-# Source files
-file(GLOB_RECURSE SOURCES "src/*.c")
+file(GLOB_RECURSE PROX_SOURCES "src/*.c")
 
-# Core library (exposed to tests and tools)
-add_library(prox_core STATIC ${SOURCES})
-target_include_directories(prox_core PUBLIC ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src)
+# Core library
+add_library(prox_core STATIC ${PROX_SOURCES})
+target_include_directories(prox_core PUBLIC
+  ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/src
+)
 
-# Executable
+# Main executable
 add_executable(prox src/main.c)
 target_link_libraries(prox PRIVATE prox_core)
 
-# Optional targets: tools and tests
-add_subdirectory(tests)
-add_subdirectory(tools/bench)
+# ===============================
+# Optional components (OFF by default)
+# ===============================
+option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_BENCH "Build benchmarks" OFF)
 
-# Tests
-enable_testing()
-add_subdirectory(tests)
+if (BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
+if (BUILD_BENCH)
+  add_subdirectory(tools/bench)
+endif()
