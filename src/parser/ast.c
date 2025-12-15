@@ -23,6 +23,7 @@ void appendExpr(ExprList *list, Expr *expr) {
 }
 
 void freeExprList(ExprList *list) {
+  if (list == NULL) return;
   for (int i = 0; i < list->count; i++) {
     freeExpr(list->items[i]);
   }
@@ -48,6 +49,7 @@ void appendStmt(StmtList *list, Stmt *stmt) {
 }
 
 void freeStmtList(StmtList *list) {
+  if (list == NULL) return;
   for (int i = 0; i < list->count; i++) {
     freeStmt(list->items[i]);
   }
@@ -73,6 +75,7 @@ void appendString(StringList *list, const char *str) {
 }
 
 void freeStringList(StringList *list) {
+  if (list == NULL) return;
   for (int i = 0; i < list->count; i++) {
     free(list->items[i]);
   }
@@ -100,6 +103,7 @@ void appendDictPair(DictPairList *list, Expr *key, Expr *value) {
 }
 
 void freeDictPairList(DictPairList *list) {
+  if (list == NULL) return;
   for (int i = 0; i < list->count; i++) {
     freeExpr(list->items[i].key);
     freeExpr(list->items[i].value);
@@ -128,6 +132,7 @@ void appendSwitchCase(SwitchCaseList *list, Expr *value, StmtList *statements) {
 }
 
 void freeSwitchCaseList(SwitchCaseList *list) {
+  if (list == NULL) return;
   for (int i = 0; i < list->count; i++) {
     freeExpr(list->items[i].value);
     freeStmtList(list->items[i].statements);
@@ -491,8 +496,8 @@ void freeExpr(Expr *expr) {
     freeExpr(expr->as.set.value);
     break;
   case EXPR_INDEX:
-    freeExpr(expr->as.index.target);
-    freeExpr(expr->as.index.index);
+    freeExpr(expr->as.index.target); // FIXED: Removed \u003e
+    freeExpr(expr->as.index.index);  // FIXED: Removed \u003e
     break;
   case EXPR_LIST:
     freeExprList(expr->as.list.elements);
@@ -579,3 +584,4 @@ void freeStmt(Stmt *stmt) {
 
   FREE(Stmt, stmt);
 }
+
