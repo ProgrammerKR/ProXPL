@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "memory.h"
+#include "../include/object.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
