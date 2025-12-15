@@ -157,10 +157,6 @@ static TokenType identifierType(Scanner *scanner) {
       }
     }
     break;
-  }
-  return TOKEN_IDENTIFIER;
-}
-    break;
   case 'b':
     return checkKeyword(scanner, 1, 4, "reak", TOKEN_BREAK);
   case 'c':
@@ -507,3 +503,4 @@ Token scanToken(Scanner *scanner) {
 
   return errorToken(scanner, "Unexpected character.");
 }
+
