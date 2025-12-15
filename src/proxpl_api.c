@@ -4,7 +4,7 @@
 
 #include "proxpl_api.h"
 #include "vm.h"
-#include "bytecode.h"
+#include "chunk.h"
 #include <stdlib.h>
 
 void proxpl_vm_init(VM *vm) {
