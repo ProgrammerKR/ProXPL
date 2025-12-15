@@ -33,12 +33,6 @@ jobs:
             -DBUILD_TESTS=OFF \
             -DBUILD_BENCH=OFF
 
-      - name: Build
-        run: cmake --build build --config ${{ env.BUILD_TYPE }}
-
-      # Optional: Upload binaries (uncomment when ready)
-      # - name: Upload build artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: proxpl-${{ matrix.os }}
-      #     path: build/
+      # 🔥 IMPORTANT: Verbose build to expose linker errors
+      - name: Build (verbose)
+        run: cmake --build build --verbose
