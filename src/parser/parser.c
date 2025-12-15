@@ -692,6 +692,6 @@ static Expr *primary(Parser *p) {
     return createDictionaryExpr(pairs, previous(p).line, 0);
   }
 
-  parser Error(p, "Expect expression.");
+  parserError(p, "Expect expression.");
   return NULL;
 }
