@@ -23,18 +23,27 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # --- NEW STEP ADDED: Install LLVM ---
+      # Ye step teeno OS (Win/Mac/Linux) par LLVM install karega
+      # taaki CMake ko "LLVMConfig.cmake" mil sake.
+      - name: Setup LLVM
+        uses: wang-xinyu/setup-llvm@v1
+        with:
+          version: '17' # Aap apni zaroorat ke hisaab se version change kar sakte hain (16, 17, 18)
+
       - name: Setup CMake
         uses: lukka/get-cmake@latest
 
       - name: Configure
         shell: bash
+        # Humne LLVM_DIR add kiya hai taaki CMake ko pata chale LLVM kahan installed hai
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DBUILD_TESTS=OFF \
-            -DBUILD_BENCH=OFF
+            -DBUILD_BENCH=OFF \
+            -DLLVM_DIR="${{ env.LLVM_PATH }}/lib/cmake/llvm"
 
       - name: Build (verbose)
         shell: bash
-        run: cmake --build build --verbose
-
+        run: cmake --build build --verbose --config ${{ env.BUILD_TYPE }}
