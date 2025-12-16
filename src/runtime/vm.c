@@ -10,7 +10,7 @@
 #include "debug.h"
 #include "vm.h"
 
-static void freeObjects(VM* vm);
+void freeObjects();
 
 void initVM(VM *vm) { vm->stackTop = vm->stack; }
 

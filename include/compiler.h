@@ -11,7 +11,7 @@
 #include "vm.h"
 
 
-#include "parser.h"
+typedef struct Parser Parser;
 
 typedef enum {
   PREC_NONE,
