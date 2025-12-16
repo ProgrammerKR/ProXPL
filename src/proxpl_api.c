@@ -44,11 +44,11 @@ static char* readFile(const char* path) {
 void proxpl_vm_init(VM *vm) {
     // Standard CLOX uses a global VM instance, so we ignore the pointer for now
     // or assume 'vm' points to the global one.
-    initVM(); 
+    initVM(vm); 
 }
 
 void proxpl_vm_free(VM *vm) {
-    freeVM();
+    freeVM(vm);
 }
 
 InterpretResult proxpl_interpret_chunk(VM *vm, const Chunk *chunk) {
@@ -63,7 +63,7 @@ InterpretResult proxpl_interpret_file(VM *vm, const char *path) {
     if (source == NULL) return INTERPRET_COMPILE_ERROR;
 
     // Pass the source string to interpret
-    InterpretResult result = interpret(source);
+    InterpretResult result = interpret(vm, source);
     
     free(source);
     return result;
