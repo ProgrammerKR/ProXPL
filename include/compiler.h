@@ -5,13 +5,7 @@
 #include "vm.h"
 
 
-typedef struct {
-  Token current;
-  Token previous;
-  bool hadError;
-  bool panicMode;
-  Scanner *scanner;
-} Parser;
+#include "parser.h"
 
 typedef enum {
   PREC_NONE,

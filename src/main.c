@@ -15,6 +15,8 @@
 #include <string.h>
 
 
+void registerStdLib(VM* vm);
+
 static void repl(VM *vm) {
   char line[1024];
 

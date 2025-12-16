@@ -4,6 +4,8 @@
 #include "debug.h"
 #include "vm.h"
 
+static void freeObjects(VM* vm);
+
 void initVM(VM *vm) { vm->stackTop = vm->stack; }
 
 void freeVM(VM *vm) {
