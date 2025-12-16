@@ -1,3 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 /* test_opcode_roundtrip.c
  * Verifies that a chunk with opcodes and constants round-trips through
  * write_chunk_to_file() and read_chunk_from_file() preserving bytes.

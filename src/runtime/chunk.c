@@ -1,3 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 #include <stdlib.h>
 
 #include "chunk.h"
