@@ -24,20 +24,30 @@ link_directories(${LLVM_LIBRARY_DIRS})
 llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo)
 
 # --- Project Source ---
+# Export symbols for Windows DLL
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+# --- Project Source ---
 include_directories(include)
 
-# Gather sources
-file(GLOB_RECURSE SOURCES 
+# Gather sources (excluding main.c for library)
+file(GLOB_RECURSE LIB_SOURCES 
     "src/*.c"
-    "src/compiler/*.cpp"  # Pickup the new backend
+    "src/compiler/*.cpp"
 )
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
+
+# --- Shared Library ---
+add_library(proxpl_lib SHARED ${LIB_SOURCES})
+target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
 
 # --- Executable ---
-add_executable(proxpl ${SOURCES})
+add_executable(proxpl src/main.c ${LIB_SOURCES})
 
 # Link LLVM and standard libraries
 target_link_libraries(proxpl PRIVATE ${llvm_libs})
 
 if(UNIX)
     target_link_libraries(proxpl PRIVATE pthread dl z tinfo) 
+    target_link_libraries(proxpl_lib PRIVATE pthread dl z tinfo)
 endif()
