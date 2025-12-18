@@ -1,4 +1,16 @@
+<<<<<<< HEAD
 /* proxpl_api.c - public API wrappers for stable ABI */
+=======
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
+/* proxpl_api.c - public API wrappers for stable ABI
+ * Exposes a minimal C-style API that callers can use to embed runtime.
+ */
+>>>>>>> feature/opcode-tests
 
 #include <stdio.h>
 #include <stdlib.h>

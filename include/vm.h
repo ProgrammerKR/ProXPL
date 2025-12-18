@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #ifndef PROXPL_VM_H
 #define PROXPL_VM_H
 
@@ -5,6 +6,18 @@
 #include "value.h"
 #include "table.h" 
 #include "object.h" 
+=======
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
+#ifndef PROX_VM_H
+#define PROX_VM_H
+
+#include "table.h"
+>>>>>>> feature/opcode-tests
 
 #define STACK_MAX 256
 
@@ -12,11 +25,20 @@ typedef struct {
   Chunk* chunk;
   uint8_t* ip;
   Value stack[STACK_MAX];
+<<<<<<< HEAD
   Value* stackTop;
   Obj* objects; 
   Table strings; 
   Table globals; 
+=======
+  Value *stackTop;
+  Table globals;
+  Table strings;
+  struct Obj *objects;
+>>>>>>> feature/opcode-tests
 } VM;
+
+extern VM vm;
 
 typedef enum {
   INTERPRET_OK,

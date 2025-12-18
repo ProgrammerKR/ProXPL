@@ -1,3 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 #ifndef PROX_COMPILER_H
 #define PROX_COMPILER_H
 
@@ -5,13 +11,7 @@
 #include "vm.h"
 
 
-typedef struct {
-  Token current;
-  Token previous;
-  bool hadError;
-  bool panicMode;
-  Scanner *scanner;
-} Parser;
+typedef struct Parser Parser;
 
 typedef enum {
   PREC_NONE,
@@ -36,5 +36,8 @@ typedef struct {
 } ParseRule;
 
 bool compile(const char *source, Chunk *chunk);
+
+#include "ast.h"
+void generateBytecode(StmtList* statements, Chunk* chunk);
 
 #endif

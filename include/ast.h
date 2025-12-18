@@ -1,11 +1,44 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 #ifndef PROX_AST_H
 #define PROX_AST_H
 
 #include "common.h"
 #include "value.h"
 
+<<<<<<< HEAD
 // --- Forward Declarations (CRITICAL) ---
 // These allow the structs to reference each other before full definition.
+=======
+// --- Type System for Static Typing ---
+typedef enum {
+    TYPE_UNKNOWN = 0,
+    TYPE_VOID,
+    TYPE_BOOL,
+    TYPE_INT,
+    TYPE_FLOAT,
+    TYPE_STRING,
+    TYPE_FUNCTION,
+    TYPE_CLASS
+} TypeKind;
+
+typedef struct TypeInfo {
+    TypeKind kind;
+    char* name; // For classes or user types
+    
+    // For functions
+    struct TypeInfo* returnType;
+    struct TypeInfo* paramTypes; // Array or linked list? Let's use array for simplicity if fixed size, or pointer to array.
+                                 // For simplicity in C without templates, let's use a pointer to a dynamically allocated array of TypeInfos.
+    int paramCount;
+} TypeInfo;
+
+// Forward declarations
+>>>>>>> feature/opcode-tests
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;
 typedef struct ExprList ExprList;
@@ -50,7 +83,8 @@ typedef enum {
   STMT_BREAK,
   STMT_CONTINUE,
   STMT_SWITCH,
-  STMT_TRY_CATCH
+  STMT_TRY_CATCH,
+  STMT_PRINT
 } StmtType;
 
 // --- List Structures ---
@@ -174,6 +208,7 @@ typedef struct {
 // --- Main Expression Struct ---
 struct Expr {
   ExprType type;
+  TypeInfo inferredType; // [NEW] For Type Checker
   int line;
   int column;
   union {
@@ -204,6 +239,7 @@ typedef struct {
 typedef struct {
   char *name;
   Expr *initializer;
+  TypeInfo type; // [NEW] Explicit type declaration
   bool is_const;
 } VarDeclStmt;
 
@@ -211,6 +247,7 @@ typedef struct {
   char *name;
   StringList *params;
   StmtList *body;
+  TypeInfo returnType; // [NEW]
 } FuncDeclStmt;
 
 typedef struct {
@@ -264,6 +301,10 @@ typedef struct {
 } SwitchStmt;
 
 typedef struct {
+  Expr *expression;
+} PrintStmt;
+
+typedef struct {
   StmtList *try_block;
   char *catch_var;
   StmtList *catch_block;
@@ -290,6 +331,7 @@ struct Stmt {
     ContinueStmt continue_stmt;
     SwitchStmt switch_stmt;
     TryCatchStmt try_catch;
+    PrintStmt print;
   } as;
 };
 
@@ -325,8 +367,17 @@ Stmt *createReturnStmt(Expr *value, int line, int column);
 Stmt *createBlockStmt(StmtList *statements, int line, int column);
 Stmt *createBreakStmt(int line, int column);
 Stmt *createContinueStmt(int line, int column);
+<<<<<<< HEAD
 Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def, int line, int column);
 Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var, StmtList *catch_blk, StmtList *finally_blk, int line, int column);
+=======
+Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def,
+                       int line, int column);
+Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var,
+                         StmtList *catch_blk, StmtList *finally_blk, int line,
+                         int column);
+Stmt *createPrintStmt(Expr *expression, int line, int column);
+>>>>>>> feature/opcode-tests
 
 // List Management
 ExprList *createExprList();

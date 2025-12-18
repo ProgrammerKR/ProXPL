@@ -1,3 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 #include "ast.h"
 #include "memory.h"
 #include <stdlib.h>
@@ -448,6 +454,15 @@ Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var,
   return stmt;
 }
 
+Stmt *createPrintStmt(Expr *expression, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_PRINT;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.print.expression = expression;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -496,8 +511,13 @@ void freeExpr(Expr *expr) {
     freeExpr(expr->as.set.value);
     break;
   case EXPR_INDEX:
+<<<<<<< HEAD:src/parser/ast.c
     freeExpr(expr->as.index.target); // FIXED: Removed \u003e
     freeExpr(expr->as.index.index);  // FIXED: Removed \u003e
+=======
+    freeExpr(expr->as.index.target);
+    freeExpr(expr->as.index.index);
+>>>>>>> feature/opcode-tests:src/compiler/parser/ast.c
     break;
   case EXPR_LIST:
     freeExprList(expr->as.list.elements);
@@ -579,6 +599,9 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.try_catch.catch_var);
     freeStmtList(stmt->as.try_catch.catch_block);
     freeStmtList(stmt->as.try_catch.finally_block);
+    break;
+  case STMT_PRINT:
+    freeExpr(stmt->as.print.expression);
     break;
   }
 

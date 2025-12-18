@@ -1,4 +1,13 @@
+<<<<<<< HEAD
 /* src/runtime/object.c */
+=======
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
+>>>>>>> feature/opcode-tests
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 #include <stdio.h>
 #include <string.h>
 
@@ -30,19 +36,13 @@ void freeValueArray(ValueArray *array) {
 }
 
 void printValue(Value value) {
-  switch (value.type) {
-  case VAL_BOOL:
+  if (IS_BOOL(value)) {
     printf(AS_BOOL(value) ? "true" : "false");
-    break;
-  case VAL_NULL:
+  } else if (IS_NULL(value)) {
     printf("null");
-    break;
-  case VAL_NUMBER:
+  } else if (IS_NUMBER(value)) {
     printf("%g", AS_NUMBER(value));
-    break;
-  case VAL_OBJ:
-    // Placeholder until object system is implemented
-    printf("<obj>");
-    break;
+  } else if (IS_OBJ(value)) {
+    printObject(value);
   }
 }

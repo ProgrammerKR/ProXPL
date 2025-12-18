@@ -1,3 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 /*
  * ProXPL Main Entry Point
  * Handles REPL mode and file execution
@@ -15,7 +21,11 @@
 #include <string.h>
 
 
-static void repl(VM *vm) {
+void registerStdLib(VM* vm);
+
+// Declare global VM instance - already in vm.c
+
+static void repl() {
   char line[1024];
 
   printf("ProXPL v1.0 REPL\n");
@@ -80,11 +90,15 @@ static void repl(VM *vm) {
       continue;
     }
 
-    // TODO: Compile and execute
-    // For now, just indicate success
-    printf("Parsed successfully (%d statements)\n", statements->count);
+    // --- Pipeline: AST -> Bytecode -> VM ---
+    Chunk chunk;
+    initChunk(&chunk);
+    generateBytecode(statements, &chunk);
+    
+    interpret(&vm, &chunk);
 
-    // Free AST
+    // Free resources
+    freeChunk(&chunk);
     freeStmtList(statements);
   }
 }
@@ -121,7 +135,10 @@ static char *readFile(const char *path) {
   return buffer;
 }
 
-static void runFile(VM *vm, const char *path) {
+extern void generateCode(StmtList* statements); // Defined in llvm_backend.cpp
+#include "type_checker.h"
+
+static void runFile(const char *path) {
   char *source = readFile(path);
   if (source == NULL) {
     exit(74);
@@ -168,21 +185,46 @@ static void runFile(VM *vm, const char *path) {
   printf("Successfully parsed %d statements from %s\n", statements->count,
          path);
 
-  // TODO: Compile and execute
-  // InterpretResult result = interpret(source);
+  // --- Pipeline Step 2: Type Checking ---
+  printf("Running Type Checker...\n");
+  TypeChecker checker;
+  initTypeChecker(&checker);
+  
+  if (!checkTypes(&checker, statements)) {
+      fprintf(stderr, "Type Checking Failed with %d errors.\n", checker.errorCount);
+      freeTypeChecker(&checker);
+      freeStmtList(statements);
+      free(source);
+      exit(65);
+  }
+  freeTypeChecker(&checker);
+  printf("Type Check Passed.\n");
+
+  // --- Pipeline Step 3: Bytecode Gen & Execution ---
+  printf("Generating Bytecode...\n");
+  Chunk chunk;
+  initChunk(&chunk);
+  generateBytecode(statements, &chunk);
+
+  printf("Executing VM...\n");
+  InterpretResult result = interpret(&vm, &chunk);
+  if (result != INTERPRET_OK) {
+      fprintf(stderr, "Execution Failed.\n");
+  }
+
+  // --- Pipeline Step 4: LLVM CodeGen (Optional/Future) ---
+  // printf("Generating LLVM IR...\n");
+  // generateCode(statements);
 
   // Free resources
+  freeChunk(&chunk);
   freeStmtList(statements);
   free(source);
-
-  // Exit based on result
-  // if (result == INTERPRET_COMPILE_ERROR) exit(65);
-  // if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
+
 
 int main(int argc, const char *argv[]) {
   // Initialize VM
-  VM vm;
   initVM(&vm);
 
   // Register standard library
@@ -190,16 +232,16 @@ int main(int argc, const char *argv[]) {
 
   if (argc == 1) {
     // REPL mode
-    repl(&vm);
+    repl();
   } else if (argc == 2) {
     // File execution mode
-    runFile(&vm, argv[1]);
+    runFile(argv[1]);
   } else if (argc >= 3) {
     // Handle subcommands
     const char *command = argv[1];
 
     if (strcmp(command, "run") == 0) {
-      runFile(&vm, argv[2]);
+      runFile(argv[2]);
     } else if (strcmp(command, "build") == 0) {
       printf("Build command not yet implemented\n");
       exit(1);

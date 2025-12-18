@@ -1,4 +1,10 @@
 #!/usr/bin/env pwsh
+# --------------------------------------------------
+#   Project: ProX Programming Language (ProXPL)
+#   Author:  ProgrammerKR
+#   Created: 2025-12-16
+#   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
 <#
   build_msvc.ps1
   Build the bench_simple.exe using MSVC `cl.exe`.
