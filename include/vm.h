@@ -7,8 +7,7 @@
 #ifndef PROX_VM_H
 #define PROX_VM_H
 
-#include "chunk.h"
-#include "value.h"
+#include "table.h"
 
 #define STACK_MAX 256
 
@@ -17,7 +16,12 @@ typedef struct {
   u8 *ip; // Instruction Pointer
   Value stack[STACK_MAX];
   Value *stackTop;
+  Table globals;
+  Table strings;
+  struct Obj *objects;
 } VM;
+
+extern VM vm;
 
 typedef enum {
   INTERPRET_OK,

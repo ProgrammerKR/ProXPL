@@ -37,4 +37,7 @@ typedef struct {
 
 bool compile(const char *source, Chunk *chunk);
 
+#include "ast.h"
+void generateBytecode(StmtList* statements, Chunk* chunk);
+
 #endif

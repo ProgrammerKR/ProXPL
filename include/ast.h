@@ -73,7 +73,8 @@ typedef enum {
   STMT_BREAK,
   STMT_CONTINUE,
   STMT_SWITCH,
-  STMT_TRY_CATCH
+  STMT_TRY_CATCH,
+  STMT_PRINT
 } StmtType;
 
 // Dynamic array for expressions
@@ -295,6 +296,10 @@ typedef struct {
 } SwitchStmt;
 
 typedef struct {
+  Expr *expression;
+} PrintStmt;
+
+typedef struct {
   StmtList *try_block;
   char *catch_var;
   StmtList *catch_block;
@@ -321,6 +326,7 @@ struct Stmt {
     ContinueStmt continue_stmt;
     SwitchStmt switch_stmt;
     TryCatchStmt try_catch;
+    PrintStmt print;
   } as;
 };
 
@@ -371,6 +377,7 @@ Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def,
 Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var,
                          StmtList *catch_blk, StmtList *finally_blk, int line,
                          int column);
+Stmt *createPrintStmt(Expr *expression, int line, int column);
 
 // List management functions
 ExprList *createExprList();

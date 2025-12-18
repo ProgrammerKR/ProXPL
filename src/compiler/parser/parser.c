@@ -26,6 +26,7 @@ static Stmt *tryStmt(Parser *p);
 static Stmt *returnStmt(Parser *p);
 static Stmt *breakStmt(Parser *p);
 static Stmt *continueStmt(Parser *p);
+static Stmt *printStmt(Parser *p);
 static Stmt *exprStmt(Parser *p);
 static StmtList *block(Parser *p);
 
@@ -294,6 +295,8 @@ static Stmt *statement(Parser *p) {
     return breakStmt(p);
   if (match(p, 1, TOKEN_CONTINUE))
     return continueStmt(p);
+  if (match(p, 1, TOKEN_PRINT))
+    return printStmt(p);
   if (match(p, 1, TOKEN_LEFT_BRACE)) {
     StmtList *stmts = block(p);
     return createBlockStmt(stmts, previous(p).line, 0);
@@ -457,6 +460,12 @@ static StmtList *block(Parser *p) {
 
   consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
   return statements;
+}
+
+static Stmt *printStmt(Parser *p) {
+  Expr *value = expression(p);
+  consume(p, TOKEN_SEMICOLON, "Expect ';' after value.");
+  return createPrintStmt(value, previous(p).line, 0);
 }
 
 static Stmt *exprStmt(Parser *p) {

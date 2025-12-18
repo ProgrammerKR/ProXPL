@@ -43,6 +43,6 @@ void printValue(Value value) {
   } else if (IS_NUMBER(value)) {
     printf("%g", AS_NUMBER(value));
   } else if (IS_OBJ(value)) {
-    printf("<obj>");
+    printObject(value);
   }
 }
