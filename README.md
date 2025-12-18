@@ -27,7 +27,7 @@
 
 ## 📖 About ProXPL
 
-**ProXPL** is a modern programming language designed to bridge the gap between the simplicity of interpreted languages like Python and the performance of C-based runtimes. It is built for a wide range of applications, from educational compiler theory to efficient system tooling.
+**ProXPL** - ProX Programming Language is a modern, Indian-origin programming language designed for speed, simplicity, and professional-grade development. It combines Python-like readability with C-level performance, focusing on clean syntax, scalable systems, and a growing native ecosystem.
 
 ### The Philosophy
 *   **Clarity First**: Familiar curly-brace syntax (similar to JavaScript/Go) ensures a low learning curve.
