@@ -1,9 +1,7 @@
 # ProXPL Programming Language
 
-<<<<<<< HEAD
 <p align="center">
   <b>A Professional & Modern Programming Language Compiler</b>
-=======
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -15,7 +13,6 @@
 
 <p>
   <strong>Clean Syntax • Strong Type System • Rich Standard Library • C-Based Runtime</strong>
->>>>>>> feature/opcode-tests
 </p>
 
 [Quick Start](#-quick-start) •
@@ -40,7 +37,6 @@
 
 ---
 
-<<<<<<< HEAD
 ## What is ProXPL?
 
 **ProXPL** is a modern, general-purpose programming language designed for **clarity, performance, and long-term maintainability**.  
@@ -82,8 +78,6 @@ ProXPL bridges the gap between **simplicity** (Python-like syntax) and **perform
 - **Rich Standard Library**: 75+ built-in functions for common tasks
 - **Modular Architecture**: Clear separation of lexer, parser, compiler, and VM
 
-=======
->>>>>>> feature/opcode-tests
 ## 🚀 Key Features
 
 | Feature | Description |
@@ -124,7 +118,6 @@ main();
 prox hello.prox
 ```
 
-<<<<<<< HEAD
 ### 3. Build It (Coming Soon)
 ProXPL supports compiling to bytecode.
 =======
@@ -135,7 +128,6 @@ Enter your name: Alice
 Hello, Alice!
 Your lucky number is: 42
 ```
->>>>>>> feature/opcode-tests
 
 ---
 
