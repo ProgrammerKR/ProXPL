@@ -227,6 +227,63 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             break;
         }
 
+        case STMT_CLASS_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.class_decl.name, strlen(stmt->as.class_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            emitBytes(gen, OP_CLASS, (uint8_t)nameConst, stmt->line);
+            emitBytes(gen, OP_DEFINE_GLOBAL, (uint8_t)nameConst, stmt->line);
+
+            if (stmt->as.class_decl.superclass != NULL) {
+                genExpr(gen, (Expr*)stmt->as.class_decl.superclass);
+                emitBytes(gen, OP_GET_GLOBAL, (uint8_t)nameConst, stmt->line);
+                emitByte(gen, OP_INHERIT, stmt->line);
+            }
+
+            emitBytes(gen, OP_GET_GLOBAL, (uint8_t)nameConst, stmt->line);
+            for (int i = 0; i < stmt->as.class_decl.methods->count; i++) {
+                Stmt* method = stmt->as.class_decl.methods->items[i];
+                Value methodName = OBJ_VAL(copyString(method->as.func_decl.name, strlen(method->as.func_decl.name)));
+                int methodConst = addConstant(gen->chunk, methodName);
+                
+                // Note: Simplified logic for method body compilation 
+                // In a full implementation, we'd compile the function separately
+                emitBytes(gen, OP_METHOD, (uint8_t)methodConst, stmt->line);
+            }
+            emitByte(gen, OP_POP, stmt->line); // Pop the class
+            break;
+        }
+
+        case STMT_USE_DECL: {
+            for (int i = 0; i < stmt->as.use_decl.modules->count; i++) {
+                char* modulePath = stmt->as.use_decl.modules->items[i];
+                Value pathVal = OBJ_VAL(copyString(modulePath, strlen(modulePath)));
+                int pathConst = addConstant(gen->chunk, pathVal);
+                emitBytes(gen, OP_USE, (uint8_t)pathConst, stmt->line);
+            }
+            break;
+        }
+
+        case STMT_TRY_CATCH: {
+            int catchJump = emitJump(gen, OP_TRY, stmt->line);
+            
+            // Compile try block
+            for (int i = 0; i < stmt->as.try_catch.try_block->count; i++) {
+                genStmt(gen, stmt->as.try_catch.try_block->items[i]);
+            }
+            emitByte(gen, OP_END_TRY, stmt->line);
+            int endJump = emitJump(gen, OP_JUMP, stmt->line);
+            
+            patchJump(gen, catchJump);
+            emitByte(gen, OP_CATCH, stmt->line);
+            
+            // Compile catch block
+            for (int i = 0; i < stmt->as.try_catch.catch_block->count; i++) {
+                genStmt(gen, stmt->as.try_catch.catch_block->items[i]);
+            }
+            patchJump(gen, endJump);
+            break;
+        }
+
         default:
             fprintf(stderr, "Unimplemented statement type in BytecodeGen: %d\n", stmt->type);
             break;

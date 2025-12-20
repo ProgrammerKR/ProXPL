@@ -39,6 +39,7 @@ extern VM vm;
 void initVM(VM* vm);
 void freeVM(VM* vm);
 InterpretResult interpret(VM* vm, const char* source);
+InterpretResult interpretAST(VM* vm, StmtList* statements);
 void push(VM* vm, Value value);
 Value pop(VM* vm);
 void defineNative(VM* vm, const char* name, NativeFn function);

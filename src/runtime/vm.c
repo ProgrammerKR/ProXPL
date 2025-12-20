@@ -444,6 +444,24 @@ static InterpretResult run(VM *vm) {
 #undef DISPATCH
 }
 
+InterpretResult interpretAST(VM* pvm, StmtList* statements) {
+  ObjFunction* function = newFunction();
+  
+  // Connect the AST-based bytecode generator
+  generateBytecode(statements, &function->chunk);
+  
+  // Setup for execution
+  push(pvm, OBJ_VAL(function));
+  CallFrame* frame = &pvm->frames[pvm->frameCount++];
+  frame->function = function;
+  frame->ip = function->chunk.code;
+  frame->slots = pvm->stack;
+
+  InterpretResult result = run(pvm);
+
+  return result;
+}
+
 InterpretResult interpret(VM* pvm, const char* source) {
   pvm->source = source;
   ObjFunction* function = compile(source);

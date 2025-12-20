@@ -44,6 +44,12 @@ typedef enum {
   OP_INHERIT,
   OP_METHOD,
   
+  // Modularity & Error Handling
+  OP_USE,
+  OP_TRY,
+  OP_CATCH,
+  OP_END_TRY,
+  
   // Future enhancements
   OP_MATCH,
   OP_AWAIT,

@@ -10,10 +10,17 @@
 #include "common.h"
 #include "value.h"
 
-<<<<<<< HEAD
 // --- Forward Declarations (CRITICAL) ---
-// These allow the structs to reference each other before full definition.
-=======
+typedef struct Expr Expr;
+typedef struct Stmt Stmt;
+typedef struct ExprList ExprList;
+typedef struct StmtList StmtList;
+typedef struct SwitchCase SwitchCase;
+typedef struct SwitchCaseList SwitchCaseList;
+typedef struct DictPair DictPair;
+typedef struct DictPairList DictPairList;
+typedef struct StringList StringList;
+
 // --- Type System for Static Typing ---
 typedef enum {
     TYPE_UNKNOWN = 0,
@@ -32,22 +39,9 @@ typedef struct TypeInfo {
     
     // For functions
     struct TypeInfo* returnType;
-    struct TypeInfo* paramTypes; // Array or linked list? Let's use array for simplicity if fixed size, or pointer to array.
-                                 // For simplicity in C without templates, let's use a pointer to a dynamically allocated array of TypeInfos.
+    struct TypeInfo* paramTypes; 
     int paramCount;
 } TypeInfo;
-
-// Forward declarations
->>>>>>> feature/opcode-tests
-typedef struct Expr Expr;
-typedef struct Stmt Stmt;
-typedef struct ExprList ExprList;
-typedef struct StmtList StmtList;
-typedef struct SwitchCase SwitchCase;
-typedef struct SwitchCaseList SwitchCaseList;
-typedef struct DictPair DictPair;
-typedef struct DictPairList DictPairList;
-typedef struct StringList StringList;
 
 // --- Node Types ---
 
@@ -208,7 +202,7 @@ typedef struct {
 // --- Main Expression Struct ---
 struct Expr {
   ExprType type;
-  TypeInfo inferredType; // [NEW] For Type Checker
+  TypeInfo inferredType; 
   int line;
   int column;
   union {
@@ -239,7 +233,7 @@ typedef struct {
 typedef struct {
   char *name;
   Expr *initializer;
-  TypeInfo type; // [NEW] Explicit type declaration
+  TypeInfo type; 
   bool is_const;
 } VarDeclStmt;
 
@@ -247,7 +241,7 @@ typedef struct {
   char *name;
   StringList *params;
   StmtList *body;
-  TypeInfo returnType; // [NEW]
+  TypeInfo returnType; 
 } FuncDeclStmt;
 
 typedef struct {
@@ -367,17 +361,37 @@ Stmt *createReturnStmt(Expr *value, int line, int column);
 Stmt *createBlockStmt(StmtList *statements, int line, int column);
 Stmt *createBreakStmt(int line, int column);
 Stmt *createContinueStmt(int line, int column);
-<<<<<<< HEAD
 Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def, int line, int column);
 Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var, StmtList *catch_blk, StmtList *finally_blk, int line, int column);
-=======
-Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def,
-                       int line, int column);
-Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var,
-                         StmtList *catch_blk, StmtList *finally_blk, int line,
-                         int column);
 Stmt *createPrintStmt(Expr *expression, int line, int column);
->>>>>>> feature/opcode-tests
+
+// List Management
+ExprList *createExprList();
+void appendExpr(ExprList *list, Expr *expr);
+void freeExprList(ExprList *list);
+
+StmtList *createStmtList();
+void appendStmt(StmtList *list, Stmt *stmt);
+void freeStmtList(StmtList *list);
+
+StringList *createStringList();
+void appendString(StringList *list, const char *str);
+void freeStringList(StringList *list);
+
+DictPairList *createDictPairList();
+void appendDictPair(DictPairList *list, Expr *key, Expr *value);
+void freeDictPairList(DictPairList *list);
+
+SwitchCaseList *createSwitchCaseList();
+void appendSwitchCase(SwitchCaseList *list, Expr *value, StmtList *statements);
+void freeSwitchCaseList(SwitchCaseList *list);
+
+// Memory Management
+void freeExpr(Expr *expr);
+void freeStmt(Stmt *stmt);
+
+#endif // PROX_AST_H
+
 
 // List Management
 ExprList *createExprList();

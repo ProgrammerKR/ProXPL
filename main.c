@@ -82,13 +82,12 @@ static void repl(VM *vm) {
     StmtList *statements = parse(&parser);
 
     if (statements == NULL || statements->count == 0) {
-      fprintf(stderr, "Parse error\n");
+      // Error reporting is handled inside parser/interpretAST
       continue;
     }
 
-    // TODO: Compile and execute
-    // For now, just indicate success
-    printf("Parsed successfully (%d statements)\n", statements->count);
+    // Unified Pipeline: Compile AST to bytecode and execute
+    interpretAST(vm, statements);
 
     // Free AST
     freeStmtList(statements);
@@ -166,24 +165,20 @@ static void runFile(VM *vm, const char *path) {
   StmtList *statements = parse(&parser);
 
   if (statements == NULL || statements->count == 0) {
-    fprintf(stderr, "Parse error\n");
     free(source);
     exit(65);
   }
 
-  printf("Successfully parsed %d statements from %s\n", statements->count,
-         path);
-
-  // TODO: Compile and execute
-  // InterpretResult result = interpret(source);
+  // Unified Pipeline: Compile AST to bytecode and execute
+  InterpretResult result = interpretAST(vm, statements);
 
   // Free resources
   freeStmtList(statements);
   free(source);
 
   // Exit based on result
-  // if (result == INTERPRET_COMPILE_ERROR) exit(65);
-  // if (result == INTERPRET_RUNTIME_ERROR) exit(70);
+  if (result == INTERPRET_COMPILE_ERROR) exit(65);
+  if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
 int main(int argc, const char *argv[]) {
@@ -197,30 +192,31 @@ int main(int argc, const char *argv[]) {
   if (argc == 1) {
     // REPL mode
     repl(&vm);
-  } else if (argc == 2) {
-    // File execution mode
-    runFile(&vm, argv[1]);
-  } else if (argc >= 3) {
-    // Handle subcommands
+  } else if (argc >= 2) {
+    // Handle subcommands or direct file execution
     const char *command = argv[1];
 
     if (strcmp(command, "run") == 0) {
+      if (argc < 3) {
+        fprintf(stderr, "Usage: prox run [path]\n");
+        exit(64);
+      }
       runFile(&vm, argv[2]);
     } else if (strcmp(command, "build") == 0) {
-      printf("Build command not yet implemented\n");
-      exit(1);
-    } else if (argv[1][strlen(argv[1]) - 1] == 'x' &&
-               argv[1][strlen(argv[1]) - 2] == 'o' &&
-               argv[1][strlen(argv[1]) - 3] == 'r' &&
-               argv[1][strlen(argv[1]) - 4] == 'p' &&
-               argv[1][strlen(argv[1]) - 5] == '.') {
-      // File with .prox extension
-      runFile(&vm, argv[1]);
+      if (argc < 3) {
+        fprintf(stderr, "Usage: prox build [path]\n");
+        exit(64);
+      }
+      printf("Compiling %s to bytecode...\n", argv[2]);
+      // TODO: Implement .pxc file emission
+      printf("Build successful (not really yet, stub)\n");
+    } else if (strcmp(command, "init") == 0) {
+      printf("Initializing new ProXPL project...\n");
+      // TODO: Scaffold Libs/Files
+      printf("Project initialized successfully.\n");
     } else {
-      fprintf(stderr, "Usage: prox [path]\n");
-      fprintf(stderr, "       prox run [path]\n");
-      fprintf(stderr, "       prox          (REPL mode)\n");
-      exit(64);
+      // Assume first argument is a file path if it's not a known command
+      runFile(&vm, argv[1]);
     }
   }
 

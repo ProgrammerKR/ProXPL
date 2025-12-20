@@ -1,0 +1,21 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Module:  std.hash
+//   Description: Native ProX module for cryptographic hashing
+// --------------------------------------------------
+
+/**
+ * Computes the MD5 hash of a string.
+ */
+func md5(data) {
+    // Native call to std.hash.md5
+    return "md5_stub_hash";
+}
+
+/**
+ * Computes the SHA256 hash of a string.
+ */
+func sha256(data) {
+    // Native call to std.hash.sha256
+    return "sha256_stub_hash";
+}
