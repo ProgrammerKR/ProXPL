@@ -1,17 +1,13 @@
-<<<<<<< HEAD
-/* src/runtime/vm.c */
-#include <stdarg.h>
-=======
 // --------------------------------------------------
 //   Project: ProX Programming Language (ProXPL)
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
 
->>>>>>> feature/opcode-tests
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdarg.h>
 
 #include "../include/common.h"
 #include "../include/compiler.h"
@@ -19,90 +15,80 @@
 #include "../include/object.h"
 #include "../include/memory.h"
 #include "../include/vm.h"
-#include "../include/table.h"
-
-<<<<<<< HEAD
-// Helper to reset the stack
-static void resetStack(VM* vm) {
-  vm->stackTop = vm->stack;
-=======
-void freeObjects();
-
-#include "table.h"
-#include "object.h"
+#include "../include/error_report.h"
 
 VM vm;
 
+static void resetStack(VM *pvm) {
+  pvm->stackTop = pvm->stack;
+  pvm->frameCount = 0;
+}
+
 void initVM(VM *pvm) { 
-    pvm->stackTop = pvm->stack; 
+    resetStack(pvm);
     pvm->objects = NULL;
     initTable(&pvm->globals);
     initTable(&pvm->strings);
+    pvm->source = NULL;
 }
 
-void freeVM(VM *vm) {
-  freeTable(&vm->globals);
-  freeTable(&vm->strings);
-  // freeObjects();
->>>>>>> feature/opcode-tests
+void freeVM(VM *pvm) {
+  freeTable(&pvm->globals);
+  freeTable(&pvm->strings);
+  freeObjects();
 }
 
 // Runtime Error Helper
-static void runtimeError(VM* vm, const char* format, ...) {
+static void runtimeError(VM* pvm, const char* format, ...) {
+  char message[1024];
   va_list args;
   va_start(args, format);
-  vfprintf(stderr, format, args);
+  vsnprintf(message, sizeof(message), format, args);
   va_end(args);
-  fputs("\n", stderr);
 
-  size_t instruction = vm->ip - vm->chunk->code - 1;
-  int line = vm->chunk->lines[instruction];
-  fprintf(stderr, "[line %d] in script\n", line);
-  resetStack(vm);
+  CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
+  ObjFunction* function = frame->function;
+  size_t instruction = frame->ip - function->chunk.code - 1;
+  int line = function->chunk.lines[instruction];
+
+  reportRuntimeError(pvm->source, line, message);
+
+  for (int i = pvm->frameCount - 1; i >= 0; i--) {
+    CallFrame* frame = &pvm->frames[i];
+    ObjFunction* function = frame->function;
+    size_t instruction = frame->ip - function->chunk.code - 1;
+    fprintf(stderr, "  [line %d] in ", function->chunk.lines[instruction]);
+    if (function->name == NULL) {
+      fprintf(stderr, "script\n");
+    } else {
+      fprintf(stderr, "%s()\n", function->name->chars);
+    }
+  }
+
+  resetStack(pvm);
 }
 
-// Initialize the VM
-void initVM(VM* vm) {
-  resetStack(vm);
-  vm->objects = NULL;
-  initTable(&vm->globals);
-  initTable(&vm->strings);
-  
-  // You can register native functions here if you want them globally available
-  // defineNative(vm, "clock", clockNative); 
+void push(VM* pvm, Value value) {
+  *pvm->stackTop = value;
+  pvm->stackTop++;
 }
 
-// Free the VM resources
-void freeVM(VM* vm) {
-  freeTable(&vm->globals);
-  freeTable(&vm->strings);
-  freeObjects(); // Frees the linked list of objects
+Value pop(VM* pvm) {
+  pvm->stackTop--;
+  return *pvm->stackTop;
 }
 
-void push(VM* vm, Value value) {
-  *vm->stackTop = value;
-  vm->stackTop++;
+static Value peek(VM* pvm, int distance) {
+  return pvm->stackTop[-1 - distance];
 }
 
-Value pop(VM* vm) {
-  vm->stackTop--;
-  return *vm->stackTop;
-}
-
-static Value peek(VM* vm, int distance) {
-  return vm->stackTop[-1 - distance];
-}
-
-<<<<<<< HEAD
-// Helper to check for false/nil
 static bool isFalsey(Value value) {
-  return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+  return IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-// Concatenate two strings
-static void concatenate(VM* vm) {
-  ObjString* b = AS_STRING(peek(vm, 0));
-  ObjString* a = AS_STRING(peek(vm, 1));
+static void concatenate(VM* pvm) {
+  ObjString* b = AS_STRING(peek(pvm, 0));
+  ObjString* a = AS_STRING(peek(pvm, 1));
 
   int length = a->length + b->length;
   char* chars = ALLOCATE(char, length + 1);
@@ -111,109 +97,21 @@ static void concatenate(VM* vm) {
   chars[length] = '\0';
 
   ObjString* result = takeString(chars, length);
-  pop(vm);
-  pop(vm);
-  push(vm, OBJ_VAL(result));
-}
-
-// Define a native function
-void defineNative(VM* vm, const char* name, NativeFn function) {
-  push(vm, OBJ_VAL(copyString(name, (int)strlen(name))));
-  push(vm, OBJ_VAL(newNative(function)));
-  tableSet(&vm->globals, AS_STRING(vm->stack[0]), vm->stack[1]);
-  pop(vm);
-  pop(vm);
-}
-
-// Main execution loop
-static InterpretResult run(VM* vm) {
-#define READ_BYTE() (*vm->ip++)
-#define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
-#define BINARY_OP(valueType, op) \
-    do { \
-      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) { \
-        runtimeError(vm, "Operands must be numbers."); \
-        return INTERPRET_RUNTIME_ERROR; \
-      } \
-      double b = AS_NUMBER(pop(vm)); \
-      double a = AS_NUMBER(pop(vm)); \
-      push(vm, valueType(a op b)); \
-    } while (false)
-
-  for (;;) {
-#ifdef DEBUG_TRACE_EXECUTION
-    printf("          ");
-    for (Value* slot = vm->stack; slot < vm->stackTop; slot++) {
-      printf("[ ");
-      printValue(*slot);
-      printf(" ]");
-    }
-    printf("\n");
-    disassembleInstruction(vm->chunk, (int)(vm->ip - vm->chunk->code));
-#endif
-
-    uint8_t instruction;
-    switch (instruction = READ_BYTE()) {
-      case OP_CONSTANT: {
-        Value constant = READ_CONSTANT();
-        push(vm, constant);
-        break;
-      }
-      case OP_TRUE:  push(vm, BOOL_VAL(true)); break;
-      case OP_FALSE: push(vm, BOOL_VAL(false)); break;
-      case OP_POP:   pop(vm); break;
-      case OP_NULL:  push(vm, NULL_VAL); break; 
-
-      case OP_ADD: {
-        if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
-          concatenate(vm);
-        } else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          double b = AS_NUMBER(pop(vm));
-          double a = AS_NUMBER(pop(vm));
-          push(vm, NUMBER_VAL(a + b));
-        } else {
-          runtimeError(vm, "Operands must be two numbers or two strings.");
-          return INTERPRET_RUNTIME_ERROR;
-        }
-        break;
-      }
-      case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
-      case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
-      case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
-      case OP_NOT:
-        push(vm, BOOL_VAL(isFalsey(pop(vm))));
-        break;
-      case OP_NEGATE:
-        if (!IS_NUMBER(peek(vm, 0))) {
-          runtimeError(vm, "Operand must be a number.");
-          return INTERPRET_RUNTIME_ERROR;
-        }
-        push(vm, NUMBER_VAL(-AS_NUMBER(pop(vm))));
-        break;
-      case OP_PRINT: {
-        printValue(pop(vm));
-        printf("\n");
-        break;
-      }
-      case OP_RETURN: {
-        return INTERPRET_OK;
-      }
-=======
-static bool isFalsey(Value value) {
-  return IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+  pop(pvm);
+  pop(pvm);
+  push(pvm, OBJ_VAL(result));
 }
 
 static InterpretResult run(VM *vm) {
-  register u8* ip = vm->ip;
-  register Value* sp = vm->stackTop;
+  CallFrame* frame = &vm->frames[vm->frameCount - 1];
 
-#define READ_BYTE() (*ip++)
-#define READ_SHORT() (ip += 2, (uint16_t)((ip[-2] << 8) | ip[-1]))
-#define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
+#define READ_BYTE() (*frame->ip++)
+#define READ_SHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
+#define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 
 #ifdef __GNUC__
-  #define DISPATCH() goto *dispatch_table[*ip++]
+  #define DISPATCH() goto *dispatch_table[*frame->ip++]
   
   static void* dispatch_table[] = {
       &&DO_OP_CONSTANT, &&DO_OP_NIL, &&DO_OP_TRUE, &&DO_OP_FALSE,
@@ -233,56 +131,56 @@ static InterpretResult run(VM *vm) {
   DISPATCH();
 
   DO_OP_CONSTANT: {
-      Value constant = READ_CONSTANT();
-      *sp++ = constant;
+      push(vm, READ_CONSTANT());
       DISPATCH();
   }
   DO_OP_NIL: {
-      *sp++ = NULL_VAL;
+      push(vm, NULL_VAL);
       DISPATCH();
   }
   DO_OP_TRUE: {
-      *sp++ = BOOL_VAL(true);
+      push(vm, BOOL_VAL(true));
       DISPATCH();
   }
   DO_OP_FALSE: {
-      *sp++ = BOOL_VAL(false);
+      push(vm, BOOL_VAL(false));
       DISPATCH();
   }
   DO_OP_POP: {
-      sp--;
+      pop(vm);
       DISPATCH();
   }
   DO_OP_GET_LOCAL: {
-      u8 slot = READ_BYTE();
-      // Placeholder: will need frame-relative indexing
+      uint8_t slot = READ_BYTE();
+      push(vm, frame->slots[slot]);
       DISPATCH();
   }
   DO_OP_SET_LOCAL: {
-      u8 slot = READ_BYTE();
+      uint8_t slot = READ_BYTE();
+      frame->slots[slot] = peek(vm, 0);
       DISPATCH();
   }
   DO_OP_GET_GLOBAL: {
       ObjString* name = READ_STRING();
       Value value;
       if (!tableGet(&vm->globals, name, &value)) {
-        // runtimeError("Undefined variable '%s'.", name->chars);
+        runtimeError(vm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
       }
-      *sp++ = value;
+      push(vm, value);
       DISPATCH();
   }
   DO_OP_DEFINE_GLOBAL: {
       ObjString* name = READ_STRING();
-      tableSet(&vm->globals, name, *(sp-1));
-      sp--;
+      tableSet(&vm->globals, name, peek(vm, 0));
+      pop(vm);
       DISPATCH();
   }
   DO_OP_SET_GLOBAL: {
       ObjString* name = READ_STRING();
-      if (tableSet(&vm->globals, name, *(sp-1))) {
+      if (tableSet(&vm->globals, name, peek(vm, 0))) {
         tableDelete(&vm->globals, name);
-        // runtimeError("Undefined variable '%s'.", name->chars);
+        runtimeError(vm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -296,80 +194,84 @@ static InterpretResult run(VM *vm) {
       DISPATCH();
   }
   DO_OP_EQUAL: {
-      Value b = *(--sp);
-      Value a = *(--sp);
-      *sp++ = BOOL_VAL(a == b); // Simplified for primitive types
+      Value b = pop(vm);
+      Value a = pop(vm);
+      push(vm, BOOL_VAL(a == b)); 
       DISPATCH();
   }
   DO_OP_GREATER: {
-      double b = AS_NUMBER(*(--sp));
-      double a = AS_NUMBER(*(--sp));
-      *sp++ = BOOL_VAL(a > b);
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, BOOL_VAL(a > b));
       DISPATCH();
   }
   DO_OP_LESS: {
-      double b = AS_NUMBER(*(--sp));
-      double a = AS_NUMBER(*(--sp));
-      *sp++ = BOOL_VAL(a < b);
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, BOOL_VAL(a < b));
       DISPATCH();
   }
   DO_OP_ADD: {
-      double b = AS_NUMBER(*(sp - 1));
-      double a = AS_NUMBER(*(sp - 2));
-      sp -= 2;
-      *sp++ = NUMBER_VAL(a + b);
+      if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
+          concatenate(vm);
+      } else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          double b = AS_NUMBER(pop(vm));
+          double a = AS_NUMBER(pop(vm));
+          push(vm, NUMBER_VAL(a + b));
+      } else {
+          runtimeError(vm, "Operands must be two numbers or two strings.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       DISPATCH();
   }
   DO_OP_SUBTRACT: {
-      double b = AS_NUMBER(*(sp - 1));
-      double a = AS_NUMBER(*(sp - 2));
-      sp -= 2;
-      *sp++ = NUMBER_VAL(a - b);
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL(a - b));
       DISPATCH();
   }
   DO_OP_MULTIPLY: {
-      double b = AS_NUMBER(*(sp - 1));
-      double a = AS_NUMBER(*(sp - 2));
-      sp -= 2;
-      *sp++ = NUMBER_VAL(a * b);
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL(a * b));
       DISPATCH();
   }
   DO_OP_DIVIDE: {
-      double b = AS_NUMBER(*(sp - 1));
-      double a = AS_NUMBER(*(sp - 2));
-      sp -= 2;
-      *sp++ = NUMBER_VAL(a / b);
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL(a / b));
       DISPATCH();
   }
   DO_OP_NOT: {
-      Value v = *(sp-1);
-      *(sp-1) = BOOL_VAL(isFalsey(v));
+      push(vm, BOOL_VAL(isFalsey(pop(vm))));
       DISPATCH();
   }
   DO_OP_NEGATE: {
-      double a = AS_NUMBER(*(sp-1));
-      *(sp-1) = NUMBER_VAL(-a);
+      if (!IS_NUMBER(peek(vm, 0))) {
+        runtimeError(vm, "Operand must be a number.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      push(vm, NUMBER_VAL(-AS_NUMBER(pop(vm))));
       DISPATCH();
   }
   DO_OP_PRINT: {
-    printValue(*(sp-1));
-    sp--;
+    printValue(pop(vm));
     printf("\n");
     DISPATCH();
   }
   DO_OP_JUMP: {
       uint16_t offset = READ_SHORT();
-      ip += offset;
+      frame->ip += offset;
       DISPATCH();
   }
   DO_OP_JUMP_IF_FALSE: {
       uint16_t offset = READ_SHORT();
-      if (isFalsey(*(sp-1))) ip += offset;
+      if (isFalsey(peek(vm, 0))) frame->ip += offset;
       DISPATCH();
   }
   DO_OP_LOOP: {
       uint16_t offset = READ_SHORT();
-      ip -= offset;
+      frame->ip -= offset;
       DISPATCH();
   }
   DO_OP_CALL:
@@ -381,9 +283,14 @@ static InterpretResult run(VM *vm) {
       DISPATCH();
   }
   DO_OP_RETURN: {
-      vm->stackTop = sp; 
-      vm->ip = ip;
-      return INTERPRET_OK;
+      vm->frameCount--;
+      if (vm->frameCount == 0) {
+        pop(vm);
+        return INTERPRET_OK;
+      }
+      vm->stackTop = frame->slots;
+      frame = &vm->frames[vm->frameCount - 1];
+      DISPATCH();
   }
   DO_OP_CLASS:
   DO_OP_INHERIT:
@@ -395,17 +302,30 @@ static InterpretResult run(VM *vm) {
 #else
   // Fallback for MSVC / Standard C
   for (;;) {
-    u8 instruction;
+    uint8_t instruction;
     switch (instruction = READ_BYTE()) {
     case OP_CONSTANT: push(vm, READ_CONSTANT()); break;
     case OP_NIL: push(vm, NULL_VAL); break;
     case OP_TRUE: push(vm, BOOL_VAL(true)); break;
     case OP_FALSE: push(vm, BOOL_VAL(false)); break;
     case OP_POP: pop(vm); break;
+    case OP_GET_LOCAL: {
+        uint8_t slot = READ_BYTE();
+        push(vm, frame->slots[slot]);
+        break;
+    }
+    case OP_SET_LOCAL: {
+        uint8_t slot = READ_BYTE();
+        frame->slots[slot] = peek(vm, 0);
+        break;
+    }
     case OP_GET_GLOBAL: {
         ObjString* name = READ_STRING();
         Value value;
-        if (!tableGet(&vm->globals, name, &value)) return INTERPRET_RUNTIME_ERROR;
+        if (!tableGet(&vm->globals, name, &value)) {
+            runtimeError(vm, "Undefined variable '%s'.", name->chars);
+            return INTERPRET_RUNTIME_ERROR;
+        }
         push(vm, value);
         break;
     }
@@ -419,6 +339,7 @@ static InterpretResult run(VM *vm) {
         ObjString* name = READ_STRING();
         if (tableSet(&vm->globals, name, peek(vm, 0))) {
             tableDelete(&vm->globals, name);
+            runtimeError(vm, "Undefined variable '%s'.", name->chars);
             return INTERPRET_RUNTIME_ERROR;
         }
         break;
@@ -442,9 +363,16 @@ static InterpretResult run(VM *vm) {
         break;
     }
     case OP_ADD: {
-        double b = AS_NUMBER(pop(vm));
-        double a = AS_NUMBER(pop(vm));
-        push(vm, NUMBER_VAL(a + b));
+        if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
+          concatenate(vm);
+        } else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          double b = AS_NUMBER(pop(vm));
+          double a = AS_NUMBER(pop(vm));
+          push(vm, NUMBER_VAL(a + b));
+        } else {
+          runtimeError(vm, "Operands must be two numbers or two strings.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
         break;
     }
     case OP_SUBTRACT: {
@@ -466,7 +394,14 @@ static InterpretResult run(VM *vm) {
         break;
     }
     case OP_NOT: push(vm, BOOL_VAL(isFalsey(pop(vm)))); break;
-    case OP_NEGATE: push(vm, NUMBER_VAL(-AS_NUMBER(pop(vm)))); break;
+    case OP_NEGATE: {
+        if (!IS_NUMBER(peek(vm, 0))) {
+            runtimeError(vm, "Operand must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        push(vm, NUMBER_VAL(-AS_NUMBER(pop(vm)))); 
+        break;
+    }
     case OP_PRINT: {
       printValue(pop(vm));
       printf("\n");
@@ -474,22 +409,30 @@ static InterpretResult run(VM *vm) {
     }
     case OP_JUMP: {
         uint16_t offset = READ_SHORT();
-        vm->ip += offset;
+        frame->ip += offset;
         break;
     }
     case OP_JUMP_IF_FALSE: {
         uint16_t offset = READ_SHORT();
-        if (isFalsey(peek(vm, 0))) vm->ip += offset;
+        if (isFalsey(peek(vm, 0))) frame->ip += offset;
         break;
     }
     case OP_LOOP: {
         uint16_t offset = READ_SHORT();
-        vm->ip -= offset;
+        frame->ip -= offset;
         break;
     }
-    case OP_RETURN: return INTERPRET_OK;
+    case OP_RETURN: {
+      vm->frameCount--;
+      if (vm->frameCount == 0) {
+        pop(vm);
+        return INTERPRET_OK;
+      }
+      vm->stackTop = frame->slots;
+      frame = &vm->frames[vm->frameCount - 1];
+      break;
+    }
     default: return INTERPRET_COMPILE_ERROR;
->>>>>>> feature/opcode-tests
     }
   }
 #endif
@@ -501,22 +444,19 @@ static InterpretResult run(VM *vm) {
 #undef DISPATCH
 }
 
-// Compile and Run
-InterpretResult interpret(VM* vm, const char* source) {
-  Chunk chunk;
-  initChunk(&chunk);
+InterpretResult interpret(VM* pvm, const char* source) {
+  pvm->source = source;
+  ObjFunction* function = compile(source);
+  if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
-  if (!compile(source, &chunk)) {
-    freeChunk(&chunk);
-    return INTERPRET_COMPILE_ERROR;
-  }
+  push(pvm, OBJ_VAL(function));
+  CallFrame* frame = &pvm->frames[pvm->frameCount++];
+  frame->function = function;
+  frame->ip = function->chunk.code;
+  frame->slots = pvm->stack;
 
-  vm->chunk = &chunk;
-  vm->ip = vm->chunk->code;
+  InterpretResult result = run(pvm);
 
-  InterpretResult result = run(vm);
-
-  freeChunk(&chunk);
   return result;
 }
 

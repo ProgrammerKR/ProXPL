@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "../../include/ast.h"
-#include "../../include/chunk.h"
+#include "../../include/bytecode.h"
 #include "../../include/common.h"
 #include "../../include/value.h"
 #include "../../include/object.h"

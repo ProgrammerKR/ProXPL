@@ -18,7 +18,7 @@
 
 #include "../include/proxpl_api.h"
 #include "../include/vm.h"
-#include "../include/chunk.h"
+#include "../include/bytecode.h"
 #include "../include/common.h"
 
 // Helper to read a file into a string

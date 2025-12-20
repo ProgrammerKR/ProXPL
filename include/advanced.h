@@ -12,7 +12,7 @@
 #ifndef PROX_ADVANCED_H
 #define PROX_ADVANCED_H
 
-#include "chunk.h"
+#include "bytecode.h"
 #include "common.h"
 
 

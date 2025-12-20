@@ -511,13 +511,8 @@ void freeExpr(Expr *expr) {
     freeExpr(expr->as.set.value);
     break;
   case EXPR_INDEX:
-<<<<<<< HEAD:src/parser/ast.c
-    freeExpr(expr->as.index.target); // FIXED: Removed \u003e
-    freeExpr(expr->as.index.index);  // FIXED: Removed \u003e
-=======
     freeExpr(expr->as.index.target);
     freeExpr(expr->as.index.index);
->>>>>>> feature/opcode-tests:src/compiler/parser/ast.c
     break;
   case EXPR_LIST:
     freeExprList(expr->as.list.elements);

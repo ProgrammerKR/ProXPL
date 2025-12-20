@@ -7,7 +7,7 @@
 #ifndef PROX_COMPILER_H
 #define PROX_COMPILER_H
 
-#include "scanner.h"
+#include "bytecode.h"
 #include "vm.h"
 
 
@@ -35,7 +35,7 @@ typedef struct {
   Precedence precedence;
 } ParseRule;
 
-bool compile(const char *source, Chunk *chunk);
+ObjFunction* compile(const char *source);
 
 #include "ast.h"
 void generateBytecode(StmtList* statements, Chunk* chunk);

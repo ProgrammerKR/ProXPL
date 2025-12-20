@@ -32,57 +32,20 @@ typedef uint64_t Value;
 
 typedef struct Obj Obj;
 
-<<<<<<< HEAD
-typedef enum { 
-  VAL_BOOL, 
-  VAL_NULL, // Kept for backward compatibility
-  VAL_NUMBER, 
-  VAL_OBJ 
-} ValueType;
-
-// --- COMPATIBILITY FIX: Map NIL to NULL ---
-// This fixes the "VAL_NIL undeclared identifier" errors
-#define VAL_NIL VAL_NULL
-// ------------------------------------------
-=======
 // Classification Macros
 #define IS_NUMBER(v) (((v) & QNAN) != QNAN)
 #define IS_NULL(v)   ((v) == (QNAN | TAG_NULL))
 #define IS_BOOL(v)   (((v) | 1) == (QNAN | TAG_TRUE))
-#define IS_OBJ(v)    (((v) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
->>>>>>> feature/opcode-tests
+#define IS_OBJ(v)    (((v) & (SIGN_BIT | QNAN)) == (SIGN_BIT | QNAN))
+
+// Compatibility aliases
+#define IS_NIL(v)    IS_NULL(v)
 
 // Conversion Macros
 #define AS_NUMBER(v) valueToNum(v)
 #define AS_BOOL(v)   ((v) == (QNAN | TAG_TRUE))
 #define AS_OBJ(v)    ((Obj*)(uintptr_t)((v) & ~(SIGN_BIT | QNAN)))
 
-<<<<<<< HEAD
-// Macros for checking type
-#define IS_BOOL(value)   ((value).type == VAL_BOOL)
-#define IS_NULL(value)   ((value).type == VAL_NULL)
-#define IS_NUMBER(value) ((value).type == VAL_NUMBER)
-#define IS_OBJ(value)    ((value).type == VAL_OBJ)
-
-// --- COMPATIBILITY FIX: Map IS_NIL to IS_NULL ---
-#define IS_NIL(value)    IS_NULL(value)
-// ------------------------------------------------
-
-// Macros for unwrapping
-#define AS_BOOL(value)   ((value).as.boolean)
-#define AS_NUMBER(value) ((value).as.number)
-#define AS_OBJ(value)    ((value).as.obj)
-
-// Macros for creating values
-#define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
-#define NULL_VAL          ((Value){VAL_NULL, {.number = 0}})
-#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
-#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj *)object}})
-
-// --- COMPATIBILITY FIX: Map NIL_VAL to NULL_VAL ---
-#define NIL_VAL           NULL_VAL
-// --------------------------------------------------
-=======
 // Value Constructors
 static inline Value numToValue(double num) {
     Value value;
@@ -98,9 +61,9 @@ static inline double valueToNum(Value value) {
 
 #define NUMBER_VAL(num) (numToValue(num))
 #define NULL_VAL        ((Value)(QNAN | TAG_NULL))
+#define NIL_VAL         NULL_VAL
 #define BOOL_VAL(b)     ((b) ? (QNAN | TAG_TRUE) : (QNAN | TAG_FALSE))
 #define OBJ_VAL(obj)    (Value)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
->>>>>>> feature/opcode-tests
 
 // Value Array (for constants, stack etc.)
 typedef struct {

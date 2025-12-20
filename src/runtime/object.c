@@ -16,7 +16,7 @@
 #include "../include/object.h"
 #include "../include/value.h"
 #include "../include/vm.h"
-#include "../include/chunk.h" 
+#include "../include/bytecode.h" 
 
 // This is the critical fix for the "vm undeclared" error:
 extern VM vm; 

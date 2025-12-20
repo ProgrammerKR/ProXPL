@@ -9,7 +9,7 @@
  * Handles REPL mode and file execution
  */
 
-#include "chunk.h"
+#include "bytecode.h"
 #include "common.h"
 #include "compiler.h"
 #include "debug.h"

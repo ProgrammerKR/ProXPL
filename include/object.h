@@ -9,7 +9,7 @@
 
 #include "common.h"
 #include "value.h"
-#include "chunk.h" // Required because ObjFunction contains a 'Chunk' struct
+#include "bytecode.h" // Required because ObjFunction contains a 'Chunk' struct
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
