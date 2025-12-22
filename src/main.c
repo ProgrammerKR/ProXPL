@@ -135,7 +135,7 @@ static char *readFile(const char *path) {
   return buffer;
 }
 
-extern void generateCode(StmtList* statements); // Defined in llvm_backend.cpp
+// extern void generateCode(StmtList* statements); // Defined in llvm_backend.cpp
 #include "type_checker.h"
 
 static void runFile(const char *path) {

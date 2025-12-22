@@ -14,6 +14,7 @@
 #include "../include/debug.h"
 #include "../include/object.h"
 #include "../include/memory.h"
+#include "../include/gc.h"
 #include "../include/vm.h"
 #include "../include/error_report.h"
 
@@ -27,6 +28,7 @@ static void resetStack(VM *pvm) {
 void initVM(VM *pvm) { 
     resetStack(pvm);
     pvm->objects = NULL;
+    initGC(pvm); // CRITICAL: Initialize GC state
     initTable(&pvm->globals);
     initTable(&pvm->strings);
     pvm->source = NULL;
@@ -35,7 +37,7 @@ void initVM(VM *pvm) {
 void freeVM(VM *pvm) {
   freeTable(&pvm->globals);
   freeTable(&pvm->strings);
-  freeObjects();
+  freeObjects(pvm);
 }
 
 // Runtime Error Helper

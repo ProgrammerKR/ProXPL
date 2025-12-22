@@ -6,19 +6,14 @@
 
 #include <stdlib.h>
 
-#include "memory.h"
+#include "../include/memory.h"
+#include "../include/vm.h"
+#include "../include/gc.h"
 
-void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
-    if (newSize == 0) {
-        free(pointer);
-        return NULL;
-    }
+extern VM vm;
 
-    void* result = realloc(pointer, newSize);
-    if (result == NULL) exit(1);
-    return result;
-}
+// void* reallocate(void* pointer, size_t oldSize, size_t newSize)
+// Moved to src/runtime/gc.c to handle GC triggers.
 
-void freeObjects() {
-    // TODO: Implement proper object freeing logic
-}
+// void freeObjects()
+// Moved to src/runtime/gc.c

@@ -43,10 +43,15 @@ ObjNative *newNative(NativeFn function) {
 }
 
 static ObjString *allocateString(char *chars, int length, uint32_t hash) {
-  ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+  ObjString *string = (ObjString *)allocateObject(sizeof(ObjString) + length + 1, OBJ_STRING);
   string->length = length;
-  string->chars = chars;
   string->hash = hash;
+  memcpy(string->chars, chars, length);
+  string->chars[length] = '\0';
+  
+  // Intern the string
+  tableSet(&vm.strings, string, NIL_VAL);
+  
   return string;
 }
 
@@ -61,15 +66,28 @@ static uint32_t hashString(const char *key, int length) {
 
 ObjString *takeString(char *chars, int length) {
   uint32_t hash = hashString(chars, length);
-  return allocateString(chars, length, hash);
+  
+  ObjString *interned = tableFindString(&vm.strings, chars, length, hash);
+  if (interned != NULL) {
+      FREE_ARRAY(char, chars, length + 1);
+      return interned;
+  }
+
+  // With Flexible Array Member, we cannot "take" the pointer. We must copy.
+  // allocateString copies 'chars', so we must free the original 'chars' now.
+  ObjString* string = allocateString(chars, length, hash);
+  FREE_ARRAY(char, chars, length + 1);
+  return string;
 }
 
 ObjString *copyString(const char *chars, int length) {
   uint32_t hash = hashString(chars, length);
-  char *heapChars = ALLOCATE(char, length + 1);
-  memcpy(heapChars, chars, length);
-  heapChars[length] = '\0';
-  return allocateString(heapChars, length, hash);
+  
+  // Check if string is already interned
+  ObjString *interned = tableFindString(&vm.strings, chars, length, hash);
+  if (interned != NULL) return interned;
+
+  return allocateString((char*)chars, length, hash);
 }
 
 void printObject(Value value) {

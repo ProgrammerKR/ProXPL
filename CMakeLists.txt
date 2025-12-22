@@ -34,7 +34,12 @@ include_directories(src)
 # --- Library Sources ---
 file(GLOB_RECURSE LIB_SOURCES 
     "src/*.c"
-    "src/compiler/*.cpp"
+    "src/compiler/backend_llvm.cpp"
+    "src/compiler/ir_gen.c"
+    "src/compiler/ir_opt.c"
+    "src/compiler/ir.c"
+    "src/compiler/type_checker.c"
+    "src/runtime/llvm_runtime.c"
 )
 # Exclude main entry point from library
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
