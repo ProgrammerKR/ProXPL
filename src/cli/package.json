@@ -1,0 +1,19 @@
+{
+    "name": "proxpl-cli",
+    "version": "1.0.0",
+    "description": "Professional CLI tool for ProXPL",
+    "main": "index.js",
+    "bin": {
+        "prox": "./index.js"
+    },
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "commander": "^11.1.0",
+        "chalk": "^4.1.2",
+        "chokidar": "^3.5.3",
+        "fs-extra": "^11.2.0"
+    },
+    "type": "module"
+}

@@ -114,8 +114,14 @@ main();
 ```
 
 ### 2. Run It
+Using the CLI:
 ```bash
-prox hello.prox
+prox run hello.prox
+```
+
+Or using the legacy direct execution:
+```bash
+./proxpl hello.prox
 ```
 
 ### 3. Build It (Coming Soon)
@@ -133,14 +139,25 @@ Your lucky number is: 42
 
 ## 📥 Installation
 
-### Option 1: Pre-built Binaries (Recommended)
+### Option 1: CLI via Node.js (Recommended for Developers)
+The ProXPL CLI provides an enhanced experience with watch mode and better logging.
+
+```bash
+cd src/cli
+npm install
+npm link
+```
+
+Now you can use the `prox` command globally.
+
+### Option 2: Pre-built Binaries
 No compilation required. Download the latest release for your OS:
 
-*   **Windows**: [Download `prox.exe`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
-*   **Linux**: [Download `prox`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
-*   **macOS**: [Download `prox-macos`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+*   **Windows**: [Download `proxpl.exe`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+*   **Linux**: [Download `proxpl`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+*   **macOS**: [Download `proxpl-macos`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
 
-Add the executable to your system `PATH` to run it from anywhere.
+Add the executable to your system `PATH` to run it as `proxpl`.
 
 ### Option 2: Build from Source (CMake)
 Requirements: **GCC/Clang** (C99+), **CMake** 3.10+, **Git**.
