@@ -9,7 +9,7 @@
 
 #include "common.h"
 #include "value.h"
-#include "bytecode.h" // Required because ObjFunction contains a 'Chunk' struct
+#include "bytecode.h" 
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
@@ -43,19 +43,20 @@ struct ObjString {
   uint32_t hash;
 };
 
-typedef struct {
+struct ObjFunction {
   Obj obj;
   int arity;
-  Chunk chunk; // Requires definition from chunk.h
+  Chunk chunk;
   ObjString *name;
-} ObjFunction;
+};
 
-typedef Value (*NativeFn)(int argCount, Value *args);
 
-typedef struct {
+// NativeFn moved to common.h
+
+struct ObjNative {
   Obj obj;
   NativeFn function;
-} ObjNative;
+};
 
 ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
@@ -67,5 +68,4 @@ static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
-#endif
-
+#endif // PROX_OBJECT_H

@@ -18,3 +18,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     if (result == NULL) exit(1);
     return result;
 }
+
+void freeObjects() {
+    // TODO: Implement proper object freeing logic
+}

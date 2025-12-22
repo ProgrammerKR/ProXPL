@@ -23,11 +23,39 @@ typedef int16_t  i16;
 typedef int32_t  i32;
 typedef int64_t  i64;
 
+#ifndef UINT8_MAX
 #define UINT8_MAX 255
+#endif
 #define UINT8_COUNT (UINT8_MAX + 1)
+
+typedef uint64_t Value;
+
+// Forward declarations
+typedef struct Obj Obj;
+typedef struct ObjString ObjString;
+typedef struct ObjFunction ObjFunction;
+typedef struct ObjNative ObjNative;
+typedef struct Table Table;
+typedef struct Entry Entry;
+typedef struct ValueArray ValueArray;
+typedef struct Chunk Chunk;
+typedef struct VM VM;
+typedef struct CallFrame CallFrame;
+typedef struct Expr Expr;
+typedef struct Stmt Stmt;
+typedef struct ExprList ExprList;
+typedef struct StmtList StmtList;
+typedef struct SwitchCase SwitchCase;
+typedef struct SwitchCaseList SwitchCaseList;
+typedef struct DictPair DictPair;
+typedef struct DictPairList DictPairList;
+typedef struct StringList StringList;
+typedef struct TypeInfo TypeInfo;
+
+typedef Value (*NativeFn)(int argCount, Value *args);
 
 // Debugging
 #define DEBUG_TRACE_EXECUTION
 #define DEBUG_PRINT_CODE
 
-#endif
+#endif // PROX_COMMON_H

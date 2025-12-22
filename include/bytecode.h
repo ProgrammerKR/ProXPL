@@ -1,10 +1,16 @@
-#ifndef PROXPL_BYTECODE_H
-#define PROXPL_BYTECODE_H
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2025-12-16
+//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+
+#ifndef PROX_BYTECODE_H
+#define PROX_BYTECODE_H
 
 #include "common.h"
 #include "value.h"
 
-// ProX-Bytecode Opcodes
+// OpCodes
 typedef enum {
   OP_CONSTANT,
   OP_NIL,
@@ -43,34 +49,24 @@ typedef enum {
   OP_CLASS,
   OP_INHERIT,
   OP_METHOD,
-  
-  // Modularity & Error Handling
   OP_USE,
   OP_TRY,
   OP_CATCH,
   OP_END_TRY,
-  
-  // Future enhancements
-  OP_MATCH,
-  OP_AWAIT,
-  OP_YIELD,
-  
   OP_HALT = 0xFF
 } OpCode;
 
-// Chunk: Sequence of bytecode and metadata
-typedef struct {
+struct Chunk {
   int count;
   int capacity;
   uint8_t *code;
-  int *lines;           // Line numbers for debugging/errors
-  ValueArray constants; // Constant pool
-} Chunk;
+  int *lines;
+  ValueArray constants;
+};
 
-// Chunk API
 void initChunk(Chunk *chunk);
 void freeChunk(Chunk *chunk);
 void writeChunk(Chunk *chunk, uint8_t byte, int line);
 int addConstant(Chunk *chunk, Value value);
 
-#endif // PROXPL_BYTECODE_H
+#endif // PROX_BYTECODE_H
