@@ -87,6 +87,12 @@ static void blackenObject(Obj* object) {
             markArray(&function->chunk.constants);
             break;
         }
+        case OBJ_MODULE: {
+            ObjModule* module = (ObjModule*)object;
+            markObject((Obj*)module->name);
+            markTable(&module->exports);
+            break;
+        }
         // Case OBJ_CLASS, OBJ_INSTANCE would go here
         default:
             // Warn or ignore?
@@ -103,7 +109,11 @@ static void markRoots() {
     // 2. Mark Globals
     markTable(&vm.globals);
     
-    // 3. Mark Compiler Roots
+    // 3. Mark Loaded Modules & Search Paths?
+    // Modules are strong refs in importer.modules
+    markTable(&vm.importer.modules);
+
+    // 4. Mark Compiler Roots
     markCompilerRoots();
     
     // 4. Mark Interned Strings?
@@ -154,6 +164,12 @@ static void freeObject(Obj* object) {
         }
         case OBJ_NATIVE: {
             FREE(ObjNative, object);
+            break;
+        }
+        case OBJ_MODULE: {
+            ObjModule* module = (ObjModule*)object;
+            freeTable(&module->exports);
+            FREE(ObjModule, object);
             break;
         }
         default:

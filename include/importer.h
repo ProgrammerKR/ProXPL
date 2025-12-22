@@ -3,43 +3,33 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
-
-/*
- * Module Importer for ProXPL
- * Handles "use" keyword and module loading
- *
- * STUB IMPLEMENTATION - Basic functionality only
- * Full implementation would include:
- * - Circular dependency detection
- * - Module caching
- * - Search path resolution
- * - Package management integration
- */
+// --------------------------------------------------
 
 #ifndef PROX_IMPORTER_H
 #define PROX_IMPORTER_H
 
 #include "common.h"
 #include "parser.h"
+#include "table.h"
 
+// Importer State
 typedef struct {
   char **searchPaths;
   int pathCount;
-  char **loadedModules;
-  int loadedCount;
+  
+  // Cache of loaded modules (Name -> ObjModule*)
+  Table modules; 
 } Importer;
 
-// Initialize importer with search paths
+// Initialize importer with default search paths
 void initImporter(Importer *importer);
 
-// Load a module by name (returns statements)
-StmtList *loadModule(Importer *importer, const char *moduleName);
+// Load a module by name (e.g., "std.io" or "utils")
+// Returns true if successful, populates *result with the Module object
+bool loadModule(Importer *importer, const char *moduleName, void** result);
 
-// Resolve module path
-char *resolveModulePath(Importer *importer, const char *moduleName);
-
-// Check if module is already loaded
-bool isModuleLoaded(Importer *importer, const char *path);
+// Add a directory to the module search path
+void addSearchPath(Importer *importer, const char *path);
 
 // Free importer resources
 void freeImporter(Importer *importer);

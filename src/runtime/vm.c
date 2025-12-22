@@ -32,11 +32,13 @@ void initVM(VM *pvm) {
     initTable(&pvm->globals);
     initTable(&pvm->strings);
     pvm->source = NULL;
+    initImporter(&pvm->importer);
 }
 
 void freeVM(VM *pvm) {
   freeTable(&pvm->globals);
   freeTable(&pvm->strings);
+  freeImporter(&pvm->importer);
   freeObjects(pvm);
 }
 

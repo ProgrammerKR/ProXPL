@@ -3,6 +3,7 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+// --------------------------------------------------
 
 /*
  * ProXPL Standard Library - I/O Module
@@ -17,6 +18,19 @@
 #include "vm.h"
 #include "value.h"
 #include "object.h"
+#include "memory.h"
+
+extern VM vm;
+
+// Helper
+static void defineModuleFn(ObjModule* module, const char* name, NativeFn function) {
+    ObjString* nameObj = copyString(name, (int)strlen(name));
+    push(&vm, OBJ_VAL(nameObj));
+    push(&vm, OBJ_VAL(newNative(function)));
+    tableSet(&module->exports, nameObj, peek(&vm, 0));
+    pop(&vm);
+    pop(&vm);
+}
 
 // --- Macro Compatibility Layer (CRITICAL FIX) ---
 // This ensures that your MAKE_ macros return the correct 'Value' struct
@@ -70,96 +84,18 @@ static Value native_input(int argCount, Value* args) {
     return MAKE_NULL();
 }
 
-// read_file(path) - Read entire file as string
-static Value native_read_file(int argCount, Value* args) {
-    if (argCount < 1 || !IS_STRING(args[0])) {
-        fprintf(stderr, "read_file expects a string path\n");
-        return MAKE_NULL();
-    }
-    
-    const char* path = AS_CSTRING(args[0]);
-    FILE* file = fopen(path, "rb");
-    if (!file) {
-        // Return NULL if file not found instead of crashing/printing
-        return MAKE_NULL();
-    }
-    
-    fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
-    rewind(file);
-    
-    char* buffer = (char*)malloc(fileSize + 1);
-    if (!buffer) {
-        fclose(file);
-        return MAKE_NULL();
-    }
-    
-    size_t bytesRead = fread(buffer, 1, fileSize, file);
-    buffer[bytesRead] = '\0';
-    fclose(file);
-    
-    Value result = MAKE_OBJ(copyString(buffer, (int)bytesRead));
-    free(buffer);
-    return result;
-}
-
-// write_file(path, content) - Write string to file
-static Value native_write_file(int argCount, Value* args) {
-    if (argCount < 2 || !IS_STRING(args[0])) {
-        fprintf(stderr, "write_file expects (path, content)\n");
-        return MAKE_BOOL(false);
-    }
-    
-    const char* path = AS_CSTRING(args[0]);
-    FILE* file = fopen(path, "w");
-    if (!file) {
-        return MAKE_BOOL(false);
-    }
-
-    if (IS_STRING(args[1])) {
-        // Fast path: Write raw string directly
-        ObjString* strObj = AS_STRING(args[1]);
-        fwrite(strObj->chars, 1, strObj->length, file);
-    } else {
-        // Fallback: simple implementation for non-strings
-        // Note: For full support, you'd want a valueToString helper here
-        fprintf(file, "<non-string value>");
-    }
-    
-    fclose(file);
-    return MAKE_BOOL(true);
-}
-
-// append_file(path, content) - Append string to file
-static Value native_append_file(int argCount, Value* args) {
-    if (argCount < 2 || !IS_STRING(args[0])) {
-        fprintf(stderr, "append_file expects (path, content)\n");
-        return MAKE_BOOL(false);
-    }
-    
-    const char* path = AS_CSTRING(args[0]);
-    FILE* file = fopen(path, "a");
-    if (!file) {
-        return MAKE_BOOL(false);
-    }
-    
-    if (IS_STRING(args[1])) {
-        ObjString* strObj = AS_STRING(args[1]);
-        fwrite(strObj->chars, 1, strObj->length, file);
-    } else {
-        fprintf(file, "<non-string value>");
-    }
-    
-    fclose(file);
-    return MAKE_BOOL(true);
-}
 
 // Register all I/O functions with the VM
-void register_io_natives(VM* vm) {
-    defineNative(vm, "print", native_print);
-    defineNative(vm, "input", native_input);
-    defineNative(vm, "read_file", native_read_file);
-    defineNative(vm, "write_file", native_write_file);
-    defineNative(vm, "append_file", native_append_file);
+ObjModule* create_std_io_module() {
+    ObjString* name = copyString("std.io", 6);
+    push(&vm, OBJ_VAL(name));
+    ObjModule* module = newModule(name);
+    push(&vm, OBJ_VAL(module));
+    
+    defineModuleFn(module, "print", native_print);
+    defineModuleFn(module, "input", native_input);
+    
+    pop(&vm); // module
+    pop(&vm); // name
+    return module;
 }
-

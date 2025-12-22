@@ -25,10 +25,15 @@
 #define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
 #define AS_NATIVE(value) (((ObjNative *)AS_OBJ(value))->function)
 
+// Macros for Modules
+#define IS_MODULE(value) isObjType(value, OBJ_MODULE)
+#define AS_MODULE(value) ((ObjModule *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
   OBJ_NATIVE,
+  OBJ_MODULE,
 } ObjType;
 
 struct Obj {
@@ -59,10 +64,17 @@ struct ObjNative {
   NativeFn function;
 };
 
+struct ObjModule {
+  Obj obj;
+  ObjString *name;
+  Table exports; // Symbols exported by this module
+};
+
 ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn function);
+ObjModule *newModule(ObjString *name);
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {

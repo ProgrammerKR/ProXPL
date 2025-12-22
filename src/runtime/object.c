@@ -42,6 +42,13 @@ ObjNative *newNative(NativeFn function) {
   return native;
 }
 
+ObjModule *newModule(ObjString *name) {
+  ObjModule *module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
+  module->name = name;
+  initTable(&module->exports);
+  return module;
+}
+
 static ObjString *allocateString(char *chars, int length, uint32_t hash) {
   ObjString *string = (ObjString *)allocateObject(sizeof(ObjString) + length + 1, OBJ_STRING);
   string->length = length;
@@ -106,6 +113,9 @@ void printObject(Value value) {
   }
   case OBJ_NATIVE:
     printf("<native fn>");
+    break;
+  case OBJ_MODULE:
+    printf("<module %s>", ((ObjModule*)AS_OBJ(value))->name->chars);
     break;
   }
 }
