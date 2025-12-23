@@ -37,7 +37,10 @@ jobs:
 
       - name: Install LLVM (Windows)
         if: matrix.os == 'windows-latest'
-        run: choco install llvm -y
+        run: |
+          choco install llvm -y
+          echo "C:/Program Files/LLVM/bin" >> $GITHUB_PATH
+          echo "LLVM_DIR=C:/Program Files/LLVM/lib/cmake/llvm" >> $GITHUB_ENV
 
       - name: Configure
         shell: bash
@@ -46,7 +49,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DBUILD_TESTS=OFF \
             -DBUILD_BENCH=OFF \
-            -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm" \
             -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM"
 
       - name: Build (verbose)

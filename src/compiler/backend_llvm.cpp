@@ -1,10 +1,16 @@
+#include "../../include/backend_llvm.h"
 #include "../../include/object.h"
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Support/raw_ostream.h>
 #include <vector>
 #include <map>
 #include <iostream>
+#include <memory>
 
 // Do NOT use 'using namespace llvm;' due to clash with our 'Value' type.
-
 
 class LLVMEmitter {
     std::unique_ptr<llvm::LLVMContext> Context;
@@ -218,3 +224,4 @@ extern "C" void emitLLVM(IRModule* module) {
     LLVMEmitter emitter;
     emitter.emitModule(module);
 }
+
