@@ -8,18 +8,26 @@
     "type": "git",
     "url": "https://github.com/ProgrammerKR/ProXPL"
   },
-  "engines": {
-    "vscode": "^1.75.0"
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:proxpl"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
   },
-  "categories": [
-    "Programming Languages"
-  ],
-  "keywords": [
-    "proxpl",
-    "prox",
-    "syntax",
-    "highlighting"
-  ],
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.5",
+    "eslint": "^8.36.0",
+    "@typescript-eslint/parser": "^5.55.0",
+    "@typescript-eslint/eslint-plugin": "^5.55.0"
+  },
   "contributes": {
     "languages": [
       {
@@ -46,6 +54,22 @@
         "language": "proxpl",
         "path": "./snippets/proxpl-snippets.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "proxpl.run",
+        "title": "ProXPL: Run File",
+        "icon": "$(play)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceExtname == .prox",
+          "command": "proxpl.run",
+          "group": "navigation"
+        }
+      ]
+    }
   }
 }
