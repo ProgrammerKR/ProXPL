@@ -10,6 +10,8 @@
 #include "common.h"
 #include "value.h"
 
+#define AM_CONST 1
+
 // OpCodes
 typedef enum {
   OP_CONSTANT,

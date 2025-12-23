@@ -36,30 +36,29 @@ static void push_value(VMState *vm, Value v) {
     vm->stack[vm->sp++] = v;
 }
 static Value pop_value(VMState *vm) {
-    if (vm->sp <= 0) { Value n; n.type = VAL_NULL; return n; }
+    if (vm->sp <= 0) { return NULL_VAL; }
     return vm->stack[--vm->sp];
 }
 
 /* truthiness */
-static int is_truthy(const Value *v) {
-    if (!v) return 0;
-    if (v->type == VAL_NULL) return 0;
-    if (v->type == VAL_BOOL) return v->as.boolean;
-    if (v->type == VAL_NUMBER) return v->as.number != 0.0;
+static int is_truthy(Value v) {
+    if (IS_NIL(v)) return 0;
+    if (IS_BOOL(v)) return AS_BOOL(v);
+    if (IS_NUMBER(v)) return AS_NUMBER(v) != 0.0;
     return 1;
 }
 
 /* decode helpers reading LEB128 from chunk */
 static uint64_t read_uleb128_chunk(const Chunk *c, size_t *pos) {
-    return read_uleb128_from(c->code + *pos, c->code_len - *pos, pos);
+    return read_uleb128_from(c->code + *pos, c->count - *pos, pos);
 }
 static int64_t read_sleb128_chunk(const Chunk *c, size_t *pos) {
-    return read_sleb128_from(c->code + *pos, c->code_len - *pos, pos);
+    return read_sleb128_from(c->code + *pos, c->count - *pos, pos);
 }
 
 /* Helper to get const by uleb idx within chunk */
 static Value get_const(const Chunk *c, uint64_t idx) {
-    return consttable_get(&c->constants, (size_t)idx);
+    return consttable_get(c, (size_t)idx);
 }
 
 /* Simple runtime: implement only a few opcodes to validate dispatch */
@@ -81,14 +80,14 @@ static int vm_execute_simple(const Chunk *chunk) {
 #endif
 
     for (;;) {
-        if (vm.ip >= chunk->code_len) { return 0; }
+        if (vm.ip >= chunk->count) { return 0; }
         uint8_t opcode = chunk->code[vm.ip++];
 
 #if defined(__GNUC__) || defined(__clang__)
         /* lazy fill dispatch labels */
         /* The table entries are set below just once per function call. */
         dispatch_table[OP_NOP] = &&do_NOP;
-        dispatch_table[OP_PUSH_CONST] = &&do_PUSH_CONST;
+        dispatch_table[OP_CONSTANT] = &&do_CONSTANT;
         dispatch_table[OP_CALL] = &&do_CALL;
         dispatch_table[OP_HALT] = &&do_HALT;
         dispatch_table[OP_ADD] = &&do_ADD;
@@ -100,37 +99,36 @@ static int vm_execute_simple(const Chunk *chunk) {
             /* no-op */
             continue;
         }
-        do_PUSH_CONST: {
-            size_t old = vm.ip;
+        do_CONSTANT: {
             size_t read = 0;
-            uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->code_len - vm.ip, &read);
+            uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->count - vm.ip, &read);
             vm.ip += read;
             Value v = get_const(chunk, idx);
             push_value(&vm, v);
             continue;
         }
         do_CALL: {
-            if (vm.ip >= chunk->code_len) return -1;
+            if (vm.ip >= chunk->count) return -1;
             uint8_t am = chunk->code[vm.ip++];
             if (am == AM_CONST) {
                 size_t read=0;
-                uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->code_len - vm.ip, &read);
+                uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->count - vm.ip, &read);
                 vm.ip += read;
-                if (vm.ip >= chunk->code_len) return -1;
+                if (vm.ip >= chunk->count) return -1;
                 uint8_t argc = chunk->code[vm.ip++];
                 /* For test mode: support only native 'print' identified by string const "print" */
                 Value callee = get_const(chunk, idx);
-                if (callee.type == VAL_STRING && strcmp(callee.as.string.chars,"print")==0) {
+                if (IS_STRING(callee) && strcmp(AS_CSTRING(callee),"print")==0) {
                     /* pop argc args into an array, print them to stdout */
                     for (int i = (int)argc - 1; i >= 0; --i) {
                         Value arg = pop_value(&vm);
-                        if (arg.type == VAL_STRING) {
-                            printf("%s", arg.as.string.chars);
-                        } else if (arg.type == VAL_NUMBER) {
-                            printf("%g", arg.as.number);
-                        } else if (arg.type == VAL_BOOL) {
-                            printf(arg.as.boolean ? "true":"false");
-                        } else if (arg.type == VAL_NULL) {
+                        if (IS_STRING(arg)) {
+                            printf("%s", AS_CSTRING(arg));
+                        } else if (IS_NUMBER(arg)) {
+                            printf("%g", AS_NUMBER(arg));
+                        } else if (IS_BOOL(arg)) {
+                            printf(AS_BOOL(arg) ? "true":"false");
+                        } else if (IS_NIL(arg)) {
                             printf("null");
                         } else {
                             printf("<obj>");
@@ -139,8 +137,7 @@ static int vm_execute_simple(const Chunk *chunk) {
                     }
                     printf("\n");
                     /* push null as return */
-                    Value r = make_null_const();
-                    push_value(&vm, r);
+                    push_value(&vm, NULL_VAL);
                     continue;
                 } else {
                     fprintf(stderr,"unsupported call target in test vm\n");
@@ -155,11 +152,8 @@ static int vm_execute_simple(const Chunk *chunk) {
             if (vm.sp < 2) { fprintf(stderr,"stack underflow add\n"); return -1; }
             Value b = pop_value(&vm);
             Value a = pop_value(&vm);
-            Value out;
-            if (a.type == VAL_NUMBER && b.type == VAL_NUMBER) {
-                out.type = VAL_NUMBER;
-                out.as.number = a.as.number + b.as.number;
-                push_value(&vm, out);
+            if (IS_NUMBER(a) && IS_NUMBER(b)) {
+                push_value(&vm, NUMBER_VAL(AS_NUMBER(a) + AS_NUMBER(b)));
             } else {
                 /* attempt to coerce or error */
                 fprintf(stderr,"type error in ADD\n");
@@ -179,33 +173,33 @@ static int vm_execute_simple(const Chunk *chunk) {
 dispatch_switch:
         switch (opcode) {
             case OP_NOP: break;
-            case OP_PUSH_CONST: {
+            case OP_CONSTANT: {
                 size_t read = 0;
-                uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->code_len - vm.ip, &read);
+                uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->count - vm.ip, &read);
                 vm.ip += read;
                 Value v = get_const(chunk, idx);
                 push_value(&vm, v);
             } break;
             case OP_CALL: {
-                if (vm.ip >= chunk->code_len) return -1;
+                if (vm.ip >= chunk->count) return -1;
                 uint8_t am = chunk->code[vm.ip++];
                 if (am == AM_CONST) {
                     size_t read = 0;
-                    uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->code_len - vm.ip, &read);
+                    uint64_t idx = read_uleb128_from(chunk->code + vm.ip, chunk->count - vm.ip, &read);
                     vm.ip += read;
-                    if (vm.ip >= chunk->code_len) return -1;
+                    if (vm.ip >= chunk->count) return -1;
                     uint8_t argc = chunk->code[vm.ip++];
                     Value callee = get_const(chunk, idx);
-                    if (callee.type == VAL_STRING && strcmp(callee.as.string.chars,"print")==0) {
+                    if (IS_STRING(callee) && strcmp(AS_CSTRING(callee),"print")==0) {
                         for (int i = (int)argc - 1; i >= 0; --i) {
                             Value arg = pop_value(&vm);
-                            if (arg.type == VAL_STRING) {
-                                printf("%s", arg.as.string.chars);
-                            } else if (arg.type == VAL_NUMBER) {
-                                printf("%g", arg.as.number);
-                            } else if (arg.type == VAL_BOOL) {
-                                printf(arg.as.boolean ? "true":"false");
-                            } else if (arg.type == VAL_NULL) {
+                            if (IS_STRING(arg)) {
+                                printf("%s", AS_CSTRING(arg));
+                            } else if (IS_NUMBER(arg)) {
+                                printf("%g", AS_NUMBER(arg));
+                            } else if (IS_BOOL(arg)) {
+                                printf(AS_BOOL(arg) ? "true":"false");
+                            } else if (IS_NIL(arg)) {
                                 printf("null");
                             } else {
                                 printf("<obj>");
@@ -213,8 +207,7 @@ dispatch_switch:
                             if (i) printf(" ");
                         }
                         printf("\n");
-                        Value r = make_null_const();
-                        push_value(&vm, r);
+                        push_value(&vm, NULL_VAL);
                     } else {
                         fprintf(stderr,"unsupported call target in test vm\n");
                         return -1;
@@ -228,11 +221,8 @@ dispatch_switch:
                 if (vm.sp < 2) { fprintf(stderr,"stack underflow add\n"); return -1; }
                 Value b = pop_value(&vm);
                 Value a = pop_value(&vm);
-                Value out;
-                if (a.type == VAL_NUMBER && b.type == VAL_NUMBER) {
-                    out.type = VAL_NUMBER;
-                    out.as.number = a.as.number + b.as.number;
-                    push_value(&vm, out);
+                if (IS_NUMBER(a) && IS_NUMBER(b)) {
+                    push_value(&vm, NUMBER_VAL(AS_NUMBER(a) + AS_NUMBER(b)));
                 } else {
                     fprintf(stderr,"type error in ADD\n");
                     return -1;
