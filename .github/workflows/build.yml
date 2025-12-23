@@ -66,103 +66,69 @@ jobs:
         shell: pwsh
         run: |
           $llvmDir = ""
-          if ($env:LLVM_DIR -and (Test-Path $env:LLVM_DIR)) {
+          
+          # 1. Check if LLVM_DIR from previous step is valid
+          if ($env:LLVM_DIR -and (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake")) {
             $llvmDir = $env:LLVM_DIR
+            Write-Host "Using LLVM_DIR from environment: $llvmDir"
           }
 
-          # Strategy 1: Find via clang in PATH
+          # 2. Try to find it via llvm-config if available
           if (-not $llvmDir) {
-            $clang = Get-Command clang -ErrorAction SilentlyContinue
-            if ($clang) {
-              $binDir = (Get-Item $clang.Source).Directory.FullName
-              $root = (Get-Item $binDir).Parent.FullName
-              Write-Host "Clang found at: $($clang.Source)"
-              Write-Host "Inferred Root: $root"
-              
-              # Check common relative paths for cmake config
-              $relativePaths = @(
-                "lib\cmake\llvm",
-                "share\llvm\cmake",
-                "lib\llvm\cmake",
-                "cmake\modules",
-                "lib\cmake\clang" 
-              )
-              
-              foreach ($rel in $relativePaths) {
-                $candidate = Join-Path $root $rel
-                $configPath = Join-Path $candidate "LLVMConfig.cmake"
-                if (Test-Path $configPath) {
-                   $llvmDir = $candidate
-                   Write-Host "Found LLVMConfig.cmake via clang heuristic at: $llvmDir"
-                   break
-                }
+            $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue
+            if ($llvmConfig) {
+              $dir = & $llvmConfig --cmakedir
+              if (Test-Path "$dir/LLVMConfig.cmake") {
+                $llvmDir = $dir
+                Write-Host "Found LLVM via llvm-config: $llvmDir"
               }
             }
           }
 
-          # Strategy 2: Common Install Paths (Recursive Search)
+          # 3. Strategy: Known common paths for Chocolatey and standard installs
           if (-not $llvmDir) {
-            $installPaths = @(
-              "C:\Program Files\LLVM",
-              "C:\Program Files (x86)\LLVM",
-              "C:\llvm"
-            )
-            foreach ($path in $installPaths) {
-              if (Test-Path $path) {
-                Write-Host "Searching in known install location: $path"
-                $found = Get-ChildItem -Path $path -Filter "LLVMConfig.cmake" -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) {
-                  $llvmDir = $found.Directory.FullName
-                  Write-Host "Found LLVMConfig.cmake via recursive search at: $llvmDir"
-                  break
+            $roots = @("C:\Program Files\LLVM", "C:\Program Files (x86)\LLVM", "C:\llvm")
+            $subs = @("lib\cmake\llvm", "share\llvm\cmake", "lib\llvm\cmake")
+            
+            foreach ($root in $roots) {
+              if (Test-Path $root) {
+                foreach ($sub in $subs) {
+                  $candidate = Join-Path $root $sub
+                  if (Test-Path "$candidate\LLVMConfig.cmake") {
+                    $llvmDir = $candidate
+                    Write-Host "Found LLVM via heuristic: $llvmDir"
+                    break
+                  }
                 }
+                if ($llvmDir) { break }
+              }
+            }
+          }
+
+          # 4. Aggressive Search as a last resort
+          if (-not $llvmDir) {
+            Write-Host "LLVMConfig.cmake not found in common paths. Performing aggressive search in C:\Program Files\LLVM..."
+            if (Test-Path "C:\Program Files\LLVM") {
+              $found = Get-ChildItem -Path "C:\Program Files\LLVM" -Filter "LLVMConfig.cmake" -Recurse -Depth 5 -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($found) {
+                $llvmDir = $found.Directory.FullName
+                Write-Host "Found LLVMConfig.cmake via aggressive search at: $llvmDir"
               }
             }
           }
 
           if ($llvmDir) {
-            # Clean up path separators
             $llvmDir = $llvmDir -replace "\\", "/"
-            # Attempt to deduce root from lib/cmake/llvm pattern
-            # Generally LLVM_DIR is <root>/lib/cmake/llvm
-            # So root is usually 3 levels up, or we can just try to use the clang root if we found it.
-            # Robust way: If it contains /lib/ or /share/, grab parent until then.
-            # Simplified: Use the parent of the parent of LLVM_DIR if it looks standard.
-            
             $llvmRoot = (Get-Item $llvmDir).Parent.Parent.FullName -replace "\\", "/"
+            if ($llvmDir -match "share/llvm/cmake") { $llvmRoot = (Get-Item $llvmDir).Parent.Parent.Parent.FullName -replace "\\", "/" }
             
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
-            Write-Host "FINAL LLVM_DIR=$llvmDir"
-            Write-Host "FINAL LLVM_ROOT=$llvmRoot"
+            Write-Host "SETTING LLVM_DIR=$llvmDir"
+            Write-Host "SETTING LLVM_ROOT=$llvmRoot"
           } else {
-            Write-Error "LLVM not found. Aggressive Dump Follows:"
-            
-            Write-Host "--- C:\Program Files ---"
-            Get-ChildItem "C:\Program Files" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
-            
-            if (Test-Path "C:\Program Files\LLVM") {
-                 Write-Host "--- C:\Program Files\LLVM Recursive Dump ---"
-                 Get-ChildItem "C:\Program Files\LLVM" -Recurse -Depth 4 | Select-Object FullName | Write-Host
-            }
-
-            Write-Host "Attempting Chocolatey Install of LLVM..."
-            choco install llvm -y --no-progress
-            
-            # Re-check common path after install
-            if (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm\LLVMConfig.cmake") {
-                $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
-                $llvmRoot = "C:\Program Files\LLVM"
-                $llvmDir = $llvmDir -replace "\\", "/"
-                $llvmRoot = $llvmRoot -replace "\\", "/"
-                Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
-                Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
-                Write-Host "Resolved LLVM_DIR=$llvmDir (via Choco)"
-                exit 0
-            } else {
-                 Write-Error "LLVM still not found after Chocolatey install."
-                 exit 1
-            }
+            Write-Error "LLVM discovery failed completely."
+            exit 1
           }
 
       - name: Configure (Windows)
