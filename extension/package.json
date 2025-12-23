@@ -1,0 +1,51 @@
+{
+  "name": "proxpl",
+  "displayName": "ProXPL Language Support",
+  "description": "Syntax highlighting and language support for the ProXPL programming language",
+  "version": "1.0.0",
+  "publisher": "ProgrammerKR",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProgrammerKR/ProXPL"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "proxpl",
+    "prox",
+    "syntax",
+    "highlighting"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "proxpl",
+        "aliases": [
+          "ProXPL",
+          "prox"
+        ],
+        "extensions": [
+          ".prox"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "proxpl",
+        "scopeName": "source.proxpl",
+        "path": "./syntaxes/proxpl.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "proxpl",
+        "path": "./snippets/proxpl-snippets.json"
+      }
+    ]
+  }
+}
