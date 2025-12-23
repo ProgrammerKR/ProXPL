@@ -59,12 +59,15 @@ jobs:
           fi
           
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            # Using absolute paths with forward slashes for CMake on Windows
+            LLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+            CMAKE_PREFIX_PATH="C:/Program Files/LLVM"
             cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
               -DBUILD_TESTS=OFF \
               -DBUILD_BENCH=OFF \
-              -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm" \
-              -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM"
+              -DLLVM_DIR="$LLVM_DIR" \
+              -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH"
           else
             cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
