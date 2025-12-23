@@ -65,30 +65,40 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $paths = @(
+          $searchPaths = @(
             "C:\Program Files\LLVM\lib\cmake\llvm",
-            "C:\llvm\lib\cmake\llvm",
-            "C:\Program Files (x86)\LLVM\lib\cmake\llvm"
+            "C:\Program Files (x86)\LLVM\lib\cmake\llvm",
+            "C:\llvm\lib\cmake\llvm"
           )
           $llvmDir = ""
-          foreach ($path in $paths) {
+          foreach ($path in $searchPaths) {
             if (Test-Path "$path\LLVMConfig.cmake") {
               $llvmDir = $path
               break
             }
           }
           if ($llvmDir -eq "") {
-              Write-Host "Searching recursively as fallback..."
-              $llvmConfig = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\llvm" -Filter LLVMConfig.cmake -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-              if ($llvmConfig) { $llvmDir = $llvmConfig.DirectoryName }
+            # Try one level up if not found in specialized cmake dir
+            $searchPaths = @(
+              "C:\Program Files\LLVM\lib\cmake",
+              "C:\Program Files (x86)\LLVM\lib\cmake",
+              "C:\llvm\lib\cmake"
+            )
+            foreach ($path in $searchPaths) {
+              if (Test-Path "$path\llvm\LLVMConfig.cmake") {
+                $llvmDir = "$path\llvm"
+                break
+              }
+            }
           }
+          
           if ($llvmDir) {
             $llvmPrefix = (Get-Item $llvmDir).Parent.Parent.FullName
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmPrefix"
             Write-Host "Found LLVM at $llvmDir"
           } else {
-            Write-Error "LLVM not found!"
+            Write-Error "LLVM not found in standard paths. Failing fast instead of hanging on recursive search."
             exit 1
           }
 

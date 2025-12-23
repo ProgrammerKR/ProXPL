@@ -19,6 +19,14 @@
 #include "value.h"
 #include "object.h"
 
+#ifdef _WIN32
+  #include <windows.h>
+  #define popen _popen
+  #define pclose _pclose
+#else
+  #include <unistd.h>
+#endif
+
 // exit(code) - Exit program
 static Value native_exit(int argCount, Value* args) {
     int code = 0;
