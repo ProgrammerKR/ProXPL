@@ -583,50 +583,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and [CODE
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2024 Kanishk Raj (ProgrammerKR)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
-
----
-
-## 🙏 Acknowledgments
-
-ProXPL stands on the shoulders of giants. Special thanks to:
-
-- **LLVM Project** for the world-class compiler infrastructure
-- **Robert Nystrom** for "Crafting Interpreters" - an invaluable resource
-- **The GCC and Clang teams** for compiler design inspiration
-- **The open-source community** for continuous feedback and contributions
-
----
-
-## 📞 Contact & Community
-
-- **GitHub**: [ProgrammerKR/ProXPL](https://github.com/ProgrammerKR/ProXPL)
-- **Issues**: [Report bugs and request features](https://github.com/ProgrammerKR/ProXPL/issues)
-- **Discussions**: [Join the community](https://github.com/ProgrammerKR/ProXPL/discussions)
-- **Email**: contact@proxpl.dev (coming soon)
-- **Documentation**: [Read the full docs](docs/)
-
----
-
-## 🌟 Show Your Support
-
-If you find ProXPL useful, please consider:
-
-- ⭐ Starring the repository
-- 🐦 Sharing on social media
-- 📝 Writing tutorials or blog posts
-- 🤝 Contributing code or documentation
-- 💬 Joining discussions and helping others
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
