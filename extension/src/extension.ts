@@ -6,7 +6,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticCollection);
 
     // 1. Code Runner Command
-    let runCommand = vscode.commands.registerCommand('proxpl.runFile', () => {
+    let runCommand = vscode.commands.registerCommand('proxpl.run', () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -67,17 +67,30 @@ export function activate(context: vscode.ExtensionContext) {
     const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider('proxpl', {
         provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
             const edits: vscode.TextEdit[] = [];
+            let lastLineWasEmpty = false;
 
             for (let i = 0; i < document.lineCount; i++) {
                 const line = document.lineAt(i);
                 const text = line.text;
 
-                // Remove trailing whitespace
+                // 1. Remove extra empty lines (consecutive empty lines)
+                if (text.trim() === '') {
+                    if (lastLineWasEmpty) {
+                        // Delete this extra empty line
+                        edits.push(vscode.TextEdit.delete(line.rangeIncludingLineBreak));
+                        continue;
+                    }
+                    lastLineWasEmpty = true;
+                } else {
+                    lastLineWasEmpty = false;
+                }
+
+                // 2. Remove trailing whitespace
                 if (text.endsWith(' ') || text.endsWith('\t')) {
                     edits.push(vscode.TextEdit.delete(new vscode.Range(i, text.trimEnd().length, i, text.length)));
                 }
 
-                // Basic Indentation
+                // 3. Basic Indentation (Fix to 4 spaces)
                 const indentMatch = text.match(/^(\s+)/);
                 if (indentMatch) {
                     const oldIndent = indentMatch[1];
