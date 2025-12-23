@@ -46,12 +46,23 @@ jobs:
       - name: Configure
         shell: bash
         run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            LLVM_CMAKE_DIR=$(llvm-config --cmakedir | sed 's/\\/\//g')
+            LLVM_ROOT_DIR=$(llvm-config --prefix | sed 's/\\/\//g')
+          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+            LLVM_CMAKE_DIR=$(brew --prefix llvm)/lib/cmake/llvm
+            LLVM_ROOT_DIR=$(brew --prefix llvm)
+          else
+            LLVM_CMAKE_DIR=/usr/lib/llvm-18/lib/cmake/llvm
+            LLVM_ROOT_DIR=/usr/lib/llvm-18
+          fi
+          
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DBUILD_TESTS=OFF \
             -DBUILD_BENCH=OFF \
-            -DCMAKE_PREFIX_PATH="$LLVM_ROOT" \
-            -DLLVM_DIR="$LLVM_DIR"
+            -DLLVM_DIR="$LLVM_CMAKE_DIR" \
+            -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
 
       - name: Build (verbose)
         shell: bash

@@ -1,5 +1,3 @@
-#include "../../include/backend_llvm.h"
-#include "../../include/object.h"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -9,6 +7,8 @@
 #include <map>
 #include <iostream>
 #include <memory>
+#include "../../include/backend_llvm.h"
+#include "../../include/object.h"
 
 // Do NOT use 'using namespace llvm;' due to clash with our 'Value' type.
 
@@ -63,7 +63,7 @@ public:
 
     void emitFunction(IRFunction* func) {
         // All functions return Value (Int64)
-        llvm::FunctionType *FT = llvm::FunctionType::get(Builder->getInt64Ty(), {}, false);
+        llvm::FunctionType *FT = llvm::FunctionType::get(Builder->getInt64Ty(), std::vector<llvm::Type*>(), false);
         llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, func->name, ModuleOb.get());
 
         ssaValues.clear();
