@@ -79,8 +79,9 @@ jobs:
             foreach ($cand in $candidates) {
               if (Test-Path $cand) {
                 Write-Host "Searching in $cand"
-                # Search recursively for LLVMConfig.cmake, max depth 4
-                $found = Get-ChildItem -Path $cand -Filter "LLVMConfig.cmake" -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1
+                # Search recursively for LLVMConfig.cmake, max depth 5
+                # We filter out likely irrelevant folders to speed it up if possible
+                $found = Get-ChildItem -Path $cand -Filter "LLVMConfig.cmake" -Recurse -Depth 5 -ErrorAction SilentlyContinue | Select-Object -First 1
                 if ($found) {
                   $llvmDir = $found.Directory.FullName
                   Write-Host "Found LLVMConfig.cmake at $llvmDir"
@@ -111,8 +112,13 @@ jobs:
             Write-Host "Resolved LLVM_DIR=$llvmDir"
             Write-Host "Resolved LLVM_ROOT=$llvmPrefix"
           } else {
-            Write-Error "LLVM not found. Listing C:\Program Files\:"
+            Write-Error "LLVM not found. Listing C:\Program Files to assist debugging:"
             Get-ChildItem "C:\Program Files" -Depth 1 | Select-Object Name | Write-Host
+            
+            if (Test-Path "C:\Program Files\LLVM") {
+                 Write-Host "Listing C:\Program Files\LLVM contents:"
+                 Get-ChildItem "C:\Program Files\LLVM" -Recurse -Depth 3 | Select-Object FullName | Write-Host
+            }
             exit 1
           }
 

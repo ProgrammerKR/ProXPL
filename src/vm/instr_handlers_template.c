@@ -3,6 +3,7 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+//
 
 /*
   Instruction handlers template.
@@ -15,6 +16,8 @@
 */
 
 #include "../../include/bytecode.h"
+#include "../../include/value.h"
+#include "../../include/object.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,10 +36,14 @@ typedef struct VMState {
 /* ABI: handlers operate on VMState* and return 0 on success, non-zero on fatal error. */
 
 static inline void handler_push(VMState *vm, Value v) {
+    if (vm->sp >= OPERAND_STACK_MAX) {
+        fprintf(stderr, "Stack overflow\n");
+        exit(1);
+    }
     vm->stack[vm->sp++] = v;
 }
 static inline Value handler_pop(VMState *vm) {
-    if (vm->sp <= 0) { Value n; n.type = VAL_NULL; return n; }
+    if (vm->sp <= 0) { return NIL_VAL; }
     return vm->stack[--vm->sp];
 }
 
@@ -49,18 +56,18 @@ int handle_push_const(VMState *vm, uint64_t const_idx) {
 int handle_call_const(VMState *vm, uint64_t const_idx, uint8_t argc) {
     /* Simplified: call a native function by string name only (for template) */
     Value callee = consttable_get(&vm->chunk->constants, (size_t)const_idx);
-    if (callee.type == VAL_STRING && strcmp(callee.as.string.chars, "print")==0) {
+    if (IS_STRING(callee) && strcmp(AS_CSTRING(callee), "print")==0) {
         for (int i = (int)argc - 1; i >= 0; --i) {
             Value arg = handler_pop(vm);
-            if (arg.type == VAL_STRING) printf("%s", arg.as.string.chars);
-            else if (arg.type == VAL_NUMBER) printf("%g", arg.as.number);
-            else if (arg.type == VAL_BOOL) printf(arg.as.boolean ? "true":"false");
+            if (IS_STRING(arg)) printf("%s", AS_CSTRING(arg));
+            else if (IS_NUMBER(arg)) printf("%g", AS_NUMBER(arg));
+            else if (IS_BOOL(arg)) printf(AS_BOOL(arg) ? "true":"false");
             else printf("<obj>");
             if (i) printf(" ");
         }
         printf("\n");
         /* push null return */
-        Value nullv; nullv.type = VAL_NULL; handler_push(vm, nullv);
+        handler_push(vm, NIL_VAL);
         return 0;
     }
     /* in full runtime, we'd check for function objects, bound functions, etc. */
@@ -71,8 +78,8 @@ int handle_call_const(VMState *vm, uint64_t const_idx, uint8_t argc) {
 int handle_add_stack(VMState *vm) {
     Value b = handler_pop(vm);
     Value a = handler_pop(vm);
-    if (a.type == VAL_NUMBER && b.type == VAL_NUMBER) {
-        Value out; out.type = VAL_NUMBER; out.as.number = a.as.number + b.as.number;
+    if (IS_NUMBER(a) && IS_NUMBER(b)) {
+        Value out = NUMBER_VAL(AS_NUMBER(a) + AS_NUMBER(b));
         handler_push(vm, out);
         return 0;
     }
