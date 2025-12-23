@@ -63,7 +63,7 @@ target_link_libraries(ir_gen_test PRIVATE proxpl_lib)
 
 # --- LLVM Gen Test Executable ---
 add_executable(llvm_gen_test tools/llvm_gen_test.c)
-add_executable(llvm_gen_test tools/llvm_gen_test.c)
+
 target_link_libraries(llvm_gen_test PRIVATE proxpl_lib ${llvm_libs})
 
 # --- PRM Executable ---
