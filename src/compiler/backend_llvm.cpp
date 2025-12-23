@@ -63,7 +63,7 @@ public:
 
     void emitFunction(IRFunction* func) {
         // All functions return Value (Int64)
-        llvm::FunctionType *FT = llvm::FunctionType::get(Builder->getInt64Ty(), false);
+        llvm::FunctionType *FT = llvm::FunctionType::get(Builder->getInt64Ty(), {}, false);
         llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, func->name, ModuleOb.get());
 
         ssaValues.clear();

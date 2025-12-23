@@ -25,11 +25,11 @@ static void invoke_compiler(const char* file, bool run) {
     
     if (run) {
         // Run mode: proxpl src/main.prox
-        sprintf(command, "%s \"%s\"", exe, file);
+        snprintf(command, sizeof(command), "%s \"%s\"", exe, file);
     } else {
         // Build mode: proxpl build src/main.prox (Not fully implemented in main.c yet)
         printf("Compile-only mode not fully supported yet, running instead...\n");
-        sprintf(command, "%s \"%s\"", exe, file);
+        snprintf(command, sizeof(command), "%s \"%s\"", exe, file);
     }
     
     printf("[PRM] Executing: %s\n", command);

@@ -49,7 +49,9 @@ jobs:
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DBUILD_TESTS=OFF \
-            -DBUILD_BENCH=OFF
+            -DBUILD_BENCH=OFF \
+            -DCMAKE_PREFIX_PATH="$LLVM_ROOT" \
+            -DLLVM_DIR="$LLVM_DIR"
 
       - name: Build (verbose)
         shell: bash
