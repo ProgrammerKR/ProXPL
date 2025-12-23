@@ -1,7 +1,9 @@
 # ProXPL Programming Language
 
 <p align="center">
-  <b>A Professional & Modern Programming Language Compiler</b>
+  <b>A Modern, High-Performance Programming Language</b>
+</p>
+
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,11 +11,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
-<b>A Modern, Statically-Typed Programming Language with a Bytecode VM Runtime</b>
-
-<p>
-  <strong>Clean Syntax • Strong Type System • Rich Standard Library • C-Based Runtime</strong>
-</p>
+**Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
 
 [Quick Start](#-quick-start) •
 [Installation](#-installation) •
@@ -25,142 +23,108 @@
 
 ---
 
-## 📖 About ProXPL
+## 📖 Introduction
 
-**ProXPL** - ProX Programming Language is a modern, Indian-origin programming language designed for speed, simplicity, and professional-grade development. It combines Python-like readability with C-level performance, focusing on clean syntax, scalable systems, and a growing native ecosystem.
+**ProXPL** (ProX Programming Language) is a modern, statically-typed programming language designed for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional compiler architecture with a custom bytecode VM, comprehensive type system, and integrated package management.
 
-### The Philosophy
-*   **Clarity First**: Familiar curly-brace syntax (similar to JavaScript/Go) ensures a low learning curve.
-*   **Type Safety**: A strong type system (Compile-time & Runtime) prevents common errors before they happen.
-*   **Performance**: Source code is compiled to bytecode and executed on a custom, optimized stack-based Virtual Machine.
-*   **Batteries Included**: A rich standard library allows you to build useful applications immediately without external dependencies.
+ProXPL is implemented entirely in C/C++ with zero runtime dependencies, making it ideal for systems programming, backend services, command-line tools, and performance-critical applications.
 
----
+### Why ProXPL?
 
-## What is ProXPL?
-
-**ProXPL** is a modern, general-purpose programming language designed for **clarity, performance, and long-term maintainability**.  
-It combines a **clean, expressive syntax** with a **structured and strongly typed core**, making it suitable for building reliable software systems at any scale.
-
-ProXPL is implemented with a **bytecode compiler and a C-based virtual machine**, providing predictable execution and a solid foundation for performance-oriented workloads.
-
-### Design Goals
-
-- **Readable & Expressive Syntax**  
-  A clear, modern syntax inspired by high-level languages, focused on developer productivity and code clarity.
-
-- **Strong Typing & Defined Semantics**  
-  Explicit language rules and type safety to improve correctness and reduce runtime errors.
-
-- **Efficient Runtime**  
-  Bytecode compilation executed on a custom virtual machine for consistent and optimized execution.
-
-- **Modular & Scalable Architecture**  
-  Clean separation between lexer, parser, compiler, and VM, enabling maintainable and extensible implementations.
-
-### Use Cases
-
-ProXPL is well-suited for:
-
-- Command-line tools and system utilities  
-- Backend services and application logic  
-- Automation and scripting with production reliability  
-- Structured, long-lived software projects  
-
-ProXPL aims to provide a **balanced programming model** that emphasizes simplicity without sacrificing control or performance.
+- **🎯 Familiar Syntax**: Clean, expressive syntax inspired by JavaScript and Python
+- **⚡ True Performance**: Bytecode compilation to a stack-based VM with LLVM backend for AOT compilation
+- **🛡️ Type Safety**: Static typing with intelligent type inference prevents entire classes of runtime errors
+- **🔧 Batteries Included**: 75+ built-in standard library functions covering I/O, math, strings, collections, and system operations
+- **📦 Integrated Tooling**: Built-in package manager (PRM), CLI tools, and LSP support
+- **🏗️ Professional Architecture**: Clean separation between lexer, parser, type checker, compiler, and VM
 
 ---
 
-ProXPL bridges the gap between **simplicity** (Python-like syntax) and **performance** (C-based runtime). It combines:
-- **Familiar Syntax**: Inspired by Python and JavaScript
-- **Strong Type System**: Compile-time and runtime type checking
-- **Fast Runtime**: Bytecode-compiled and executed on a custom VM
-- **Rich Standard Library**: 75+ built-in functions for common tasks
-- **Modular Architecture**: Clear separation of lexer, parser, compiler, and VM
-
-## 🚀 Key Features
+## ✨ Key Features
 
 | Feature | Description |
 |---------|-------------|
-| 🔤 **Modern Syntax** | Clean, readable syntax inspired by Python and JavaScript. |
-| ⚡ **Fast Runtime** | Zero-dependency binaries compiled to bytecode, executed on a custom VM. |
-| 📦 **Rich Stdlib** | **75+ built-in functions** for I/O, Math, Strings, Collections, and System tasks. |
-| 🛡️ **Strong Typing** | Statically typed with support for type inference and explicit conversion. |
-| 🧩 **Modularity** | robust `use` keyword system for importing modules and local files. |
-| 🛠️ **PRM Included** | Integrated **ProX Repository Manager** for managing packages. |
-| 🏗️ **Architecture** | Classic Compiler Design: Lexer → Parser (AST) → Compiler → Bytecode → VM. |
+| 🔤 **Modern Syntax** | JavaScript-like syntax with curly braces, familiar control flow, and clean function definitions |
+| ⚡ **Fast Execution** | Custom stack-based VM executing optimized bytecode with LLVM AOT compilation support |
+| 📦 **Rich Standard Library** | **75+ native functions** for I/O, mathematics, string manipulation, collections, and system tasks |
+| 🛡️ **Static Type System** | Compile-time type checking with type inference reduces runtime errors |
+| 🧩 **Module System** | Robust `use` keyword for importing standard libraries, packages, and local files |
+| 🔧 **PRM Package Manager** | Integrated **ProX Repository Manager** for dependency management and project scaffolding |
+| 🏗️ **Multi-Phase Compiler** | Lexer → Parser (AST) → Type Checker → IR Optimizer → Bytecode/LLVM |
+| 🔍 **Developer Tools** | CLI with watch mode, LSP for IDE integration, comprehensive error reporting |
+| 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
+| 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
 
 ---
 
 ## ⚡ Quick Start
 
-### 1. Your First Program
+### Your First Program
+
 Create a file named `hello.prox`:
 
 ```javascript
 // hello.prox
+// Your first ProXPL program
+
 func main() {
     print("Welcome to ProXPL!");
-
-    let name = input("Enter your name: ");
+    
+    let name = input("What is your name? ");
     print("Hello, " + name + "!");
-
-    // Generate a random number using the standard library
+    
+    // Generate a random lucky number
     let lucky = random(1, 100);
-    print("Your lucky number is: " + to_string(lucky));
+    print("Here is a lucky number for you: " + to_string(lucky));
 }
 
 main();
 ```
 
-### 2. Run It
-Using the CLI:
+### Run It
+
+Using the ProXPL CLI:
 ```bash
 prox run hello.prox
 ```
 
-Or using the legacy direct execution:
+Or using the compiled executable:
 ```bash
 ./proxpl hello.prox
 ```
 
-### 3. Build It (Coming Soon)
-ProXPL supports compiling to bytecode.
-=======
-### 3. Output
+### Output
+
 ```text
 Welcome to ProXPL!
-Enter your name: Alice
+What is your name? Alice
 Hello, Alice!
-Your lucky number is: 42
+Here is a lucky number for you: 42
 ```
 
 ---
 
 ## 📥 Installation
 
-### Option 1: CLI via Node.js (Recommended for Developers)
-The ProXPL CLI provides an enhanced experience with watch mode and better logging.
+### Option 1: Pre-built Binaries (Recommended)
 
-```bash
-cd src/cli
-npm install
-npm link
-```
+Download the latest release for your operating system:
 
-Now you can use the `prox` command globally.
+- **Windows**: [Download `proxpl.exe`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+- **Linux**: [Download `proxpl`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+- **macOS**: [Download `proxpl-macos`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
 
-### Option 2: Pre-built Binaries
-No compilation required. Download the latest release for your OS:
+Add the executable to your system `PATH` for global access.
 
-*   **Windows**: [Download `proxpl.exe`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
-*   **Linux**: [Download `proxpl`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
-*   **macOS**: [Download `proxpl-macos`](https://github.com/ProgrammerKR/ProXPL/releases/latest)
+### Option 2: Build from Source
 
-Add the executable to your system `PATH` to run it as `proxpl`.
+**Requirements**: 
+- C/C++ Compiler (GCC 9+, Clang 10+, or MSVC 2019+)
+- CMake 3.15+
+- LLVM 10+ (for AOT compilation support)
+- Git
 
-### Option 2: Build from Source (CMake)
-Requirements: **GCC/Clang** (C99+), **CMake** 3.10+, **Git**.
+**Build Instructions**:
 
 ```bash
 # Clone the repository
@@ -170,90 +134,253 @@ cd ProXPL
 # Create build directory
 mkdir build && cd build
 
-# Configure and build
+# Configure with CMake
 cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# Build the project
 make
 
-# Install (Optional)
+# Optional: Install system-wide
 sudo make install
 ```
+
+**Windows (Visual Studio)**:
+```bash
+mkdir build && cd build
+cmake -G "Visual Studio 16 2019" ..
+cmake --build . --config Release
+```
+
+### Option 3: CLI via Node.js (Enhanced Developer Experience)
+
+The ProXPL CLI provides watch mode, better logging, and development conveniences:
+
+```bash
+cd src/cli
+npm install
+npm link
+```
+
+Now use the `prox` command globally with enhanced features.
 
 ---
 
 ## 💻 Language Tour
 
-### Variables & Collections
-ProXPL supports 12 core data types, including Lists and Dictionaries.
+### Variables & Data Types
+
+ProXPL supports 12 core data types with static type checking:
 
 ```javascript
-let message = "System Active";
-let count = 42;
-let list = [1, 2, 3, 4];
-let config = {"host": "localhost", "port": 8080};
+// Primitives
+let count = 42;              // Integer
+let price = 19.99;           // Float
+let active = true;           // Boolean
+let message = "Hello!";      // String
 
-push(list, 5);
-print(config["host"]);
+// Collections
+let numbers = [1, 2, 3, 4, 5];                    // List
+let config = {"host": "localhost", "port": 8080}; // Dictionary
+
+// Type inference works automatically
+let auto = 100;  // Inferred as Integer
 ```
 
 ### Functions & Control Flow
+
 ```javascript
+// Function definition
 func fibonacci(n) {
     if (n <= 1) return n;
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
+// Loops and iteration
 func main() {
     for (let i = 0; i < 10; i = i + 1) {
         print("fib(" + to_string(i) + ") = " + to_string(fibonacci(i)));
+    }
+    
+    // While loops
+    let count = 0;
+    while (count < 5) {
+        print("Count: " + to_string(count));
+        count = count + 1;
+    }
+}
+
+main();
+```
+
+### Working with Collections
+
+```javascript
+func demonstrate_collections() {
+    // Lists
+    let items = [1, 2, 3];
+    push(items, 4);           // Add element
+    let first = items[0];     // Access by index
+    let size = length(items); // Get size
+    
+    // Dictionaries
+    let user = {"name": "Alice", "age": 30};
+    user["email"] = "alice@example.com";  // Add key
+    let name = user["name"];              // Access value
+    
+    // Iteration
+    for (let i = 0; i < length(items); i = i + 1) {
+        print(to_string(items[i]));
     }
 }
 ```
 
 ### Module System
-ProXPL uses the `use` keyword for modularity. Circular imports are handled automatically.
+
+ProXPL uses the `use` keyword for modular programming:
 
 ```javascript
-use math;           // Import standard library
-use utils/io;       // Import installed package
-use local_helper;   // Import local file
+// Import standard library module
+use std.math;
 
-print(math.sqrt(16));
+// Import from installed package
+use http.client;
+
+// Import local file (relative path)
+use local_helper;
+
+func main() {
+    let result = std.math.sqrt(16);
+    print("Square root of 16: " + to_string(result));
+}
 ```
 
-### Package Manager (PRM)
-Manage dependencies using the built-in **ProX Repository Manager**.
+### Standard Library Examples
+
+```javascript
+use std.io;
+use std.fs;
+use std.sys;
+
+func showcase_stdlib() {
+    // File I/O
+    let content = read_file("data.txt");
+    write_file("output.txt", "Hello from ProXPL!");
+    
+    // String operations
+    let text = "ProXPL is awesome";
+    let upper = to_upper(text);
+    let parts = split(text, " ");
+    
+    // Math operations
+    let result = sqrt(144);
+    let power = pow(2, 8);
+    let random_num = random(1, 100);
+    
+    // System operations
+    let env_var = env("PATH");
+    let current_time = time();
+}
+```
+
+---
+
+## 📦 Package Manager (PRM)
+
+ProXPL includes **PRM** (ProX Repository Manager), a built-in package manager for dependency management and project scaffolding.
+
+### Basic Commands
 
 ```bash
-prm install utils/io      # Install a package
-prm list                  # List installed packages
-prm search http           # Search the registry
+# Initialize a new project
+prm init my-project
+
+# Install a package
+prm install http-server
+
+# List installed packages
+prm list
+
+# Search for packages
+prm search json
+
+# Update dependencies
+prm update
+
+# Remove a package
+prm remove old-package
+```
+
+### Project Structure (`prox.toml`)
+
+```toml
+[package]
+name = "my-web-server"
+version = "1.0.0"
+authors = ["Your Name <you@example.com>"]
+edition = "2025"
+description = "A fast web server built with ProXPL"
+license = "MIT"
+
+[dependencies]
+http_parser = "2.1.0"
+json = "1.5.0"
+
+[build]
+target = "native"
+optimize = true
 ```
 
 ---
 
 ## 🏗️ Architecture Overview
 
-ProXPL follows a professional three-phase compiler architecture aimed at maintainability and performance.
+ProXPL follows a professional multi-phase compiler architecture designed for maintainability, extensibility, and performance.
 
 ```mermaid
 graph LR
-    A[Source Code] --> B[Lexer]
-    B --> C[Parser / AST]
-    C --> D[Type Checker]
-    D --> E[Compiler]
-    E --> F[Bytecode Chunk]
-    F --> G[Virtual Machine]
-    G --> H[Execution]
+    A[Source Code .prox] --> B[Scanner/Lexer]
+    B --> C[Parser]
+    C --> D[AST]
+    D --> E[Type Checker]
+    E --> F[IR Generator]
+    F --> G[SSA Optimizer]
+    G --> H{Compilation Mode}
+    H -->|Bytecode| I[Bytecode Generator]
+    H -->|AOT| J[LLVM Backend]
+    I --> K[Bytecode Chunk]
+    J --> L[Native Binary]
+    K --> M[Stack-Based VM]
+    L --> N[Direct Execution]
+    M --> O[Runtime Execution]
 ```
 
 ### Core Components
+
 | Component | Location | Responsibility |
 |-----------|----------|----------------|
-| **Lexer** | `src/lexer/scanner.c` | Converts source code into tokens. |
-| **Parser** | `src/parser/parser.c` | Constructs the Abstract Syntax Tree (AST). |
-| **Compiler** | `src/runtime/compiler.c` | Emits optimized bytecode instructions. |
-| **VM** | `src/runtime/vm.c` | Stack-based virtual machine that executes bytecode. |
-| **Memory** | `src/runtime/memory.c` | Garbage collection and memory allocation. |
+| **Scanner/Lexer** | [`src/lexer/scanner.c`](src/lexer/scanner.c) | Tokenizes source code into lexical tokens |
+| **Parser** | [`src/parser/parser.c`](src/parser/parser.c) | Builds Abstract Syntax Tree (AST) from tokens |
+| **Type Checker** | [`src/compiler/type_checker.c`](src/compiler/type_checker.c) | Validates types and enforces type safety |
+| **IR Generator** | [`src/compiler/ir_gen.c`](src/compiler/ir_gen.c) | Generates intermediate representation (SSA form) |
+| **IR Optimizer** | [`src/compiler/ir_opt.c`](src/compiler/ir_opt.c) | Performs optimizations on SSA IR |
+| **Bytecode Compiler** | [`src/compiler/bytecode_gen.c`](src/compiler/bytecode_gen.c) | Emits optimized bytecode instructions |
+| **LLVM Backend** | [`src/compiler/backend_llvm.cpp`](src/compiler/backend_llvm.cpp) | Generates LLVM IR for AOT native compilation |
+| **Virtual Machine** | [`src/runtime/vm.c`](src/runtime/vm.c) | Stack-based VM that executes bytecode |
+| **Garbage Collector** | [`src/runtime/gc.c`](src/runtime/gc.c) | Mark-and-sweep GC for automatic memory management |
+| **Memory Manager** | [`src/runtime/memory.c`](src/runtime/memory.c) | Low-level memory allocation and tracking |
+| **Standard Library** | [`src/stdlib/`](src/stdlib/) | Native implementations of 75+ built-in functions |
+
+### Compilation Pipeline
+
+1. **Lexical Analysis**: Source code is tokenized into meaningful symbols
+2. **Syntax Analysis**: Tokens are parsed into an Abstract Syntax Tree
+3. **Semantic Analysis**: Type checking and semantic validation
+4. **IR Generation**: AST is lowered to SSA-based intermediate representation
+5. **Optimization**: IR optimizations (constant folding, dead code elimination, etc.)
+6. **Code Generation**: 
+   - **Bytecode Path**: Generate bytecode for VM execution
+   - **Native Path**: Generate LLVM IR → native binary via LLVM
+7. **Execution**: Run on the stack-based VM or execute native binary
 
 ---
 
@@ -261,63 +388,253 @@ graph LR
 
 ```text
 ProXPL/
-├── include/              # Header files (Interfaces)
-│   ├── vm.h
-│   ├── compiler.h
-│   └── stdlib_native.h
-├── src/                  # Implementation Source
-│   ├── main.c            # Entry point
-│   ├── lexer/            # Tokenizer logic
-│   ├── parser/           # AST and Type Checking
-│   ├── runtime/          # VM and Garbage Collector
-│   └── stdlib/           # Native Standard Library impl
-├── cli/                  # PRM and CLI tools
-├── examples/             # ProXPL code samples
-├── docs/                 # Specifications and Guides
-└── tests/                # Unit and Integration tests
+├── include/                  # Public header files
+│   ├── vm.h                  # Virtual machine interface
+│   ├── compiler.h            # Compiler interface
+│   ├── ast.h                 # AST node definitions
+│   ├── stdlib_native.h       # Standard library declarations
+│   └── gc.h                  # Garbage collector interface
+├── src/
+│   ├── main.c                # Entry point
+│   ├── lexer/                # Lexical analysis
+│   │   └── scanner.c
+│   ├── parser/               # Syntax analysis
+│   │   ├── parser.c
+│   │   └── ast.c
+│   ├── compiler/             # Code generation
+│   │   ├── type_checker.c
+│   │   ├── ir_gen.c
+│   │   ├── ir_opt.c
+│   │   ├── bytecode_gen.c
+│   │   └── backend_llvm.cpp
+│   ├── runtime/              # Runtime system
+│   │   ├── vm.c              # Virtual machine
+│   │   ├── gc.c              # Garbage collector
+│   │   ├── memory.c          # Memory management
+│   │   ├── chunk.c           # Bytecode storage
+│   │   └── object.c          # Runtime object system
+│   ├── stdlib/               # Standard library (native)
+│   │   ├── stdlib_core.c
+│   │   ├── stdlib_io.c
+│   │   ├── stdlib_math.c
+│   │   └── stdlib_string.c
+│   ├── prm/                  # Package manager
+│   │   ├── manifest.c
+│   │   └── builder.c
+│   └── utils/                # Utilities
+│       └── error_report.c
+├── lib/std/                  # Standard library (ProXPL)
+├── tools/
+│   ├── lsp/                  # Language Server Protocol
+│   ├── bench/                # Benchmarking tools
+│   └── prm_main.c            # PRM CLI entry
+├── examples/                 # Example programs
+├── tests/                    # Test suite
+├── docs/                     # Documentation
+│   ├── language-spec/        # Language specification
+│   ├── stdlib/               # Standard library docs
+│   └── architecture/         # Architecture guides
+├── benchmarks/               # Performance benchmarks
+├── CMakeLists.txt            # Build configuration
+├── Makefile                  # Alternative build system
+└── README.md                 # This file
 ```
 
 ---
 
 ## 📚 Documentation
 
-Detailed documentation is available in the `docs/` directory:
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
-*   **[Language Specification](docs/language-spec.md)**: Grammar, Keywords, and Operators.
-*   **[Standard Library Reference](docs/stdlib.md)**: Documentation for all 75+ built-in functions.
-*   **[Architecture Guide](docs/architecture.md)**: Deep dive into the VM and Compiler internals.
-*   **[Build Guide](docs/BUILD_GUIDE.md)**: Platform-specific instructions (Windows/Linux/Mac).
+- **[Language Specification](docs/language-spec/)**: Complete grammar, keywords, operators, and semantics
+- **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all 75+ built-in functions
+- **[Architecture Guide](docs/architecture/)**: Deep dive into compiler and VM internals
+- **[IR Specification](docs/ir-spec/)**: SSA intermediate representation documentation
+- **[Build Guide](CONTRIBUTING.md)**: Platform-specific build instructions
+- **[Coding Standards](CODING_STANDARD.md)**: Code style and contribution guidelines
+- **[Benchmarks](BENCHMARKS.md)**: Performance comparisons and optimization notes
+- **[Ecosystem Design](ECOSYSTEM_DESIGN.md)**: Stdlib and PRM architecture
 
 ---
 
 ## 🛣️ Roadmap
 
-*   **v0.1.0** (Current): Core language, VM, Stdlib, Basic I/O.
-*   **v0.2.0**: Class-based OOP, Advanced Error Handling.
-*   **v0.3.0**: Native Foreign Function Interface (FFI).
-*   **v1.0.0**: Production Stability, Async/Await Support.
+### v1.0.0 (Current - December 2024)
+**Status**: Production-Ready Core
+- ✅ Complete compiler pipeline (Lexer → Parser → Type Checker → IR → Codegen)
+- ✅ Stack-based VM with bytecode execution
+- ✅ LLVM backend for AOT native compilation
+- ✅ 75+ standard library functions
+- ✅ Garbage collector (Mark & Sweep)
+- ✅ Type system with inference
+- ✅ Module system with `use` keyword
+- ✅ PRM package manager (basic)
+- ✅ CLI tools and LSP foundation
+- ✅ Cross-platform support (Windows/Linux/macOS)
+
+### v1.1.0 (Q1 2025)
+**Focus**: Enhanced Developer Experience
+- 🚧 LSP server with full IDE support (autocomplete, go-to-definition, diagnostics)
+- 🚧 Enhanced error messages with suggestions
+- 🚧 Debugger integration (source maps, breakpoints)
+- 🚧 Standard library expansion (`std.net`, `std.json`, `std.regex`)
+- 🚧 PRM registry service (centralized package repository)
+- 🚧 Watch mode and hot reload
+
+### v1.2.0 (Q2 2025)
+**Focus**: Object-Oriented Programming
+- 📋 Class-based OOP with inheritance
+- 📋 Interfaces and abstract classes
+- 📋 Method overloading and operator overloading
+- 📋 Property accessors (getters/setters)
+- 📋 Access modifiers (`pub`, `priv`, `protected`)
+- 📋 Constructors and destructors
+
+### v1.3.0 (Q3 2025)
+**Focus**: Advanced Features
+- 📋 Pattern matching (match expressions)
+- 📋 Algebraic data types (enums with associated values)
+- 📋 Generics and type parameters
+- 📋 Trait system (type classes)
+- 📋 Option and Result types for error handling
+- 📋 Lambda expressions and closures
+
+### v2.0.0 (Q4 2025+)
+**Focus**: Concurrency & Advanced Systems
+- 📋 Async/await support
+- 📋 Green threads / coroutines
+- 📋 Actor model concurrency
+- 📋 Foreign Function Interface (FFI) for C interop
+- 📋 WebAssembly compilation target
+- 📋 JIT compilation with tiered optimization
+- 📋 Advanced optimizations (inlining, escape analysis)
+
+### Future Considerations
+- 📋 Memory safety guarantees (ownership/borrowing system)
+- 📋 Compile-time reflection and metaprogramming
+- 📋 Package registry with namespace management
+- 📋 Incremental compilation
+- 📋 Language server protocol v3.0 features
+- 📋 IDE plugins (VS Code, JetBrains, Vim)
+
+---
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Build with tests enabled
+cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ..
+make
+
+# Run all tests
+make test
+
+# Run specific test
+./build/tests/lexer_test
+./build/tests/parser_test
+./build/tests/vm_test
+```
+
+---
+
+## 🚀 Performance
+
+ProXPL is designed for high performance through multiple optimization layers:
+
+- **Zero-cost abstractions**: High-level features compile to efficient low-level code
+- **SSA-based optimizations**: Constant folding, dead code elimination, common subexpression elimination
+- **Bytecode JIT potential**: Foundation for future JIT compilation
+- **LLVM backend**: Leverages industry-standard optimizer for native performance
+- **Efficient GC**: Mark-and-sweep with tri-color marking (planned)
+
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ---
 
 ## 🛠️ Contributing
 
-We welcome contributors! ProXPL is an excellent project for learning compiler design.
+We warmly welcome contributions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
 
-1.  **Fork** the repository.
-2.  Create a feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes following the [Coding Standard](CODING_STANDARD.md).
-4.  Push to the branch and Open a **Pull Request**.
+### How to Contribute
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct.
+1. **Fork** the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Follow the [Coding Standards](CODING_STANDARD.md)
+4. Write tests for new features
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a **Pull Request**
+
+### Areas for Contribution
+
+- 🐛 Bug fixes and stability improvements
+- ✨ New standard library functions
+- 📝 Documentation and tutorials
+- 🧪 Test coverage expansion
+- ⚡ Performance optimizations
+- 🎨 IDE and editor plugins
+- 📦 Community packages
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2024 Kanishk Raj (ProgrammerKR)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...
+```
+
+---
+
+## 🙏 Acknowledgments
+
+ProXPL stands on the shoulders of giants. Special thanks to:
+
+- **LLVM Project** for the world-class compiler infrastructure
+- **Robert Nystrom** for "Crafting Interpreters" - an invaluable resource
+- **The GCC and Clang teams** for compiler design inspiration
+- **The open-source community** for continuous feedback and contributions
+
+---
+
+## 📞 Contact & Community
+
+- **GitHub**: [ProgrammerKR/ProXPL](https://github.com/ProgrammerKR/ProXPL)
+- **Issues**: [Report bugs and request features](https://github.com/ProgrammerKR/ProXPL/issues)
+- **Discussions**: [Join the community](https://github.com/ProgrammerKR/ProXPL/discussions)
+- **Email**: contact@proxpl.dev (coming soon)
+- **Documentation**: [Read the full docs](docs/)
+
+---
+
+## 🌟 Show Your Support
+
+If you find ProXPL useful, please consider:
+
+- ⭐ Starring the repository
+- 🐦 Sharing on social media
+- 📝 Writing tutorials or blog posts
+- 🤝 Contributing code or documentation
+- 💬 Joining discussions and helping others
 
 ---
 
 <p align="center">
-  Built with ❤️ by the ProXPL Community
+  <b>Built with ❤️ by the ProXPL Community</b><br>
+  <i>Making systems programming accessible and enjoyable</i>
+</p>
+
+<p align="center">
+  <sub>ProXPL - A Modern Programming Language for the Future</sub>
 </p>
