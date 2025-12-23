@@ -48,7 +48,7 @@ public:
         // Value prox_rt_const_string(char* chars, int length);
         llvm::FunctionType *ConstStrType = llvm::FunctionType::get(
             Builder->getInt64Ty(),
-            {Builder->getInt8PtrTy(), Builder->getInt32Ty()},
+            {Builder->getPtrTy(), Builder->getInt32Ty()},
             false
         );
         llvm::Function::Create(ConstStrType, llvm::Function::ExternalLinkage, "prox_rt_const_string", ModuleOb.get());
