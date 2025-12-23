@@ -21,8 +21,6 @@ struct CallFrame {
   Value* slots;
 };
 
-typedef struct CallFrame CallFrame;
-
 struct VM {
   CallFrame frames[FRAMES_MAX];
   int frameCount;

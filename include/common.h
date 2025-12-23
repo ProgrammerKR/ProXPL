@@ -40,7 +40,11 @@ typedef struct Entry Entry;
 typedef struct ValueArray ValueArray;
 typedef struct Chunk Chunk;
 typedef struct VM VM;
-typedef struct CallFrame CallFrame;
+typedef struct CallFrame {
+  ObjFunction* function;
+  uint8_t* ip;
+  Value* slots;
+} CallFrame;
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;
 typedef struct ExprList ExprList;
@@ -50,6 +54,8 @@ typedef struct SwitchCaseList SwitchCaseList;
 typedef struct DictPair DictPair;
 typedef struct DictPairList DictPairList;
 typedef struct StringList StringList;
+// --- Type System ---
+typedef struct ObjModule ObjModule;
 typedef struct TypeInfo TypeInfo;
 
 typedef Value (*NativeFn)(int argCount, Value *args);

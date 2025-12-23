@@ -10,13 +10,6 @@
 #include "common.h"
 #include "value.h"
 
-// Forward declarations for other internal structures
-typedef struct SwitchCase SwitchCase;
-typedef struct SwitchCaseList SwitchCaseList;
-typedef struct DictPair DictPair;
-typedef struct DictPairList DictPairList;
-typedef struct StringList StringList;
-
 // --- Type System ---
 typedef enum {
     TYPE_UNKNOWN = 0,
