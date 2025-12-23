@@ -74,4 +74,8 @@ Value consttable_get(const Chunk *chunk, size_t idx);
 int write_chunk_to_file(const char *path, const Chunk *chunk);
 int read_chunk_from_file(const char *path, Chunk *out);
 
+// LEB128 Utilities
+uint64_t read_uleb128_from(const uint8_t *buf, size_t buf_len, size_t *out_read);
+int64_t read_sleb128_from(const uint8_t *buf, size_t buf_len, size_t *out_read);
+
 #endif // PROX_BYTECODE_H

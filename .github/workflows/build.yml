@@ -112,13 +112,22 @@ jobs:
             Write-Host "Resolved LLVM_DIR=$llvmDir"
             Write-Host "Resolved LLVM_ROOT=$llvmPrefix"
           } else {
-            Write-Error "LLVM not found. Listing C:\Program Files to assist debugging:"
-            Get-ChildItem "C:\Program Files" -Depth 1 | Select-Object Name | Write-Host
+            Write-Error "LLVM not found. Starting aggressive debug dump."
             
+            Write-Host "--- C:\Program Files ---"
+            Get-ChildItem "C:\Program Files" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
+            
+            Write-Host "--- C:\Program Files (x86) ---"
+            Get-ChildItem "C:\Program Files (x86)" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
+
             if (Test-Path "C:\Program Files\LLVM") {
-                 Write-Host "Listing C:\Program Files\LLVM contents:"
-                 Get-ChildItem "C:\Program Files\LLVM" -Recurse -Depth 3 | Select-Object FullName | Write-Host
+                 Write-Host "--- C:\Program Files\LLVM Recursive Dump ---"
+                 Get-ChildItem "C:\Program Files\LLVM" -Recurse -Depth 4 | Select-Object FullName | Write-Host
             }
+            
+            Write-Host "--- Checking C:\ ---"
+            Get-ChildItem "C:\" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
+
             exit 1
           }
 

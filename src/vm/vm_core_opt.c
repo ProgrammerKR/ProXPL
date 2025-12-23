@@ -3,6 +3,7 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+//
 
 /*
  * vm_core_opt.c
@@ -17,6 +18,8 @@
  */
 
 #include "../../include/bytecode.h"
+#include "../../include/value.h"
+#include "../../include/object.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -55,13 +58,13 @@ int vm_execute_optimized(const Chunk *chunk) {
 #endif
 
     for (;;) {
-        if (ip >= chunk->code_len) return 0;
+        if (ip >= (size_t)chunk->count) return 0;
         uint8_t op = chunk->code[ip++];
 
 #if defined(__GNUC__) || defined(__clang__)
         /* fill common handlers once */
         dispatch_table[OP_NOP] = &&do_NOP;
-        dispatch_table[OP_PUSH_CONST] = &&do_PUSH_CONST;
+        dispatch_table[OP_CONSTANT] = &&do_CONSTANT; // Replaces previous OP_PUSH_CONST
         dispatch_table[OP_CALL] = &&do_CALL;
         dispatch_table[OP_ADD] = &&do_ADD_FAST;
         dispatch_table[OP_HALT] = &&do_HALT;
@@ -69,11 +72,13 @@ int vm_execute_optimized(const Chunk *chunk) {
 
         do_NOP: { continue; }
 
-        do_PUSH_CONST: {
+        do_CONSTANT: {
             size_t read = 0;
-            uint64_t idx = read_uleb128_from(chunk->code + ip, chunk->code_len - ip, &read);
-            ip += read;
-            stack[sp++] = consttable_get(&chunk->constants, (size_t)idx);
+            // NOTE: OP_CONSTANT usually takes a 1-byte operand in current bytecode.h, 
+            // but for safety/flexibility let's assume standard handling or check logic.
+            // If OpCode says OP_CONSTANT uses 1 byte index:
+            uint8_t idx = chunk->code[ip++];
+            stack[sp++] = consttable_get(chunk, (size_t)idx);
             continue;
         }
 
@@ -82,8 +87,8 @@ int vm_execute_optimized(const Chunk *chunk) {
             if (unlikely(sp < 2)) return -1;
             Value b = stack[--sp];
             Value a = stack[--sp];
-            if (likely(a.type == VAL_NUMBER && b.type == VAL_NUMBER)) {
-                Value r; r.type = VAL_NUMBER; r.as.number = a.as.number + b.as.number;
+            if (likely(IS_NUMBER(a) && IS_NUMBER(b))) {
+                Value r = NUMBER_VAL(AS_NUMBER(a) + AS_NUMBER(b));
                 stack[sp++] = r; continue;
             }
             /* fallback to generic add handler - simple example */
@@ -94,13 +99,23 @@ int vm_execute_optimized(const Chunk *chunk) {
         do_CALL: {
             /* inline cache lookup (very simple) */
             size_t saved_ip = ip;
-            size_t read = 0;
-            uint64_t idx = read_uleb128_from(chunk->code + ip, chunk->code_len - ip, &read);
-            ip += read;
-            if (ip >= chunk->code_len) return -1;
+            
+            // Assume OP_CALL format: [OP_CALL] [ArgCount] (1 byte)
+            // Note: This logic must match the compiler's emission for OP_CALL.
+            // Earlier files hinted at variable length, but simple compiler usually emits [OP] [Byte].
+            // If invalid, we return error.
+            if (ip >= (size_t)chunk->count) return -1;
             uint8_t argc = chunk->code[ip++];
+            
+            // For this optimized core, we assume the callee is on the stack *before* args? 
+            // Or is it a constant call? The 'vm_execute_simple' used const index.
+            // Standard ProXPL usually pushes callee then args.
+            // Let's assume standard stack: [Callee] [Arg1] ... [ArgN]
+            // We peak at stack[sp - 1 - argc] to find callee.
+            
+            if (sp < argc + 1) return -1;
+            Value callee = stack[sp - 1 - argc];
 
-            Value callee = consttable_get(&chunk->constants, (size_t)idx);
             /* probe icache for site */
             uint32_t site = (uint32_t)(saved_ip & 63);
             ICEntry *ent = &icache[site];
@@ -110,26 +125,28 @@ int vm_execute_optimized(const Chunk *chunk) {
                 typedef Value (*native_fn)(Value*, int);
                 native_fn fn = (native_fn)ent->native_ptr;
                 Value ret = fn(&stack[sp-argc], (int)argc);
-                sp -= argc; stack[sp++] = ret; continue;
+                sp -= (argc + 1); // Pop callee too
+                stack[sp++] = ret; continue;
             }
 
             /* resolve and fill cache (demo: only 'print') */
-            if (callee.type == VAL_STRING && strcmp(callee.as.string.chars, "print") == 0) {
+            if (IS_STRING(callee) && strcmp(AS_CSTRING(callee), "print") == 0) {
                 /* cache a sentinel to native print handler */
                 ent->site_pc = (uint32_t)saved_ip;
-                ent->target_name = callee.as.string.chars;
+                ent->target_name = AS_CSTRING(callee);
                 ent->native_ptr = NULL; /* optionally assign a function pointer */
                 /* fallback: implement print directly */
                 for (int i = (int)argc - 1; i >= 0; --i) {
                     Value arg = stack[--sp];
-                    if (arg.type == VAL_STRING) fputs(arg.as.string.chars, stdout);
-                    else if (arg.type == VAL_NUMBER) printf("%g", arg.as.number);
-                    else if (arg.type == VAL_BOOL) fputs(arg.as.boolean?"true":"false", stdout);
+                    if (IS_STRING(arg)) fputs(AS_CSTRING(arg), stdout);
+                    else if (IS_NUMBER(arg)) printf("%g", AS_NUMBER(arg));
+                    else if (IS_BOOL(arg)) fputs(AS_BOOL(arg)?"true":"false", stdout);
                     else fputs("<obj>", stdout);
                     if (i) putchar(' ');
                 }
                 putchar('\n');
-                Value r = make_null_const(); stack[sp++] = r; continue;
+                sp--; // Pop callee
+                stack[sp++] = NIL_VAL; continue;
             }
 
             fprintf(stderr, "unsupported call target\n"); return -1;
@@ -140,22 +157,34 @@ int vm_execute_optimized(const Chunk *chunk) {
 #else
 dispatch_switch:
         switch (op) {
-            case OP_NOP: break;
-            case OP_PUSH_CONST: {
-                size_t read=0; uint64_t idx = read_uleb128_from(chunk->code+ip, chunk->code_len-ip, &read); ip+=read;
-                stack[sp++] = consttable_get(&chunk->constants, (size_t)idx);
+            case OP_CONSTANT: {
+                uint8_t idx = chunk->code[ip++];
+                stack[sp++] = consttable_get(chunk, (size_t)idx);
             } break;
             case OP_ADD: {
                 if (sp<2) return -1; Value b = stack[--sp]; Value a = stack[--sp];
-                if (a.type==VAL_NUMBER && b.type==VAL_NUMBER) { Value r; r.type=VAL_NUMBER; r.as.number=a.as.number+b.as.number; stack[sp++]=r; }
-                else { fprintf(stderr,"slow path: non-number add\n"); return -1; }
+                if (IS_NUMBER(a) && IS_NUMBER(b)) { 
+                    stack[sp++] = NUMBER_VAL(AS_NUMBER(a) + AS_NUMBER(b)); 
+                } else { fprintf(stderr,"slow path: non-number add\n"); return -1; }
             } break;
             case OP_CALL: {
-                size_t read=0; uint64_t idx = read_uleb128_from(chunk->code+ip, chunk->code_len-ip, &read); ip+=read;
-                if (ip>=chunk->code_len) return -1; uint8_t argc = chunk->code[ip++];
-                Value callee = consttable_get(&chunk->constants,(size_t)idx);
-                if (callee.type==VAL_STRING && strcmp(callee.as.string.chars,"print")==0) {
-                    for (int i=(int)argc-1;i>=0;--i){ Value arg=stack[--sp]; if (arg.type==VAL_STRING) fputs(arg.as.string.chars, stdout); else if (arg.type==VAL_NUMBER) printf("%g",arg.as.number); else fputs("<obj>",stdout); if (i) putchar(' ');} putchar('\n'); Value r = make_null_const(); stack[sp++]=r; break;
+                if (ip>=(size_t)chunk->count) return -1; 
+                uint8_t argc = chunk->code[ip++];
+                if (sp < argc + 1) return -1;
+                Value callee = stack[sp - 1 - argc];
+                
+                if (IS_STRING(callee) && strcmp(AS_CSTRING(callee),"print")==0) {
+                    for (int i=(int)argc-1;i>=0;--i){ 
+                        Value arg=stack[--sp]; 
+                        if (IS_STRING(arg)) fputs(AS_CSTRING(arg), stdout); 
+                        else if (IS_NUMBER(arg)) printf("%g",AS_NUMBER(arg)); 
+                        else fputs("<obj>",stdout); 
+                        if (i) putchar(' ');
+                    } 
+                    putchar('\n'); 
+                    sp--; // Pop callee
+                    stack[sp++] = NIL_VAL; 
+                    break;
                 }
                 fprintf(stderr,"unsupported call target\n"); return -1;
             }
