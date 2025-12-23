@@ -19,34 +19,6 @@
 #include "value.h"
 #include "object.h"
 
-// --- Macro Compatibility Layer ---
-// This ensures that your MAKE_ macros return the correct 'Value' struct
-// and not an integer, fixing the Windows build errors.
-
-#ifndef NIL_VAL
- #define NIL_VAL ((Value){VAL_NIL, { .number = 0 }})
-#endif
-
-#undef MAKE_NULL
-#define MAKE_NULL() NIL_VAL
-
-#undef MAKE_NUMBER
-#define MAKE_NUMBER(x) ((Value){VAL_NUMBER, { .number = (x) }})
-
-#undef MAKE_OBJ
-#define MAKE_OBJ(x) ((Value){VAL_OBJ, { .obj = (Obj*)(x) }})
-// ---------------------------------
-
-#ifdef _WIN32
-  #include <windows.h>
-  #define popen _popen
-  #define pclose _pclose
-  #define sleep_ms(x) Sleep(x)
-#else
-  #include <unistd.h>
-  #define sleep_ms(x) usleep((x) * 1000)
-#endif
-
 // exit(code) - Exit program
 static Value native_exit(int argCount, Value* args) {
     int code = 0;
@@ -54,59 +26,61 @@ static Value native_exit(int argCount, Value* args) {
         code = (int)AS_NUMBER(args[0]);
     }
     exit(code);
-    return MAKE_NULL(); // Never reached, but satisfies compiler
+    return NIL_VAL; // Never reached, but satisfies compiler
 }
 
 // env(name) - Get environment variable
 static Value native_env(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) {
-        return MAKE_NULL();
+        return NIL_VAL;
     }
     
     const char* name = AS_CSTRING(args[0]);
     const char* value = getenv(name);
     
     if (value) {
-        return MAKE_OBJ(copyString(value, (int)strlen(value)));
+        return OBJ_VAL(copyString(value, (int)strlen(value)));
     }
-    return MAKE_NULL();
+    return NIL_VAL;
 }
 
 // platform() - Get platform name
 static Value native_platform(int argCount, Value* args) {
+    (void)argCount; (void)args;
 #ifdef _WIN32
-    return MAKE_OBJ(copyString("Windows", 7));
+    return OBJ_VAL(copyString("Windows", 7));
 #elif __APPLE__
-    return MAKE_OBJ(copyString("macOS", 5));
+    return OBJ_VAL(copyString("macOS", 5));
 #elif __linux__
-    return MAKE_OBJ(copyString("Linux", 5));
+    return OBJ_VAL(copyString("Linux", 5));
 #else
-    return MAKE_OBJ(copyString("Unknown", 7));
+    return OBJ_VAL(copyString("Unknown", 7));
 #endif
 }
 
 // version() - Get ProXPL version
 static Value native_version(int argCount, Value* args) {
-    return MAKE_OBJ(copyString("ProXPL 1.0.0", 12));
+    (void)argCount; (void)args;
+    return OBJ_VAL(copyString("ProXPL 1.0.0", 12));
 }
 
 // exec(command) - Execute shell command
 static Value native_exec(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) {
-        return MAKE_NULL();
+        return NIL_VAL;
     }
     
     const char* command = AS_CSTRING(args[0]);
     FILE* pipe = popen(command, "r");
     if (!pipe) {
-        return MAKE_NULL();
+        return NIL_VAL;
     }
     
     char buffer[4096];
     char* result = (char*)malloc(1);
     if (!result) {
         pclose(pipe);
-        return MAKE_NULL();
+        return NIL_VAL;
     }
     result[0] = '\0';
     size_t totalLen = 0;
@@ -117,7 +91,7 @@ static Value native_exec(int argCount, Value* args) {
         if (!temp) {
             free(result);
             pclose(pipe);
-            return MAKE_NULL();
+            return NIL_VAL;
         }
         result = temp;
         strcpy(result + totalLen, buffer);
@@ -126,21 +100,22 @@ static Value native_exec(int argCount, Value* args) {
     
     pclose(pipe);
     
-    Value output = MAKE_OBJ(copyString(result, (int)totalLen));
+    Value output = OBJ_VAL(copyString(result, (int)totalLen));
     free(result);
     return output;
 }
 
 // time() - Get current timestamp in seconds since epoch
 static Value native_time(int argCount, Value* args) {
+    (void)argCount; (void)args;
     time_t now = time(NULL);
-    return MAKE_NUMBER((double)now);
+    return NUMBER_VAL((double)now);
 }
 
 // sleep(seconds) - Sleep for specified seconds  
 static Value native_sleep(int argCount, Value* args) {
     if (argCount < 1 || !IS_NUMBER(args[0])) {
-        return MAKE_NULL();
+        return NIL_VAL;
     }
     
     int seconds = (int)AS_NUMBER(args[0]);
@@ -151,7 +126,7 @@ static Value native_sleep(int argCount, Value* args) {
     sleep(seconds);
 #endif
     
-    return MAKE_NULL();
+    return NIL_VAL;
 }
 
 // Register all system functions with the VM

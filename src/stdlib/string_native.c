@@ -18,13 +18,6 @@
 #include <string.h>
 #include <ctype.h>
 
-// --- Safety Macros ---
-// These ensure we use the correct return types (Value struct) 
-// instead of accidentally returning ints.
-#ifndef NIL_VAL
-  #define NIL_VAL ((Value){VAL_NIL, { .number = 0 }})
-#endif
-
 // str_upper(str) - Convert to uppercase
 static Value native_str_upper(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
