@@ -46,6 +46,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DBUILD_TESTS=OFF \
             -DBUILD_BENCH=OFF \
+            -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm" \
             -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM"
 
       - name: Build (verbose)
