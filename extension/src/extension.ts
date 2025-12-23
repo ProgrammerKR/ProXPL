@@ -6,7 +6,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticCollection);
 
     // 1. Code Runner Command
-    let runCommand = vscode.commands.registerCommand('proxpl.run', () => {
+    let runCommand = vscode.commands.registerCommand('proxpl.runFile', () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -19,33 +19,45 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Save file before running
-        editor.document.save().then(() => {
-            const terminal = vscode.window.activeTerminal || vscode.window.createTerminal('ProXPL');
-            terminal.show();
-            terminal.sendText(`proxpl run "${fileName}"`);
-
-            // Optional: Background execution for diagnostics
-            // We run another process to capture output specifically for the "linter"
-            cp.exec(`proxpl check "${fileName}"`, (error, stdout, stderr) => {
-                diagnosticCollection.clear();
-                const diagnostics: vscode.Diagnostic[] = [];
-
-                // Simple pattern matching for "Error at line X: message"
-                const errorLog = stderr || stdout;
-                const errorLines = errorLog.split('\n');
-
-                errorLines.forEach(line => {
-                    const match = line.match(/Error at line (\d+): (.*)/);
-                    if (match) {
-                        const lineNum = parseInt(match[1]) - 1;
-                        const message = match[2];
-                        const range = new vscode.Range(lineNum, 0, lineNum, 100);
-                        diagnostics.push(new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error));
+        // Check if proxpl is in PATH
+        cp.exec('proxpl --version', (err: Error | null) => {
+            if (err) {
+                vscode.window.showInformationMessage(
+                    'ProXPL compiler not found in PATH. Please install it to run scripts.',
+                    'View Installation Docs'
+                ).then((selection: string | undefined) => {
+                    if (selection === 'View Installation Docs') {
+                        vscode.env.openExternal(vscode.Uri.parse('https://github.com/ProgrammerKR/ProXPL#installation'));
                     }
                 });
+                return;
+            }
 
-                diagnosticCollection.set(editor.document.uri, diagnostics);
+            // Save file before running
+            editor.document.save().then(() => {
+                const terminal = vscode.window.activeTerminal || vscode.window.createTerminal('ProXPL');
+                terminal.show();
+                terminal.sendText(`proxpl run "${fileName}"`);
+
+                // Background execution for diagnostics
+                cp.exec(`proxpl check "${fileName}"`, (error: Error | null, stdout: string, stderr: string) => {
+                    diagnosticCollection.clear();
+                    const diagnostics: vscode.Diagnostic[] = [];
+                    const errorLog = stderr || stdout;
+                    const errorLines = errorLog.split('\n');
+
+                    errorLines.forEach((line: string) => {
+                        const match = line.match(/Error at line (\d+): (.*)/);
+                        if (match) {
+                            const lineNum = mapLineNumber(match[1]);
+                            const message = match[2];
+                            const range = new vscode.Range(lineNum, 0, lineNum, 100);
+                            diagnostics.push(new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error));
+                        }
+                    });
+
+                    diagnosticCollection.set(editor.document.uri, diagnostics);
+                });
             });
         });
     });
@@ -65,12 +77,10 @@ export function activate(context: vscode.ExtensionContext) {
                     edits.push(vscode.TextEdit.delete(new vscode.Range(i, text.trimEnd().length, i, text.length)));
                 }
 
-                // Basic Indentation (simplified example - fixes existing whitespace to 4 spaces)
-                // This is a naive implementation; complex ones use AST
+                // Basic Indentation
                 const indentMatch = text.match(/^(\s+)/);
                 if (indentMatch) {
                     const oldIndent = indentMatch[1];
-                    // Example: convert tabs to 4 spaces or ensure 4-space blocks
                     const newIndent = oldIndent.replace(/\t/g, '    ');
                     if (oldIndent !== newIndent) {
                         edits.push(vscode.TextEdit.replace(new vscode.Range(i, 0, i, oldIndent.length), newIndent));
@@ -84,8 +94,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 3. Hover Support
     const hoverProvider = vscode.languages.registerHoverProvider('proxpl', {
-        provideHover(document, position) {
+        provideHover(document: vscode.TextDocument, position: vscode.Position) {
             const range = document.getWordRangeAtPosition(position);
+            if (!range) return null;
             const word = document.getText(range);
 
             const descriptions: { [key: string]: string } = {
@@ -106,6 +117,11 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
     context.subscriptions.push(hoverProvider);
+}
+
+function mapLineNumber(lineStr: string): number {
+    const num = parseInt(lineStr);
+    return isNaN(num) ? 0 : num - 1;
 }
 
 export function deactivate() { }
