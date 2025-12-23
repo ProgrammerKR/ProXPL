@@ -51,7 +51,7 @@ void chunk_write_bytes(Chunk *chunk, const uint8_t *bytes, size_t len) {
 
 /* --- emission helpers --- */
 
-void emit_opcode(Chunk *chunk, Opcode op) {
+void emit_opcode(Chunk *chunk, OpCode op) {
     chunk_write_byte(chunk, (uint8_t)op);
 }
 void emit_u8(Chunk *chunk, uint8_t x) {
@@ -263,13 +263,12 @@ int read_chunk_from_file(const char *path, Chunk *out) {
         out->code = malloc(code_len);
         if (!out->code) { fclose(f); return -1; }
         if (fread(out->code,1,code_len,f) != code_len) { fclose(f); return -1; }
-        out->code_len = code_len;
-        out->code_cap = code_len;
+        out->count = code_len;
+        out->capacity = code_len;
     }
     /* read constants_count (uleb128) */
     /* read bytes progressively */
     uint8_t buf[1];
-    size_t readbytes = 0;
     uint64_t count = 0;
     /* read uleb128 from file stream manually */
     {
@@ -285,7 +284,7 @@ int read_chunk_from_file(const char *path, Chunk *out) {
         count = result;
     }
     /* read constants */
-    consttable_init(&out->constants);
+    initValueArray(&out->constants);
     for (uint64_t i = 0; i < count; ++i) {
         uint8_t type;
         if (fread(&type,1,1,f) != 1) { fclose(f); return -1; }
@@ -319,7 +318,7 @@ int read_chunk_from_file(const char *path, Chunk *out) {
             if (fread(&b,1,1,f) != 1) { fclose(f); return -1; }
             v = BOOL_VAL(b ? 1 : 0);
         }
-        consttable_add(&out->constants, v);
+        writeValueArray(&out->constants, v);
     }
     fclose(f);
     return 0;
@@ -341,6 +340,12 @@ int example_write_hello(const char *path) {
     (void)s0; (void)s1;
 
     /* Emit instructions */
+#ifndef OP_PUSH_CONST
+#define OP_PUSH_CONST OP_CONSTANT
+#endif
+#ifndef AM_CONST
+#define AM_CONST 1
+#endif
     emit_opcode(&c, OP_PUSH_CONST);
     emit_uleb128(&c, 0);
     /* CALL: addressing mode const (AM_CONST), const idx = 1, argc = 1 */

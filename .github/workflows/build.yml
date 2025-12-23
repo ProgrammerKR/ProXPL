@@ -72,10 +72,13 @@ jobs:
             "C:\Program Files\LLVM\lib\cmake",
             "C:\Program Files (x86)\LLVM\lib\cmake"
           )
-          $llvmDir = ""
-          foreach ($path in $searchPaths) {
-            if (Test-Path "$path\LLVMConfig.cmake") { $llvmDir = $path; break }
-            if (Test-Path "$path\llvm\LLVMConfig.cmake") { $llvmDir = "$path\llvm"; break }
+          if ($env:LLVM_DIR -and (Test-Path $env:LLVM_DIR)) {
+            $llvmDir = $env:LLVM_DIR
+          } else {
+            foreach ($path in $searchPaths) {
+               if (Test-Path "$path\LLVMConfig.cmake") { $llvmDir = $path; break }
+               if (Test-Path "$path\llvm\LLVMConfig.cmake") { $llvmDir = "$path\llvm"; break }
+            }
           }
           
           if ($llvmDir -eq "") {
