@@ -11,7 +11,7 @@
 #include "vm.h"
 
 
-typedef struct Parser Parser;
+// Parser forward declaration removed to avoid conflict with parser.h
 
 typedef enum {
   PREC_NONE,

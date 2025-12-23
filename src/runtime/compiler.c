@@ -19,14 +19,14 @@ typedef struct {
 } Local;
 
 typedef enum {
-  TYPE_FUNCTION,
-  TYPE_SCRIPT
-} FunctionType;
+  COMP_COMP_TYPE_FUNCTION,
+  COMP_COMP_TYPE_SCRIPT
+} CompFunctionType;
 
 typedef struct Compiler {
   struct Compiler* enclosing;
   ObjFunction* function;
-  FunctionType type;
+  CompFunctionType type;
 
   Local locals[UINT8_COUNT];
   int localCount;
@@ -40,9 +40,9 @@ typedef struct {
   Token previous;
   bool hadError;
   bool panicMode;
-} Parser;
+} CompilerParser;
 
-Parser parser;
+CompilerParser compParser;
 Compiler* current = NULL;
 
 static Chunk* currentChunk() {
@@ -50,35 +50,35 @@ static Chunk* currentChunk() {
 }
 
 static void errorAt(Token* token, const char* message) {
-  if (parser.panicMode) return;
-  parser.panicMode = true;
+  if (compParser.panicMode) return;
+  compParser.panicMode = true;
   
-  reportCompileError(parser.source, *token, message);
+  reportCompileError(compParser.source, *token, message);
   
-  parser.hadError = true;
+  compParser.hadError = true;
 }
 
 static void error(const char* message) {
-  errorAt(&parser.previous, message);
+  errorAt(&compParser.previous, message);
 }
 
 static void errorAtCurrent(const char* message) {
-  errorAt(&parser.current, message);
+  errorAt(&compParser.current, message);
 }
 
 static void advance() {
-  parser.previous = parser.current;
+  compParser.previous = compParser.current;
 
   for (;;) {
-    parser.current = scanToken(parser.scanner); 
-    if (parser.current.type != TOKEN_ERROR) break;
+    compParser.current = scanToken(compParser.scanner); 
+    if (compParser.current.type != TOKEN_ERROR) break;
 
-    errorAtCurrent(parser.current.start);
+    errorAtCurrent(compParser.current.start);
   }
 }
 
 static void consume(TokenType type, const char* message) {
-  if (parser.current.type == type) {
+  if (compParser.current.type == type) {
     advance();
     return;
   }
@@ -87,7 +87,7 @@ static void consume(TokenType type, const char* message) {
 }
 
 static bool check(TokenType type) {
-  return parser.current.type == type;
+  return compParser.current.type == type;
 }
 
 static bool match(TokenType type) {
@@ -97,7 +97,7 @@ static bool match(TokenType type) {
 }
 
 static void emitByte(uint8_t byte) {
-  writeChunk(currentChunk(), byte, parser.previous.line);
+  writeChunk(currentChunk(), byte, compParser.previous.line);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -144,7 +144,7 @@ static ObjFunction* endCompiler() {
   ObjFunction* function = current->function;
 
 #ifdef DEBUG_PRINT_CODE
-  if (!parser.hadError) {
+  if (!compParser.hadError) {
     disassembleChunk(currentChunk(), function->name != NULL ? function->name->chars : "script");
   }
 #endif
@@ -193,7 +193,7 @@ static void addLocal(Token name) {
 static void declareVariable() {
   if (current->scopeDepth == 0) return;
 
-  Token* name = &parser.previous;
+  Token* name = &compParser.previous;
   for (int i = current->localCount - 1; i >= 0; i--) {
     Local* local = &current->locals[i];
     if (local->depth != -1 && local->depth < current->scopeDepth) break;
@@ -212,7 +212,7 @@ static uint8_t parseVariable(const char* errorMessage) {
   declareVariable();
   if (current->scopeDepth > 0) return 0;
 
-  return identifierConstant(&parser.previous);
+  return identifierConstant(&compParser.previous);
 }
 
 static void markInitialized() {
@@ -250,12 +250,12 @@ static void namedVariable(Token name, bool canAssign) {
 }
 
 static void variable(bool canAssign) {
-  namedVariable(parser.previous, canAssign);
+  namedVariable(compParser.previous, canAssign);
 }
 
 static void binary(bool canAssign) {
   (void)canAssign;
-  TokenType operatorType = parser.previous.type;
+  TokenType operatorType = compParser.previous.type;
   ParseRule* rule = getRule(operatorType);
   parsePrecedence((Precedence)(rule->precedence + 1));
 
@@ -276,7 +276,7 @@ static void binary(bool canAssign) {
 
 static void literal(bool canAssign) {
   (void)canAssign;
-  switch (parser.previous.type) {
+  switch (compParser.previous.type) {
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
     case TOKEN_NULL:  emitByte(OP_NIL); break;
     case TOKEN_TRUE:  emitByte(OP_TRUE); break;
@@ -292,19 +292,19 @@ static void grouping(bool canAssign) {
 
 static void number(bool canAssign) {
   (void)canAssign;
-  double value = strtod(parser.previous.start, NULL);
+  double value = strtod(compParser.previous.start, NULL);
   emitConstant(NUMBER_VAL(value));
 }
 
 static void string(bool canAssign) {
   (void)canAssign;
-  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
-                                  parser.previous.length - 2)));
+  emitConstant(OBJ_VAL(copyString(compParser.previous.start + 1,
+                                  compParser.previous.length - 2)));
 }
 
 static void unary(bool canAssign) {
   (void)canAssign;
-  TokenType operatorType = parser.previous.type;
+  TokenType operatorType = compParser.previous.type;
   parsePrecedence(PREC_UNARY);
 
   switch (operatorType) {
@@ -359,7 +359,7 @@ ParseRule rules[] = {
 
 static void parsePrecedence(Precedence precedence) {
   advance();
-  ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+  ParseFn prefixRule = getRule(compParser.previous.type)->prefix;
   if (prefixRule == NULL) {
     error("Expect expression.");
     return;
@@ -368,9 +368,9 @@ static void parsePrecedence(Precedence precedence) {
   bool canAssign = precedence <= PREC_ASSIGNMENT;
   prefixRule(canAssign);
 
-  while (precedence <= getRule(parser.current.type)->precedence) {
+  while (precedence <= getRule(compParser.current.type)->precedence) {
     advance();
-    ParseFn infixRule = getRule(parser.previous.type)->infix;
+    ParseFn infixRule = getRule(compParser.previous.type)->infix;
     infixRule(canAssign);
   }
 
@@ -413,11 +413,11 @@ static void expressionStatement() {
 }
 
 static void synchronize() {
-  parser.panicMode = false;
+  compParser.panicMode = false;
 
-  while (parser.current.type != TOKEN_EOF) {
-    if (parser.previous.type == TOKEN_SEMICOLON) return;
-    switch (parser.current.type) {
+  while (compParser.current.type != TOKEN_EOF) {
+    if (compParser.previous.type == TOKEN_SEMICOLON) return;
+    switch (compParser.current.type) {
       case TOKEN_CLASS:
       case TOKEN_FUNC:
       case TOKEN_LET:
@@ -443,7 +443,7 @@ static void declaration() {
     statement();
   }
 
-  if (parser.panicMode) synchronize();
+  if (compParser.panicMode) synchronize();
 }
 
 static void statement() {
@@ -458,12 +458,12 @@ ObjFunction* compile(const char* source) {
   Scanner scanner;
   initScanner(&scanner, source);
   Compiler compiler;
-  initCompiler(&compiler, TYPE_SCRIPT);
+  initCompiler(&compiler, COMP_TYPE_SCRIPT);
 
-  parser.scanner = &scanner;
-  parser.source = source;
-  parser.hadError = false;
-  parser.panicMode = false;
+  compParser.scanner = &scanner;
+  compParser.source = source;
+  compParser.hadError = false;
+  compParser.panicMode = false;
 
   advance();
 
@@ -472,7 +472,7 @@ ObjFunction* compile(const char* source) {
   }
 
   ObjFunction* function = endCompiler();
-  return parser.hadError ? NULL : function;
+  return compParser.hadError ? NULL : function;
 }
 
 void markCompilerRoots() {
