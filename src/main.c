@@ -200,26 +200,23 @@ static void runFile(const char *path) {
   freeTypeChecker(&checker);
   printf("Type Check Passed.\n");
 
-  // --- Pipeline Step 3: Bytecode Gen & Execution ---
-  printf("Generating Bytecode...\n");
-  Chunk chunk;
-  initChunk(&chunk);
-  generateBytecode(statements, &chunk);
+    // --- Pipeline Step 3: Bytecode Gen & Execution ---
+    // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
+    printf("Executing...\n");
+    InterpretResult result = interpretAST(&vm, statements);
+    
+    if (result != INTERPRET_OK) {
+        fprintf(stderr, "Execution Failed.\n");
+    }
 
-  printf("Executing VM...\n");
-  InterpretResult result = interpret(&vm, &chunk);
-  if (result != INTERPRET_OK) {
-      fprintf(stderr, "Execution Failed.\n");
-  }
+    // --- Pipeline Step 4: LLVM CodeGen (Optional/Future) ---
+    // printf("Generating LLVM IR...\n");
+    // generateCode(statements);
 
-  // --- Pipeline Step 4: LLVM CodeGen (Optional/Future) ---
-  // printf("Generating LLVM IR...\n");
-  // generateCode(statements);
-
-  // Free resources
-  freeChunk(&chunk);
-  freeStmtList(statements);
-  free(source);
+    // Free resources
+    // freeChunk(&chunk); // chunk is not used anymore
+    freeStmtList(statements);
+    free(source);
 }
 
 
@@ -251,7 +248,7 @@ int main(int argc, const char *argv[]) {
                argv[1][strlen(argv[1]) - 4] == 'p' &&
                argv[1][strlen(argv[1]) - 5] == '.') {
       // File with .prox extension
-      runFile(&vm, argv[1]);
+      runFile(argv[1]);
     } else {
       fprintf(stderr, "Usage: prox [path]\n");
       fprintf(stderr, "       prox run [path]\n");
