@@ -68,6 +68,7 @@ void initChunk(Chunk *chunk);
 void freeChunk(Chunk *chunk);
 void writeChunk(Chunk *chunk, uint8_t byte, int line);
 int addConstant(Chunk *chunk, Value value);
+Value consttable_get(const Chunk *chunk, size_t idx);
 
 // File serialization
 int write_chunk_to_file(const char *path, const Chunk *chunk);

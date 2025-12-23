@@ -65,39 +65,54 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $searchPaths = @(
-            "C:\Program Files\LLVM\lib\cmake\llvm",
-            "C:\Program Files (x86)\LLVM\lib\cmake\llvm",
-            "C:\llvm\lib\cmake\llvm",
-            "C:\Program Files\LLVM\lib\cmake",
-            "C:\Program Files (x86)\LLVM\lib\cmake"
-          )
+          $llvmDir = ""
           if ($env:LLVM_DIR -and (Test-Path $env:LLVM_DIR)) {
             $llvmDir = $env:LLVM_DIR
-          } else {
-            foreach ($path in $searchPaths) {
-               if (Test-Path "$path\LLVMConfig.cmake") { $llvmDir = $path; break }
-               if (Test-Path "$path\llvm\LLVMConfig.cmake") { $llvmDir = "$path\llvm"; break }
+          }
+
+          if (-not $llvmDir) {
+            $candidates = @(
+              "C:\Program Files\LLVM",
+              "C:\Program Files (x86)\LLVM",
+              "C:\llvm"
+            )
+            foreach ($cand in $candidates) {
+              if (Test-Path $cand) {
+                Write-Host "Searching in $cand"
+                # Search recursively for LLVMConfig.cmake, max depth 4
+                $found = Get-ChildItem -Path $cand -Filter "LLVMConfig.cmake" -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($found) {
+                  $llvmDir = $found.Directory.FullName
+                  Write-Host "Found LLVMConfig.cmake at $llvmDir"
+                  break
+                }
+              }
             }
           }
-          
-          if ($llvmDir -eq "") {
-            # Try to find clang or llvm-config in PATH
+
+          if (-not $llvmDir) {
+            # Try to find clang via PATH
             $clang = Get-Command clang -ErrorAction SilentlyContinue
             if ($clang) {
-              $llvmRoot = (Get-Item $clang.Source).Directory.Parent.FullName
-              $trial = "$llvmRoot\lib\cmake\llvm"
+              $root = (Get-Item $clang.Source).Directory.Parent.FullName
+              Write-Host "Found clang at $($clang.Source), checking root $root"
+              $trial = Join-Path $root "lib\cmake\llvm"
               if (Test-Path "$trial\LLVMConfig.cmake") { $llvmDir = $trial }
             }
           }
 
           if ($llvmDir) {
-            $llvmPrefix = (Get-Item $llvmDir).Parent.Parent.FullName
+            # Clean up path separators
+            $llvmDir = $llvmDir -replace "\\", "/"
+            $llvmPrefix = (Get-Item $llvmDir).Parent.Parent.FullName -replace "\\", "/"
+            
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmPrefix"
-            Write-Host "Found LLVM at $llvmDir"
+            Write-Host "Resolved LLVM_DIR=$llvmDir"
+            Write-Host "Resolved LLVM_ROOT=$llvmPrefix"
           } else {
-            Write-Error "LLVM not found in standard paths or via PATH. Failing fast."
+            Write-Error "LLVM not found. Listing C:\Program Files\:"
+            Get-ChildItem "C:\Program Files" -Depth 1 | Select-Object Name | Write-Host
             exit 1
           }
 
