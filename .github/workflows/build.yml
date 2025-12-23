@@ -70,64 +70,81 @@ jobs:
             $llvmDir = $env:LLVM_DIR
           }
 
+          # Strategy 1: Find via clang in PATH
           if (-not $llvmDir) {
-            $candidates = @(
+            $clang = Get-Command clang -ErrorAction SilentlyContinue
+            if ($clang) {
+              $binDir = (Get-Item $clang.Source).Directory.FullName
+              $root = (Get-Item $binDir).Parent.FullName
+              Write-Host "Clang found at: $($clang.Source)"
+              Write-Host "Inferred Root: $root"
+              
+              # Check common relative paths for cmake config
+              $relativePaths = @(
+                "lib\cmake\llvm",
+                "share\llvm\cmake",
+                "lib\llvm\cmake",
+                "cmake\modules",
+                "lib\cmake\clang" 
+              )
+              
+              foreach ($rel in $relativePaths) {
+                $candidate = Join-Path $root $rel
+                $configPath = Join-Path $candidate "LLVMConfig.cmake"
+                if (Test-Path $configPath) {
+                   $llvmDir = $candidate
+                   Write-Host "Found LLVMConfig.cmake via clang heuristic at: $llvmDir"
+                   break
+                }
+              }
+            }
+          }
+
+          # Strategy 2: Common Install Paths (Recursive Search)
+          if (-not $llvmDir) {
+            $installPaths = @(
               "C:\Program Files\LLVM",
               "C:\Program Files (x86)\LLVM",
               "C:\llvm"
             )
-            foreach ($cand in $candidates) {
-              if (Test-Path $cand) {
-                Write-Host "Searching in $cand"
-                # Search recursively for LLVMConfig.cmake, max depth 5
-                # We filter out likely irrelevant folders to speed it up if possible
-                $found = Get-ChildItem -Path $cand -Filter "LLVMConfig.cmake" -Recurse -Depth 5 -ErrorAction SilentlyContinue | Select-Object -First 1
+            foreach ($path in $installPaths) {
+              if (Test-Path $path) {
+                Write-Host "Searching in known install location: $path"
+                $found = Get-ChildItem -Path $path -Filter "LLVMConfig.cmake" -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1
                 if ($found) {
                   $llvmDir = $found.Directory.FullName
-                  Write-Host "Found LLVMConfig.cmake at $llvmDir"
+                  Write-Host "Found LLVMConfig.cmake via recursive search at: $llvmDir"
                   break
                 }
               }
             }
           }
 
-          if (-not $llvmDir) {
-            # Try to find clang via PATH
-            $clang = Get-Command clang -ErrorAction SilentlyContinue
-            if ($clang) {
-              $root = (Get-Item $clang.Source).Directory.Parent.FullName
-              Write-Host "Found clang at $($clang.Source), checking root $root"
-              $trial = Join-Path $root "lib\cmake\llvm"
-              if (Test-Path "$trial\LLVMConfig.cmake") { $llvmDir = $trial }
-            }
-          }
-
           if ($llvmDir) {
             # Clean up path separators
             $llvmDir = $llvmDir -replace "\\", "/"
-            $llvmPrefix = (Get-Item $llvmDir).Parent.Parent.FullName -replace "\\", "/"
+            # Attempt to deduce root from lib/cmake/llvm pattern
+            # Generally LLVM_DIR is <root>/lib/cmake/llvm
+            # So root is usually 3 levels up, or we can just try to use the clang root if we found it.
+            # Robust way: If it contains /lib/ or /share/, grab parent until then.
+            # Simplified: Use the parent of the parent of LLVM_DIR if it looks standard.
+            
+            $llvmRoot = (Get-Item $llvmDir).Parent.Parent.FullName -replace "\\", "/"
             
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
-            Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmPrefix"
-            Write-Host "Resolved LLVM_DIR=$llvmDir"
-            Write-Host "Resolved LLVM_ROOT=$llvmPrefix"
+            Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
+            Write-Host "FINAL LLVM_DIR=$llvmDir"
+            Write-Host "FINAL LLVM_ROOT=$llvmRoot"
           } else {
-            Write-Error "LLVM not found. Starting aggressive debug dump."
+            Write-Error "LLVM not found. Aggressive Dump Follows:"
             
             Write-Host "--- C:\Program Files ---"
             Get-ChildItem "C:\Program Files" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
             
-            Write-Host "--- C:\Program Files (x86) ---"
-            Get-ChildItem "C:\Program Files (x86)" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
-
             if (Test-Path "C:\Program Files\LLVM") {
                  Write-Host "--- C:\Program Files\LLVM Recursive Dump ---"
                  Get-ChildItem "C:\Program Files\LLVM" -Recurse -Depth 4 | Select-Object FullName | Write-Host
             }
-            
-            Write-Host "--- Checking C:\ ---"
-            Get-ChildItem "C:\" -Depth 1 -ErrorAction SilentlyContinue | Select-Object Name | Write-Host
-
             exit 1
           }
 
