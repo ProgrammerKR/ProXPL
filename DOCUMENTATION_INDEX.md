@@ -8,22 +8,24 @@
 
 ### New to ProXPL?
 1. Read **[README.md](README.md)** (5 min)
-2. Try **[BUILD_GUIDE.md](docs/BUILD_GUIDE.md)** (10 min)
-3. Run examples from `examples/` folder
-4. Work through **[docs/tutorials/01-basics.md](docs/tutorials/01-basics.md)**
+2. Follow **[GETTING_STARTED.md](GETTING_STARTED.md)** (30 min)
+3. Try **[BUILD_GUIDE.md](docs/BUILD_GUIDE.md)** (10 min)
+4. Run examples from `examples/` folder
+5. Explore **[docs/language-spec.md](docs/language-spec.md)**
 
 ### Joining as a Developer?
 1. Read **[README.md](README.md)** (5 min)
-2. Follow **[BUILD_GUIDE.md](docs/BUILD_GUIDE.md)** (10 min)
-3. Study **[ARCHITECTURE.md](ARCHITECTURE.md)** (30 min)
-4. Review **[CONTRIBUTING.md](CONTRIBUTING.md)** (15 min)
+2. Follow **[GETTING_STARTED.md](GETTING_STARTED.md)** (30 min)
+3. Study **[docs/VM_ARCHITECTURE.md](docs/VM_ARCHITECTURE.md)** (45 min)
+4. Review **[CONTRIBUTING.md](CONTRIBUTING.md)** (20 min)
 5. Read **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** (5 min)
+6. Explore **[src/README.md](src/README.md)** for codebase overview
 
 ### Planning or Maintaining?
-1. Check **[REFACTOR-REPORT.md](REFACTOR-REPORT.md)** (15 min)
-2. Review **[docs/migration/PYTHON_TO_C.md](docs/migration/PYTHON_TO_C.md)** (30 min)
-3. Reference **[CHANGELOG.md](CHANGELOG.md)** for versions
-4. Use **[docs/API.md](docs/API.md)** for stdlib reference
+1. Check **[CHANGELOG.md](CHANGELOG.md)** (15 min)
+2. Review **[ECOSYSTEM_DESIGN.md](ECOSYSTEM_DESIGN.md)** (30 min)
+3. Reference **[VERSIONING.md](VERSIONING.md)** for release policy
+4. Study **[docs/VM_ARCHITECTURE.md](docs/VM_ARCHITECTURE.md)** for technical depth
 
 ---
 
