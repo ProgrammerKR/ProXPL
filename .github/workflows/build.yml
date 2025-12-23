@@ -145,7 +145,24 @@ jobs:
                  Write-Host "--- C:\Program Files\LLVM Recursive Dump ---"
                  Get-ChildItem "C:\Program Files\LLVM" -Recurse -Depth 4 | Select-Object FullName | Write-Host
             }
-            exit 1
+
+            Write-Host "Attempting Chocolatey Install of LLVM..."
+            choco install llvm -y --no-progress
+            
+            # Re-check common path after install
+            if (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm\LLVMConfig.cmake") {
+                $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
+                $llvmRoot = "C:\Program Files\LLVM"
+                $llvmDir = $llvmDir -replace "\\", "/"
+                $llvmRoot = $llvmRoot -replace "\\", "/"
+                Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
+                Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
+                Write-Host "Resolved LLVM_DIR=$llvmDir (via Choco)"
+                exit 0
+            } else {
+                 Write-Error "LLVM still not found after Chocolatey install."
+                 exit 1
+            }
           }
 
       - name: Configure (Windows)

@@ -48,14 +48,14 @@ static inline Value handler_pop(VMState *vm) {
 }
 
 int handle_push_const(VMState *vm, uint64_t const_idx) {
-    Value v = consttable_get(&vm->chunk->constants, (size_t)const_idx);
+    Value v = consttable_get(vm->chunk, (size_t)const_idx);
     handler_push(vm, v);
     return 0;
 }
 
 int handle_call_const(VMState *vm, uint64_t const_idx, uint8_t argc) {
     /* Simplified: call a native function by string name only (for template) */
-    Value callee = consttable_get(&vm->chunk->constants, (size_t)const_idx);
+    Value callee = consttable_get(vm->chunk, (size_t)const_idx);
     if (IS_STRING(callee) && strcmp(AS_CSTRING(callee), "print")==0) {
         for (int i = (int)argc - 1; i >= 0; --i) {
             Value arg = handler_pop(vm);
