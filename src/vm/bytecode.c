@@ -11,6 +11,8 @@
 */
 
 #include "../../include/bytecode.h"
+#include "../../include/value.h"
+#include "../../include/object.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -28,38 +30,23 @@ static void *xrealloc(void *p, size_t s) {
 }
 
 void chunk_init(Chunk *chunk) {
-    chunk->code = NULL;
-    chunk->code_len = 0;
-    chunk->code_cap = 0;
-    consttable_init(&chunk->constants);
+    initChunk(chunk);
 }
 
 void chunk_free(Chunk *chunk) {
-    if (chunk->code) free(chunk->code);
-    chunk->code = NULL;
-    chunk->code_len = 0;
-    chunk->code_cap = 0;
-    consttable_free(&chunk->constants);
+    freeChunk(chunk);
 }
 
-/* ensure capacity */
-static void chunk_ensure(Chunk *chunk, size_t want) {
-    if (chunk->code_cap >= want) return;
-    size_t cap = chunk->code_cap ? chunk->code_cap : 64;
-    while (cap < want) cap *= 2;
-    chunk->code = xrealloc(chunk->code, cap);
-    chunk->code_cap = cap;
-}
+// Re-using common infrastructure
 
 void chunk_write_byte(Chunk *chunk, uint8_t byte) {
-    chunk_ensure(chunk, chunk->code_len + 1);
-    chunk->code[chunk->code_len++] = byte;
+    writeChunk(chunk, byte, 0);
 }
 
 void chunk_write_bytes(Chunk *chunk, const uint8_t *bytes, size_t len) {
-    chunk_ensure(chunk, chunk->code_len + len);
-    memcpy(chunk->code + chunk->code_len, bytes, len);
-    chunk->code_len += len;
+    for (size_t i = 0; i < len; i++) {
+        writeChunk(chunk, bytes[i], 0);
+    }
 }
 
 /* --- emission helpers --- */
@@ -117,41 +104,13 @@ void emit_sleb128(Chunk *chunk, int64_t value) {
 
 /* --- Const table --- */
 
-void consttable_init(ConstTable *tbl) {
-    tbl->items = NULL;
-    tbl->count = 0;
-    tbl->capacity = 0;
-}
-void consttable_free(ConstTable *tbl) {
-    if (!tbl) return;
-    for (size_t i = 0; i < tbl->count; ++i) {
-        if (tbl->items[i].type == VAL_STRING) {
-            free(tbl->items[i].as.string.chars);
-        } else if (tbl->items[i].type == VAL_FUNCTION_PROTO) {
-            /* if we had nested protos, we'd free them */
-        }
+// Constants managed by ValueArray in Chunk
+// Constants managed by ValueArray in Chunk
+Value consttable_get(const Chunk *chunk, size_t idx) {
+    if (idx >= (size_t)chunk->constants.count) {
+        return NIL_VAL;
     }
-    free(tbl->items);
-    tbl->items = NULL;
-    tbl->count = 0;
-    tbl->capacity = 0;
-}
-size_t consttable_add(ConstTable *tbl, Value v) {
-    if (tbl->count + 1 > tbl->capacity) {
-        size_t cap = tbl->capacity ? tbl->capacity * 2 : 8;
-        tbl->items = xrealloc(tbl->items, cap * sizeof(Value));
-        tbl->capacity = cap;
-    }
-    tbl->items[tbl->count] = v;
-    return tbl->count++;
-}
-Value consttable_get(const ConstTable *tbl, size_t idx) {
-    if (idx >= tbl->count) {
-        Value nullv;
-        nullv.type = VAL_NULL;
-        return nullv;
-    }
-    return tbl->items[idx];
+    return chunk->constants.values[idx];
 }
 
 /* --- LEB128 Readers for decoding from buffers --- */
@@ -231,13 +190,11 @@ int write_chunk_to_file(const char *path, const Chunk *chunk) {
     fwrite(&endianness,1,1,f);
     uint8_t reserved = 0;
     fwrite(&reserved,1,1,f);
-    write_u32_le(f, (uint32_t)chunk->code_len);
-    if (chunk->code_len) fwrite(chunk->code,1,chunk->code_len,f);
+    write_u32_le(f, (uint32_t)chunk->count);
+    if (chunk->count) fwrite(chunk->code,1,chunk->count,f);
     /* constants */
     /* write count as uleb128 */
     uint8_t tmp[32];
-    /* create a temp buffer to use emit_uleb128 into and write; reuse chunk emission helpers temporarily */
-    /* We'll encode uleb into tmp */
     uint8_t *p = tmp;
     uint64_t val = chunk->constants.count;
     do {
@@ -247,50 +204,39 @@ int write_chunk_to_file(const char *path, const Chunk *chunk) {
         *p++ = byte;
     } while (val);
     fwrite(tmp,1,(size_t)(p - tmp), f);
-    for (size_t i = 0; i < chunk->constants.count; ++i) {
-        Value c = chunk->constants.items[i];
-        fwrite(&c.type,1,1,f);
-        switch (c.type) {
-            case VAL_NUMBER: {
-                /* 8 byte little-endian double */
-                union { double d; uint64_t u; } u;
-                u.d = c.as.number;
-                uint8_t b[8];
-                b[0] = u.u & 0xFF;
-                b[1] = (u.u>>8)&0xFF;
-                b[2] = (u.u>>16)&0xFF;
-                b[3] = (u.u>>24)&0xFF;
-                b[4] = (u.u>>32)&0xFF;
-                b[5] = (u.u>>40)&0xFF;
-                b[6] = (u.u>>48)&0xFF;
-                b[7] = (u.u>>56)&0xFF;
-                fwrite(b,1,8,f);
-            } break;
-            case VAL_STRING: {
-                /* write length as uleb128 then bytes */
-                size_t len = c.as.string.length;
-                uint8_t tmp2[32];
-                uint8_t *q = tmp2;
-                uint64_t v2 = len;
-                do {
-                    uint8_t byte = v2 & 0x7F;
-                    v2 >>= 7;
-                    if (v2) byte |= 0x80;
-                    *q++ = byte;
-                } while (v2);
-                fwrite(tmp2,1,(size_t)(q - tmp2), f);
-                if (len) fwrite(c.as.string.chars,1,len,f);
-            } break;
-            case VAL_BOOL: {
-                uint8_t b = c.as.boolean ? 1 : 0;
-                fwrite(&b,1,1,f);
-            } break;
-            case VAL_NULL: {
-                /* nothing */
-            } break;
-            default:
-                /* skip unsupported types */
-                break;
+    for (size_t i = 0; i < (size_t)chunk->constants.count; ++i) {
+        Value c = chunk->constants.values[i];
+        uint8_t type = 0; // mapping for serialization
+        if (IS_NIL(c)) type = 1;
+        else if (IS_BOOL(c)) type = 2;
+        else if (IS_NUMBER(c)) type = 3;
+        else if (IS_OBJ(c) && IS_STRING(c)) type = 4;
+        
+        fwrite(&type,1,1,f);
+        if (type == 3) { // VAL_NUMBER equivalent
+            /* 8 byte little-endian double */
+            union { double d; uint64_t u; } u;
+            u.d = AS_NUMBER(c);
+            uint8_t b[8];
+            for (int k=0; k<8; k++) b[k] = (u.u >> (8*k)) & 0xFF;
+            fwrite(b,1,8,f);
+        } else if (type == 4) { // VAL_STRING equivalent
+            /* write length as uleb128 then bytes */
+            size_t len = AS_STRING(c)->length;
+            uint8_t tmp2[32];
+            uint8_t *q = tmp2;
+            uint64_t v2 = len;
+            do {
+                uint8_t byte = v2 & 0x7F;
+                v2 >>= 7;
+                if (v2) byte |= 0x80;
+                *q++ = byte;
+            } while (v2);
+            fwrite(tmp2,1,(size_t)(q - tmp2), f);
+            if (len) fwrite(AS_CSTRING(c),1,len,f);
+        } else if (type == 2) { // VAL_BOOL equivalent
+            uint8_t b = AS_BOOL(c) ? 1 : 0;
+            fwrite(&b,1,1,f);
         }
     }
     fclose(f);
@@ -308,9 +254,9 @@ int read_chunk_from_file(const char *path, Chunk *out) {
     uint16_t ver = verbuf[0] | (verbuf[1]<<8);
     (void)ver;
     uint8_t endianness;
-    fread(&endianness,1,1,f);
+    if (fread(&endianness,1,1,f) != 1) { fclose(f); return -1; }
     uint8_t reserved;
-    fread(&reserved,1,1,f);
+    if (fread(&reserved,1,1,f) != 1) { fclose(f); return -1; }
     uint32_t code_len = read_u32_le(f);
     chunk_init(out);
     if (code_len) {
@@ -343,16 +289,15 @@ int read_chunk_from_file(const char *path, Chunk *out) {
     for (uint64_t i = 0; i < count; ++i) {
         uint8_t type;
         if (fread(&type,1,1,f) != 1) { fclose(f); return -1; }
-        Value v;
-        v.type = (ValueType)type;
-        if (v.type == VAL_NUMBER) {
+        Value v = NIL_VAL;
+        if (type == 3) { // VAL_NUMBER
             uint8_t b[8];
             if (fread(b,1,8,f) != 8) { fclose(f); return -1; }
-            uint64_t u = ((uint64_t)b[0]) | ((uint64_t)b[1]<<8) | ((uint64_t)b[2]<<16) | ((uint64_t)b[3]<<24)
-                       | ((uint64_t)b[4]<<32) | ((uint64_t)b[5]<<40) | ((uint64_t)b[6]<<48) | ((uint64_t)b[7]<<56);
+            uint64_t u = 0;
+            for (int k=0; k<8; k++) u |= ((uint64_t)b[k] << (8*k));
             union { uint64_t u; double d; } uu; uu.u = u;
-            v.as.number = uu.d;
-        } else if (v.type == VAL_STRING) {
+            v = NUMBER_VAL(uu.d);
+        } else if (type == 4) { // VAL_STRING
             /* read uleb128 length */
             uint64_t len = 0;
             unsigned shift = 0;
@@ -363,21 +308,16 @@ int read_chunk_from_file(const char *path, Chunk *out) {
                 if (!(byte & 0x80)) break;
                 shift += 7;
             }
-            v.as.string.length = (uint32_t)len;
-            v.as.string.chars = malloc((size_t)len + 1);
+            char *chars = malloc((size_t)len + 1);
             if (len) {
-                if (fread(v.as.string.chars,1,len,f) != len) { fclose(f); return -1; }
+                if (fread(chars,1,len,f) != len) { free(chars); fclose(f); return -1; }
             }
-            v.as.string.chars[len] = '\0';
-        } else if (v.type == VAL_BOOL) {
+            chars[len] = '\0';
+            v = OBJ_VAL(takeString(chars, (int)len));
+        } else if (type == 2) { // VAL_BOOL
             uint8_t b;
             if (fread(&b,1,1,f) != 1) { fclose(f); return -1; }
-            v.as.boolean = b ? 1 : 0;
-        } else if (v.type == VAL_NULL) {
-            /* nothing */
-        } else {
-            /* unknown type: treat as null and skip */
-            v.type = VAL_NULL;
+            v = BOOL_VAL(b ? 1 : 0);
         }
         consttable_add(&out->constants, v);
     }
@@ -386,38 +326,6 @@ int read_chunk_from_file(const char *path, Chunk *out) {
 }
 
 /* --- Test example serializer in this file (exposed for tests) --- */
-
-/* Helper for creating a string constant */
-Value make_string_const(const char *s) {
-    Value v;
-    v.type = VAL_STRING;
-    size_t len = s ? strlen(s) : 0;
-    v.as.string.length = (uint32_t)len;
-    v.as.string.chars = malloc(len + 1);
-    if (len) memcpy(v.as.string.chars, s, len);
-    v.as.string.chars[len] = '\0';
-    return v;
-}
-
-Value make_number_const(double d) {
-    Value v;
-    v.type = VAL_NUMBER;
-    v.as.number = d;
-    return v;
-}
-
-Value make_bool_const(int b) {
-    Value v;
-    v.type = VAL_BOOL;
-    v.as.boolean = b ? 1 : 0;
-    return v;
-}
-
-Value make_null_const(void) {
-    Value v;
-    v.type = VAL_NULL;
-    return v;
-}
 
 /* Example: create a chunk for "print('Hello World')" as:
    PUSH_CONST 0  ; "Hello World" at const 0
@@ -428,8 +336,8 @@ int example_write_hello(const char *path) {
     Chunk c;
     chunk_init(&c);
     /* Constants: 0 -> "Hello World", 1 -> symbol 'print' (we'll encode as a string for test) */
-    size_t s0 = consttable_add(&c.constants, make_string_const("Hello, World!"));
-    size_t s1 = consttable_add(&c.constants, make_string_const("print"));
+    size_t s0 = addConstant(&c, OBJ_VAL(copyString("Hello, World!", 13)));
+    size_t s1 = addConstant(&c, OBJ_VAL(copyString("print", 5)));
     (void)s0; (void)s1;
 
     /* Emit instructions */
@@ -438,8 +346,6 @@ int example_write_hello(const char *path) {
     /* CALL: addressing mode const (AM_CONST), const idx = 1, argc = 1 */
     emit_opcode(&c, OP_CALL);
     emit_u8(&c, AM_CONST);
-    emit_uleb128(&c, 1);
-    emit_u8(&c, 1);
     emit_opcode(&c, OP_HALT);
 
     int rc = write_chunk_to_file(path, &c);
@@ -451,8 +357,8 @@ int example_write_hello(const char *path) {
 int example_create_hello_blob(uint8_t **out_buf, size_t *out_len) {
     Chunk c;
     chunk_init(&c);
-    consttable_add(&c.constants, make_string_const("Hello, Blob!"));
-    consttable_add(&c.constants, make_string_const("print"));
+    addConstant(&c, OBJ_VAL(copyString("Hello, Blob!", 12)));
+    addConstant(&c, OBJ_VAL(copyString("print", 5)));
     emit_opcode(&c, OP_PUSH_CONST);
     emit_uleb128(&c, 0);
     emit_opcode(&c, OP_CALL);
@@ -468,16 +374,16 @@ int example_create_hello_blob(uint8_t **out_buf, size_t *out_len) {
     memcpy(header, "PROX",4);
     header[4] = 1; header[5] = 0; /* version */
     header[6] = 1; header[7] = 0;
-    uint32_t code_len = (uint32_t)c.code_len;
+    uint32_t code_len = (uint32_t)c.count;
     header[8] = code_len & 0xFF;
     header[9] = (code_len>>8)&0xFF;
     header[10] = (code_len>>16)&0xFF;
     header[11] = (code_len>>24)&0xFF;
-    size_t estimated = 12 + c.code_len + 16 + 64;
+    size_t estimated = 12 + c.count + 16 + 64;
     uint8_t *buf = malloc(estimated);
     size_t pos = 0;
     memcpy(buf + pos, header, 12); pos += 12;
-    if (c.code_len) { memcpy(buf + pos, c.code, c.code_len); pos += c.code_len; }
+    if (c.count) { memcpy(buf + pos, c.code, c.count); pos += c.count; }
     /* constants count uleb */
     uint64_t cc = c.constants.count;
     do {
@@ -486,26 +392,31 @@ int example_create_hello_blob(uint8_t **out_buf, size_t *out_len) {
         if (cc) b |= 0x80;
         buf[pos++] = b;
     } while (cc);
-    for (size_t i = 0; i < c.constants.count; ++i) {
-        Value v = c.constants.items[i];
-        buf[pos++] = (uint8_t)v.type;
-        if (v.type == VAL_STRING) {
-            /* length uleb */
-            uint64_t len = v.as.string.length;
+    for (size_t i = 0; i < (size_t)c.constants.count; ++i) {
+        Value v = c.constants.values[i];
+        uint8_t type = 0;
+        if (IS_NIL(v)) type = 1;
+        else if (IS_BOOL(v)) type = 2;
+        else if (IS_NUMBER(v)) type = 3;
+        else if (IS_OBJ(v) && IS_STRING(v)) type = 4;
+        
+        buf[pos++] = type;
+        if (type == 4) { // String
+            uint64_t len = AS_STRING(v)->length;
             do {
                 uint8_t b = len & 0x7F;
                 len >>= 7;
                 if (len) b |= 0x80;
                 buf[pos++] = b;
             } while (len);
-            memcpy(buf + pos, v.as.string.chars, v.as.string.length); pos += v.as.string.length;
-        } else if (v.type == VAL_NUMBER) {
-            union { double d; uint64_t u; } u; u.d = v.as.number;
-            for (int k=0;k<8;k++) { buf[pos++] = (u.u >> (8*k)) & 0xFF; }
-        } else if (v.type == VAL_BOOL) {
-            buf[pos++] = v.as.boolean ? 1 : 0;
-        } else if (v.type == VAL_NULL) {
-            /* nothing */
+            memcpy(buf + pos, AS_CSTRING(v), AS_STRING(v)->length); 
+            pos += AS_STRING(v)->length;
+        } else if (type == 3) { // Number
+            union { double d; uint64_t u; } u; 
+            u.d = AS_NUMBER(v);
+            for (int k=0; k<8; k++) { buf[pos++] = (u.u >> (8*k)) & 0xFF; }
+        } else if (type == 2) { // Bool
+            buf[pos++] = AS_BOOL(v) ? 1 : 0;
         }
     }
     *out_buf = buf;

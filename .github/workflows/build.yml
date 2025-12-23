@@ -68,37 +68,33 @@ jobs:
           $searchPaths = @(
             "C:\Program Files\LLVM\lib\cmake\llvm",
             "C:\Program Files (x86)\LLVM\lib\cmake\llvm",
-            "C:\llvm\lib\cmake\llvm"
+            "C:\llvm\lib\cmake\llvm",
+            "C:\Program Files\LLVM\lib\cmake",
+            "C:\Program Files (x86)\LLVM\lib\cmake"
           )
           $llvmDir = ""
           foreach ($path in $searchPaths) {
-            if (Test-Path "$path\LLVMConfig.cmake") {
-              $llvmDir = $path
-              break
-            }
-          }
-          if ($llvmDir -eq "") {
-            # Try one level up if not found in specialized cmake dir
-            $searchPaths = @(
-              "C:\Program Files\LLVM\lib\cmake",
-              "C:\Program Files (x86)\LLVM\lib\cmake",
-              "C:\llvm\lib\cmake"
-            )
-            foreach ($path in $searchPaths) {
-              if (Test-Path "$path\llvm\LLVMConfig.cmake") {
-                $llvmDir = "$path\llvm"
-                break
-              }
-            }
+            if (Test-Path "$path\LLVMConfig.cmake") { $llvmDir = $path; break }
+            if (Test-Path "$path\llvm\LLVMConfig.cmake") { $llvmDir = "$path\llvm"; break }
           }
           
+          if ($llvmDir -eq "") {
+            # Try to find clang or llvm-config in PATH
+            $clang = Get-Command clang -ErrorAction SilentlyContinue
+            if ($clang) {
+              $llvmRoot = (Get-Item $clang.Source).Directory.Parent.FullName
+              $trial = "$llvmRoot\lib\cmake\llvm"
+              if (Test-Path "$trial\LLVMConfig.cmake") { $llvmDir = $trial }
+            }
+          }
+
           if ($llvmDir) {
             $llvmPrefix = (Get-Item $llvmDir).Parent.Parent.FullName
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmPrefix"
             Write-Host "Found LLVM at $llvmDir"
           } else {
-            Write-Error "LLVM not found in standard paths. Failing fast instead of hanging on recursive search."
+            Write-Error "LLVM not found in standard paths or via PATH. Failing fast."
             exit 1
           }
 

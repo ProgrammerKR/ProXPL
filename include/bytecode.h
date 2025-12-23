@@ -69,4 +69,8 @@ void freeChunk(Chunk *chunk);
 void writeChunk(Chunk *chunk, uint8_t byte, int line);
 int addConstant(Chunk *chunk, Value value);
 
+// File serialization
+int write_chunk_to_file(const char *path, const Chunk *chunk);
+int read_chunk_from_file(const char *path, Chunk *out);
+
 #endif // PROX_BYTECODE_H

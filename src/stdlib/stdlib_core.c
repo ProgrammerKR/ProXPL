@@ -12,6 +12,7 @@
 
 #include "../include/common.h"
 #include "../include/vm.h"
+#include "../include/object.h"
 
 // Forward declarations for module creators
 ObjModule* create_std_io_module();
@@ -43,6 +44,9 @@ void registerStdLib(VM* vm) {
     registerModule(vm, "std.io", create_std_io_module());
     registerModule(vm, "std.fs", create_std_fs_module());
     registerModule(vm, "std.sys", create_std_sys_module());
+    
+    // std.core creator is usually registered as std.core
+    extern ObjModule* create_std_core_module();
     registerModule(vm, "std.core", create_std_core_module());
 
     // Legacy (Global Scope) - keep for now or refactor later
