@@ -47,14 +47,14 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            LLVM_CMAKE_DIR=$(llvm-config --cmakedir | sed 's/\\/\//g')
-            LLVM_ROOT_DIR=$(llvm-config --prefix | sed 's/\\/\//g')
+            LLVM_CMAKE_DIR="$LLVM_DIR"
+            LLVM_ROOT_DIR="$LLVM_ROOT"
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             LLVM_CMAKE_DIR=$(brew --prefix llvm)/lib/cmake/llvm
             LLVM_ROOT_DIR=$(brew --prefix llvm)
           else
-            LLVM_CMAKE_DIR=/usr/lib/llvm-18/lib/cmake/llvm
-            LLVM_ROOT_DIR=/usr/lib/llvm-18
+            LLVM_CMAKE_DIR=$(llvm-config --cmakedir)
+            LLVM_ROOT_DIR=$(llvm-config --prefix)
           fi
           
           cmake -S . -B build \
