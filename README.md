@@ -583,7 +583,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and [CODE
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the ProXPL Professional License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
