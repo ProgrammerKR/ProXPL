@@ -19,8 +19,8 @@ typedef struct {
 } Local;
 
 typedef enum {
-  COMP_COMP_TYPE_FUNCTION,
-  COMP_COMP_TYPE_SCRIPT
+  COMP_TYPE_FUNCTION,
+  COMP_TYPE_SCRIPT
 } CompFunctionType;
 
 typedef struct Compiler {
@@ -124,7 +124,7 @@ static void emitConstant(Value value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
-static void initCompiler(Compiler* compiler, FunctionType type) {
+static void initCompiler(Compiler* compiler, CompFunctionType type) {
   compiler->enclosing = current;
   compiler->function = NULL;
   compiler->type = type;

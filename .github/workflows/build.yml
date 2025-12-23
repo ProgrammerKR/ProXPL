@@ -47,28 +47,20 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            # Use PowerShell to find LLVM if possible, or fallback to known path
-            LLVM_ROOT_DIR="C:/Program Files/LLVM"
-            LLVM_CMAKE_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+            # We'll run the windows config in a separate powershell step for better path handling
+            echo "Skipping bash config for Windows"
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             LLVM_CMAKE_DIR=$(brew --prefix llvm)/lib/cmake/llvm
             LLVM_ROOT_DIR=$(brew --prefix llvm)
-          else
-            LLVM_CMAKE_DIR=$(llvm-config --cmakedir)
-            LLVM_ROOT_DIR=$(llvm-config --prefix)
-          fi
-          
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            # Using absolute paths with forward slashes for CMake on Windows
-            LLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
-            CMAKE_PREFIX_PATH="C:/Program Files/LLVM"
             cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
               -DBUILD_TESTS=OFF \
               -DBUILD_BENCH=OFF \
-              -DLLVM_DIR="$LLVM_DIR" \
-              -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH"
+              -DLLVM_DIR="$LLVM_CMAKE_DIR" \
+              -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
           else
+            LLVM_CMAKE_DIR=$(llvm-config --cmakedir)
+            LLVM_ROOT_DIR=$(llvm-config --prefix)
             cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
               -DBUILD_TESTS=OFF \
@@ -76,6 +68,34 @@ jobs:
               -DLLVM_DIR="$LLVM_CMAKE_DIR" \
               -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
           fi
+
+      - name: Locate LLVM (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $llvmConfig = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\llvm" -Filter LLVMConfig.cmake -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($llvmConfig) {
+            $llvmDir = $llvmConfig.DirectoryName
+            $llvmPrefix = $llvmConfig.Directory.Parent.Parent.FullName # Assuming lib/cmake/llvm structure
+            Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
+            Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmPrefix"
+            Write-Host "Found LLVM at $llvmDir"
+          } else {
+            Write-Host "Warning: LLVMConfig.cmake not found in standard locations."
+          }
+
+      - name: Configure (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $llvm_dir = if ($env:LLVM_DIR) { $env:LLVM_DIR } else { "C:/Program Files/LLVM/lib/cmake/llvm" }
+          $cmake_prefix = if ($env:LLVM_ROOT) { $env:LLVM_ROOT } else { "C:/Program Files/LLVM" }
+          cmake -S . -B build `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DBUILD_TESTS=OFF `
+            -DBUILD_BENCH=OFF `
+            -DLLVM_DIR="$llvm_dir" `
+            -DCMAKE_PREFIX_PATH="$cmake_prefix"
 
       - name: Build (verbose)
         shell: bash
