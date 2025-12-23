@@ -49,6 +49,7 @@ jobs:
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             LLVM_CMAKE_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
             LLVM_ROOT_DIR="C:/Program Files/LLVM"
+            echo "LLVM_DIR=C:/Program Files/LLVM/lib/cmake/llvm" >> $GITHUB_ENV
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             LLVM_CMAKE_DIR=$(brew --prefix llvm)/lib/cmake/llvm
             LLVM_ROOT_DIR=$(brew --prefix llvm)

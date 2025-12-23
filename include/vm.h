@@ -15,11 +15,7 @@
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * 256)
 
-struct CallFrame {
-  ObjFunction* function;
-  uint8_t* ip;
-  Value* slots;
-};
+// CallFrame is now defined in common.h
 
 struct VM {
   CallFrame frames[FRAMES_MAX];
