@@ -32,28 +32,6 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
     pop(&vm);
 }
 
-// --- Macro Compatibility Layer (CRITICAL FIX) ---
-// This ensures that your MAKE_ macros return the correct 'Value' struct
-// and not an integer, preventing Windows build errors.
-
-#ifndef NIL_VAL
- #define NIL_VAL ((Value){VAL_NIL, { .number = 0 }})
-#endif
-
-#ifndef BOOL_VAL
- #define BOOL_VAL(value) ((Value){VAL_BOOL, { .boolean = value }})
-#endif
-
-#undef MAKE_NULL
-#define MAKE_NULL() NIL_VAL
-
-#undef MAKE_BOOL
-#define MAKE_BOOL(x) BOOL_VAL(x)
-
-#undef MAKE_OBJ
-#define MAKE_OBJ(x) ((Value){VAL_OBJ, { .obj = (Obj*)(x) }})
-// ------------------------------------------------
-
 // print(...) - Print values to stdout
 static Value native_print(int argCount, Value* args) {
     for (int i = 0; i < argCount; i++) {
@@ -61,7 +39,7 @@ static Value native_print(int argCount, Value* args) {
         if (i < argCount - 1) printf(" ");
     }
     printf("\n");
-    return MAKE_NULL();
+    return NIL_VAL;
 }
 
 // input(prompt) - Read line from stdin
@@ -78,10 +56,10 @@ static Value native_input(int argCount, Value* args) {
             buffer[len-1] = '\0';
             len--;
         }
-        return MAKE_OBJ(copyString(buffer, (int)len));
+        return OBJ_VAL(copyString(buffer, (int)len));
     }
     
-    return MAKE_NULL();
+    return NIL_VAL;
 }
 
 
