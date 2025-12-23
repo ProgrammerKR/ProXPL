@@ -56,9 +56,17 @@ struct ValueArray {
   Value *values;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void initValueArray(ValueArray *array);
 void writeValueArray(ValueArray *array, Value value);
 void freeValueArray(ValueArray *array);
 void printValue(Value value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PROX_VALUE_H

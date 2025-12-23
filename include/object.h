@@ -70,6 +70,10 @@ struct ObjModule {
   Table exports; // Symbols exported by this module
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
 ObjFunction *newFunction();
@@ -80,5 +84,9 @@ void printObject(Value value);
 static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PROX_OBJECT_H

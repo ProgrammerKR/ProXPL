@@ -73,7 +73,7 @@ public:
         // Pass 1: Create all blocks
         for (int i = 0; i < func->blockCount; i++) {
             char name[64];
-            sprintf(name, "block%d", func->blocks[i]->id);
+            snprintf(name, sizeof(name), "block%d", func->blocks[i]->id);
             blockMap[func->blocks[i]] = llvm::BasicBlock::Create(*Context, name, F);
         }
 

@@ -93,6 +93,10 @@ typedef struct IRModule {
     int funcCapacity;
 } IRModule;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Constructor functions
 IRModule* createIRModule();
 IRFunction* createIRFunction(const char* name);
@@ -103,5 +107,9 @@ void addOperand(IRInstruction* instr, IROperand op);
 void computeCFGLinks(IRFunction* func);
 void dumpIR(IRModule* module);
 void freeIRModule(IRModule* module);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PROX_IR_H
