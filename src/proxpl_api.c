@@ -60,6 +60,7 @@ void proxpl_vm_free(VM *vm) {
 }
 
 InterpretResult proxpl_interpret_chunk(VM *vm, const Chunk *chunk) {
+    (void)vm; (void)chunk;
     // ERROR: The standard VM interprets Source Code strings, not raw Chunks.
     // To support this, you would need to expose the internal run() function.
     fprintf(stderr, "API Error: interpreting raw chunks is not supported in this version.\n");
@@ -80,11 +81,13 @@ InterpretResult proxpl_interpret_file(VM *vm, const char *path) {
 // These functions are STUBBED because bytecode.c was deleted.
 // You must re-implement binary serialization later if you need it.
 int proxpl_write_chunk_to_file(const char *path, const Chunk *chunk) {
+    (void)path; (void)chunk;
     fprintf(stderr, "Feature 'write_chunk_to_file' is temporarily disabled.\n");
     return -1;
 }
 
 int proxpl_read_chunk_from_file(const char *path, Chunk *out) {
+    (void)path; (void)out;
     fprintf(stderr, "Feature 'read_chunk_from_file' is temporarily disabled.\n");
     return -1;
 }

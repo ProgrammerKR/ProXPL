@@ -43,60 +43,66 @@ jobs:
           echo "LLVM_DIR=C:/Program Files/LLVM/lib/cmake/llvm" >> $GITHUB_ENV
           echo "LLVM_ROOT=C:/Program Files/LLVM" >> $GITHUB_ENV
 
-      - name: Configure
+      - name: Configure (non-Windows)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            # We'll run the windows config in a separate powershell step for better path handling
-            echo "Skipping bash config for Windows"
-          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
             LLVM_CMAKE_DIR=$(brew --prefix llvm)/lib/cmake/llvm
             LLVM_ROOT_DIR=$(brew --prefix llvm)
-            cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-              -DBUILD_TESTS=OFF \
-              -DBUILD_BENCH=OFF \
-              -DLLVM_DIR="$LLVM_CMAKE_DIR" \
-              -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
           else
             LLVM_CMAKE_DIR=$(llvm-config --cmakedir)
             LLVM_ROOT_DIR=$(llvm-config --prefix)
-            cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-              -DBUILD_TESTS=OFF \
-              -DBUILD_BENCH=OFF \
-              -DLLVM_DIR="$LLVM_CMAKE_DIR" \
-              -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
           fi
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_BENCH=OFF \
+            -DLLVM_DIR="$LLVM_CMAKE_DIR" \
+            -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
 
       - name: Locate LLVM (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $llvmConfig = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\llvm" -Filter LLVMConfig.cmake -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($llvmConfig) {
-            $llvmDir = $llvmConfig.DirectoryName
-            $llvmPrefix = $llvmConfig.Directory.Parent.Parent.FullName # Assuming lib/cmake/llvm structure
+          $paths = @(
+            "C:\Program Files\LLVM\lib\cmake\llvm",
+            "C:\llvm\lib\cmake\llvm",
+            "C:\Program Files (x86)\LLVM\lib\cmake\llvm"
+          )
+          $llvmDir = ""
+          foreach ($path in $paths) {
+            if (Test-Path "$path\LLVMConfig.cmake") {
+              $llvmDir = $path
+              break
+            }
+          }
+          if ($llvmDir -eq "") {
+              Write-Host "Searching recursively as fallback..."
+              $llvmConfig = Get-ChildItem -Path "C:\Program Files\LLVM", "C:\llvm" -Filter LLVMConfig.cmake -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($llvmConfig) { $llvmDir = $llvmConfig.DirectoryName }
+          }
+          if ($llvmDir) {
+            $llvmPrefix = (Get-Item $llvmDir).Parent.Parent.FullName
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmPrefix"
             Write-Host "Found LLVM at $llvmDir"
           } else {
-            Write-Host "Warning: LLVMConfig.cmake not found in standard locations."
+            Write-Error "LLVM not found!"
+            exit 1
           }
 
       - name: Configure (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $llvm_dir = if ($env:LLVM_DIR) { $env:LLVM_DIR } else { "C:/Program Files/LLVM/lib/cmake/llvm" }
-          $cmake_prefix = if ($env:LLVM_ROOT) { $env:LLVM_ROOT } else { "C:/Program Files/LLVM" }
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
             -DBUILD_TESTS=OFF `
             -DBUILD_BENCH=OFF `
-            -DLLVM_DIR="$llvm_dir" `
-            -DCMAKE_PREFIX_PATH="$cmake_prefix"
+            -DLLVM_DIR="$env:LLVM_DIR" `
+            -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
 
-      - name: Build (verbose)
+      - name: Build
         shell: bash
         run: cmake --build build --verbose

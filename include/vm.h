@@ -52,6 +52,8 @@ InterpretResult interpret(VM* vm, const char* source);
 InterpretResult interpretAST(VM* vm, StmtList* statements);
 void push(VM* vm, Value value);
 Value pop(VM* vm);
+Value peek(VM* vm, int distance);
+bool isFalsey(Value value);
 void defineNative(VM* vm, const char* name, NativeFn function);
 
 #endif // PROX_VM_H

@@ -82,11 +82,11 @@ Value pop(VM* pvm) {
   return *pvm->stackTop;
 }
 
-static Value peek(VM* pvm, int distance) {
+Value peek(VM* pvm, int distance) {
   return pvm->stackTop[-1 - distance];
 }
 
-static bool isFalsey(Value value) {
+bool isFalsey(Value value) {
   return IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 

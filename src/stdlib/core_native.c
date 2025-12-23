@@ -58,19 +58,20 @@ static Value core_typeOf(int argCount, Value* args) {
     Value v = args[0];
     const char* typeStr = "unknown";
     
-    switch (v.type) {
-        case VAL_BOOL: typeStr = "bool"; break;
-        case VAL_NIL: typeStr = "nil"; break;
-        case VAL_NUMBER: typeStr = "number"; break;
-        case VAL_OBJ:
-            switch (OBJ_TYPE(v)) {
-                case OBJ_STRING: typeStr = "string"; break;
-                case OBJ_FUNCTION: typeStr = "function"; break;
-                case OBJ_NATIVE: typeStr = "native"; break;
-                case OBJ_MODULE: typeStr = "module"; break;
-                default: typeStr = "object"; break;
-            }
-            break;
+    if (IS_BOOL(v)) {
+        typeStr = "bool";
+    } else if (IS_NIL(v)) {
+        typeStr = "nil";
+    } else if (IS_NUMBER(v)) {
+        typeStr = "number";
+    } else if (IS_OBJ(v)) {
+        switch (OBJ_TYPE(v)) {
+            case OBJ_STRING: typeStr = "string"; break;
+            case OBJ_FUNCTION: typeStr = "function"; break;
+            case OBJ_NATIVE: typeStr = "native"; break;
+            case OBJ_MODULE: typeStr = "module"; break;
+            default: typeStr = "object"; break;
+        }
     }
     
     return OBJ_VAL(copyString(typeStr, (int)strlen(typeStr)));
