@@ -47,9 +47,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            LLVM_CMAKE_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+            # Use PowerShell to find LLVM if possible, or fallback to known path
             LLVM_ROOT_DIR="C:/Program Files/LLVM"
-            echo "LLVM_DIR=C:/Program Files/LLVM/lib/cmake/llvm" >> $GITHUB_ENV
+            LLVM_CMAKE_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             LLVM_CMAKE_DIR=$(brew --prefix llvm)/lib/cmake/llvm
             LLVM_ROOT_DIR=$(brew --prefix llvm)
@@ -58,12 +58,21 @@ jobs:
             LLVM_ROOT_DIR=$(llvm-config --prefix)
           fi
           
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_BENCH=OFF \
-            -DLLVM_DIR="$LLVM_CMAKE_DIR" \
-            -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cmake -S . -B build \
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+              -DBUILD_TESTS=OFF \
+              -DBUILD_BENCH=OFF \
+              -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm" \
+              -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM"
+          else
+            cmake -S . -B build \
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+              -DBUILD_TESTS=OFF \
+              -DBUILD_BENCH=OFF \
+              -DLLVM_DIR="$LLVM_CMAKE_DIR" \
+              -DCMAKE_PREFIX_PATH="$LLVM_ROOT_DIR"
+          fi
 
       - name: Build (verbose)
         shell: bash

@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-/* proxpl_api.c - public API wrappers for stable ABI */
-=======
 // --------------------------------------------------
 //   Project: ProX Programming Language (ProXPL)
 //   Author:  ProgrammerKR
@@ -10,7 +7,6 @@
 /* proxpl_api.c - public API wrappers for stable ABI
  * Exposes a minimal C-style API that callers can use to embed runtime.
  */
->>>>>>> feature/opcode-tests
 
 #include <stdio.h>
 #include <stdlib.h>
