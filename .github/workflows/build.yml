@@ -87,23 +87,37 @@ jobs:
           } else {
             Write-Error "LLVM not found on Windows after installation."
             if (Test-Path $llvmRoot) {
-               Write-Host "Listing $llvmRoot recursively (depth 3) for debugging:"
-               Get-ChildItem -Path $llvmRoot -Recurse -Depth 3 | Select-Object FullName
-            }
+                Write-Host "Listing $llvmRoot recursively (depth 5) for debugging:"
+                Get-ChildItem -Path $llvmRoot -Recurse -Depth 5 | Select-Object FullName
+             } else {
+                Write-Host "PATH $llvmRoot DOES NOT EXIST"
+                Write-Host "Listing C:\Program Files recursively (Depth 2) to find where LLVM is:"
+                Get-ChildItem -Path "C:\Program Files" -Recurse -Depth 2 | Select-Object FullName
+             }
             exit 1
           }
+
+      - name: Configure (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_BENCH=OFF
 
       - name: Configure (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           cmake -S . -B build `
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-            -DBUILD_TESTS=OFF `
-            -DBUILD_BENCH=OFF `
-            -DLLVM_DIR="$env:LLVM_DIR" `
-            -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
+             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+             -DBUILD_TESTS=OFF `
+             -DBUILD_BENCH=OFF `
+             -DLLVM_DIR="$env:LLVM_DIR" `
+             -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
 
       - name: Build
+
         shell: bash
         run: cmake --build build --verbose
