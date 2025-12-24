@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../include/lexer.h"
+#include <string.h>
+#include "../include/common.h"
+#include "../include/scanner.h"
 #include "../include/parser.h"
-#include "../include/ir.h"
-#include "../include/ir_opt.h"
+#include "../include/compiler.h"
 #include "../include/backend_llvm.h"
 #include "../include/vm.h"
 
 VM vm;
 
 int main() {
-    initVM();
+    initVM(&vm);
     
     const char* source = 
         "let x = 10;\n"
@@ -27,11 +28,30 @@ int main() {
     
     printf("Testing Source:\n%s\n", source);
     
+    // 1. Tokenize
+    Scanner scanner;
+    initScanner(&scanner, source);
+    Token tokens[4096];
+    int tokenCount = 0;
+    
+    for (;;) {
+        Token token = scanToken(&scanner);
+        tokens[tokenCount++] = token;
+        if (token.type == TOKEN_EOF) break;
+        if (token.type == TOKEN_ERROR) {
+            fprintf(stderr, "Scan Error: %.*s\n", token.length, token.start);
+            return 1;
+        }
+    }
+    
+    // 2. Parse
     Parser parser;
-    initParser(&parser, source);
+    initParser(&parser, tokens, tokenCount);
     StmtList* program = parse(&parser);
     
     if (program) {
+        printf("Parsed successfully.\n");
+        
         IRModule* ir = generateSSA_IR(program);
         
         for (int i = 0; i < ir->funcCount; i++) {
@@ -41,12 +61,15 @@ int main() {
         }
         
         printf("Generated LLVM IR:\n");
+        // emitLLVM is defined in backend_llvm.cpp and exposed via extern "C"
         emitLLVM(ir);
         
         freeIRModule(ir);
-        // Free program, etc.
+        freeStmtList(program);
+    } else {
+        printf("Parse failed.\n");
     }
     
-    freeVM();
+    freeVM(&vm);
     return 0;
 }

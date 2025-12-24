@@ -28,7 +28,7 @@ static void resetStack(VM *pvm) {
 void initVM(VM *pvm) { 
     resetStack(pvm);
     pvm->objects = NULL;
-    initGC(pvm); // CRITICAL: Initialize GC state
+    gc_init(pvm); // CRITICAL: Initialize GC state
     initTable(&pvm->globals);
     initTable(&pvm->strings);
     pvm->source = NULL;

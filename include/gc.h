@@ -6,7 +6,7 @@
 #include "vm.h"
 
 // Initialize GC state
-void initGC(VM* vm);
+void gc_init(VM* vm);
 
 // Free all objects (called at VM shutdown)
 void freeObjects(VM* vm);
