@@ -122,10 +122,10 @@ typedef enum {
 
   TOKEN_ERROR,
   TOKEN_EOF
-} TokenType;
+} PxTokenType;
 
 typedef struct {
-  TokenType type;
+  PxTokenType type;
   const char *start;
   int length;
   int line;

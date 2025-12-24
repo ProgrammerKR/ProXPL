@@ -50,9 +50,9 @@ static bool isAtEnd(Parser *p);
 static Token peek(Parser *p);
 static Token previous(Parser *p);
 static Token advance(Parser *p);
-static bool check(Parser *p, TokenType type);
+static bool check(Parser *p, PxTokenType type);
 static bool match(Parser *p, int count, ...);
-static Token consume(Parser *p, TokenType type, const char *message);
+static Token consume(Parser *p, PxTokenType type, const char *message);
 static void synchronize(Parser *p);
 
 // === Initialization ===
@@ -82,7 +82,7 @@ static Token advance(Parser *p) {
   return previous(p);
 }
 
-static bool check(Parser *p, TokenType type) {
+static bool check(Parser *p, PxTokenType type) {
   if (isAtEnd(p))
     return false;
   return peek(p).type == type;
@@ -93,7 +93,7 @@ static bool match(Parser *p, int count, ...) {
   va_start(args, count);
 
   for (int i = 0; i < count; i++) {
-    TokenType type = va_arg(args, TokenType);
+    PxTokenType type = va_arg(args, PxTokenType);
     if (check(p, type)) {
       advance(p);
       va_end(args);
@@ -105,7 +105,7 @@ static bool match(Parser *p, int count, ...) {
   return false;
 }
 
-static Token consume(Parser *p, TokenType type, const char *message) {
+static Token consume(Parser *p, PxTokenType type, const char *message) {
   if (check(p, type))
     return advance(p);
   parserError(p, message);

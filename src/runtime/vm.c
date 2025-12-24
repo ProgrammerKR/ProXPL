@@ -491,12 +491,12 @@ InterpretResult interpret(VM* pvm, const char* source) {
   return result;
 }
 
-void defineNative(const char* name, NativeFn function) {
-  push(&vm, OBJ_VAL(copyString(name, (int)strlen(name))));
-  push(&vm, OBJ_VAL(newNative(function)));
-  tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
-  pop(&vm);
-  pop(&vm);
+void defineNative(VM* vm, const char* name, NativeFn function) {
+  push(vm, OBJ_VAL(copyString(name, (int)strlen(name))));
+  push(vm, OBJ_VAL(newNative(function)));
+  tableSet(&vm->globals, AS_STRING(vm->stackTop[-2]), vm->stackTop[-1]);
+  pop(vm);
+  pop(vm);
 }
 
 InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {

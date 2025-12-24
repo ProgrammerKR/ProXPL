@@ -77,7 +77,7 @@ static void advance() {
   }
 }
 
-static void consume(TokenType type, const char* message) {
+static void consume(PxTokenType type, const char* message) {
   if (compParser.current.type == type) {
     advance();
     return;
@@ -86,11 +86,11 @@ static void consume(TokenType type, const char* message) {
   errorAtCurrent(message);
 }
 
-static bool check(TokenType type) {
+static bool check(PxTokenType type) {
   return compParser.current.type == type;
 }
 
-static bool match(TokenType type) {
+static bool match(PxTokenType type) {
   if (!check(type)) return false;
   advance();
   return true;
@@ -156,7 +156,7 @@ static ObjFunction* endCompiler() {
 static void expression();
 static void statement();
 static void declaration();
-static ParseRule* getRule(TokenType type);
+static ParseRule* getRule(PxTokenType type);
 static void parsePrecedence(Precedence precedence);
 
 static uint8_t identifierConstant(Token* name) {
@@ -255,7 +255,7 @@ static void variable(bool canAssign) {
 
 static void binary(bool canAssign) {
   (void)canAssign;
-  TokenType operatorType = compParser.previous.type;
+  PxTokenType operatorType = compParser.previous.type;
   ParseRule* rule = getRule(operatorType);
   parsePrecedence((Precedence)(rule->precedence + 1));
 
@@ -304,7 +304,7 @@ static void string(bool canAssign) {
 
 static void unary(bool canAssign) {
   (void)canAssign;
-  TokenType operatorType = compParser.previous.type;
+  PxTokenType operatorType = compParser.previous.type;
   parsePrecedence(PREC_UNARY);
 
   switch (operatorType) {
@@ -379,7 +379,7 @@ static void parsePrecedence(Precedence precedence) {
   }
 }
 
-static ParseRule* getRule(TokenType type) {
+static ParseRule* getRule(PxTokenType type) {
   return &rules[type];
 }
 

@@ -88,7 +88,7 @@ static void skipWhitespace(Scanner *scanner) {
   }
 }
 
-static Token makeToken(Scanner *scanner, TokenType type) {
+static Token makeToken(Scanner *scanner, PxTokenType type) {
   Token token;
   token.type = type;
   token.start = scanner->start;
@@ -134,8 +134,8 @@ static Token number(Scanner *scanner) {
   return makeToken(scanner, TOKEN_NUMBER);
 }
 
-static TokenType checkKeyword(Scanner *scanner, int start, int length,
-                              const char *rest, TokenType type) {
+static PxTokenType checkKeyword(Scanner *scanner, int start, int length,
+                              const char *rest, PxTokenType type) {
   if (scanner->current - scanner->start == start + length &&
       memcmp(scanner->start + start, rest, length) == 0) {
     return type;
@@ -143,7 +143,7 @@ static TokenType checkKeyword(Scanner *scanner, int start, int length,
   return TOKEN_IDENTIFIER;
 }
 
-static TokenType identifierType(Scanner *scanner) {
+static PxTokenType identifierType(Scanner *scanner) {
   switch (scanner->start[0]) {
   case 'a':
     if (scanner->current - scanner->start > 1) {
