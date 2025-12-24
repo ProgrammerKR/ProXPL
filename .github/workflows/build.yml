@@ -84,6 +84,12 @@ jobs:
             }
           }
           
+          # 5. HARDCODED FALLBACK: We know it exists here on the runner!
+          if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
+             $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
+             Write-Host "Forcing LLVM_DIR to known path: $llvmDir"
+          }
+          
           if ($llvmDir) {
             $llvmDir = $llvmDir -replace "\\", "/"
             $llvmRoot = $llvmRoot -replace "\\", "/"

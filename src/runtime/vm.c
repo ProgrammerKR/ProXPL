@@ -51,7 +51,7 @@ static void runtimeError(VM* pvm, const char* format, ...) {
   va_end(args);
 
   CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
-  ObjFunction* function = frame->function;
+  ObjFunction* function = frame->closure->function;
   size_t instruction = frame->ip - function->chunk.code - 1;
   int line = function->chunk.lines[instruction];
 
@@ -59,7 +59,7 @@ static void runtimeError(VM* pvm, const char* format, ...) {
 
   for (int i = pvm->frameCount - 1; i >= 0; i--) {
     CallFrame* frame = &pvm->frames[i];
-    ObjFunction* function = frame->function;
+    ObjFunction* function = frame->closure->function;
     size_t instruction = frame->ip - function->chunk.code - 1;
     fprintf(stderr, "  [line %d] in ", function->chunk.lines[instruction]);
     if (function->name == NULL) {
@@ -111,7 +111,7 @@ static InterpretResult run(VM *vm) {
 
 #define READ_BYTE() (*frame->ip++)
 #define READ_SHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
-#define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
+#define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 
 #ifdef __GNUC__
@@ -455,9 +455,14 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   generateBytecode(statements, &function->chunk);
   
   // Setup for execution
+  // Setup for execution
   push(pvm, OBJ_VAL(function));
+  ObjClosure* closure = newClosure(function);
+  pop(pvm);
+  push(pvm, OBJ_VAL(closure));
+  
   CallFrame* frame = &pvm->frames[pvm->frameCount++];
-  frame->function = function;
+  frame->closure = closure;
   frame->ip = function->chunk.code;
   frame->slots = pvm->stack;
 
@@ -472,8 +477,12 @@ InterpretResult interpret(VM* pvm, const char* source) {
   if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
   push(pvm, OBJ_VAL(function));
+  ObjClosure* closure = newClosure(function);
+  pop(pvm);
+  push(pvm, OBJ_VAL(closure));
+
   CallFrame* frame = &pvm->frames[pvm->frameCount++];
-  frame->function = function;
+  frame->closure = closure;
   frame->ip = function->chunk.code;
   frame->slots = pvm->stack;
 
