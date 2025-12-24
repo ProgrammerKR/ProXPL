@@ -38,6 +38,9 @@ file(GLOB_RECURSE LIB_SOURCES
 )
 # Exclude main entry point from library
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_v2\\.c$")
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_dispatch\\.c$")
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*instr_handlers_template\\.c$")
 
 # --- Core Library ---
 add_library(proxpl_lib SHARED ${LIB_SOURCES})
