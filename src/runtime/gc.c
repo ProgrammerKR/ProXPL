@@ -16,6 +16,14 @@
 // Access the global VM instance
 extern VM vm;
 
+void initGC(VM* vm) {
+    vm->grayCount = 0;
+    vm->grayCapacity = 0;
+    vm->grayStack = NULL;
+    vm->bytesAllocated = 0;
+    vm->nextGC = 1024 * 1024;
+}
+
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     vm.bytesAllocated += newSize - oldSize;
     
