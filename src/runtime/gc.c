@@ -93,6 +93,35 @@ static void blackenObject(Obj* object) {
             markTable(&module->exports);
             break;
         }
+        case OBJ_CLOSURE: {
+            ObjClosure* closure = (ObjClosure*)object;
+            markObject((Obj*)closure->function);
+            for (int i = 0; i < closure->upvalueCount; i++) {
+                markObject((Obj*)closure->upvalues[i]);
+            }
+            break;
+        }
+        case OBJ_UPVALUE:
+            markValue(((ObjUpvalue*)object)->closed);
+            break;
+        case OBJ_CLASS: {
+            struct ObjClass* klass = (struct ObjClass*)object;
+            markObject((Obj*)klass->name);
+            markTable(&klass->methods);
+            break;
+        }
+        case OBJ_INSTANCE: {
+            struct ObjInstance* instance = (struct ObjInstance*)object;
+            markObject((Obj*)instance->klass);
+            markTable(&instance->fields);
+            break;
+        }
+        case OBJ_BOUND_METHOD: {
+            struct ObjBoundMethod* bound = (struct ObjBoundMethod*)object;
+            markValue(bound->receiver);
+            markObject((Obj*)bound->method);
+            break;
+        }
         // Case OBJ_CLASS, OBJ_INSTANCE would go here
         default:
             // Warn or ignore?
@@ -172,6 +201,30 @@ static void freeObject(Obj* object) {
             FREE(ObjModule, object);
             break;
         }
+        case OBJ_CLOSURE: {
+            ObjClosure* closure = (ObjClosure*)object;
+            FREE_ARRAY(ObjUpvalue*, closure->upvalues, closure->upvalueCount);
+            FREE(ObjClosure, object);
+            break;
+        }
+        case OBJ_UPVALUE:
+            FREE(ObjUpvalue, object);
+            break;
+        case OBJ_CLASS: {
+            struct ObjClass* klass = (struct ObjClass*)object;
+            freeTable(&klass->methods);
+            FREE(struct ObjClass, object);
+            break;
+        }
+        case OBJ_INSTANCE: {
+            struct ObjInstance* instance = (struct ObjInstance*)object;
+            freeTable(&instance->fields);
+            FREE(struct ObjInstance, object);
+            break;
+        }
+        case OBJ_BOUND_METHOD:
+            FREE(struct ObjBoundMethod, object);
+            break;
         default:
             FREE(Obj, object); // Fallback
             break;

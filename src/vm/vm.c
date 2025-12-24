@@ -298,6 +298,8 @@ InterpretResult interpretChunk(VM* vm_ptr, Chunk* chunk) {
 
 // If we need to support the AST interpreter which main.c uses:
 InterpretResult interpretAST(VM* vm_ptr, StmtList* statements) {
+    (void)vm_ptr;
+    (void)statements;
     // this handles AST execution
     return INTERPRET_OK; 
 }

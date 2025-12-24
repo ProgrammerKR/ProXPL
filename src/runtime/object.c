@@ -114,9 +114,65 @@ void printObject(Value value) {
   case OBJ_NATIVE:
     printf("<native fn>");
     break;
-  case OBJ_MODULE:
     printf("<module %s>", ((ObjModule*)AS_OBJ(value))->name->chars);
     break;
+  case OBJ_CLOSURE:
+    printObject(OBJ_VAL(((ObjClosure*)AS_OBJ(value))->function));
+    break;
+  case OBJ_UPVALUE:
+    printf("upvalue");
+    break;
+  case OBJ_CLASS:
+    printf("<class %s>", ((struct ObjClass*)AS_OBJ(value))->name->chars);
+    break;
+  case OBJ_INSTANCE:
+    printf("<instance %s>", ((struct ObjInstance*)AS_OBJ(value))->klass->name->chars);
+    break;
+  case OBJ_BOUND_METHOD:
+    printObject(OBJ_VAL(((struct ObjBoundMethod*)AS_OBJ(value))->method->function));
+    break;
   }
+}
+
+ObjClosure *newClosure(ObjFunction *function) {
+  ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
+  for (int i = 0; i < function->upvalueCount; i++) {
+    upvalues[i] = NULL;
+  }
+
+  ObjClosure *closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+  closure->function = function;
+  closure->upvalues = upvalues;
+  closure->upvalueCount = function->upvalueCount;
+  return closure;
+}
+
+ObjUpvalue *newUpvalue(Value *slot) {
+  ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
+  upvalue->closed = NIL_VAL;
+  upvalue->location = slot;
+  upvalue->next = NULL;
+  return upvalue;
+}
+
+struct ObjClass *newClass(ObjString *name) {
+  struct ObjClass *klass = ALLOCATE_OBJ(struct ObjClass, OBJ_CLASS);
+  klass->name = name;
+  initTable(&klass->methods);
+  return klass;
+}
+
+struct ObjInstance *newInstance(struct ObjClass *klass) {
+  struct ObjInstance *instance = ALLOCATE_OBJ(struct ObjInstance, OBJ_INSTANCE);
+  instance->klass = klass;
+  initTable(&instance->fields);
+  return instance;
+}
+
+struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method) {
+  struct ObjBoundMethod *bound = ALLOCATE_OBJ(struct ObjBoundMethod, OBJ_BOUND_METHOD);
+  bound->receiver = receiver;
+  bound->method = method;
+  return bound;
 }
 

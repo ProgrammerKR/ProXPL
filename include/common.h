@@ -41,7 +41,7 @@ typedef struct ValueArray ValueArray;
 typedef struct Chunk Chunk;
 typedef struct VM VM;
 typedef struct CallFrame {
-  ObjFunction* function;
+  struct ObjClosure* closure;
   uint8_t* ip;
   Value* slots;
 } CallFrame;

@@ -30,11 +30,31 @@
 #define IS_MODULE(value) isObjType(value, OBJ_MODULE)
 #define AS_MODULE(value) ((ObjModule *)AS_OBJ(value))
 
+#define IS_UPVALUE(value) isObjType(value, OBJ_UPVALUE)
+#define AS_UPVALUE(value) ((ObjUpvalue *)AS_OBJ(value))
+
+#define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
+#define AS_CLOSURE(value) ((ObjClosure *)AS_OBJ(value))
+
+#define IS_CLASS(value) isObjType(value, OBJ_CLASS)
+#define AS_CLASS(value) ((struct ObjClass *)AS_OBJ(value))
+
+#define IS_INSTANCE(value) isObjType(value, OBJ_INSTANCE)
+#define AS_INSTANCE(value) ((struct ObjInstance *)AS_OBJ(value))
+
+#define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
+#define AS_BOUND_METHOD(value) ((struct ObjBoundMethod *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
   OBJ_NATIVE,
   OBJ_MODULE,
+  OBJ_UPVALUE,
+  OBJ_CLOSURE,
+  OBJ_CLASS,
+  OBJ_INSTANCE,
+  OBJ_BOUND_METHOD,
 } ObjType;
 
 struct Obj {
@@ -71,6 +91,38 @@ struct ObjModule {
   Table exports; // Symbols exported by this module
 };
 
+typedef struct ObjUpvalue {
+  Obj obj;
+  Value *location;
+  Value closed;
+  struct ObjUpvalue *next;
+} ObjUpvalue;
+
+typedef struct ObjClosure {
+  Obj obj;
+  ObjFunction *function;
+  ObjUpvalue **upvalues;
+  int upvalueCount;
+} ObjClosure;
+
+struct ObjClass {
+  Obj obj;
+  ObjString *name;
+  Table methods;
+};
+
+struct ObjInstance {
+  Obj obj;
+  struct ObjClass *klass; // 'class' is a keyword in C++
+  Table fields;
+};
+
+struct ObjBoundMethod {
+  Obj obj;
+  Value receiver;
+  ObjClosure *method;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,7 +131,13 @@ ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn function);
+ObjNative *newNative(NativeFn function);
 ObjModule *newModule(ObjString *name);
+ObjClosure *newClosure(ObjFunction *function);
+ObjUpvalue *newUpvalue(Value *slot);
+struct ObjClass *newClass(ObjString *name);
+struct ObjInstance *newInstance(struct ObjClass *klass);
+struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
