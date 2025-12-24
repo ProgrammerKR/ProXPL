@@ -95,7 +95,7 @@ static void repl() {
     initChunk(&chunk);
     generateBytecode(statements, &chunk);
     
-    interpret(&vm, &chunk);
+    interpretChunk(&vm, &chunk);
 
     // Free resources
     freeChunk(&chunk);

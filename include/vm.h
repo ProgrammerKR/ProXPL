@@ -49,6 +49,7 @@ extern VM vm;
 void initVM(VM* vm);
 void freeVM(VM* vm);
 InterpretResult interpret(VM* vm, const char* source);
+InterpretResult interpretChunk(VM* vm, Chunk* chunk);
 InterpretResult interpretAST(VM* vm, StmtList* statements);
 void push(VM* vm, Value value);
 Value pop(VM* vm);

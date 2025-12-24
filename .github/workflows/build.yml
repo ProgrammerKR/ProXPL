@@ -39,8 +39,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # 1. Install LLVM via Chocolatey (often already present, but ensures consistency)
-          choco install llvm -y --no-progress
+          # 1. Install LLVM via Chocolatey (Pinned to stable version)
+          choco install llvm --version 17.0.6 -y --force
           
           # 2. Define standard paths
           $llvmRoot = "C:\Program Files\LLVM"

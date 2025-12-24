@@ -51,8 +51,13 @@ add_executable(proxpl src/main.c)
 target_link_libraries(proxpl PRIVATE proxpl_lib ${llvm_libs})
 
 if(UNIX)
-    target_link_libraries(proxpl PRIVATE pthread dl z tinfo) 
-    target_link_libraries(proxpl_lib PRIVATE pthread dl z tinfo)
+    if(APPLE)
+        target_link_libraries(proxpl PRIVATE pthread dl z)
+        target_link_libraries(proxpl_lib PRIVATE pthread dl z)
+    else()
+        target_link_libraries(proxpl PRIVATE pthread dl z tinfo)
+        target_link_libraries(proxpl_lib PRIVATE pthread dl z tinfo)
+    endif()
 endif()
 
 # --- IR Test Executable ---
