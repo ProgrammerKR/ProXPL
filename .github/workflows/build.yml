@@ -58,21 +58,29 @@ jobs:
           )
           
           foreach ($c in $candidates) {
-            if (Test-Path "$c\LLVMConfig.cmake") {
-              $llvmDir = $c
-              break
+            if (Test-Path "$c") {
+                # If the directory exists, check for config file OR accept the dir if it looks like a cmake dir
+                if ((Test-Path "$c\LLVMConfig.cmake") -or (Test-Path "$c\LLVMConfigExtensions.cmake")) {
+                    $llvmDir = $c
+                    break
+                }
             }
           }
           
           # 4. Fallback search (more depth)
           if (-not $llvmDir -and (Test-Path $llvmRoot)) {
             Write-Host "Performing deep search in $llvmRoot..."
-            # Debug: List root contents to see what's actually there
-            Get-ChildItem -Path $llvmRoot -Depth 1 | Select-Object FullName
-            
-            $found = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfig.cmake" -Recurse -Depth 10 -ErrorAction SilentlyContinue | Select-Object -First 1
+            # Try to find the directory containing LLVMConfig.cmake
+            $found = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfig.cmake" -Recurse -Depth 8 -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($found) {
               $llvmDir = $found.Directory.FullName
+            } else {
+                 # Fallback: look for LLVMConfigExtensions.cmake which we saw exists
+                $foundExt = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfigExtensions.cmake" -Recurse -Depth 8 -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($foundExt) {
+                    $llvmDir = $foundExt.Directory.FullName
+                    Write-Host "Found likely LLVM CMake dir via Extensions: $llvmDir"
+                }
             }
           }
           

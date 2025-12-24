@@ -31,6 +31,7 @@ static Obj *allocateObject(size_t size, ObjType type) {
 ObjFunction *newFunction() {
   ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
   function->arity = 0;
+  function->upvalueCount = 0;
   function->name = NULL;
   initChunk(&function->chunk); // Requires chunk.h
   return function;
@@ -114,6 +115,7 @@ void printObject(Value value) {
   case OBJ_NATIVE:
     printf("<native fn>");
     break;
+  case OBJ_MODULE:
     printf("<module %s>", ((ObjModule*)AS_OBJ(value))->name->chars);
     break;
   case OBJ_CLOSURE:

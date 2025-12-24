@@ -177,11 +177,6 @@ static void freeObject(Obj* object) {
 
     switch (object->type) {
         case OBJ_STRING: {
-            ObjString* string = (ObjString*)object;
-            // Flexible array member 'chars' is part of struct allocation
-            // so just freeing object is enough?
-            // Wait, allocateString does: sizeof(ObjString) + length + 1
-            // So yes, single free.
             FREE(ObjString, object);
             break;
         }
@@ -283,6 +278,7 @@ void collectGarbage(VM* vm_ptr) {
 }
 
 void freeObjects(VM* vm_ptr) {
+    (void)vm_ptr;
     Obj* object = vm.objects;
     while (object != NULL) {
         Obj* next = object->next;
