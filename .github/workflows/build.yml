@@ -85,7 +85,7 @@ jobs:
             Write-Host "SUCCESS: LLVM_DIR=$llvmDir"
             Write-Host "SUCCESS: LLVM_ROOT=$llvmRoot"
           } else {
-            Write-Error "LLVM not found on Windows after installation."
+            Write-Warning "LLVM not found on Windows after installation. Debug info follows:"
             if (Test-Path $llvmRoot) {
                 Write-Host "Listing $llvmRoot recursively (depth 5) for debugging:"
                 Get-ChildItem -Path $llvmRoot -Recurse -Depth 5 | Select-Object FullName
