@@ -491,3 +491,43 @@ InterpretResult interpret(VM* pvm, const char* source) {
   return result;
 }
 
+void defineNative(const char* name, NativeFn function) {
+  push(&vm, OBJ_VAL(copyString(name, (int)strlen(name))));
+  push(&vm, OBJ_VAL(newNative(function)));
+  tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+  pop(&vm);
+  pop(&vm);
+}
+
+InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {
+    // Wrap the raw chunk into a function/closure
+    ObjFunction* function = newFunction();
+    function->chunk = *chunk; 
+    
+    // NOTE: This assumes ownership transfer or temporary usage.
+    // Ensure we don't double free if main.c owns chunk.
+    // For REPL, main.c inits chunk. function->chunk is a shallow copy.
+    // function destructor will try to free chunk.
+    // We should zero out function->chunk before returning or accept double-free risk?
+    // Proper fix: `interpretChunk` should take compiled function, not chunk.
+    // But to unblock REPL:
+    
+    push(pvm, OBJ_VAL(function));
+    ObjClosure* closure = newClosure(function);
+    pop(pvm);
+    push(pvm, OBJ_VAL(closure));
+    
+    CallFrame* frame = &pvm->frames[pvm->frameCount++];
+    frame->closure = closure;
+    frame->ip = function->chunk.code;
+    frame->slots = pvm->stack;
+    
+    InterpretResult result = run(pvm);
+    
+    // Prevent double free of chunk code/constants by function destructor
+    // if main.c manages them.
+    initChunk(&function->chunk);
+    
+    return result;
+}
+
