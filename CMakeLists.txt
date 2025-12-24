@@ -15,14 +15,20 @@ else()
 endif()
 
 # --- LLVM Configuration ---
-find_package(LLVM REQUIRED CONFIG)
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-link_directories(${LLVM_LIBRARY_DIRS})
+find_package(LLVM CONFIG)
 
-# Map generic components to specific libs
-llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo)
+if (LLVM_FOUND)
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
+    link_directories(${LLVM_LIBRARY_DIRS})
+
+    # Map generic components to specific libs
+    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo)
+else()
+    message(WARNING "LLVM not found. Building without LLVM backend.")
+    set(llvm_libs "")
+endif()
 
 # Export symbols for Windows DLL
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -42,9 +48,15 @@ list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_v2\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_dispatch\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*instr_handlers_template\\.c$")
 
+if (NOT LLVM_FOUND)
+    list(FILTER LIB_SOURCES EXCLUDE REGEX ".*backend_llvm\\.cpp$")
+endif()
+
 # --- Core Library ---
 add_library(proxpl_lib SHARED ${LIB_SOURCES})
-target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
+if (LLVM_FOUND)
+    target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
+endif()
 
 # --- Main Executable ---
 add_executable(proxpl src/main.c)
