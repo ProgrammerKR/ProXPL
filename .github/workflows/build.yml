@@ -135,3 +135,11 @@ jobs:
 
         shell: bash
         run: cmake --build build --verbose
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProXPL-${{ matrix.os }}
+          path: |
+            build/proxpl
+            build/Release/proxpl.exe
