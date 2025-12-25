@@ -1,0 +1,18 @@
+// Demo of PRM-installed packages
+// Ensure you run 'python cli/prm.py install utils/io' first
+
+use utils/io;
+use math/advanced;
+
+func main() {
+    print("Testing PRM Modules:");
+    
+    // Valid for v1.0.0 of utils/io mock
+    // Note: mock content in prm.py defines 'print_line'
+    print_line(" > This module was loaded from local packages/");
+    
+    let sq = square(5);
+    print(" > 5 squared is: " + sq);
+}
+
+main();

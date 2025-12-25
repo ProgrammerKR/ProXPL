@@ -1,0 +1,10 @@
+obj/
+*.o
+prox
+prox.exe
+*.out
+*.exe
+*.dll
+*.so
+*.dylib
+.DS_Store

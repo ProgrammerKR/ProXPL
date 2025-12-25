@@ -1,0 +1,44 @@
+// Functional Test for ProXPL Stdlib v0.1
+
+import std.io;
+import std.fs;
+import std.sys;
+import std.core;
+
+// Test std.core
+print("Testing std.core...");
+std.core.assert(true, "True is true");
+std.core.assert(1 + 1 == 2, "Math works");
+print("Type of 123: " + std.core.typeOf(123));
+
+// Test std.io
+print("Testing std.io...");
+std.io.print("Hello from std.io.print!");
+
+// Test std.fs
+print("Testing std.fs...");
+var testFile = "test_output.txt";
+std.fs.writeFile(testFile, "Hello File System!");
+
+if (std.fs.exists(testFile)) {
+    print("File created successfully.");
+    var content = std.fs.readFile(testFile);
+    print("File content: " + content);
+    std.core.assert(content == "Hello File System!", "File content mismatch");
+} else {
+    print("Error: File was not created.");
+}
+
+// Test std.sys
+print("Testing std.sys...");
+print("OS: " + std.sys.OS_NAME);
+print("Arch: " + std.sys.ARCH);
+
+var path = std.sys.env("PATH");
+if (path) {
+    print("PATH env var found (length " + std.core.typeOf(path) + ")");
+} else {
+    print("PATH env var not found?");
+}
+
+print("All tests passed!");

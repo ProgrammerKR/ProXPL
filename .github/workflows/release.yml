@@ -1,0 +1,120 @@
+name: ProXPL Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-package:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: proxpl-linux
+            binary_path: build/proxpl
+            asset_name: proxpl-linux
+          - os: windows-latest
+            artifact_name: proxpl-windows
+            binary_path: build\Release\proxpl.exe
+            asset_name: proxpl-windows.exe
+          - os: macos-latest
+            artifact_name: proxpl-macos
+            binary_path: build/proxpl
+            asset_name: proxpl-macos
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install LLVM (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-dev libclang-dev clang
+
+      - name: Install LLVM (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install llvm
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix llvm)" >> $GITHUB_ENV
+
+      - name: Install LLVM (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install llvm -y
+          echo "C:/Program Files/LLVM/bin" >> $GITHUB_PATH
+          echo "LLVM_DIR=C:/Program Files/LLVM/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "LLVM_ROOT=C:/Program Files/LLVM" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM" \
+            -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release --verbose
+
+      - name: Verify Build (Check Binary Exists)
+        shell: bash
+        run: |
+          if [ -f "${{ matrix.binary_path }}" ]; then
+            echo "Binary found at ${{ matrix.binary_path }}"
+          else
+            echo "Binary NOT found at ${{ matrix.binary_path }}"
+            # List directory for debugging
+            ls -R build
+            exit 1
+          fi
+
+      - name: Rename Binary
+        shell: bash
+        run: |
+          mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+
+  release:
+    name: Create Release
+    needs: build-and-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: proxpl-windows.exe
+          
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: proxpl-linux
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: proxpl-macos
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            proxpl-windows.exe
+            proxpl-linux
+            proxpl-macos
+          generate_release_notes: true
+          draft: false
+          prerelease: false

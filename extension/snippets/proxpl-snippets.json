@@ -1,0 +1,33 @@
+{
+    "Main Function": {
+        "prefix": "main",
+        "body": [
+            "func main() {",
+            "\t${1:// main code}",
+            "}",
+            "",
+            "main();"
+        ],
+        "description": "Main function entry point"
+    },
+    "If-Else block": {
+        "prefix": "ifelse",
+        "body": [
+            "if (${1:condition}) {",
+            "\t${2:// code}",
+            "} else {",
+            "\t${3:// code}",
+            "}"
+        ],
+        "description": "If-else block"
+    },
+    "If block": {
+        "prefix": "if",
+        "body": [
+            "if (${1:condition}) {",
+            "\t${2:// code}",
+            "}"
+        ],
+        "description": "If block"
+    }
+}
