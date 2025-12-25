@@ -446,14 +446,14 @@ ProXPL/
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
-- **[Language Specification](docs/language-spec/)**: Complete grammar, keywords, operators, and semantics
-- **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all 75+ built-in functions
-- **[Architecture Guide](docs/architecture/)**: Deep dive into compiler and VM internals
-- **[IR Specification](docs/ir-spec/)**: SSA intermediate representation documentation
-- **[Build Guide](CONTRIBUTING.md)**: Platform-specific build instructions
-- **[Coding Standards](CODING_STANDARD.md)**: Code style and contribution guidelines
-- **[Benchmarks](BENCHMARKS.md)**: Performance comparisons and optimization notes
-- **[Ecosystem Design](ECOSYSTEM_DESIGN.md)**: Stdlib and PRM architecture
+- **[Language Specification](docs/spec.md)**: A detailed guide to ProXPL grammar, keywords, operators, data types, and core semantics.
+- **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all built-in functions and modules.
+- **[Architecture Guide](docs/architecture/)**: A deep dive into the compiler design and Virtual Machine (VM) internals.
+- **[IR Specification](docs/ir-spec/)**: Documentation for the SSA (Static Single Assignment) intermediate representation.
+- **[Build Guide](CONTRIBUTING.md)**: Platform-specific instructions for building ProXPL from source.
+- **[Coding Standards](CODING_STANDARD.md)**: Code style guidelines and contribution workflow.
+- **[Benchmarks](BENCHMARKS.md)**: Performance metrics, comparisons, and optimization notes.
+- **[Ecosystem Design](ECOSYSTEM_DESIGN.md)**: Overview of the Standard Library and PRM (ProX Package Manager) architecture.
 
 ---
 
