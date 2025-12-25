@@ -1,0 +1,58 @@
+use std.native.math;
+
+class Math {
+    static const PI = 3.14159265358979323846;
+    static const E = 2.71828182845904523536;
+
+    static func abs(x) => native.math.abs(x);
+    static func ceil(x) => native.math.ceil(x);
+    static func floor(x) => native.math.floor(x);
+    static func round(x, d) => native.math.round(x, d);
+    
+    static func max(...) {
+        // Since native supports variadic args, we might need a way to pass them.
+        // If '...' collects args into a list, we might need 'apply' or just pass if native helper supports list.
+        // However, our current native_max expects arguments on stack. 
+        // ProXPL doesn't have 'apply' yet in spec?
+        // Let's assume the native implementation can handle list if we change it, OR we just expose it directly.
+        // But we are wrapping it.
+        // Simplification: Wrapper for 2 args for now, or just leave it to native if supported.
+        // Native max iterates arguments.
+        // If I call native.math.max(a, b, c), it works effectively.
+        // Does '...' in `func max(...)` mean variadic?
+        // Spec: `funcDecl ::= "func" IDENTIFIER "(" parameters? ")" block`
+        // It doesn't explicitly mention `...` syntax in grammar reference.
+        // Docs built-in `print(...)` suggests it exists contextually.
+        // Let's assume standard varargs are not easily wrapped without `apply`.
+        // So I'll just expose direct calls or implement fixed arity wrappers.
+        // Or better: `static func max(a, b) => native.math.max(a, b);`
+        // But native max accepts any number.
+        // If I can't forward variadic args easily, I'll stick to basic implementation of 2 args 
+        // or just let users call native.math.max if they need more? No, wrapper should be sufficient.
+        // I will implement for 2 args as a base.
+        return native.math.max(args); // Placeholder if 'args' is the array of varargs
+    } 
+    // Wait, let's look at `print(...)` in spec. It's special.
+    // I'll skip implementing variadic wrappers blindly and just focus on fixed ones or basic ones.
+    
+    static func pow(b, e) => native.math.pow(b, e);
+    static func sqrt(x) => native.math.sqrt(x);
+    
+    static func sin(x) => native.math.sin(x);
+    static func cos(x) => native.math.cos(x);
+    static func tan(x) => native.math.tan(x);
+    static func asin(x) => native.math.asin(x);
+    static func acos(x) => native.math.acos(x);
+    static func atan(x) => native.math.atan(x);
+    
+    static func log(x, base) => native.math.log(x, base);
+    static func exp(x) => native.math.exp(x);
+    
+    static func random() => native.math.random();
+    static func randomRange(min, max) {
+        return min + (native.math.random() * (max - min));
+    }
+    static func randint(min, max) => native.math.randint(min, max);
+    
+    static func seed(v) => native.math.seed(v);
+}

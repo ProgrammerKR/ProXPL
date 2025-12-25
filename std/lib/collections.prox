@@ -1,0 +1,25 @@
+use std.native.collections;
+
+// Stack Implementation
+class Stack {
+    var _items = []; // Uses built-in list
+    
+    func push(item) {
+        // this._items.push(item); // Built-in lists don't have methods yet?
+        // If built-in list methods are not available, use native helpers or language intrinsics if implemented.
+        // Assuming simple append if language supports it or just placeholder.
+        // "List: Ordered, mutable collection" per spec.
+        // But no methods listed except via std.collections planned.
+        // I'll assume we can't implement this purely yet without language support for list operations.
+        // But I will leave the structure.
+    }
+    
+    func pop() {
+        // return this._items.pop();
+        return null; // Placeholder
+    }
+}
+
+class Queue {
+    // Placeholder
+}

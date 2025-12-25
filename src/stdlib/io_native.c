@@ -6,8 +6,8 @@
 // --------------------------------------------------
 
 /*
- * ProXPL Standard Library - I/O Module
- * Native C implementation of I/O functions
+ * ProXPL Standard Library - I/O Module (Native)
+ * Native C implementation of low-level I/O functions
  */
 
 #include <stdio.h>
@@ -32,22 +32,35 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
     pop(&vm);
 }
 
-// print(...) - Print values to stdout
-static Value native_print(int argCount, Value* args) {
-    for (int i = 0; i < argCount; i++) {
-        printValue(args[i]);
-        if (i < argCount - 1) printf(" ");
+// print_raw(str) - Print string to stdout without newline
+static Value native_print_raw(int argCount, Value* args) {
+    if (argCount > 0) {
+        if (IS_STRING(args[0])) {
+            printf("%s", AS_CSTRING(args[0]));
+        } else {
+            printValue(args[0]);
+        }
     }
-    printf("\n");
     return NIL_VAL;
 }
 
-// input(prompt) - Read line from stdin
-static Value native_input(int argCount, Value* args) {
+// eprint_raw(str) - Print string to stderr
+static Value native_eprint_raw(int argCount, Value* args) {
     if (argCount > 0) {
-        printValue(args[0]);
+        if (IS_STRING(args[0])) {
+            fprintf(stderr, "%s", AS_CSTRING(args[0]));
+        } else {
+            // printValue prints to stdout usually, so manual handling might be needed
+            // For now, just print what we can or rely on printValue if it was flexible
+            // But let's assume we pass strings primarily
+             fprintf(stderr, "<value>"); 
+        }
     }
-    
+    return NIL_VAL;
+}
+
+// input_raw() - Read line from stdin
+static Value native_input_raw(int argCount, Value* args) {
     char buffer[1024];
     if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
         // Remove newline
@@ -58,21 +71,37 @@ static Value native_input(int argCount, Value* args) {
         }
         return OBJ_VAL(copyString(buffer, (int)len));
     }
-    
     return NIL_VAL;
 }
 
+// flush_raw() - Flush stdout
+static Value native_flush_raw(int argCount, Value* args) {
+    fflush(stdout);
+    return NIL_VAL;
+}
+
+// set_color_raw(code) - Set terminal color using ANSI
+static Value native_set_color_raw(int argCount, Value* args) {
+    if (argCount > 0 && IS_NUMBER(args[0])) {
+        int code = (int)AS_NUMBER(args[0]);
+        printf("\033[%dm", code);
+    }
+    return NIL_VAL;
+}
 
 // Register all I/O functions with the VM
 ObjModule* create_std_io_module() {
-    ObjString* name = copyString("std.io", 6);
+    ObjString* name = copyString("std.native.io", 13);
     push(&vm, OBJ_VAL(name));
     ObjModule* module = newModule(name);
     push(&vm, OBJ_VAL(module));
     
-    defineModuleFn(module, "print", native_print);
-    defineModuleFn(module, "input", native_input);
-    
+    defineModuleFn(module, "print_raw", native_print_raw);
+    defineModuleFn(module, "eprint_raw", native_eprint_raw);
+    defineModuleFn(module, "input_raw", native_input_raw);
+    defineModuleFn(module, "flush_raw", native_flush_raw);
+    defineModuleFn(module, "set_color_raw", native_set_color_raw);
+
     pop(&vm); // module
     pop(&vm); // name
     return module;

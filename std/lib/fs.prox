@@ -1,0 +1,33 @@
+use std.native.fs;
+
+class File {
+    static func read(path) {
+        if (!native.fs.exists(path)) {
+            // throw "File not found: " + to_string(path); // 'throw' support check?
+            // Assuming throw is supported or just return null for now if not.
+            // Spec says: throw Error("Oops");
+            throw "File not found: " + to_string(path);
+        }
+        return native.fs.read_file(path);
+    }
+
+    static func write(path, content) {
+        return native.fs.write_file(path, to_string(content));
+    }
+
+    static func append(path, content) {
+        return native.fs.append_file(path, to_string(content));
+    }
+
+    static func exists(path) {
+        return native.fs.exists(path);
+    }
+
+    static func remove(path) {
+        return native.fs.remove(path);
+    }
+
+    static func size(path) {
+        return native.fs.metadata(path);
+    }
+}

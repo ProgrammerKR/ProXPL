@@ -1,0 +1,7 @@
+use std.native.reflect;
+
+class Reflect {
+    static func type(val) {
+        return native.reflect.type_of(val);
+    }
+}

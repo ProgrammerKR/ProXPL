@@ -11,8 +11,10 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <direct.h>
 #define OS_NAME_STR "Windows"
 #define setenv(k, v, o) _putenv_s(k, v)
+#define getcwd _getcwd
 #else
 #include <unistd.h>
 #define OS_NAME_STR "Linux/Unix"
@@ -56,7 +58,7 @@ static void defineModuleConst(ObjModule* module, const char* name, Value value) 
 }
 
 // --------------------------------------------------
-// std.sys Implementation
+// std.native.sys Implementation
 // --------------------------------------------------
 
 // exit(code)
@@ -82,23 +84,42 @@ static Value sys_env(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+// set_env(key, val)
+static Value sys_set_env(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return NIL_VAL;
+    
+    const char* key = AS_CSTRING(args[0]);
+    const char* val = AS_CSTRING(args[1]);
+    
+    setenv(key, val, 1);
+    return NIL_VAL;
+}
+
+// cwd() -> String
+static Value sys_cwd(int argCount, Value* args) {
+    char buffer[1024];
+    if (getcwd(buffer, sizeof(buffer)) != NULL) {
+        return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+    }
+    return NIL_VAL;
+}
+
 // args() -> List<String> 
-// Note: We don't have List object in C yet easily, so let's return Array or just count for now
-// Phase 1 limitation: accessing global args requires VM support to store them first (in main.c)
-// For now, return empty list or simulated args
 static Value sys_args(int argCount, Value* args) {
     // TODO: Implement proper args passing from main.c -> VM
     return NIL_VAL;
 }
 
 ObjModule* create_std_sys_module() {
-    ObjString* name = copyString("std.sys", 7);
+    ObjString* name = copyString("std.native.sys", 14);
     push(&vm, OBJ_VAL(name));
     ObjModule* module = newModule(name);
     push(&vm, OBJ_VAL(module));
     
     defineModuleFn(module, "exit", sys_exit);
     defineModuleFn(module, "env", sys_env);
+    defineModuleFn(module, "set_env", sys_set_env);
+    defineModuleFn(module, "cwd", sys_cwd);
     defineModuleFn(module, "args", sys_args);
     
     defineModuleConst(module, "OS_NAME", OBJ_VAL(copyString(OS_NAME_STR, strlen(OS_NAME_STR))));

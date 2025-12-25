@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "../../include/common.h"
 #include "../../include/vm.h"
@@ -29,11 +30,11 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
 }
 
 // --------------------------------------------------
-// std.fs Implementation
+// std.native.fs Implementation
 // --------------------------------------------------
 
-// readFile(path) -> String or Null
-static Value fs_readFile(int argCount, Value* args) {
+// read_file(path) -> String or Null
+static Value fs_read_file(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     const char* path = AS_CSTRING(args[0]);
@@ -54,12 +55,11 @@ static Value fs_readFile(int argCount, Value* args) {
     buffer[bytesRead] = '\0';
     fclose(file);
     
-    Value result = OBJ_VAL(takeString(buffer, (int)bytesRead));
-    return result;
+    return OBJ_VAL(takeString(buffer, (int)bytesRead));
 }
 
-// writeFile(path, content) -> Bool
-static Value fs_writeFile(int argCount, Value* args) {
+// write_file(path, content) -> Bool
+static Value fs_write_file(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return BOOL_VAL(false);
     
     const char* path = AS_CSTRING(args[0]);
@@ -72,27 +72,63 @@ static Value fs_writeFile(int argCount, Value* args) {
     return BOOL_VAL(true);
 }
 
+// append_file(path, content) -> Bool
+static Value fs_append_file(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return BOOL_VAL(false);
+    
+    const char* path = AS_CSTRING(args[0]);
+    FILE* file = fopen(path, "a");
+    if (!file) return BOOL_VAL(false);
+    
+    ObjString* content = AS_STRING(args[1]);
+    fwrite(content->chars, 1, content->length, file);
+    fclose(file);
+    return BOOL_VAL(true);
+}
+
 // exists(path) -> Bool
 static Value fs_exists(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
     
-    FILE* file = fopen(AS_CSTRING(args[0]), "r");
-    if (file) {
-        fclose(file);
-        return BOOL_VAL(true);
+    struct stat buffer;   
+    return BOOL_VAL(stat(AS_CSTRING(args[0]), &buffer) == 0);
+}
+
+// remove(path) -> Bool
+static Value fs_remove(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
+    return BOOL_VAL(remove(AS_CSTRING(args[0])) == 0);
+}
+
+// metadata(path) -> Map { "size": int, "exists": bool }
+// Note: Returning a map implies we can create one. If VM doesn't expose map creation easily here,
+// we might iterate. For now, let's just return size as integer or -1 if not found.
+// Or if the VM has native map support exposed. 
+// Assuming `newMap` or similar is not easily available without including more headers, 
+// I'll stick to returning file size for now or NIL.
+// Wait, libraries usually return objects. I'll return the size (number).
+static Value fs_metadata(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    
+    struct stat st;
+    if (stat(AS_CSTRING(args[0]), &st) == 0) {
+        return NUMBER_VAL((double)st.st_size);
     }
-    return BOOL_VAL(false);
+    return NIL_VAL;
 }
 
 ObjModule* create_std_fs_module() {
-    ObjString* name = copyString("std.fs", 6);
+    ObjString* name = copyString("std.native.fs", 13);
     push(&vm, OBJ_VAL(name));
     ObjModule* module = newModule(name);
     push(&vm, OBJ_VAL(module));
     
-    defineModuleFn(module, "readFile", fs_readFile);
-    defineModuleFn(module, "writeFile", fs_writeFile);
+    defineModuleFn(module, "read_file", fs_read_file);
+    defineModuleFn(module, "write_file", fs_write_file);
+    defineModuleFn(module, "append_file", fs_append_file);
     defineModuleFn(module, "exists", fs_exists);
+    defineModuleFn(module, "remove", fs_remove);
+    defineModuleFn(module, "metadata", fs_metadata); // Currently returns size
     
     pop(&vm);
     pop(&vm);

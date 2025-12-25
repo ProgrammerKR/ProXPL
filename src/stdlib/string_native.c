@@ -3,6 +3,7 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+// --------------------------------------------------
 
 /*
  * ProXPL Standard Library - String Module
@@ -18,15 +19,26 @@
 #include <string.h>
 #include <ctype.h>
 
-// str_upper(str) - Convert to uppercase
-static Value native_str_upper(int argCount, Value* args) {
+extern VM vm;
+
+// Helper to define native function in a module
+static void defineModuleFn(ObjModule* module, const char* name, NativeFn function) {
+    ObjString* nameObj = copyString(name, (int)strlen(name));
+    push(&vm, OBJ_VAL(nameObj));
+    push(&vm, OBJ_VAL(newNative(function)));
+    tableSet(&module->exports, nameObj, peek(&vm, 0));
+    pop(&vm);
+    pop(&vm);
+}
+
+// upper(str) - Convert to uppercase
+static Value native_upper(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     ObjString* original = AS_STRING(args[0]);
     char* buffer = (char*)malloc(original->length + 1);
     
     for (int i = 0; i < original->length; i++) {
-        // Cast to unsigned char to safely handle non-ASCII characters
         buffer[i] = toupper((unsigned char)original->chars[i]);
     }
     buffer[original->length] = '\0';
@@ -36,8 +48,8 @@ static Value native_str_upper(int argCount, Value* args) {
     return result;
 }
 
-// str_lower(str) - Convert to lowercase
-static Value native_str_lower(int argCount, Value* args) {
+// lower(str) - Convert to lowercase
+static Value native_lower(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     ObjString* original = AS_STRING(args[0]);
@@ -53,18 +65,16 @@ static Value native_str_lower(int argCount, Value* args) {
     return result;
 }
 
-// str_trim(str) - Remove leading/trailing whitespace
-static Value native_str_trim(int argCount, Value* args) {
+// trim(str) - Remove leading/trailing whitespace
+static Value native_trim(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     const char* str = AS_CSTRING(args[0]);
     int len = AS_STRING(args[0])->length;
     
-    // Find start
     int start = 0;
     while (start < len && isspace((unsigned char)str[start])) start++;
     
-    // Find end
     int end = len - 1;
     while (end >= start && isspace((unsigned char)str[end])) end--;
     
@@ -74,19 +84,18 @@ static Value native_str_trim(int argCount, Value* args) {
     return OBJ_VAL(copyString(str + start, newLen));
 }
 
-// str_split(str, delimiter) - Split string by delimiter
-static Value native_str_split(int argCount, Value* args) {
+// split(str, delimiter) - Split string by delimiter
+static Value native_split(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return NIL_VAL;
     }
     
     // TODO: Return array/list once collections are implemented
-    // For now, return the original string
     return args[0];
 }
 
-// str_replace(str, old, new) - Replace occurrences
-static Value native_str_replace(int argCount, Value* args) {
+// replace(str, old, new) - Replace occurrences
+static Value native_replace(int argCount, Value* args) {
     if (argCount < 3 || !IS_STRING(args[0]) || 
         !IS_STRING(args[1]) || !IS_STRING(args[2])) {
         return args[0];
@@ -94,14 +103,13 @@ static Value native_str_replace(int argCount, Value* args) {
     
     const char* str = AS_CSTRING(args[0]);
     const char* old = AS_CSTRING(args[1]);
-    const char* new_str = AS_CSTRING(args[2]); // Renamed 'new' to 'new_str' (C++ keyword safety)
+    const char* new_str = AS_CSTRING(args[2]); 
     
     int oldLen = AS_STRING(args[1])->length;
     int newLen = AS_STRING(args[2])->length;
     
     if (oldLen == 0) return args[0];
     
-    // Simple implementation: replace first occurrence
     const char* pos = strstr(str, old);
     if (!pos) return args[0];
     
@@ -111,11 +119,8 @@ static Value native_str_replace(int argCount, Value* args) {
     
     char* buffer = (char*)malloc(totalLen + 1);
     
-    // Copy prefix
     memcpy(buffer, str, prefixLen);
-    // Copy replacement
     memcpy(buffer + prefixLen, new_str, newLen);
-    // Copy suffix
     memcpy(buffer + prefixLen + newLen, pos + oldLen, suffixLen);
     
     buffer[totalLen] = '\0';
@@ -125,8 +130,8 @@ static Value native_str_replace(int argCount, Value* args) {
     return result;
 }
 
-// str_contains(str, substr) - Check if string contains substring
-static Value native_str_contains(int argCount, Value* args) {
+// contains(str, substr)
+static Value native_contains(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return BOOL_VAL(false);
     }
@@ -137,8 +142,8 @@ static Value native_str_contains(int argCount, Value* args) {
     return BOOL_VAL(strstr(str, substr) != NULL);
 }
 
-// str_startswith(str, prefix) - Check if string starts with prefix
-static Value native_str_startswith(int argCount, Value* args) {
+// startswith(str, prefix)
+static Value native_startswith(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return BOOL_VAL(false);
     }
@@ -150,8 +155,8 @@ static Value native_str_startswith(int argCount, Value* args) {
     return BOOL_VAL(strncmp(str, prefix, prefixLen) == 0);
 }
 
-// str_endswith(str, suffix) - Check if string ends with suffix
-static Value native_str_endswith(int argCount, Value* args) {
+// endswith(str, suffix)
+static Value native_endswith(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return BOOL_VAL(false);
     }
@@ -167,7 +172,7 @@ static Value native_str_endswith(int argCount, Value* args) {
     return BOOL_VAL(strcmp(str + strLen - suffixLen, suffix) == 0);
 }
 
-// substr(str, start, length) - Extract substring
+// substr(str, start, length)
 static Value native_substr(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_NUMBER(args[1])) {
         return NIL_VAL;
@@ -189,22 +194,28 @@ static Value native_substr(int argCount, Value* args) {
         length = strLen - start;
     }
     
-    // Ensure length is not negative
     if (length < 0) length = 0;
     
     return OBJ_VAL(copyString(str + start, length));
 }
 
-// Register all string functions with the VM
-void register_string_natives(VM* vm) {
-    defineNative(vm, "str_upper", native_str_upper);
-    defineNative(vm, "str_lower", native_str_lower);
-    defineNative(vm, "str_trim", native_str_trim);
-    defineNative(vm, "str_split", native_str_split);
-    defineNative(vm, "str_replace", native_str_replace);
-    defineNative(vm, "str_contains", native_str_contains);
-    defineNative(vm, "str_startswith", native_str_startswith);
-    defineNative(vm, "str_endswith", native_str_endswith);
-    defineNative(vm, "substr", native_substr);
-}
+ObjModule* create_std_str_module() {
+    ObjString* name = copyString("std.native.str", 14);
+    push(&vm, OBJ_VAL(name));
+    ObjModule* module = newModule(name);
+    push(&vm, OBJ_VAL(module));
+    
+    defineModuleFn(module, "upper", native_upper);
+    defineModuleFn(module, "lower", native_lower);
+    defineModuleFn(module, "trim", native_trim);
+    defineModuleFn(module, "split", native_split);
+    defineModuleFn(module, "replace", native_replace);
+    defineModuleFn(module, "contains", native_contains);
+    defineModuleFn(module, "startswith", native_startswith);
+    defineModuleFn(module, "endswith", native_endswith);
+    defineModuleFn(module, "substr", native_substr);
 
+    pop(&vm);
+    pop(&vm);
+    return module;
+}

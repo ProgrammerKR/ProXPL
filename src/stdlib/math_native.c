@@ -3,6 +3,7 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+// --------------------------------------------------
 
 /*
  * ProXPL Standard Library - Math Module  
@@ -18,6 +19,19 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+
+extern VM vm;
+
+// Helper to define native function in a module
+static void defineModuleFn(ObjModule* module, const char* name, NativeFn function) {
+    ObjString* nameObj = copyString(name, (int)strlen(name));
+    push(&vm, OBJ_VAL(nameObj));
+    push(&vm, OBJ_VAL(newNative(function)));
+    tableSet(&module->exports, nameObj, peek(&vm, 0));
+    pop(&vm);
+    pop(&vm);
+}
 
 // abs(x) - Absolute value
 static Value native_abs(int argCount, Value* args) {
@@ -114,6 +128,21 @@ static Value native_tan(int argCount, Value* args) {
     return NUMBER_VAL(tan(AS_NUMBER(args[0])));
 }
 
+static Value native_asin(int argCount, Value* args) {
+    if (argCount < 1 || !IS_NUMBER(args[0])) return NUMBER_VAL(0);
+    return NUMBER_VAL(asin(AS_NUMBER(args[0])));
+}
+
+static Value native_acos(int argCount, Value* args) {
+    if (argCount < 1 || !IS_NUMBER(args[0])) return NUMBER_VAL(0);
+    return NUMBER_VAL(acos(AS_NUMBER(args[0])));
+}
+
+static Value native_atan(int argCount, Value* args) {
+    if (argCount < 1 || !IS_NUMBER(args[0])) return NUMBER_VAL(0);
+    return NUMBER_VAL(atan(AS_NUMBER(args[0])));
+}
+
 // log(x, base) - Logarithm
 static Value native_log(int argCount, Value* args) {
     if (argCount < 1 || !IS_NUMBER(args[0])) return NUMBER_VAL(0);
@@ -162,25 +191,52 @@ static Value native_randint(int argCount, Value* args) {
     return NUMBER_VAL(min + (rand() % range));
 }
 
-// Register all math functions with the VM
-void register_math_natives(VM* vm) {
-    // Initialize random seed
-    srand((unsigned int)time(NULL));
-    
-    defineNative(vm, "abs", native_abs);
-    defineNative(vm, "ceil", native_ceil);
-    defineNative(vm, "floor", native_floor);
-    defineNative(vm, "round", native_round);
-    defineNative(vm, "max", native_max);
-    defineNative(vm, "min", native_min);
-    defineNative(vm, "pow", native_pow);
-    defineNative(vm, "sqrt", native_sqrt);
-    defineNative(vm, "sin", native_sin);
-    defineNative(vm, "cos", native_cos);
-    defineNative(vm, "tan", native_tan);
-    defineNative(vm, "log", native_log);
-    defineNative(vm, "exp", native_exp);
-    defineNative(vm, "random", native_random);
-    defineNative(vm, "randint", native_randint);
+// seed(val)
+static Value native_seed(int argCount, Value* args) {
+    if (argCount > 0 && IS_NUMBER(args[0])) {
+        srand((unsigned int)AS_NUMBER(args[0]));
+    } else {
+        srand((unsigned int)time(NULL));
+    }
+    return NIL_VAL;
 }
 
+// Create std.native.math module
+ObjModule* create_std_math_module() {
+    // Initialize random seed once if needed, or rely on user seeding.
+    // We can seed on module creation.
+    static int seeded = 0;
+    if (!seeded) {
+        srand((unsigned int)time(NULL));
+        seeded = 1;
+    }
+
+    ObjString* name = copyString("std.native.math", 15);
+    push(&vm, OBJ_VAL(name));
+    ObjModule* module = newModule(name);
+    push(&vm, OBJ_VAL(module));
+    
+    defineModuleFn(module, "abs", native_abs);
+    defineModuleFn(module, "ceil", native_ceil);
+    defineModuleFn(module, "floor", native_floor);
+    defineModuleFn(module, "round", native_round);
+    defineModuleFn(module, "max", native_max);
+    defineModuleFn(module, "min", native_min);
+    defineModuleFn(module, "pow", native_pow);
+    defineModuleFn(module, "sqrt", native_sqrt);
+    defineModuleFn(module, "sin", native_sin);
+    defineModuleFn(module, "cos", native_cos);
+    defineModuleFn(module, "tan", native_tan);
+    defineModuleFn(module, "asin", native_asin);
+    defineModuleFn(module, "acos", native_acos);
+    defineModuleFn(module, "atan", native_atan);
+    defineModuleFn(module, "log", native_log);
+    defineModuleFn(module, "exp", native_exp);
+    defineModuleFn(module, "random", native_random);
+    defineModuleFn(module, "randint", native_randint);
+    defineModuleFn(module, "seed", native_seed);
+
+    pop(&vm); // module
+    pop(&vm); // name
+    return module;
+}
