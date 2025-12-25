@@ -413,12 +413,13 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
             
         case STMT_RETURN: {
-            // TypeInfo retType;
+            TypeInfo retType;
             if (stmt->as.return_stmt.value) {
                 retType = checkExpr(checker, stmt->as.return_stmt.value);
             } else {
                 retType = createType(TYPE_VOID);
             }
+            (void)retType; // Suppress unused variable warning until TODOs are implemented
             // TODO: Match validity against current function return type
             break;
         }
