@@ -5,8 +5,12 @@
 #include "value.h"
 #include "vm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Initialize GC state
-void gc_init(VM* vm);
+void initGC(VM* vm);
 
 // Free all objects (called at VM shutdown)
 void freeObjects(VM* vm);
@@ -22,5 +26,9 @@ void markValue(Value value);
 
 // Allocation wrapper that triggers GC if needed
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PROX_GC_H

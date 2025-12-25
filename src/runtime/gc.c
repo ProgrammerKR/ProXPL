@@ -16,7 +16,7 @@
 // Access the global VM instance
 extern VM vm;
 
-void gc_init(VM* vm) {
+void initGC(VM* vm) {
     vm->grayCount = 0;
     vm->grayCapacity = 0;
     vm->grayStack = NULL;

@@ -413,7 +413,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
             
         case STMT_RETURN: {
-            TypeInfo retType;
+            // TypeInfo retType;
             if (stmt->as.return_stmt.value) {
                 retType = checkExpr(checker, stmt->as.return_stmt.value);
             } else {

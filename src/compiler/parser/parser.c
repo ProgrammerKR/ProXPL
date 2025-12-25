@@ -173,6 +173,7 @@ static Stmt *declaration(Parser *p) {
 }
 
 static Stmt *funcDecl(Parser *p, const char *kind) {
+  (void)kind;
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
   char *name = tokenToString(nameToken);
 
