@@ -292,7 +292,7 @@ static InterpretResult run(VM *vm) {
               runtimeError(vm, "Stack overflow.");
               return INTERPRET_RUNTIME_ERROR;
           }
-          CallFrame* frame = &vm->frames[vm->frameCount++];
+          frame = &vm->frames[vm->frameCount++];
           frame->closure = closure;
           frame->ip = closure->function->chunk.code;
           frame->slots = vm->stackTop - argCount - 1;
