@@ -463,6 +463,41 @@ static InterpretResult run(VM *vm) {
         frame->ip -= offset;
         break;
     }
+    case OP_CALL: {
+        int argCount = READ_BYTE();
+        Value callee = peek(vm, argCount);
+        if (IS_CLOSURE(callee)) {
+            ObjClosure* closure = AS_CLOSURE(callee);
+            if (argCount != closure->function->arity) {
+                runtimeError(vm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            if (vm->frameCount == 64) {
+                runtimeError(vm, "Stack overflow.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            frame = &vm->frames[vm->frameCount++];
+            frame->closure = closure;
+            frame->ip = closure->function->chunk.code;
+            frame->slots = vm->stackTop - argCount - 1;
+            break;
+        } else if (IS_NATIVE(callee)) {
+            NativeFn native = AS_NATIVE(callee);
+            Value result = native(argCount, vm->stackTop - argCount);
+            vm->stackTop -= argCount + 1;
+            push(vm, result);
+            break;
+        } else {
+            runtimeError(vm, "Can only call functions and classes.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+    }
+    case OP_CLOSURE: {
+        ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
+        ObjClosure* closure = newClosure(function);
+        push(vm, OBJ_VAL(closure));
+        break;
+    }
     case OP_RETURN: {
       vm->frameCount--;
       if (vm->frameCount == 0) {
