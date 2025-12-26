@@ -278,21 +278,58 @@ static InterpretResult run(VM *vm) {
       frame->ip -= offset;
       DISPATCH();
   }
-  DO_OP_CALL:
+  DO_OP_CALL: {
+      int argCount = READ_BYTE();
+      // callValue logic
+      Value callee = peek(vm, argCount);
+      if (IS_CLOSURE(callee)) {
+          ObjClosure* closure = AS_CLOSURE(callee);
+          if (argCount != closure->function->arity) {
+              runtimeError(vm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          if (vm->frameCount == 64) { // MAX_FRAMES
+              runtimeError(vm, "Stack overflow.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          CallFrame* frame = &vm->frames[vm->frameCount++];
+          frame->closure = closure;
+          frame->ip = closure->function->chunk.code;
+          frame->slots = vm->stackTop - argCount - 1;
+          DISPATCH();
+      } else if (IS_NATIVE(callee)) {
+          NativeFn native = AS_NATIVE(callee);
+          Value result = native(argCount, vm->stackTop - argCount);
+          vm->stackTop -= argCount + 1;
+          push(vm, result);
+          DISPATCH();
+      } else {
+          runtimeError(vm, "Can only call functions and classes.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      DISPATCH();
+  }
   DO_OP_INVOKE:
   DO_OP_SUPER_INVOKE:
-  DO_OP_CLOSURE:
+  DO_OP_CLOSURE: {
+      ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
+      ObjClosure* closure = newClosure(function);
+      push(vm, OBJ_VAL(closure));
+      DISPATCH();
+  }
   DO_OP_CLOSE_UPVALUE: {
       // Stubs
       DISPATCH();
   }
   DO_OP_RETURN: {
+      Value result = pop(vm);
       vm->frameCount--;
       if (vm->frameCount == 0) {
         pop(vm);
         return INTERPRET_OK;
       }
       vm->stackTop = frame->slots;
+      push(vm, result);
       frame = &vm->frames[vm->frameCount - 1];
       DISPATCH();
   }
