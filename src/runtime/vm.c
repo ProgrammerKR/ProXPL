@@ -222,6 +222,24 @@ static InterpretResult run(VM *vm) {
           double b = AS_NUMBER(pop(vm));
           double a = AS_NUMBER(pop(vm));
           push(vm, NUMBER_VAL(a + b));
+      } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
+          // String + Number
+          Value numVal = pop(vm); // b
+          Value strVal = pop(vm); // a
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
+          push(vm, strVal);
+          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          concatenate(vm);
+      } else if (IS_STRING(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          // Number + String
+          Value strVal = pop(vm); // b
+          Value numVal = pop(vm); // a
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
+          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          push(vm, strVal);
+          concatenate(vm);
       } else {
           runtimeError(vm, "Operands must be two numbers or two strings.");
           return INTERPRET_RUNTIME_ERROR;
@@ -410,6 +428,22 @@ static InterpretResult run(VM *vm) {
           double b = AS_NUMBER(pop(vm));
           double a = AS_NUMBER(pop(vm));
           push(vm, NUMBER_VAL(a + b));
+        } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
+          Value numVal = pop(vm);
+          Value strVal = pop(vm);
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
+          push(vm, strVal);
+          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          concatenate(vm);
+        } else if (IS_STRING(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          Value strVal = pop(vm);
+          Value numVal = pop(vm);
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
+          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          push(vm, strVal);
+          concatenate(vm);
         } else {
           runtimeError(vm, "Operands must be two numbers or two strings.");
           return INTERPRET_RUNTIME_ERROR;
