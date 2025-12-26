@@ -486,17 +486,23 @@ static InterpretResult run(VM *vm) {
 }
 
 InterpretResult interpretAST(VM* pvm, StmtList* statements) {
+  // Disable GC during compilation to prevent freeing unrooted function/constants
+  size_t oldNextGC = pvm->nextGC;
+  pvm->nextGC = (size_t)-1; // SIZE_MAX
+
   ObjFunction* function = newFunction();
   
   // Connect the AST-based bytecode generator
   generateBytecode(statements, &function->chunk);
   
   // Setup for execution
-  // Setup for execution
   push(pvm, OBJ_VAL(function));
   ObjClosure* closure = newClosure(function);
   pop(pvm);
   push(pvm, OBJ_VAL(closure));
+  
+  // Restore GC
+  pvm->nextGC = oldNextGC;
   
   CallFrame* frame = &pvm->frames[pvm->frameCount++];
   frame->closure = closure;
