@@ -1,4 +1,4 @@
-# ProXPL Programming Language
+<div align="center"><h1> ProXPL - ProX Programming Language  </h1></div>
 
 <p align="center">
   <b>A Modern, High-Performance Programming Language</b>
@@ -457,65 +457,6 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 ---
 
-## 🛣️ Roadmap
-
-### v1.0.0 (Current - December 2024)
-**Status**: Production-Ready Core
-- ✅ Complete compiler pipeline (Lexer → Parser → Type Checker → IR → Codegen)
-- ✅ Stack-based VM with bytecode execution
-- ✅ LLVM backend for AOT native compilation
-- ✅ 75+ standard library functions
-- ✅ Garbage collector (Mark & Sweep)
-- ✅ Type system with inference
-- ✅ Module system with `use` keyword
-- ✅ PRM package manager (basic)
-- ✅ CLI tools and LSP foundation
-- ✅ Cross-platform support (Windows/Linux/macOS)
-
-### v1.1.0 (Q1 2025)
-**Focus**: Enhanced Developer Experience
-- 🚧 LSP server with full IDE support (autocomplete, go-to-definition, diagnostics)
-- 🚧 Enhanced error messages with suggestions
-- 🚧 Debugger integration (source maps, breakpoints)
-- 🚧 Standard library expansion (`std.net`, `std.json`, `std.regex`)
-- 🚧 PRM registry service (centralized package repository)
-- 🚧 Watch mode and hot reload
-
-### v1.2.0 (Q2 2025)
-**Focus**: Object-Oriented Programming
-- 📋 Class-based OOP with inheritance
-- 📋 Interfaces and abstract classes
-- 📋 Method overloading and operator overloading
-- 📋 Property accessors (getters/setters)
-- 📋 Access modifiers (`pub`, `priv`, `protected`)
-- 📋 Constructors and destructors
-
-### v1.3.0 (Q3 2025)
-**Focus**: Advanced Features
-- 📋 Pattern matching (match expressions)
-- 📋 Algebraic data types (enums with associated values)
-- 📋 Generics and type parameters
-- 📋 Trait system (type classes)
-- 📋 Option and Result types for error handling
-- 📋 Lambda expressions and closures
-
-### v2.0.0 (Q4 2025+)
-**Focus**: Concurrency & Advanced Systems
-- 📋 Async/await support
-- 📋 Green threads / coroutines
-- 📋 Actor model concurrency
-- 📋 Foreign Function Interface (FFI) for C interop
-- 📋 WebAssembly compilation target
-- 📋 JIT compilation with tiered optimization
-- 📋 Advanced optimizations (inlining, escape analysis)
-
-### Future Considerations
-- 📋 Memory safety guarantees (ownership/borrowing system)
-- 📋 Compile-time reflection and metaprogramming
-- 📋 Package registry with namespace management
-- 📋 Incremental compilation
-- 📋 Language server protocol v3.0 features
-- 📋 IDE plugins (VS Code, JetBrains, Vim)
 
 ---
 
@@ -555,7 +496,52 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ## 🛠️ Contributing
 
-We warmly welcome contributions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
+We warmly welcome contribut## 🛣️ Roadmap
+
+### v1.0.0 (Current - December 2024)
+**Status**: Production-Ready Core
+- ✅ Complete compiler pipeline (Lexer → Parser → Type Checker → IR → Codegen)
+- ✅ Stack-based VM with bytecode execution
+- ✅ LLVM backend for AOT native compilation
+- ✅ 75+ standard library functions
+- ✅ Garbage collector (Mark & Sweep)
+- ✅ Type system with inference
+- ✅ Module system with `use` keyword
+- ✅ PRM package manager (basic)
+- ✅ CLI tools and LSP foundation
+- ✅ Cross-platform support (Windows/Linux/macOS)
+
+### v1.1.0 (Q1 2025)
+**Focus**: Enhanced Developer Experience & System APIs
+- 🚧 **Advanced Diagnostics**: Enhanced error reporting with **Column Tracking** and visual pointers (`^`) for precise debugging.
+- 🚧 **VS Code Tooling**: Implementation of **Snippets** and **Hover Support** (documentation tooltips) in the official extension.
+- 🚧 **System Standard Library**: Expansion of `std.fs` (File System I/O) and `std.sys` (Process args, exit codes, and env).
+- 🚧 **LSP Evolution**: Transition from foundation to a functional Language Server (Go-to-definition, basic autocomplete).
+- 🚧 **PRM Remote Support**: Enabling PRM to fetch and install packages directly from **GitHub repositories**.
+
+### v1.2.0 (Q2 2025)
+**Focus**: Object-Oriented Programming & Ecosystem
+- 📋 Class-based OOP with inheritance and interfaces.
+- 📋 Access modifiers (`pub`, `priv`) and constructors/destructors.
+- 📋 **ProX Studio Alpha**: Initial fork of VS Code tailored for ProXPL development.
+
+### v1.3.0 (Q3 2025)
+**Focus**: Advanced Features
+- 📋 Pattern matching and Algebraic Data Types (Enums).
+- 📋 Generics, Traits, and Type Parameters.
+- 📋 Option/Result types for robust error handling.
+
+### v2.0.0 (Q4 2025+)
+**Focus**: Concurrency & Integrated Tooling
+- 📋 **ProX Studio (Stable)**: A fully branded, dedicated IDE with integrated debugger, PRM GUI, and zero-config ProXPL environment.
+- 📋 Async/await, Green threads, and Actor model concurrency.
+- 📋 Foreign Function Interface (FFI) and WebAssembly target.
+- 📋 JIT compilation and advanced LLVM optimizations.
+
+### Future Considerations
+- 📋 Memory safety guarantees (ownership/borrowing).
+- 📋 Compile-time reflection and metaprogramming.
+- 📋 Dedicated ProXPL Package Registry.ions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
 
 ### How to Contribute
 
