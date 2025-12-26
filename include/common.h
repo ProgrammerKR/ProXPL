@@ -56,6 +56,9 @@ typedef struct DictPairList DictPairList;
 typedef struct StringList StringList;
 // --- Type System ---
 typedef struct ObjModule ObjModule;
+typedef struct ObjClass ObjClass;
+typedef struct ObjInstance ObjInstance;
+typedef struct ObjBoundMethod ObjBoundMethod;
 typedef struct TypeInfo TypeInfo;
 
 typedef Value (*NativeFn)(int argCount, Value *args);

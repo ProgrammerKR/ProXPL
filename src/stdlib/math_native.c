@@ -16,6 +16,7 @@
 #include "common.h"
 #include "vm.h"
 #include "value.h"
+#include "object.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
