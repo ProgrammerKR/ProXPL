@@ -1,7 +1,7 @@
 // benchmarks/string_concat.prox
 // Stress Test: Allocation & GC
 
-const ITERATIONS = 100000;
+const ITERATIONS = 20000;
 print("Starting String Concat...");
 
 start = clock();

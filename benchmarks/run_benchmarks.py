@@ -44,8 +44,8 @@ def main():
          # But user expects benchmarks.
          return
 
-    print(f"{'Benchmark':<30} | {'Time (s)':<10} | {'Status':<10}")
-    print("-" * 55)
+    print(f"{'Benchmark':<30} | {'Time (s)':<10} | {'Status':<10}", flush=True)
+    print("-" * 55, flush=True)
 
     failure = False
     for bench in benchmarks:
@@ -53,9 +53,9 @@ def main():
         duration, output = run_benchmark(args.executable, bench)
         
         if duration is not None:
-             print(f"{name:<30} | {duration:<10.4f} | {'PASS':<10}")
+             print(f"{name:<30} | {duration:<10.4f} | {'PASS':<10}", flush=True)
         else:
-             print(f"{name:<30} | {'N/A':<10} | {'FAIL':<10}")
+             print(f"{name:<30} | {'N/A':<10} | {'FAIL':<10}", flush=True)
              failure = True
 
     if failure:
