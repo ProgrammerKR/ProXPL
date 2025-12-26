@@ -7,6 +7,7 @@
 #include "../../include/common.h"
 #include "../../include/value.h"
 #include "../../include/object.h"
+#include <stddef.h> 
 
 // --- Compiler & Scope Types ---
 
@@ -62,7 +63,7 @@ static void initCompiler(BytecodeGen* gen, Compiler* compiler, CompFunctionType 
 
 static ObjFunction* endCompiler(BytecodeGen* gen) {
     // Emit return
-    writeChunk(gen->chunk, OP_NIL, 0); // TODO: Line info
+    writeChunk(gen->chunk, OP_NIL, 0); 
     writeChunk(gen->chunk, OP_RETURN, 0);
     
     ObjFunction* function = gen->compiler->function;
@@ -112,21 +113,16 @@ static void addLocal(BytecodeGen* gen, const char* name) {
     local->depth = gen->compiler->scopeDepth; // Assuming initialized immediately
 }
 
-// remove static declaration of addConstant, use header implementation implicitly linked
-
 static void emitConstant(BytecodeGen* gen, Value value, int line) {
     int constant = addConstant(gen->chunk, value);
     if (constant > 255) {
-        writeChunk(gen->chunk, OP_CONSTANT, line); // Handle appropriately if we had OP_CONSTANT_LONG
+        writeChunk(gen->chunk, OP_CONSTANT, line); 
         fprintf(stderr, "Too many constants.\n");
     } else {
         writeChunk(gen->chunk, OP_CONSTANT, line);
         writeChunk(gen->chunk, (uint8_t)constant, line);
     }
 }
-
-// ... (Rest of BytecodeGen is fine until generateBytecode/STMT_FUNC_DECL) ...
-// NOTE: Must ensure STMT_FUNC_DECL uses COMP_FUNCTION
 
 static void genExpr(BytecodeGen* gen, Expr* expr) {
     if (expr == NULL) return;
@@ -227,7 +223,6 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
     if (stmt == NULL) return;
     
     switch (stmt->type) {
-        // ...
         case STMT_FUNC_DECL: {
             // New Compiler for Function
             Compiler funcCompiler;
@@ -272,91 +267,101 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             }
             break;
         }
-        // ... (Rest default)
-        default:
-             if(stmt->type == STMT_BLOCK) { // Handle other cases similarly if overridden
-                beginScope(gen);
+        case STMT_BLOCK: {
+            beginScope(gen);
+            if (stmt->as.block.statements) {
                 for (int i=0; i < stmt->as.block.statements->count; i++) {
                     genStmt(gen, stmt->as.block.statements->items[i]);
                 }
-                endScope(gen);
-             } else if (stmt->type == STMT_VAR_DECL) {
-                if (stmt->as.var_decl.initializer) {
-                    genExpr(gen, stmt->as.var_decl.initializer);
-                } else {
-                    writeChunk(gen->chunk, OP_NIL, stmt->line);
-                }
-                
-                if (gen->compiler->scopeDepth > 0) {
-                    addLocal(gen, stmt->as.var_decl.name);
-                } else {
-                    Value nameVal = OBJ_VAL(copyString(stmt->as.var_decl.name, strlen(stmt->as.var_decl.name)));
-                    int nameConst = addConstant(gen->chunk, nameVal);
-                    writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
-                    writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
-                }
-             } else if (stmt->type == STMT_EXPRESSION) {
-                genExpr(gen, stmt->as.expression.expression);
-                writeChunk(gen->chunk, OP_POP, stmt->line);
-             } else if (stmt->type == STMT_PRINT) {
-                genExpr(gen, stmt->as.print.expression);
-                writeChunk(gen->chunk, OP_PRINT, stmt->line);
-             } else if (stmt->type == STMT_RETURN) {
-                if (stmt->as.return_stmt.value) {
-                    genExpr(gen, stmt->as.return_stmt.value);
-                } else {
-                     writeChunk(gen->chunk, OP_NIL, stmt->line);
-                }
-                writeChunk(gen->chunk, OP_RETURN, stmt->line);
-             } else if (stmt->type == STMT_IF) {
-                genExpr(gen, stmt->as.if_stmt.condition);
-                writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
-                writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
-                int thenJump = gen->chunk->count - 2;
-                writeChunk(gen->chunk, OP_POP, stmt->line);
-                
-                genStmt(gen, stmt->as.if_stmt.then_branch);
-                
-                writeChunk(gen->chunk, OP_JUMP, 0);
-                writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
-                int elseJump = gen->chunk->count - 2;
-                
-                int patchThen = gen->chunk->count - thenJump - 2;
-                gen->chunk->code[thenJump] = (patchThen >> 8) & 0xff;
-                gen->chunk->code[thenJump+1] = patchThen & 0xff;
-                
-                writeChunk(gen->chunk, OP_POP, stmt->line);
-                if (stmt->as.if_stmt.else_branch) genStmt(gen, stmt->as.if_stmt.else_branch);
-                
-                int patchElse = gen->chunk->count - elseJump - 2;
-                gen->chunk->code[elseJump] = (patchElse >> 8) & 0xff;
-                gen->chunk->code[elseJump+1] = patchElse & 0xff;
-             } else if (stmt->type == STMT_WHILE) {
-                int loopStart = gen->chunk->count;
-                genExpr(gen, stmt->as.while_stmt.condition);
-                
-                writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
-                writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
-                int exitJump = gen->chunk->count - 2;
-                writeChunk(gen->chunk, OP_POP, stmt->line);
-                
-                genStmt(gen, stmt->as.while_stmt.body);
-                
-                writeChunk(gen->chunk, OP_LOOP, stmt->line);
-                int offset = gen->chunk->count - loopStart + 2;
-                writeChunk(gen->chunk, (offset >> 8) & 0xff, 0);
-                writeChunk(gen->chunk, offset & 0xff, 0);
-                
-                int patchExit = gen->chunk->count - exitJump - 2;
-                gen->chunk->code[exitJump] = (patchExit >> 8) & 0xff;
-                gen->chunk->code[exitJump+1] = patchExit & 0xff;
-                
-                writeChunk(gen->chunk, OP_POP, stmt->line);
-             }
-             else {
-                // fall back for other types if any
-             }
-             break;
+            }
+            endScope(gen);
+            break;
+        }
+        case STMT_VAR_DECL: {
+            if (stmt->as.var_decl.initializer) {
+                genExpr(gen, stmt->as.var_decl.initializer);
+            } else {
+                writeChunk(gen->chunk, OP_NIL, stmt->line);
+            }
+            
+            if (gen->compiler->scopeDepth > 0) {
+                addLocal(gen, stmt->as.var_decl.name);
+            } else {
+                Value nameVal = OBJ_VAL(copyString(stmt->as.var_decl.name, strlen(stmt->as.var_decl.name)));
+                int nameConst = addConstant(gen->chunk, nameVal);
+                writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            break;
+        }
+        case STMT_EXPRESSION: {
+            genExpr(gen, stmt->as.expression.expression);
+            writeChunk(gen->chunk, OP_POP, stmt->line);
+            break;
+        }
+        case STMT_PRINT: {
+            genExpr(gen, stmt->as.print.expression);
+            writeChunk(gen->chunk, OP_PRINT, stmt->line);
+            break;
+        }
+        case STMT_RETURN: {
+            if (stmt->as.return_stmt.value) {
+                genExpr(gen, stmt->as.return_stmt.value);
+            } else {
+                 writeChunk(gen->chunk, OP_NIL, stmt->line);
+            }
+            writeChunk(gen->chunk, OP_RETURN, stmt->line);
+            break;
+        }
+        case STMT_IF: {
+            genExpr(gen, stmt->as.if_stmt.condition);
+            writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
+            writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+            int thenJump = gen->chunk->count - 2;
+            writeChunk(gen->chunk, OP_POP, stmt->line);
+            
+            genStmt(gen, stmt->as.if_stmt.then_branch);
+            
+            writeChunk(gen->chunk, OP_JUMP, 0);
+            writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+            int elseJump = gen->chunk->count - 2;
+            
+            int patchThen = gen->chunk->count - thenJump - 2;
+            gen->chunk->code[thenJump] = (patchThen >> 8) & 0xff;
+            gen->chunk->code[thenJump+1] = patchThen & 0xff;
+            
+            writeChunk(gen->chunk, OP_POP, stmt->line);
+            if (stmt->as.if_stmt.else_branch) genStmt(gen, stmt->as.if_stmt.else_branch);
+            
+            int patchElse = gen->chunk->count - elseJump - 2;
+            gen->chunk->code[elseJump] = (patchElse >> 8) & 0xff;
+            gen->chunk->code[elseJump+1] = patchElse & 0xff;
+            break;
+        }
+        case STMT_WHILE: {
+            int loopStart = gen->chunk->count;
+            genExpr(gen, stmt->as.while_stmt.condition);
+            
+            writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
+            writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+            int exitJump = gen->chunk->count - 2;
+            writeChunk(gen->chunk, OP_POP, stmt->line);
+            
+            genStmt(gen, stmt->as.while_stmt.body);
+            
+            writeChunk(gen->chunk, OP_LOOP, stmt->line);
+            int offset = gen->chunk->count - loopStart + 2;
+            writeChunk(gen->chunk, (offset >> 8) & 0xff, 0);
+            writeChunk(gen->chunk, offset & 0xff, 0);
+            
+            int patchExit = gen->chunk->count - exitJump - 2;
+            gen->chunk->code[exitJump] = (patchExit >> 8) & 0xff;
+            gen->chunk->code[exitJump+1] = patchExit & 0xff;
+            
+            writeChunk(gen->chunk, OP_POP, stmt->line);
+            break;
+        }
+        default: break;
     }
 }
 
@@ -371,17 +376,19 @@ void generateBytecode(StmtList* statements, Chunk* chunk) {
     compiler.function = newFunction(); 
     compiler.function->chunk = *chunk; 
     
-    compiler.type = COMP_SCRIPT; // Use new enum value
+    compiler.type = COMP_SCRIPT; 
     compiler.localCount = 0;
     compiler.scopeDepth = 0;
     
     compiler.locals[compiler.localCount++].depth = 0;
     compiler.locals[0].name = "";
 
-    for (int i = 0; i < statements->count; i++) {
-        genStmt(&gen, statements->items[i]);
+    if (statements) {
+        for (int i = 0; i < statements->count; i++) {
+            genStmt(&gen, statements->items[i]);
+        }
     }
     
-    writeChunk(gen.chunk, OP_NIL, 0); // Fix: gen.chunk instead of gen->chunk
-    writeChunk(gen.chunk, OP_RETURN, 0); // Fix: gen.chunk instead of gen->chunk
+    writeChunk(gen.chunk, OP_NIL, 0);
+    writeChunk(gen.chunk, OP_RETURN, 0);
 }
