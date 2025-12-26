@@ -128,6 +128,101 @@ static void emitConstant(BytecodeGen* gen, Value value, int line) {
 // ... (Rest of BytecodeGen is fine until generateBytecode/STMT_FUNC_DECL) ...
 // NOTE: Must ensure STMT_FUNC_DECL uses COMP_FUNCTION
 
+static void genExpr(BytecodeGen* gen, Expr* expr) {
+    if (expr == NULL) return;
+
+    switch (expr->type) {
+        case EXPR_LITERAL: {
+             if (IS_NIL(expr->as.literal.value)) {
+                 writeChunk(gen->chunk, OP_NIL, expr->line);
+             } else if (IS_BOOL(expr->as.literal.value)) {
+                 writeChunk(gen->chunk, AS_BOOL(expr->as.literal.value) ? OP_TRUE : OP_FALSE, expr->line);
+             } else {
+                 emitConstant(gen, expr->as.literal.value, expr->line);
+             }
+             break;
+        }
+        case EXPR_UNARY: {
+            genExpr(gen, expr->as.unary.right);
+            if (strcmp(expr->as.unary.operator, "-") == 0) {
+                 writeChunk(gen->chunk, OP_NEGATE, expr->line);
+            } else if (strcmp(expr->as.unary.operator, "!") == 0) {
+                 writeChunk(gen->chunk, OP_NOT, expr->line);
+            }
+            break;
+        }
+        case EXPR_BINARY: {
+            genExpr(gen, expr->as.binary.left);
+            genExpr(gen, expr->as.binary.right);
+            if (strcmp(expr->as.binary.operator, "+") == 0) writeChunk(gen->chunk, OP_ADD, expr->line);
+            else if (strcmp(expr->as.binary.operator, "-") == 0) writeChunk(gen->chunk, OP_SUBTRACT, expr->line);
+            else if (strcmp(expr->as.binary.operator, "*") == 0) writeChunk(gen->chunk, OP_MULTIPLY, expr->line);
+            else if (strcmp(expr->as.binary.operator, "/") == 0) writeChunk(gen->chunk, OP_DIVIDE, expr->line);
+             else if (strcmp(expr->as.binary.operator, "==") == 0) writeChunk(gen->chunk, OP_EQUAL, expr->line);
+             else if (strcmp(expr->as.binary.operator, "!=") == 0) {
+                 writeChunk(gen->chunk, OP_EQUAL, expr->line);
+                 writeChunk(gen->chunk, OP_NOT, expr->line);
+             }
+             else if (strcmp(expr->as.binary.operator, "<") == 0) writeChunk(gen->chunk, OP_LESS, expr->line);
+             else if (strcmp(expr->as.binary.operator, "<=") == 0) {
+                 writeChunk(gen->chunk, OP_GREATER, expr->line);
+                 writeChunk(gen->chunk, OP_NOT, expr->line);
+             }
+             else if (strcmp(expr->as.binary.operator, ">") == 0) writeChunk(gen->chunk, OP_GREATER, expr->line);
+             else if (strcmp(expr->as.binary.operator, ">=") == 0) {
+                 writeChunk(gen->chunk, OP_LESS, expr->line);
+                 writeChunk(gen->chunk, OP_NOT, expr->line);
+             }
+            break;
+        }
+        case EXPR_GROUPING: {
+            genExpr(gen, expr->as.grouping.expression);
+            break;
+        }
+        case EXPR_VARIABLE: {
+            int arg = resolveLocal(gen, expr->as.variable.name);
+            if (arg != -1) {
+                writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
+                writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+            } else {
+                 Value nameVal = OBJ_VAL(copyString(expr->as.variable.name, strlen(expr->as.variable.name)));
+                 int nameConst = addConstant(gen->chunk, nameVal);
+                 writeChunk(gen->chunk, OP_GET_GLOBAL, expr->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, expr->line);
+            }
+            break;
+        }
+        case EXPR_ASSIGN: {
+            genExpr(gen, expr->as.assign.value);
+             int arg = resolveLocal(gen, expr->as.assign.name);
+             if (arg != -1) {
+                 writeChunk(gen->chunk, OP_SET_LOCAL, expr->line);
+                 writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+             } else {
+                 Value nameVal = OBJ_VAL(copyString(expr->as.assign.name, strlen(expr->as.assign.name)));
+                 int nameConst = addConstant(gen->chunk, nameVal);
+                 writeChunk(gen->chunk, OP_SET_GLOBAL, expr->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, expr->line);
+             }
+            break;
+        }
+        case EXPR_CALL: {
+            genExpr(gen, expr->as.call.callee);
+            int argCount = 0;
+            if (expr->as.call.arguments) {
+                argCount = expr->as.call.arguments->count;
+                for (int i = 0; i < argCount; i++) {
+                    genExpr(gen, expr->as.call.arguments->items[i]);
+                }
+            }
+            writeChunk(gen->chunk, OP_CALL, expr->line);
+            writeChunk(gen->chunk, (uint8_t)argCount, expr->line);
+            break;
+        }
+        default: break; 
+    }
+}
+
 static void genStmt(BytecodeGen* gen, Stmt* stmt) {
     if (stmt == NULL) return;
     
