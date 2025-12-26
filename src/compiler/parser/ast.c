@@ -323,6 +323,11 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
   stmt->as.var_decl.name = strdup(name);
   stmt->as.var_decl.initializer = init;
   stmt->as.var_decl.is_const = is_const;
+  stmt->as.var_decl.type.kind = TYPE_UNKNOWN;
+  stmt->as.var_decl.type.name = NULL;
+  stmt->as.var_decl.type.returnType = NULL;
+  stmt->as.var_decl.type.paramTypes = NULL;
+  stmt->as.var_decl.type.paramCount = 0;
   return stmt;
 }
 

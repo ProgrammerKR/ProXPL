@@ -436,8 +436,19 @@ void initTypeChecker(TypeChecker *checker) {
     checker->currentScope = NULL;
     beginScope(checker); // Global Scope
     
-    // Define Builtins?
-    // defineSymbol(checker, "print", ...);
+    // Define Builtins
+    
+    // clock() -> Float
+    TypeInfo clockType = createType(TYPE_FUNCTION);
+    clockType.returnType = (TypeInfo*)malloc(sizeof(TypeInfo));
+    *clockType.returnType = createType(TYPE_FLOAT);
+    defineSymbol(checker, "clock", clockType);
+
+    // len(str) -> Float
+    TypeInfo lenType = createType(TYPE_FUNCTION);
+    lenType.returnType = (TypeInfo*)malloc(sizeof(TypeInfo));
+    *lenType.returnType = createType(TYPE_FLOAT);
+    defineSymbol(checker, "len", lenType);
 }
 
 bool checkTypes(TypeChecker *checker, StmtList *statements) {
