@@ -43,7 +43,8 @@ typedef struct Compiler {
 
 typedef struct {
     Compiler* compiler;
-    Chunk* chunk; // Current chunk being written to (convenience)
+    Chunk* chunk; 
+    bool hadError;
 } BytecodeGen;
 
 // --- Forward Declarations ---
