@@ -56,5 +56,12 @@ Value pop(VM* vm);
 Value peek(VM* vm, int distance);
 bool isFalsey(Value value);
 void defineNative(VM* vm, const char* name, NativeFn function);
+bool bindMethod(struct ObjClass *klass, struct ObjString *name, VM *vm);
+void defineMethod(struct ObjString *name, VM *vm);
+void closeUpvalues(VM *vm, Value *last);
+struct ObjUpvalue *captureUpvalue(Value *local, VM *vm);
+bool invokeFromClass(struct ObjClass *klass, struct ObjString *name, int argCount, VM *vm);
+bool invoke(struct ObjString *name, int argCount, VM *vm);
+bool callValue(Value callee, int argCount, VM *vm);
 
 #endif // PROX_VM_H
