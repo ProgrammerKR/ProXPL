@@ -139,7 +139,19 @@ void printObject(Value value) {
   case OBJ_DICTIONARY:
     printf("{dictionary}");
     break;
+  case OBJ_TASK:
+    printf("<task>");
+    break;
   }
+}
+
+struct ObjTask *newTask(void* hdl) {
+  struct ObjTask *task = ALLOCATE_OBJ(struct ObjTask, OBJ_TASK);
+  task->coroHandle = hdl;
+  task->completed = false;
+  task->result = NIL_VAL;
+  task->next = NULL;
+  return task;
 }
 
 ObjClosure *newClosure(ObjFunction *function) {

@@ -45,6 +45,9 @@
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define AS_BOUND_METHOD(value) ((struct ObjBoundMethod *)AS_OBJ(value))
 
+#define IS_TASK(value) isObjType(value, OBJ_TASK)
+#define AS_TASK(value) ((struct ObjTask *)AS_OBJ(value))
+
 #define IS_LIST(value) isObjType(value, OBJ_LIST)
 #define AS_LIST(value) ((struct ObjList *)AS_OBJ(value))
 
@@ -62,7 +65,8 @@ typedef enum {
   OBJ_INSTANCE,
   OBJ_BOUND_METHOD,
   OBJ_LIST,
-  OBJ_DICTIONARY
+  OBJ_DICTIONARY,
+  OBJ_TASK
 } ObjType;
 
 struct Obj {
@@ -144,6 +148,14 @@ struct ObjDictionary {
   Table items;
 };
 
+struct ObjTask {
+  Obj obj;
+  void* coroHandle; // LLVM Coroutine Handle
+  bool completed;
+  Value result;
+  struct ObjTask* next; // For scheduler queue
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -161,6 +173,7 @@ struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
 struct ObjList *newList();
 struct ObjDictionary *newDictionary();
+struct ObjTask *newTask(void* hdl);
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
