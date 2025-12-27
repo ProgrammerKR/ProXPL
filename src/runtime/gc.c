@@ -251,6 +251,19 @@ static void freeObject(Obj* object) {
             FREE(struct ObjDictionary, object);
             break;
         }
+        case OBJ_TASK: {
+            // coroHandle is void* managed by LLVM/malloc?
+            // If we used a custom allocator, we free it here.
+            // But LLVM `coro.destroy` handles it.
+            // We should call `llvm.coro.destroy(hdl)` if task is dead?
+            // But we can't easily call LLVM intrinsic from here.
+            // We assume LLVM code cleaned up via `coro.free` path 
+            // when task reached end.
+            // If task is collected BEFORE completion, we might leak the coroutine frame.
+            // For now, simple free of ObjTask struct.
+            FREE(struct ObjTask, object);
+            break;
+        }
         default:
             FREE(Obj, object); // Fallback
             break;
