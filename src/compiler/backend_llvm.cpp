@@ -337,11 +337,17 @@ public:
             }
             
             case IR_OP_AWAIT: {
+                llvm::Value* TaskToAwait = getOperand(instr->operands[0]);
+
                 if (!CoroHdl) {
-                    // Error: await outside async
+                    // Sync await (e.g. in main)
+                    // Call prox_rt_run_and_wait(TaskToAwait)
+                    llvm::Function* FRunWait = ModuleOb->getFunction("prox_rt_run_and_wait");
+                    if (FRunWait) {
+                        ssaValues[instr->result] = Builder->CreateCall(FRunWait, {TaskToAwait}, "await_res");
+                    }
                     return;
                 }
-                llvm::Value* TaskToAwait = getOperand(instr->operands[0]);
                 
                 // We need to:
                 // 1. Check if task is done? (Runtime optimization)
@@ -353,7 +359,12 @@ public:
                 // BUT we don't have prox_rt_await declared yet.
                 // And await should return the result of the task.
                 
-                // TODO: Declare prox_rt_await.
+                // Call runtime to register await
+                llvm::Function* FAwait = ModuleOb->getFunction("prox_rt_await");
+                if (FAwait) {
+                    Builder->CreateCall(FAwait, {TaskToAwait});
+                }
+                
                 // For now, emit llvm.coro.suspend.
                 llvm::Function* FCoroSuspend = ModuleOb->getFunction("llvm.coro.suspend");
                 llvm::Value* SuspendResult = Builder->CreateCall(FCoroSuspend, {
@@ -439,6 +450,42 @@ public:
         }
     }
 
+    void setupSchedulerHelpers() {
+        // void prox_rt_resume(i8* hdl)
+        llvm::FunctionType *ResumeType = llvm::FunctionType::get(
+            Builder->getVoidTy(),
+            {Builder->getPtrTy()},
+            false
+        );
+        llvm::Function* FResume = llvm::Function::Create(ResumeType, llvm::Function::ExternalLinkage, "prox_rt_resume", ModuleOb.get());
+        
+        // Implement prox_rt_resume wrapper
+        llvm::BasicBlock* Entry = llvm::BasicBlock::Create(*Context, "entry", FResume);
+        llvm::IRBuilder<> ResBuilder(Entry);
+        llvm::Function* FCoroResume = llvm::Intrinsic::getDeclaration(ModuleOb.get(), llvm::Intrinsic::coro_resume);
+        ResBuilder.CreateCall(FCoroResume, {FResume->arg_begin()});
+        ResBuilder.CreateRetVoid();
+
+        // void prox_rt_await(Value task)
+        llvm::FunctionType *AwaitType = llvm::FunctionType::get(
+            Builder->getVoidTy(),
+            {Builder->getInt64Ty()},
+            false
+        );
+        llvm::Function::Create(AwaitType, llvm::Function::ExternalLinkage, "prox_rt_await", ModuleOb.get());
+    }
+
+        // Value prox_rt_run_and_wait(Value task)
+        llvm::FunctionType *RunWaitType = llvm::FunctionType::get(
+            Builder->getInt64Ty(),
+            {Builder->getInt64Ty()},
+            false
+        );
+        llvm::Function::Create(RunWaitType, llvm::Function::ExternalLinkage, "prox_rt_run_and_wait", ModuleOb.get());
+    }
+
+    // Call this from setupRuntimeTypes or Constructor
+    
     llvm::Value* getOperand(IROperand& op) {
         if (op.type == OPERAND_CONST) {
              if (IS_NUMBER(op.as.constant)) {
@@ -461,6 +508,7 @@ public:
 
 extern "C" void emitLLVM(IRModule* module) {
     LLVMEmitter emitter;
+    emitter.setupSchedulerHelpers(); // Add helpers
     emitter.emitModule(module);
 }
 

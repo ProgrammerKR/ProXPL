@@ -134,11 +134,62 @@ static int visitExpr(IRGen* gen, Expr* expr) {
         case EXPR_AWAIT: {
              int val = visitExpr(gen, expr->as.await_expr.expression);
              int r = newReg(gen);
-             IRInstruction* instr = createIRInstruction(IR_OP_AWAIT, r);
-             IROperand op;
-             op.type = OPERAND_VAL; op.as.ssaVal = val;
-             addOperand(instr, op);
-             emit(gen, instr);
+             
+             if (gen->currentFunc->isAsync) {
+                 IRInstruction* instr = createIRInstruction(IR_OP_AWAIT, r);
+                 IROperand op;
+                 op.type = OPERAND_VAL; op.as.ssaVal = val;
+                 addOperand(instr, op);
+                 emit(gen, instr);
+             } else {
+                 // Sync wait: CALL prox_rt_run_and_wait(val)
+                 // NOTE: We rely on the backend to know about this function,
+                 // OR we can add IR_OP_CALL?
+                 // But IR_OP_CALL takes a function name? 
+                 // Our IR_OP_CALL structure might not be flexible enough yet?
+                 // Let's check irOpName/ir definitions.
+                 // IR_OP_CALL usually calls user functions.
+                 // We need to call a runtime function.
+                 // Use IR_OP_CALL with a special "name" or add IR_OP_RT_CALL?
+                 // Or just assume IR_OP_CALL with string "prox_rt_run_and_wait" works 
+                 // provided we expose it in backend/runtime.
+                 // But IR_OP_CALL operands usually: 0=Func, 1..N=Args.
+                 // IR_OP_CALL definition:
+                 // operand[0] = function name (literal?) or pointer?
+                 // Let's assume operand[0] is CONST string name for now for external calls.
+                 
+                 // However, ir_gen.c doesn't support generic calls well yet (visitExpr->EXPR_CALL missing?)
+                 // Let's look at implementation of visitExpr for EXPR_CALL... OH WAIT.
+                 // I am looking at ir_gen.c and EXPR_CALL is NOT implemented in the snippet I viewed!
+                 // The snippet had EXPR_LITERAL, BINARY, VAR, ASSIGN. NO EXPR_CALL.
+                 // So I need to implement a hack for calling runtime helper using IR_OP_CALL logic manually.
+                 
+                 IRInstruction* instr = createIRInstruction(IR_OP_CALL, r);
+                 IROperand opFunc, opArg;
+                 
+                 // Op 0: Function Name
+                 opFunc.type = OPERAND_CONST;
+                 opFunc.as.constant = OBJ_VAL(copyString("prox_rt_run_and_wait", 20)); 
+                 // Wait, can't easily create ObjString here without VM?
+                 // Constants in IR are `Value`. `copyString` needs VM.
+                 // Hack: Pass raw string pointer if allowed? NO.
+                 // Alternative: Define a new IR opcode IR_OP_AWAIT_SYNC.
+                 // Easier.
+                 // Actually, reusing IR_OP_AWAIT with a flag? or isAsync check in backend?
+                 // Backend `emitInstruction` checks `CoroHdl`. 
+                 // If `CoroHdl` is null, it returns.
+                 // We can modify Backend to handle `IR_OP_AWAIT` when `CoroHdl` is null by generating the sync call!
+                 
+                 // YES! That is much cleaner.
+                 // Keep IR_OP_AWAIT.
+                 // In Backend, if CoroHdl is null, emit call to `prox_rt_run_and_wait`.
+                 
+                 IRInstruction* instrWait = createIRInstruction(IR_OP_AWAIT, r);
+                 IROperand op;
+                 op.type = OPERAND_VAL; op.as.ssaVal = val;
+                 addOperand(instrWait, op);
+                 emit(gen, instrWait);
+             }
              return r;
         }
 
