@@ -183,8 +183,36 @@ func add(a, b) {
 ```
 
 ---
+## 5. Asynchronous Programming
 
-## 5. Built-in Functions (Global)
+ProXPL supports native asynchronous programming using `async` and `await` keywords, powered by LLVM Coroutines.
+
+### Async Functions
+Functions declared with `async` return a `Task` object immediately when called. The body executes asynchronously.
+
+```javascript
+async func fetchData(url) {
+    // Simulating delay or I/O
+    return "Response from " + url;
+}
+```
+
+### Await Expression
+The `await` keyword suspends the execution of the current `async` function until the awaited `Task` completes.
+
+```javascript
+async func main() {
+    let data = await fetchData("https://example.com");
+    print(data);
+}
+```
+
+- `await` can be used on any `Task` object.
+- If `await` is used in a synchronous function (like `main`), it performs a blocking wait.
+
+---
+
+## 6. Built-in Functions (Global)
 These are available in the global scope without imports.
 
 | Function | Description |
@@ -198,7 +226,7 @@ These are available in the global scope without imports.
 
 ---
 
-## 6. Standard Libraries
+## 7. Standard Libraries
 Import these using `use <module>;` or `import ... from ...;`.
 
 ### **std.core** (Core Utilities)
@@ -255,14 +283,14 @@ Time functions: `now`, `timestamp`, `sleep`, `format_date`.
 
 ---
 
-## 7. Modules and Packages
+## 8. Modules and Packages
 - **Standard Library**: Built-in modules like `std.io`.
 - **Packages**: External code managed by PRM (ProX Project Manager).
 - **Resolution**: `stdlib` -> `packages` -> `relative paths`.
 
 ---
 
-## 8. Grammar Reference (EBNF)
+## 9. Grammar Reference (EBNF)
 
 ```ebnf
 program        ::= declaration* EOF
@@ -286,7 +314,7 @@ call           ::= primary ("(" args? ")" | "." IDENTIFIER | "[" expr "]")*
 
 ---
 
-## 9. Examples
+## 10. Examples
 
 ### Hello World
 ```javascript

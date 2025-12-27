@@ -51,6 +51,7 @@ ProXPL is implemented entirely in C/C++ with zero runtime dependencies, making i
 | 🧩 **Module System** | Robust `use` keyword for importing standard libraries, packages, and local files |
 | 🔧 **PRM Package Manager** | Integrated **ProX Repository Manager** for dependency management and project scaffolding |
 | 🏗️ **Multi-Phase Compiler** | Lexer → Parser (AST) → Type Checker → IR Optimizer → Bytecode/LLVM |
+| ⏩ **Async/Await** | Native asynchronous programming with LLVM Coroutines support |
 | 🔍 **Developer Tools** | CLI with watch mode, LSP for IDE integration, comprehensive error reporting |
 | 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
 | 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
