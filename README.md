@@ -575,7 +575,7 @@ This project is licensed under the ProXPL Professional License - see the [LICENS
 
 <p align="center">
   <b>Built with ❤️ by the ProXPL Community</b><br>
-  <i>Making systems programming accessible and enjoyable</i>
+  <i>Making programming easy, accessible and enjoyable</i>
 </p>
 
 <p align="center">
