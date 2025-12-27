@@ -133,6 +133,12 @@ void printObject(Value value) {
   case OBJ_BOUND_METHOD:
     printObject(OBJ_VAL(((struct ObjBoundMethod*)AS_OBJ(value))->method->function));
     break;
+  case OBJ_LIST:
+    printf("[list]");
+    break;
+  case OBJ_DICTIONARY:
+    printf("{dictionary}");
+    break;
   }
 }
 
@@ -176,5 +182,19 @@ struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method) {
   bound->receiver = receiver;
   bound->method = method;
   return bound;
+}
+
+struct ObjList *newList() {
+  struct ObjList *list = ALLOCATE_OBJ(struct ObjList, OBJ_LIST);
+  list->count = 0;
+  list->capacity = 0;
+  list->items = NULL;
+  return list;
+}
+
+struct ObjDictionary *newDictionary() {
+  struct ObjDictionary *dict = ALLOCATE_OBJ(struct ObjDictionary, OBJ_DICTIONARY);
+  initTable(&dict->items);
+  return dict;
 }
 

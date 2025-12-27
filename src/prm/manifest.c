@@ -27,10 +27,13 @@ static void parseLine(char* line, Manifest* manifest) {
     if (sscanf(line, " %63[^ =] = \"%255[^\"]\"", key, value) == 2) {
         if (strcmp(key, "name") == 0) {
             strncpy(manifest->name, value, MAX_NAME_LEN - 1);
+            manifest->name[MAX_NAME_LEN - 1] = '\0';
         } else if (strcmp(key, "version") == 0) {
             strncpy(manifest->version, value, MAX_VERSION_LEN - 1);
+            manifest->version[MAX_VERSION_LEN - 1] = '\0';
         } else if (strcmp(key, "entry") == 0) {
             strncpy(manifest->entryPoint, value, MAX_PATH_LEN - 1);
+            manifest->entryPoint[MAX_PATH_LEN - 1] = '\0';
         }
     }
 }
@@ -68,7 +71,9 @@ void prm_init(const char* name) {
     fclose(file);
     
     // Create src directory
-    system("mkdir src"); // Windows/Linux compatible enough for simple cases
+    if (system("mkdir src") != 0) {
+        // Ignore error if directory exists
+    }
     
     FILE* mainFile = fopen("src/main.prox", "w");
     if (mainFile) {

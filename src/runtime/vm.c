@@ -119,7 +119,9 @@ static InterpretResult run(VM *vm) {
   
   static void* dispatch_table[] = {
       &&DO_OP_CONSTANT, &&DO_OP_NIL, &&DO_OP_TRUE, &&DO_OP_FALSE,
-      &&DO_OP_POP, &&DO_OP_GET_LOCAL, &&DO_OP_SET_LOCAL, 
+      &&DO_OP_POP, 
+      &&DO_OP_DUP, &&DO_OP_BUILD_LIST, &&DO_OP_BUILD_MAP, &&DO_OP_GET_INDEX, &&DO_OP_SET_INDEX,
+      &&DO_OP_GET_LOCAL, &&DO_OP_SET_LOCAL, 
       &&DO_OP_GET_GLOBAL, &&DO_OP_DEFINE_GLOBAL, &&DO_OP_SET_GLOBAL,
       &&DO_OP_GET_UPVALUE, &&DO_OP_SET_UPVALUE,
       &&DO_OP_GET_PROPERTY, &&DO_OP_SET_PROPERTY, &&DO_OP_GET_SUPER,
@@ -129,7 +131,8 @@ static InterpretResult run(VM *vm) {
       &&DO_OP_JUMP, &&DO_OP_JUMP_IF_FALSE, &&DO_OP_LOOP,
       &&DO_OP_CALL, &&DO_OP_INVOKE, &&DO_OP_SUPER_INVOKE,
       &&DO_OP_CLOSURE, &&DO_OP_CLOSE_UPVALUE,
-      &&DO_OP_RETURN, &&DO_OP_CLASS, &&DO_OP_INHERIT, &&DO_OP_METHOD
+      &&DO_OP_RETURN, &&DO_OP_CLASS, &&DO_OP_INHERIT, &&DO_OP_METHOD,
+      &&DO_OP_USE, &&DO_OP_TRY, &&DO_OP_CATCH, &&DO_OP_END_TRY
   };
 
   DISPATCH();
@@ -152,6 +155,103 @@ static InterpretResult run(VM *vm) {
   }
   DO_OP_POP: {
       pop(vm);
+      DISPATCH();
+  }
+  DO_OP_DUP: {
+      push(vm, peek(vm, 0));
+      DISPATCH();
+  }
+  DO_OP_BUILD_LIST: {
+      int count = READ_BYTE();
+      struct ObjList* list = newList();
+      if (count > 0) {
+          list->items = ALLOCATE(Value, count);
+          list->capacity = count;
+          list->count = count;
+          for (int i = count - 1; i >= 0; i--) {
+              list->items[i] = pop(vm);
+          }
+      }
+      push(vm, OBJ_VAL(list));
+      DISPATCH();
+  }
+  DO_OP_BUILD_MAP: {
+      int count = READ_BYTE();
+      struct ObjDictionary* dict = newDictionary();
+      for (int i = 0; i < count; i++) {
+          Value val = pop(vm);
+          Value key = pop(vm);
+          if (!IS_STRING(key)) {
+               runtimeError(vm, "Dictionary key must be a string.");
+               return INTERPRET_RUNTIME_ERROR;
+          }
+          tableSet(&dict->items, AS_STRING(key), val);
+      }
+      push(vm, OBJ_VAL(dict));
+      DISPATCH();
+  }
+  DO_OP_GET_INDEX: {
+      Value indexVal = pop(vm);
+      Value targetVal = pop(vm);
+      if (IS_LIST(targetVal)) {
+          if (!IS_NUMBER(indexVal)) {
+              runtimeError(vm, "List index must be a number.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          struct ObjList* list = AS_LIST(targetVal);
+          int index = (int)AS_NUMBER(indexVal);
+          if (index < 0 || index >= list->count) {
+              runtimeError(vm, "List index out of bounds.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          push(vm, list->items[index]);
+      } else if (IS_DICTIONARY(targetVal)) {
+          if (!IS_STRING(indexVal)) {
+              runtimeError(vm, "Dictionary key must be a string.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          struct ObjDictionary* dict = AS_DICTIONARY(targetVal);
+          Value val;
+          if (tableGet(&dict->items, AS_STRING(indexVal), &val)) {
+              push(vm, val);
+          } else {
+              push(vm, NIL_VAL); 
+          }
+      } else {
+          runtimeError(vm, "Can only index lists and dictionaries.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      DISPATCH();
+  }
+  DO_OP_SET_INDEX: {
+      Value value = pop(vm);
+      Value indexVal = pop(vm);
+      Value targetVal = pop(vm);
+      if (IS_LIST(targetVal)) {
+          if (!IS_NUMBER(indexVal)) {
+              runtimeError(vm, "List index must be a number.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          struct ObjList* list = AS_LIST(targetVal);
+          int index = (int)AS_NUMBER(indexVal);
+          if (index < 0 || index >= list->count) {
+              runtimeError(vm, "List index out of bounds.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          list->items[index] = value;
+          push(vm, value);
+      } else if (IS_DICTIONARY(targetVal)) {
+          if (!IS_STRING(indexVal)) {
+              runtimeError(vm, "Dictionary key must be a string.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          struct ObjDictionary* dict = AS_DICTIONARY(targetVal);
+          tableSet(&dict->items, AS_STRING(indexVal), value);
+          push(vm, value);
+      } else {
+          runtimeError(vm, "Can only index lists and dictionaries.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       DISPATCH();
   }
   DO_OP_GET_LOCAL: {
@@ -189,12 +289,52 @@ static InterpretResult run(VM *vm) {
       }
       DISPATCH();
   }
-  DO_OP_GET_UPVALUE:
-  DO_OP_SET_UPVALUE:
-  DO_OP_GET_PROPERTY:
-  DO_OP_SET_PROPERTY:
+  DO_OP_GET_UPVALUE: {
+      uint8_t slot = READ_BYTE();
+      push(vm, *frame->closure->upvalues[slot]->location);
+      DISPATCH();
+  }
+  DO_OP_SET_UPVALUE: {
+      uint8_t slot = READ_BYTE();
+      *frame->closure->upvalues[slot]->location = peek(vm, 0);
+      DISPATCH();
+  }
+  DO_OP_GET_PROPERTY: {
+      if (!IS_INSTANCE(peek(vm, 0))) {
+        runtimeError(vm, "Only instances have properties.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      struct ObjInstance* instance = AS_INSTANCE(peek(vm, 0));
+      ObjString* name = READ_STRING();
+      Value value;
+      if (tableGet(&instance->fields, name, &value)) {
+        pop(vm); // Instance
+        push(vm, value);
+        DISPATCH();
+      }
+      if (!bindMethod(instance->klass, name, vm)) {
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      DISPATCH();
+  }
+  DO_OP_SET_PROPERTY: {
+      if (!IS_INSTANCE(peek(vm, 1))) {
+        runtimeError(vm, "Only instances have fields.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      struct ObjInstance* instance = AS_INSTANCE(peek(vm, 1));
+      tableSet(&instance->fields, READ_STRING(), peek(vm, 0));
+      Value value = pop(vm);
+      pop(vm);
+      push(vm, value);
+      DISPATCH();
+  }
   DO_OP_GET_SUPER: {
-      // Stubs
+      ObjString* name = READ_STRING();
+      struct ObjClass* superclass = AS_CLASS(pop(vm));
+      if (!bindMethod(superclass, name, vm)) {
+        return INTERPRET_RUNTIME_ERROR;
+      }
       DISPATCH();
   }
   DO_OP_EQUAL: {
@@ -336,7 +476,8 @@ static InterpretResult run(VM *vm) {
       DISPATCH();
   }
   DO_OP_CLOSE_UPVALUE: {
-      // Stubs
+      closeUpvalues(vm, vm->stackTop - 1);
+      pop(vm);
       DISPATCH();
   }
   DO_OP_RETURN: {
@@ -351,11 +492,36 @@ static InterpretResult run(VM *vm) {
       frame = &vm->frames[vm->frameCount - 1];
       DISPATCH();
   }
-  DO_OP_CLASS:
-  DO_OP_INHERIT:
-  DO_OP_METHOD: {
-      // Stubs
+  DO_OP_CLASS: {
+      push(vm, OBJ_VAL(newClass(READ_STRING())));
       DISPATCH();
+  }
+  DO_OP_INHERIT: {
+      Value superclass = peek(vm, 1);
+      if (!IS_CLASS(superclass)) {
+        runtimeError(vm, "Superclass must be a class.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      struct ObjClass* subclass = AS_CLASS(peek(vm, 0));
+      tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
+      pop(vm); // Subclass
+      DISPATCH();
+  }
+  DO_OP_METHOD: {
+      defineMethod(READ_STRING(), vm);
+      DISPATCH();
+  }
+  DO_OP_USE: {
+      ObjString* name = READ_STRING();
+      // Stub: loadModule(vm, name->chars...);
+      runtimeError(vm, "Modules not yet implemented runtime-side.");
+      return INTERPRET_RUNTIME_ERROR;
+  }
+  DO_OP_TRY:
+  DO_OP_CATCH:
+  DO_OP_END_TRY: {
+      runtimeError(vm, "Exception handling not yet implemented.");
+      return INTERPRET_RUNTIME_ERROR;
   }
   
 #else
@@ -368,6 +534,100 @@ static InterpretResult run(VM *vm) {
     case OP_TRUE: push(vm, BOOL_VAL(true)); break;
     case OP_FALSE: push(vm, BOOL_VAL(false)); break;
     case OP_POP: pop(vm); break;
+    case OP_DUP: push(vm, peek(vm, 0)); break;
+    case OP_BUILD_LIST: {
+        int count = READ_BYTE();
+        struct ObjList* list = newList();
+        if (count > 0) {
+            list->items = ALLOCATE(Value, count);
+            list->capacity = count;
+            list->count = count;
+            for (int i = count - 1; i >= 0; i--) {
+                list->items[i] = pop(vm);
+            }
+        }
+        push(vm, OBJ_VAL(list));
+        break;
+    }
+    case OP_BUILD_MAP: {
+        int count = READ_BYTE();
+        struct ObjDictionary* dict = newDictionary();
+        for (int i = 0; i < count; i++) {
+            Value val = pop(vm);
+            Value key = pop(vm);
+            if (!IS_STRING(key)) {
+                runtimeError(vm, "Dictionary key must be a string.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            tableSet(&dict->items, AS_STRING(key), val);
+        }
+        push(vm, OBJ_VAL(dict));
+        break;
+    }
+    case OP_GET_INDEX: {
+        Value indexVal = pop(vm);
+        Value targetVal = pop(vm);
+        if (IS_LIST(targetVal)) {
+            if (!IS_NUMBER(indexVal)) {
+                runtimeError(vm, "List index must be a number.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            struct ObjList* list = AS_LIST(targetVal);
+            int index = (int)AS_NUMBER(indexVal);
+            if (index < 0 || index >= list->count) {
+                runtimeError(vm, "List index out of bounds.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            push(vm, list->items[index]);
+        } else if (IS_DICTIONARY(targetVal)) {
+            if (!IS_STRING(indexVal)) {
+                runtimeError(vm, "Dictionary key must be a string.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            struct ObjDictionary* dict = AS_DICTIONARY(targetVal);
+            Value val;
+            if (tableGet(&dict->items, AS_STRING(indexVal), &val)) {
+                push(vm, val);
+            } else {
+                push(vm, NIL_VAL); 
+            }
+        } else {
+            runtimeError(vm, "Can only index lists and dictionaries.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+    }
+    case OP_SET_INDEX: {
+        Value value = pop(vm);
+        Value indexVal = pop(vm);
+        Value targetVal = pop(vm);
+        if (IS_LIST(targetVal)) {
+            if (!IS_NUMBER(indexVal)) {
+                runtimeError(vm, "List index must be a number.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            struct ObjList* list = AS_LIST(targetVal);
+            int index = (int)AS_NUMBER(indexVal);
+            if (index < 0 || index >= list->count) {
+                runtimeError(vm, "List index out of bounds.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            list->items[index] = value;
+            push(vm, value);
+        } else if (IS_DICTIONARY(targetVal)) {
+            if (!IS_STRING(indexVal)) {
+                runtimeError(vm, "Dictionary key must be a string.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            struct ObjDictionary* dict = AS_DICTIONARY(targetVal);
+            tableSet(&dict->items, AS_STRING(indexVal), value);
+            push(vm, value);
+        } else {
+            runtimeError(vm, "Can only index lists and dictionaries.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+    }
     case OP_GET_LOCAL: {
         uint8_t slot = READ_BYTE();
         push(vm, frame->slots[slot]);
@@ -400,6 +660,55 @@ static InterpretResult run(VM *vm) {
             tableDelete(&vm->globals, name);
             runtimeError(vm, "Undefined variable '%s'.", name->chars);
             return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+    }
+    case OP_GET_UPVALUE: {
+        uint8_t slot = READ_BYTE();
+        push(vm, *frame->closure->upvalues[slot]->location);
+        break;
+    }
+    case OP_SET_UPVALUE: {
+        uint8_t slot = READ_BYTE();
+        *frame->closure->upvalues[slot]->location = peek(vm, 0);
+        break;
+    }
+    case OP_GET_PROPERTY: {
+        if (!IS_INSTANCE(peek(vm, 0))) {
+          runtimeError(vm, "Only instances have properties.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        ObjInstance* instance = AS_INSTANCE(peek(vm, 0));
+        ObjString* name = READ_STRING();
+        Value value;
+        if (tableGet(&instance->fields, name, &value)) {
+          pop(vm); // Instance
+          push(vm, value);
+          break;
+        }
+        // Bind method
+        if (!bindMethod(instance->klass, name, vm)) {
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+    }
+    case OP_SET_PROPERTY: {
+        if (!IS_INSTANCE(peek(vm, 1))) {
+          runtimeError(vm, "Only instances have fields.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        ObjInstance* instance = AS_INSTANCE(peek(vm, 1));
+        tableSet(&instance->fields, READ_STRING(), peek(vm, 0));
+        Value value = pop(vm);
+        pop(vm);
+        push(vm, value);
+        break;
+    }
+    case OP_GET_SUPER: {
+        ObjString* name = READ_STRING();
+        ObjClass* superclass = AS_CLASS(pop(vm));
+        if (!bindMethod(superclass, name, vm)) {
+          return INTERPRET_RUNTIME_ERROR;
         }
         break;
     }
@@ -526,11 +835,74 @@ static InterpretResult run(VM *vm) {
             return INTERPRET_RUNTIME_ERROR;
         }
     }
+    case OP_INVOKE: {
+        ObjString* method = READ_STRING();
+        int argCount = READ_BYTE();
+        if (!invoke(method, argCount, vm)) {
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        frame = &vm->frames[vm->frameCount - 1];
+        break;
+    }
+    case OP_SUPER_INVOKE: {
+        ObjString* method = READ_STRING();
+        int argCount = READ_BYTE();
+        ObjClass* superclass = AS_CLASS(pop(vm));
+        if (!invokeFromClass(superclass, method, argCount, vm)) {
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        frame = &vm->frames[vm->frameCount - 1];
+        break;
+    }
     case OP_CLOSURE: {
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
         ObjClosure* closure = newClosure(function);
         push(vm, OBJ_VAL(closure));
+        for (int i = 0; i < closure->upvalueCount; i++) {
+            uint8_t isLocal = READ_BYTE();
+            uint8_t index = READ_BYTE();
+            if (isLocal) {
+                closure->upvalues[i] = captureUpvalue(vm, frame->slots + index);
+            } else {
+                closure->upvalues[i] = frame->closure->upvalues[index];
+            }
+        }
         break;
+    }
+    case OP_CLOSE_UPVALUE: {
+        closeUpvalues(vm, vm->stackTop - 1);
+        pop(vm);
+        break;
+    }
+    case OP_CLASS: {
+        push(vm, OBJ_VAL(newClass(READ_STRING())));
+        break;
+    }
+    case OP_INHERIT: {
+        Value superclass = peek(vm, 1);
+        if (!IS_CLASS(superclass)) {
+          runtimeError(vm, "Superclass must be a class.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        ObjClass* subclass = AS_CLASS(peek(vm, 0));
+        tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
+        pop(vm); // Subclass
+        break;
+    }
+    case OP_METHOD: {
+        defineMethod(READ_STRING(), vm);
+        break;
+    }
+    case OP_USE: {
+        ObjString* name = READ_STRING();
+        runtimeError(vm, "Modules not yet implemented runtime-side.");
+        return INTERPRET_RUNTIME_ERROR;
+    }
+    case OP_TRY:
+    case OP_CATCH:
+    case OP_END_TRY: {
+        runtimeError(vm, "Exception handling not yet implemented.");
+        return INTERPRET_RUNTIME_ERROR;
     }
     case OP_RETURN: {
       vm->frameCount--;

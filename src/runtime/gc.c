@@ -130,7 +130,18 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)bound->method);
             break;
         }
-        // Case OBJ_CLASS, OBJ_INSTANCE would go here
+        case OBJ_LIST: {
+            struct ObjList* list = (struct ObjList*)object;
+            for (int i = 0; i < list->count; i++) {
+                markValue(list->items[i]);
+            }
+            break;
+        }
+        case OBJ_DICTIONARY: {
+            struct ObjDictionary* dict = (struct ObjDictionary*)object;
+            markTable(&dict->items);
+            break;
+        }
         default:
             // Warn or ignore?
             break;
@@ -228,6 +239,18 @@ static void freeObject(Obj* object) {
         case OBJ_BOUND_METHOD:
             FREE(struct ObjBoundMethod, object);
             break;
+        case OBJ_LIST: {
+            struct ObjList* list = (struct ObjList*)object;
+            FREE_ARRAY(Value, list->items, list->capacity);
+            FREE(struct ObjList, object);
+            break;
+        }
+        case OBJ_DICTIONARY: {
+            struct ObjDictionary* dict = (struct ObjDictionary*)object;
+            freeTable(&dict->items);
+            FREE(struct ObjDictionary, object);
+            break;
+        }
         default:
             FREE(Obj, object); // Fallback
             break;

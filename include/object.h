@@ -45,6 +45,12 @@
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define AS_BOUND_METHOD(value) ((struct ObjBoundMethod *)AS_OBJ(value))
 
+#define IS_LIST(value) isObjType(value, OBJ_LIST)
+#define AS_LIST(value) ((struct ObjList *)AS_OBJ(value))
+
+#define IS_DICTIONARY(value) isObjType(value, OBJ_DICTIONARY)
+#define AS_DICTIONARY(value) ((struct ObjDictionary *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
@@ -55,6 +61,8 @@ typedef enum {
   OBJ_CLASS,
   OBJ_INSTANCE,
   OBJ_BOUND_METHOD,
+  OBJ_LIST,
+  OBJ_DICTIONARY
 } ObjType;
 
 struct Obj {
@@ -124,6 +132,18 @@ struct ObjBoundMethod {
   ObjClosure *method;
 };
 
+struct ObjList {
+  Obj obj;
+  int count;
+  int capacity;
+  Value *items;
+};
+
+struct ObjDictionary {
+  Obj obj;
+  Table items;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -139,6 +159,8 @@ ObjUpvalue *newUpvalue(Value *slot);
 struct ObjClass *newClass(ObjString *name);
 struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
+struct ObjList *newList();
+struct ObjDictionary *newDictionary();
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
