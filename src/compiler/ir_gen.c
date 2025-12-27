@@ -131,6 +131,17 @@ static int visitExpr(IRGen* gen, Expr* expr) {
             return -1;
         }
 
+        case EXPR_AWAIT: {
+             int val = visitExpr(gen, expr->as.await_expr.expression);
+             int r = newReg(gen);
+             IRInstruction* instr = createIRInstruction(IR_OP_AWAIT, r);
+             IROperand op;
+             op.type = OPERAND_VAL; op.as.ssaVal = val;
+             addOperand(instr, op);
+             emit(gen, instr);
+             return r;
+        }
+
         default:
             return -1;
     }
@@ -290,6 +301,58 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
             break;
         }
 
+        case STMT_FUNC_DECL: {
+            // Save current context
+            IRFunction* prevFunc = gen->currentFunc;
+            IRBasicBlock* prevBlock = gen->currentBlock;
+            int prevNextReg = gen->nextReg;
+            // Note: Symbol table handling here is simplified (global vs local). 
+            // In a real compiler we'd push a new scope. For this skeleton, we reset symbols or use a new/nested Gen?
+            // Reusing Gen but strictly we should save/restore symbol table state or use separate one.
+            // For now, let's just clear symbols for the new function scope (simplified).
+            
+            // Create new function
+            IRFunction* func = createIRFunction(stmt->as.func_decl.name, stmt->as.func_decl.isAsync);
+            gen->currentFunc = func;
+            gen->currentBlock = createIRBasicBlock(func);
+            gen->nextReg = 0;
+            // Reset symbols (TEMPORARY: destroys global view, good only for local vars in this func)
+            // TODO: Proper Scoping
+            int savedSymbolCount = gen->symbolCount;
+            // gen->symbolCount = 0; // Keeping globals if we had them? 
+            // Let's just append locals. Arguments first.
+            
+            StringList* params = stmt->as.func_decl.params;
+            for(int i=0; i<params->count; i++) {
+                 int r = newReg(gen);
+                 // We need an instruction to 'receive' argument? Or just assume they are in registers 0..N?
+                 // For now, map param name to register i
+                 gen->symbols[gen->symbolCount].name = strdup(params->items[i]);
+                 gen->symbols[gen->symbolCount].ssaVal = r;
+                 gen->symbols[gen->symbolCount].isAlloca = false; 
+                 gen->symbolCount++;
+            }
+
+            visitStmt(gen, createBlockStmt(stmt->as.func_decl.body, 0, 0)); // Treat body as block
+
+            // Add to module
+            if (gen->module->funcCount >= gen->module->funcCapacity) {
+                gen->module->funcCapacity = gen->module->funcCapacity == 0 ? 8 : gen->module->funcCapacity * 2;
+                gen->module->functions = (IRFunction**)realloc(gen->module->functions, sizeof(IRFunction*) * gen->module->funcCapacity);
+            }
+            gen->module->functions[gen->module->funcCount++] = func;
+            
+            func->nextSsaVal = gen->nextReg;
+            computeCFGLinks(func);
+
+            // Restore context
+            gen->currentFunc = prevFunc;
+            gen->currentBlock = prevBlock;
+            gen->nextReg = prevNextReg;
+            gen->symbolCount = savedSymbolCount;
+            break;
+        }
+
         default:
             break;
     }
@@ -298,7 +361,8 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
 IRModule* generateSSA_IR(StmtList* program) {
     IRGen gen;
     gen.module = createIRModule();
-    gen.currentFunc = createIRFunction("main");
+    // Main function wrapper
+    gen.currentFunc = createIRFunction("main", false);
     gen.currentBlock = createIRBasicBlock(gen.currentFunc);
     gen.symbolCount = 0;
     gen.nextReg = 0;
