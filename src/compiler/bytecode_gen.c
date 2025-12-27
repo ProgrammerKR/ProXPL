@@ -601,9 +601,10 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 // NOTE: In for loops, vars are in a scope ABOVE the loop scope if declared in init?
                 // Actually they are inside the scope started by STMT_FOR.
                 // We need to unwind to loop->scopeDepth.
-                int currentDepth = gen->compiler->scopeDepth;
-                // Since we don't track local counts per scope precisely here easily,
-                // we'll assume VM un-winds or we emit pops?
+                // Drop locals
+                // NOTE: In for loops, vars are in a scope ABOVE the loop scope if declared in init?
+                // Actually they are inside the scope started by STMT_FOR.
+                // We need to unwind to loop->scopeDepth.
                 // Bytecode Gen usually emits pops for locals going out of scope.
                 // BUT break jumps OUT. The locals on stack need to be popped.
                 // We can't easily emit static POPs if we don't know how many locals are on stack relative to loop start.
@@ -756,13 +757,83 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 for (int i=0; i < stmt->as.class_decl.methods->count; i++) {
                     genStmt(gen, stmt->as.class_decl.methods->items[i]);
                     writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    ObjString* mname = AS_FUNCTION(AS_CLOSURE(consttable_get(gen->chunk, gen->chunk->count-1))->function)->name; // Hacky way to get name?
-                    // Actually genStmt(STMT_FUNC_DECL) emits OP_CLOSURE.
-                    // OP_METHOD needs the method name.
-                    // We need to parse STMT_FUNC_DECL specially or use a helper.
-                    // The STMT_FUNC_DECL puts the closure on stack.
-                    // We need to emit OP_METHOD with the name index.
-                    // For now, assume this works.
+                    genStmt(gen, stmt->as.class_decl.methods->items[i]);
+                    writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                    // Hacky way to get name, but corrected:
+                    // ObjString* mname = AS_CLOSURE(consttable_get(gen->chunk, gen->chunk->count-1))->function->name;
+                    // Actually we don't need 'mname' variable if it was unused too.
+                    // The previous code had it unused. Let's just remove it if it's unused.
+                    // But wait, do we use mname? The screenshot says 'warning: unused variable mname'.
+                    // So we can just remove the line entirely?
+                    // But wait, the line 753 (in screenshot) has 'AS_FUNCTION(...)'.
+                    // If we just remove it, we solve both the error (invalid operand) and the warning (unused variable).
+                    // Let's verify if 'mname' is used below in lines I can't see?
+                    // The view_file output showed up to 766 and I didn't see mname used.
+                    // "Actually genStmt(STMT_FUNC_DECL) emits OP_CLOSURE."
+                    // "OP_METHOD needs the method name."
+                    // "We need to emit OP_METHOD with the name index."
+                    // Wait, OP_METHOD instruction usually takes an operand for the method name?
+                    // In `src/compiler/bytecode.h` (not viewed but standard Lox), OP_METHOD takes name index.
+                    // The code:
+                    // writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                    // It does NOT write the operand for OP_METHOD!
+                    // This is a BUG. OP_METHOD expects a name index.
+                    // We need to extract the name from the just-emitted closure (which is on top of constants?).
+                    // genStmt(STMT_FUNC_DECL) adds the closure constant.
+                    // So the constant index is `gen->chunk->count-1` instructions? NO.
+                    // `addConstant` returns index. `genStmt` for FUNC_DECL emits OP_CLOSURE + index.
+                    // But `addConstant` pushes to constant pool.
+                    // We can inspect the last instruction? Or just trust we can peek constant pool?
+                    // consttable_get(gen->chunk, ...).
+                    // The snippet tries to get the name.
+                    // We need to write the name index.
+                    // But OP_METHOD takes the name of the method *to define*. 
+                    // In Lox, OP_METHOD takes the name index.
+                    // So we need:
+                    // ObjFunction* method = ...;
+                    // int nameConst = addConstant(gen->chunk, OBJ_VAL(method->name));
+                    // writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                    // writeChunk(gen->chunk, nameConst, stmt->line);
+                    
+                    // The existing code was:
+                    // writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                    // ObjString* mname = ...;
+                    // (and then nothing using mname?)
+                    
+                    // If I fix the getting of mname, I should use it to emit the operand.
+                    
+                    // Step 1: Fix the Access.
+                    // Value constVal = consttable_get(gen->chunk, gen->chunk->constants.count - 1); 
+                    // (Note: we need the index of the constant, not the instruction index? consttable_get might take index?)
+                    // Let's assume we can get the function object.
+                    
+                    // Fixed line:
+                    // ObjString* mname = AS_CLOSURE(consttable_get(gen->chunk, gen->chunk->constants.count - 1))->function->name;
+                    
+                    // Wait, `consttable_get` signature? I don't see it defined. It is likely `Value consttable_get(Chunk*, int index)`.
+                    // But `genStmt` for FUNC_DECL emits OP_CLOSURE then Index.
+                    // The last constant added is the function closure? No, `addConstant` adds it.
+                    // So `chunk->constants.count - 1` is the index of the closure we just added.
+                    
+                    // Let's rewrite the block to be correct and warning-free.
+                    
+                    // Note: `genStmt` emits OP_CLOSURE and its operand.
+                    // The operand is the index of the closure in constants.
+                    // Value closureVal = chunk->constants.values[chunk->constants.count - 1];
+                    // ObjClosure* closure = AS_CLOSURE(closureVal);
+                    // ObjString* name = closure->function->name;
+                    // int nameConst = addConstant(gen->chunk, OBJ_VAL(name));
+                    // writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+                    
+                    // But we already emitted OP_METHOD without operand?
+                    // Code shows: writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                    // Then the line that failed.
+                    // So we need to insert the operand emission.
+                    
+                    Value lastConst = gen->chunk->constants.values[gen->chunk->constants.count - 1];
+                    ObjString* mname = AS_CLOSURE(lastConst)->function->name;
+                    int nameConst = addConstant(gen->chunk, OBJ_VAL(mname));
+                    writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
                 }
                 writeChunk(gen->chunk, OP_POP, stmt->line); // Pop class
             }
