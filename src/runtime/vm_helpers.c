@@ -1,5 +1,16 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
-static void closeUpvalues(VM *vm, Value *last) {
+#include "../include/common.h"
+#include "../include/vm.h"
+#include "../include/object.h"
+#include "../include/memory.h"
+#include "../include/debug.h"
+#include "../include/compiler.h"
+
+
+void closeUpvalues(VM *vm, Value *last) {
   while (vm->openUpvalues != NULL &&
          vm->openUpvalues->location >= last) {
     ObjUpvalue *upvalue = vm->openUpvalues;
@@ -9,7 +20,7 @@ static void closeUpvalues(VM *vm, Value *last) {
   }
 }
 
-static ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
+ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
   ObjUpvalue *prevUpvalue = NULL;
   ObjUpvalue *upvalue = vm->openUpvalues;
   while (upvalue != NULL && upvalue->location > local) {
@@ -33,14 +44,14 @@ static ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
   return createdUpvalue;
 }
 
-static void defineMethod(ObjString *name, VM *vm) {
+void defineMethod(ObjString *name, VM *vm) {
   Value method = peek(vm, 0);
   ObjClass *klass = AS_CLASS(peek(vm, 1));
   tableSet(&klass->methods, name, method);
   pop(vm);
 }
 
-static bool bindMethod(struct ObjClass *klass, ObjString *name, VM *vm) {
+bool bindMethod(struct ObjClass *klass, ObjString *name, VM *vm) {
   Value method;
   if (!tableGet(&klass->methods, name, &method)) {
     runtimeError(vm, "Undefined property '%s'.", name->chars);
@@ -53,7 +64,7 @@ static bool bindMethod(struct ObjClass *klass, ObjString *name, VM *vm) {
   return true;
 }
 
-static bool call(ObjClosure *closure, int argCount, VM *vm) {
+bool call(ObjClosure *closure, int argCount, VM *vm) {
   if (argCount != closure->function->arity) {
     runtimeError(vm, "Expected %d arguments but got %d.",
                  closure->function->arity, argCount);
@@ -72,7 +83,7 @@ static bool call(ObjClosure *closure, int argCount, VM *vm) {
   return true;
 }
 
-static bool callValue(Value callee, int argCount, VM *vm) {
+bool callValue(Value callee, int argCount, VM *vm) {
   if (IS_OBJ(callee)) {
     switch (OBJ_TYPE(callee)) {
     case OBJ_BOUND_METHOD: {
@@ -109,7 +120,7 @@ static bool callValue(Value callee, int argCount, VM *vm) {
   return false;
 }
 
-static bool invokeFromClass(struct ObjClass *klass, ObjString *name,
+bool invokeFromClass(struct ObjClass *klass, ObjString *name,
                             int argCount, VM *vm) {
   Value method;
   if (!tableGet(&klass->methods, name, &method)) {
@@ -119,7 +130,7 @@ static bool invokeFromClass(struct ObjClass *klass, ObjString *name,
   return call(AS_CLOSURE(method), argCount, vm);
 }
 
-static bool invoke(ObjString *name, int argCount, VM *vm) {
+bool invoke(ObjString *name, int argCount, VM *vm) {
   Value receiver = peek(vm, argCount);
 
   if (!IS_INSTANCE(receiver)) {
@@ -127,7 +138,7 @@ static bool invoke(ObjString *name, int argCount, VM *vm) {
     return false;
   }
 
-  ObjInstance *instance = AS_INSTANCE(receiver);
+  struct ObjInstance *instance = AS_INSTANCE(receiver);
 
   Value value;
   if (tableGet(&instance->fields, name, &value)) {

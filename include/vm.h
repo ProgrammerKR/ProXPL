@@ -64,5 +64,6 @@ struct ObjUpvalue *captureUpvalue(Value *local, VM *vm);
 bool invokeFromClass(struct ObjClass *klass, struct ObjString *name, int argCount, VM *vm);
 bool invoke(struct ObjString *name, int argCount, VM *vm);
 bool callValue(Value callee, int argCount, VM *vm);
+void runtimeError(VM* vm, const char* format, ...);
 
 #endif // PROX_VM_H

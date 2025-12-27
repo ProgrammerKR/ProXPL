@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 // Forward declarations of parsing functions
 static Stmt *declaration(Parser *p);
 static Stmt *statement(Parser *p);
@@ -53,7 +52,7 @@ static Token advance(Parser *p);
 static bool check(Parser *p, PxTokenType type);
 static bool match(Parser *p, int count, ...);
 static Token consume(Parser *p, PxTokenType type, const char *message);
-static void synchronize(Parser *p);
+
 
 // === Initialization ===
 
