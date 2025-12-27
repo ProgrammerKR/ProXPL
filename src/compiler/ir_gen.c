@@ -165,8 +165,8 @@ static int visitExpr(IRGen* gen, Expr* expr) {
                  // The snippet had EXPR_LITERAL, BINARY, VAR, ASSIGN. NO EXPR_CALL.
                  // So I need to implement a hack for calling runtime helper using IR_OP_CALL logic manually.
                  
-                 IRInstruction* instr = createIRInstruction(IR_OP_CALL, r);
-                 IROperand opFunc, opArg;
+                 // IRInstruction* instr = createIRInstruction(IR_OP_CALL, r);
+                 // IROperand opFunc, opArg;
                  
                  // Op 0: Function Name
                  opFunc.type = OPERAND_CONST;

@@ -31,19 +31,6 @@ static bool isTypesEqual(TypeInfo t1, TypeInfo t2) {
     return true;
 }
 
-static const char* typeToString(TypeKind kind) {
-    switch (kind) {
-        case TYPE_UNKNOWN: return "Unknown";
-        case TYPE_VOID: return "Void";
-        case TYPE_BOOL: return "Bool";
-        case TYPE_INT: return "Int";
-        case TYPE_FLOAT: return "Float";
-        case TYPE_STRING: return "String";
-        case TYPE_FUNCTION: return "Function";
-        case TYPE_CLASS: return "Class";
-        default: return "Invalid";
-    }
-}
 
 // --- Symbol Table Helpers ---
 

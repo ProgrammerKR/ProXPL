@@ -112,27 +112,6 @@ static Token consume(Parser *p, PxTokenType type, const char *message) {
   return peek(p); // Return current token on error
 }
 
-static void synchronize(Parser *p) {
-  advance(p);
-  while (!isAtEnd(p)) {
-    if (previous(p).type == TOKEN_SEMICOLON)
-      return;
-
-    switch (peek(p).type) {
-    case TOKEN_CLASS:
-    case TOKEN_FUNC:
-    case TOKEN_LET:
-    case TOKEN_FOR:
-    case TOKEN_IF:
-    case TOKEN_RETURN:
-      return;
-    default:
-      break;
-    }
-
-    advance(p);
-  }
-}
 
 // Helper to extract token value as string
 static char *tokenToString(Token token) {

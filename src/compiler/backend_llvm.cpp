@@ -395,6 +395,7 @@ public:
                 Builder->SetInsertPoint(CleanupBB);
                  // ... free ...
                  llvm::Function* FCoroFree = ModuleOb->getFunction("llvm.coro.free");
+                 (void)FCoroFree;
                  // We need ID for free... complex to propagate ID everywhere.
                  // For skeleton, trap.
                  Builder->CreateUnreachable();

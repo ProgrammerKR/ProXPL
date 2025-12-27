@@ -41,6 +41,7 @@ static void invoke_compiler(const char* file, bool run) {
 }
 
 void prm_build(const Manifest* manifest, bool releaseMode) {
+    (void)releaseMode;
     printf("[PRM] Building project: %s v%s\n", manifest->name, manifest->version);
     // Phase 1: Just invoke compiler on entry point
     invoke_compiler(manifest->entryPoint, false);

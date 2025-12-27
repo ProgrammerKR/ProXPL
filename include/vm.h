@@ -26,6 +26,7 @@ struct VM {
   Table globals;
   Table strings;
   Obj* objects;
+  struct ObjUpvalue* openUpvalues;
   
   // GC State
   int grayCount;
