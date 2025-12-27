@@ -150,9 +150,12 @@ struct ObjDictionary {
 
 typedef struct ObjTask ObjTask;
 
+typedef void (*ResumeFn)(void*);
+
 struct ObjTask {
   Obj obj;
   void* coroHandle; // LLVM Coroutine Handle
+  ResumeFn resume;  // Helper to resume coroutine
   bool completed;
   Value result;
   struct ObjTask* next; // For scheduler queue
@@ -175,7 +178,7 @@ struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
 struct ObjList *newList();
 struct ObjDictionary *newDictionary();
-struct ObjTask *newTask(void* hdl);
+struct ObjTask *newTask(void* hdl, ResumeFn resume);
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {

@@ -10,7 +10,8 @@
 #include <stdlib.h>
 
 // Extern declaration of generated LLVM wrapper
-extern void prox_rt_resume(void* hdl);
+// prox_rt_resume removed, using function pointer in ObjTask
+
 
 typedef struct TaskQueue {
     ObjTask* head;
@@ -46,8 +47,8 @@ void scheduler_run() {
         ObjTask* task = scheduler_dequeue();
         currentTask = task;
         // Resume
-        if (task->coroHandle) {
-             prox_rt_resume(task->coroHandle);
+        if (task->coroHandle && task->resume) {
+             task->resume(task->coroHandle);
         }
         currentTask = NULL;
     }
@@ -76,8 +77,8 @@ void prox_rt_await(Value taskVal) {
     }
 }
 
-Value prox_rt_new_task(void* hdl) {
-    ObjTask* task = newTask(hdl);
+Value prox_rt_new_task(void* hdl, ResumeFn resume) {
+    ObjTask* task = newTask(hdl, resume);
     // Auto-schedule new tasks? 
     // Yes, usually.
     scheduler_enqueue(task);

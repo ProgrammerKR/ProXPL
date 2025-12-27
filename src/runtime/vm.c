@@ -18,6 +18,12 @@
 #include "../include/vm.h"
 #include "../include/error_report.h"
 
+static bool bindMethod(struct ObjClass *klass, ObjString *name, VM *vm);
+static void defineMethod(ObjString *name, VM *vm);
+static void closeUpvalues(VM *vm, Value *last);
+static ObjUpvalue *captureUpvalue(Value *local, VM *vm);
+static bool invokeFromClass(struct ObjClass *klass, ObjString *name, int argCount, VM *vm);
+
 VM vm;
 
 static void resetStack(VM *pvm) {

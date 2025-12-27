@@ -145,11 +145,12 @@ void printObject(Value value) {
   }
 }
 
-struct ObjTask *newTask(void* hdl) {
-  struct ObjTask *task = ALLOCATE_OBJ(struct ObjTask, OBJ_TASK);
+struct ObjTask *newTask(void* hdl, ResumeFn resume) {
+  ObjTask *task = (ObjTask *)allocateObject(sizeof(ObjTask), OBJ_TASK);
   task->coroHandle = hdl;
+  task->resume = resume;
   task->completed = false;
-  task->result = NIL_VAL;
+  task->result = NULL_VAL;
   task->next = NULL;
   return task;
 }

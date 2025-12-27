@@ -81,7 +81,7 @@ public:
         // Runtime helper: ObjTask* prox_rt_new_task(void* hdl)
         llvm::FunctionType *NewTaskType = llvm::FunctionType::get(
              Builder->getInt64Ty(), // Value (ObjTask* encoded)
-             {Builder->getPtrTy()},
+             {Builder->getPtrTy(), Builder->getPtrTy()},
              false
         );
         llvm::Function::Create(NewTaskType, llvm::Function::ExternalLinkage, "prox_rt_new_task", ModuleOb.get());
@@ -176,7 +176,9 @@ public:
              
              // Create a Task object to return initially
              llvm::Function* NewTask = ModuleOb->getFunction("prox_rt_new_task");
-             llvm::Value* TaskObj = Builder->CreateCall(NewTask, {CoroHdl}, "taskObj");
+             llvm::Function* ResumeFn = ModuleOb->getFunction("prox_rt_resume");
+             // ResumeFn should exist since setupSchedulerHelpers called before emitModule
+             llvm::Value* TaskObj = Builder->CreateCall(NewTask, {CoroHdl, ResumeFn}, "taskObj");
              
              // We need to return this TaskObj properly when function 'starts' (suspends at init).
              // But LLVM coroutines split functions. We need to handle `IR_OP_RETURN` specially too.
