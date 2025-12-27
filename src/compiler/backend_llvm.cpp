@@ -26,6 +26,65 @@ public:
         Builder = std::make_unique<llvm::IRBuilder<>>(*Context);
         
         setupRuntimeTypes();
+        setupCoroIntrinsics();
+    }
+
+    void setupCoroIntrinsics() {
+        // i8* @llvm.coro.begin(token, i8*)
+        llvm::FunctionType *CoroBeginType = llvm::FunctionType::get(
+            Builder->getPtrTy(),
+            {llvm::Type::getTokenTy(*Context), Builder->getPtrTy()},
+            false
+        );
+        llvm::Function::Create(CoroBeginType, llvm::Function::ExternalLinkage, "llvm.coro.begin", ModuleOb.get());
+
+        // token @llvm.coro.id(i32, i8*, i8*, i8*)
+        llvm::FunctionType *CoroIdType = llvm::FunctionType::get(
+            llvm::Type::getTokenTy(*Context),
+            {Builder->getInt32Ty(), Builder->getPtrTy(), Builder->getPtrTy(), Builder->getPtrTy()},
+            false
+        );
+        llvm::Function::Create(CoroIdType, llvm::Function::ExternalLinkage, "llvm.coro.id", ModuleOb.get());
+
+        // i32 @llvm.coro.size.i64()
+        llvm::FunctionType *CoroSizeType = llvm::FunctionType::get(
+            Builder->getInt64Ty(),
+            {},
+            false
+        );
+        llvm::Function::Create(CoroSizeType, llvm::Function::ExternalLinkage, "llvm.coro.size.i64", ModuleOb.get());
+
+        // i8 @llvm.coro.suspend(token, i1)
+        llvm::FunctionType *CoroSuspendType = llvm::FunctionType::get(
+            Builder->getInt8Ty(),
+            {llvm::Type::getTokenTy(*Context), Builder->getInt1Ty()},
+            false
+        );
+        llvm::Function::Create(CoroSuspendType, llvm::Function::ExternalLinkage, "llvm.coro.suspend", ModuleOb.get());
+        
+        // i1 @llvm.coro.end(i8*, i1)
+        llvm::FunctionType *CoroEndType = llvm::FunctionType::get(
+            Builder->getInt1Ty(),
+            {Builder->getPtrTy(), Builder->getInt1Ty()},
+            false
+        );
+        llvm::Function::Create(CoroEndType, llvm::Function::ExternalLinkage, "llvm.coro.end", ModuleOb.get());
+        
+        // i8* @llvm.coro.free(token, i8*)
+        llvm::FunctionType *CoroFreeType = llvm::FunctionType::get(
+            Builder->getPtrTy(),
+            {llvm::Type::getTokenTy(*Context), Builder->getPtrTy()},
+            false
+        );
+        llvm::Function::Create(CoroFreeType, llvm::Function::ExternalLinkage, "llvm.coro.free", ModuleOb.get());
+        
+        // Runtime helper: ObjTask* prox_rt_new_task(void* hdl)
+        llvm::FunctionType *NewTaskType = llvm::FunctionType::get(
+             Builder->getInt64Ty(), // Value (ObjTask* encoded)
+             {Builder->getPtrTy()},
+             false
+        );
+        llvm::Function::Create(NewTaskType, llvm::Function::ExternalLinkage, "prox_rt_new_task", ModuleOb.get());
     }
 
     void setupRuntimeTypes() {
@@ -76,6 +135,109 @@ public:
             snprintf(name, sizeof(name), "block%d", func->blocks[i]->id);
             blockMap[func->blocks[i]] = llvm::BasicBlock::Create(*Context, name, F);
         }
+        
+        // Async Setup
+        llvm::Value* CoroId = nullptr;
+        llvm::Value* CoroHdl = nullptr;
+        
+        if (func->isAsync) {
+             llvm::BasicBlock* EntryBB = &F->getEntryBlock();
+             Builder->SetInsertPoint(EntryBB);
+             
+             llvm::Function* FCoroId = ModuleOb->getFunction("llvm.coro.id");
+             llvm::Function* FCoroSize = ModuleOb->getFunction("llvm.coro.size.i64");
+             llvm::Function* FCoroBegin = ModuleOb->getFunction("llvm.coro.begin");
+             
+             // %id = call token @llvm.coro.id(i32 0, i8* null, i8* null, i8* null)
+             CoroId = Builder->CreateCall(FCoroId, {
+                 Builder->getInt32(0),
+                 llvm::ConstantPointerNull::get(Builder->getPtrTy()),
+                 llvm::ConstantPointerNull::get(Builder->getPtrTy()),
+                 llvm::ConstantPointerNull::get(Builder->getPtrTy())
+             }, "coro.id");
+
+             // %size = call i32 @llvm.coro.size.i64()
+             llvm::Value* Size = Builder->CreateCall(FCoroSize, {}, "coro.size");
+             
+             // %alloc = call i8* @malloc(i64 %size) -- we need malloc. Use system malloc or our GC alloc?
+             // Simplest: just use malloc for now or standard alloc.
+             // We can use a dummy alloc for now or just rely on elision if optimization is on.
+             // But for -O0 we need an allocator.
+             // Let's declare malloc.
+             llvm::Function* Malloc = ModuleOb->getFunction("malloc");
+             if (!Malloc) {
+                 llvm::FunctionType* MallocType = llvm::FunctionType::get(Builder->getPtrTy(), {Builder->getInt64Ty()}, false);
+                 Malloc = llvm::Function::Create(MallocType, llvm::Function::ExternalLinkage, "malloc", ModuleOb.get());
+             }
+             llvm::Value* Alloc = Builder->CreateCall(Malloc, {Size}, "coro.alloc");
+
+             // %hdl = call i8* @llvm.coro.begin(token %id, i8* %alloc)
+             CoroHdl = Builder->CreateCall(FCoroBegin, {CoroId, Alloc}, "coro.hdl");
+             
+             // Create a Task object to return initially
+             llvm::Function* NewTask = ModuleOb->getFunction("prox_rt_new_task");
+             llvm::Value* TaskObj = Builder->CreateCall(NewTask, {CoroHdl}, "taskObj");
+             
+             // We need to return this TaskObj properly when function 'starts' (suspends at init).
+             // But LLVM coroutines split functions. We need to handle `IR_OP_RETURN` specially too.
+             // Actually, the initial return happens after the first suspend point if we want to return the handle.
+             // Standard practice: Suspend immediately at start?
+             // Or rely on implicit behavior.
+             // Let's implement manual initial suspend point if needed, or just let 'await' trigger it.
+             // Wait, for `async func`, the caller expects a `Task` back immediately.
+             // So we MUST suspend at entry to return the Task.
+             
+             llvm::Function* FCoroSuspend = ModuleOb->getFunction("llvm.coro.suspend");
+             // suspend(token, final=false)
+             llvm::Value* SuspendResult = Builder->CreateCall(FCoroSuspend, {
+                 llvm::ConstantTokenNone::get(*Context), 
+                 Builder->getInt1(0)
+             });
+             
+             // Switch on suspend result:
+             // 0: Resume (fallthrough to function body)
+             // 1: Cleanup (goto cleanup)
+             // 2: Suspend (return TaskObj)
+             
+             llvm::BasicBlock* ResumeBB = llvm::BasicBlock::Create(*Context, "coro.resume", F);
+             llvm::BasicBlock* CleanupBB = llvm::BasicBlock::Create(*Context, "coro.cleanup", F);
+             llvm::BasicBlock* SuspendBB = llvm::BasicBlock::Create(*Context, "coro.suspend", F);
+             
+             llvm::SwitchInst* SI = Builder->CreateSwitch(SuspendResult, SuspendBB, 2);
+             SI->addCase(Builder->getInt8(0), ResumeBB);
+             SI->addCase(Builder->getInt8(1), CleanupBB);
+             
+             // Suspend Path: Return TaskObj
+             Builder->SetInsertPoint(SuspendBB);
+             Builder->CreateRet(TaskObj);
+             
+             // Cleanup Path: Free memory
+             Builder->SetInsertPoint(CleanupBB);
+             llvm::Function* FCoroFree = ModuleOb->getFunction("llvm.coro.free");
+             llvm::Value* MemToFree = Builder->CreateCall(FCoroFree, {CoroId, CoroHdl});
+             llvm::Function* Free = ModuleOb->getFunction("free");
+             if (!Free) {
+                 llvm::FunctionType* FreeType = llvm::FunctionType::get(Builder->getVoidTy(), {Builder->getPtrTy()}, false);
+                 Free = llvm::Function::Create(FreeType, llvm::Function::ExternalLinkage, "free", ModuleOb.get());
+             }
+             Builder->CreateCall(Free, {MemToFree});
+             // Return NIL/Undef (caller shouldn't see this)
+             Builder->CreateRet(llvm::ConstantInt::get(*Context, llvm::APInt(64, 0x7ffc000000000001, false))); // NIL
+
+             // Resume Path: Actual function body
+             // Remap entry block to ResumeBB for subsequent instructions? 
+             // Ideally we should have injected this logic BEFORE the first block's instructions.
+             // But we are in `emitFunction` before iterating blocks.
+             // The loop below `for (int i=0; ...)` visits blocks.
+             // We need to jump from ResumeBB to the first logic block.
+             Builder->SetInsertPoint(ResumeBB);
+             Builder->CreateBr(blockMap[func->blocks[0]]); 
+             
+             // BUT wait, `blocks[0]` was already mapped to a BasicBlock.
+             // That block is empty right now (instructions will be added in Pass 2).
+             // Does `blocks[0]` have predecessors?
+             // If we jump to it from ResumeBB, it's fine.
+        }
 
         // Pass 2: Emit instructions (except Phi operands)
         for (int i = 0; i < func->blockCount; i++) {
@@ -85,7 +247,7 @@ public:
 
             IRInstruction* instr = irBlock->first;
             while (instr) {
-                emitInstruction(instr);
+                emitInstruction(instr, CoroHdl); // Pass coroutine handle if needed
                 instr = instr->next;
             }
         }
@@ -111,20 +273,29 @@ public:
         // Generate return 0 if block is unterminated (fallback)
          if (!F->back().getTerminator()) {
              Builder->SetInsertPoint(&F->back());
-             // Return NIL (0x7ffc000000000001)
-             uint64_t nilVal = 0x7ffc000000000001; 
-             Builder->CreateRet(llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false)));
+             if (func->isAsync) {
+                 // For async, falling off end means task complete with NIL
+                 // TODO: Mark task complete in runtime?
+                 // coro.end
+                 llvm::Function* FCoroEnd = ModuleOb->getFunction("llvm.coro.end");
+                 Builder->CreateCall(FCoroEnd, {llvm::ConstantPointerNull::get(Builder->getPtrTy()), Builder->getInt1(0)});
+                 Builder->CreateUnreachable(); // Should not return normally from here in coro structure
+             } else {
+                 uint64_t nilVal = 0x7ffc000000000001; 
+                 Builder->CreateRet(llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false)));
+             }
          }
 
         // Verify function
         std::string err;
         llvm::raw_string_ostream os(err);
         if (llvm::verifyFunction(*F, &os)) {
-            std::cerr << "LLVM Verification Error: " << os.str() << "\n";
+            std::cerr << "LLVM Verification Error in " << func->name << ": " << os.str() << "\n";
+            // F->dump();
         }
     }
 
-    void emitInstruction(IRInstruction* instr) {
+    void emitInstruction(IRInstruction* instr, llvm::Value* CoroHdl = nullptr) {
         switch (instr->opcode) {
             case IR_OP_CONST: {
                 llvm::Value* v = nullptr;
@@ -160,11 +331,70 @@ public:
                 llvm::Value* L = getOperand(instr->operands[0]);
                 llvm::Value* R = getOperand(instr->operands[1]);
                 llvm::Function *AddFunc = ModuleOb->getFunction("prox_rt_add");
-                if (L && R && AddFunc) ssaValues[instr->result] = Builder->CreateCall(AddFunc, {L, R}, "addtmp");
+                // if (L && R && AddFunc) 
+                ssaValues[instr->result] = Builder->CreateCall(AddFunc, {L, R}, "addtmp");
                 break;
             }
-            // TODO: Implement other math ops similarly with runtime helpers OR inline check
             
+            case IR_OP_AWAIT: {
+                if (!CoroHdl) {
+                    // Error: await outside async
+                    return;
+                }
+                llvm::Value* TaskToAwait = getOperand(instr->operands[0]);
+                
+                // We need to:
+                // 1. Check if task is done? (Runtime optimization)
+                // 2. If not, suspend. 
+                // 3. Register callback or put in scheduler? 
+                
+                // For simplicity: Always suspend, let scheduler check status.
+                // Call runtime to register await: prox_rt_await(CoroHdl, TaskToAwait)
+                // BUT we don't have prox_rt_await declared yet.
+                // And await should return the result of the task.
+                
+                // TODO: Declare prox_rt_await.
+                // For now, emit llvm.coro.suspend.
+                llvm::Function* FCoroSuspend = ModuleOb->getFunction("llvm.coro.suspend");
+                llvm::Value* SuspendResult = Builder->CreateCall(FCoroSuspend, {
+                    llvm::ConstantTokenNone::get(*Context), 
+                     Builder->getInt1(0)
+                });
+                
+                llvm::BasicBlock* ResumeBB = llvm::BasicBlock::Create(*Context, "await.resume", Builder->GetInsertBlock()->getParent());
+                llvm::BasicBlock* CleanupBB = llvm::BasicBlock::Create(*Context, "await.cleanup", Builder->GetInsertBlock()->getParent());
+                llvm::BasicBlock* SuspendBB = llvm::BasicBlock::Create(*Context, "await.suspend", Builder->GetInsertBlock()->getParent());
+                
+                llvm::SwitchInst* SI = Builder->CreateSwitch(SuspendResult, SuspendBB, 2);
+                SI->addCase(Builder->getInt8(0), ResumeBB);
+                SI->addCase(Builder->getInt8(1), CleanupBB);
+                
+                // Suspend: Return (back to scheduler)
+                Builder->SetInsertPoint(SuspendBB);
+                // What to return? For await, we don't return a new task, we just yield control.
+                // We should return something to the caller (scheduler).
+                // Usually void or boolean. 
+                // But our function signature returns Value (Int64).
+                // Return NIL/Placeholder.
+                Builder->CreateRet(llvm::ConstantInt::get(*Context, llvm::APInt(64, 0x7ffc000000000001, false))); // NIL
+
+                // Cleanup
+                Builder->SetInsertPoint(CleanupBB);
+                 // ... free ...
+                 llvm::Function* FCoroFree = ModuleOb->getFunction("llvm.coro.free");
+                 // We need ID for free... complex to propagate ID everywhere.
+                 // For skeleton, trap.
+                 Builder->CreateUnreachable();
+
+                // Resume
+                Builder->SetInsertPoint(ResumeBB);
+                // Return value of await?
+                // Assume runtime put result in a special slot or registers?
+                // For now, return TaskToAwait (dummy result) or NIL.
+                ssaValues[instr->result] = TaskToAwait; 
+                break;
+            }
+
             case IR_OP_JUMP: {
                 Builder->CreateBr(blockMap[instr->operands[0].as.block]);
                 break;
@@ -174,7 +404,7 @@ public:
                 llvm::BasicBlock* Then = blockMap[instr->operands[1].as.block];
                 llvm::BasicBlock* Else = blockMap[instr->operands[2].as.block];
                 
-                // Temporary: Treat 0 as false (legacy behavior until full type lowering)
+                // Temporary: Treat 0 as false
                  if (Cond) {
                     llvm::Value* boolCond = Builder->CreateICmpNE(Cond, llvm::ConstantInt::get(*Context, llvm::APInt(64, 0)), "ifcond");
                     Builder->CreateCondBr(boolCond, Then, Else);
@@ -187,12 +417,21 @@ public:
             }
             case IR_OP_RETURN: {
                 llvm::Value* V = getOperand(instr->operands[0]);
-                // Default return NIL
                 if (!V) {
                    uint64_t nilVal = 0x7ffc000000000001; 
                    V = llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false));
                 }
-                Builder->CreateRet(V);
+                
+                if (CoroHdl) {
+                    // Async return: Mark task as complete with value V
+                    // prox_rt_resolve_task(CurrentTask, V) ??
+                    // For now, just end.
+                    llvm::Function* FCoroEnd = ModuleOb->getFunction("llvm.coro.end");
+                    Builder->CreateCall(FCoroEnd, {llvm::ConstantPointerNull::get(Builder->getPtrTy()), Builder->getInt1(0)});
+                    Builder->CreateUnreachable();
+                } else {
+                    Builder->CreateRet(V);
+                }
                 break;
             }
             default:
