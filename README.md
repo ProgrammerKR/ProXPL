@@ -251,7 +251,25 @@ use local_helper;
 
 func main() {
     let result = std.math.sqrt(16);
+
     print("Square root of 16: " + to_string(result));
+}
+```
+
+### Async/Await
+
+ProXPL supports native asynchronous programming:
+
+```javascript
+async func fetchUser(id) {
+    // Simulate non-blocking operation
+    return {"id": id, "name": "User" + to_string(id)};
+}
+
+async func main() {
+    print("Fetching user...");
+    let user = await fetchUser(42);
+    print("Got user: " + user["name"]);
 }
 ```
 

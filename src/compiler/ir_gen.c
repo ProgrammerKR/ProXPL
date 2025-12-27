@@ -6,6 +6,7 @@
 
 #include "../../include/ir.h"
 #include "../../include/ast.h"
+#include "../../include/object.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

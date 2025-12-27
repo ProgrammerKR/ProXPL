@@ -16,7 +16,7 @@
 // Forward declarations of parsing functions
 static Stmt *declaration(Parser *p);
 static Stmt *statement(Parser *p);
-static Stmt *funcDecl(Parser *p, const char *kind);
+static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync);
 static Stmt *classDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
 static Stmt *useDecl(Parser *p);
