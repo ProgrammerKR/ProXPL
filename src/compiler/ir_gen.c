@@ -169,8 +169,8 @@ static int visitExpr(IRGen* gen, Expr* expr) {
                  // IROperand opFunc, opArg;
                  
                  // Op 0: Function Name
-                 opFunc.type = OPERAND_CONST;
-                 opFunc.as.constant = OBJ_VAL(copyString("prox_rt_run_and_wait", 20)); 
+                 // opFunc.type = OPERAND_CONST;
+                 // opFunc.as.constant = OBJ_VAL(copyString("prox_rt_run_and_wait", 20)); 
                  // Wait, can't easily create ObjString here without VM?
                  // Constants in IR are `Value`. `copyString` needs VM.
                  // Hack: Pass raw string pointer if allowed? NO.
