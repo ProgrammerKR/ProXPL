@@ -161,8 +161,15 @@ StmtList *parse(Parser *parser) {
 // === Declarations ===
 
 static Stmt *declaration(Parser *p) {
+  if (match(p, 1, TOKEN_ASYNC)) {
+      if (match(p, 1, TOKEN_FUNC))
+          return funcDecl(p, "function", true);
+      // TODO: Handle async arrow functions if supported later
+      parserError(p, "Expect 'func' after 'async'.");
+      return NULL;
+  }
   if (match(p, 1, TOKEN_FUNC))
-    return funcDecl(p, "function");
+    return funcDecl(p, "function", false);
   if (match(p, 1, TOKEN_CLASS))
     return classDecl(p);
   if (match(p, 1, TOKEN_USE))
@@ -172,7 +179,7 @@ static Stmt *declaration(Parser *p) {
   return statement(p);
 }
 
-static Stmt *funcDecl(Parser *p, const char *kind) {
+static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync) {
   (void)kind;
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
   char *name = tokenToString(nameToken);
@@ -194,7 +201,7 @@ static Stmt *funcDecl(Parser *p, const char *kind) {
 
   StmtList *body = block(p);
 
-  Stmt *stmt = createFuncDeclStmt(name, params, body, nameToken.line, 0);
+  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, nameToken.line, 0);
   free(name);
   return stmt;
 }
@@ -216,7 +223,23 @@ static Stmt *classDecl(Parser *p) {
 
   StmtList *methods = createStmtList();
   while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
-    Stmt *method = funcDecl(p, "method");
+    bool isAsync = false; 
+    if (match(p, 1, TOKEN_ASYNC)) {
+        isAsync = true;
+        // consume FUNC if present (methods might just be identifier in some langs, but here it calls funcDecl which expects identifier)
+        // Wait, funcDecl starts with identifier consumption.
+        // check if `funcDecl` handles `func` keyword? No, `declaration` consumes `func` before calling `funcDecl`.
+        // So for methods in classDecl, how are they parsed? 
+        // `createClassDeclStmt` calls `funcDecl`.
+        // `classDecl` loop calls `funcDecl(p, "method")`.
+        // `funcDecl` consumes IDENTIFIER name.
+        // So methods don't have `func` keyword?
+        // Let's check `funcDecl` implementation:
+        // `Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");`
+        // So yes, methods are `methodName() {}`.
+    }
+    // Check if `async` was consumed. If so, pass true.
+    Stmt *method = funcDecl(p, "method", isAsync);
     appendStmt(methods, method);
   }
 
@@ -596,6 +619,11 @@ static Expr *factor(Parser *p) {
 }
 
 static Expr *unary(Parser *p) {
+  if (match(p, 1, TOKEN_AWAIT)) {
+      Token op = previous(p);
+      Expr *right = unary(p);
+      return createAwaitExpr(right, op.line, 0);
+  }
   if (match(p, 2, TOKEN_BANG, TOKEN_MINUS)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);

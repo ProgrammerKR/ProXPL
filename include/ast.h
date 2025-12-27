@@ -35,7 +35,8 @@ typedef enum {
   EXPR_BINARY, EXPR_UNARY, EXPR_LITERAL, EXPR_GROUPING,
   EXPR_VARIABLE, EXPR_ASSIGN, EXPR_LOGICAL, EXPR_CALL,
   EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_LIST,
-  EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA
+  EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
+  EXPR_AWAIT
 } ExprType;
 
 typedef enum {
@@ -102,6 +103,7 @@ typedef struct { ExprList *elements; } ListExpr;
 typedef struct { DictPairList *pairs; } DictionaryExpr;
 typedef struct { Expr *condition; Expr *true_branch; Expr *false_branch; } TernaryExpr;
 typedef struct { StringList *params; StmtList *body; } LambdaExpr;
+typedef struct { Expr *expression; } AwaitExpr;
 
 struct Expr {
   ExprType type;
@@ -113,14 +115,14 @@ struct Expr {
     GroupingExpr grouping; VariableExpr variable; AssignExpr assign;
     LogicalExpr logical; CallExpr call; GetExpr get; SetExpr set;
     IndexExpr index; ListExpr list; DictionaryExpr dictionary;
-    TernaryExpr ternary; LambdaExpr lambda;
+    TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
   } as;
 };
 
 // --- Statement Data Structures ---
 typedef struct { Expr *expression; } ExpressionStmt;
 typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; } VarDeclStmt;
-typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; } FuncDeclStmt;
+typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; bool isAsync; } FuncDeclStmt;
 typedef struct { char *name; VariableExpr *superclass; StmtList *methods; } ClassDeclStmt;
 typedef struct { StringList *modules; } UseDeclStmt;
 typedef struct { Expr *condition; Stmt *then_branch; Stmt *else_branch; } IfStmt;
@@ -163,10 +165,11 @@ Expr *createListExpr(ExprList *elements, int line, int column);
 Expr *createDictionaryExpr(DictPairList *pairs, int line, int column);
 Expr *createTernaryExpr(Expr *cond, Expr *true_br, Expr *false_br, int line, int column);
 Expr *createLambdaExpr(StringList *params, StmtList *body, int line, int column);
+Expr *createAwaitExpr(Expr *expression, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line, int column);
-Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, int line, int column);
+Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, bool isAsync, int line, int column);
 Stmt *createClassDeclStmt(const char *name, VariableExpr *super, StmtList *methods, int line, int column);
 Stmt *createUseDeclStmt(StringList *modules, int line, int column);
 Stmt *createIfStmt(Expr *cond, Stmt *then_br, Stmt *else_br, int line, int column);

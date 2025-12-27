@@ -303,6 +303,15 @@ Expr *createLambdaExpr(StringList *params, StmtList *body, int line,
   return expr;
 }
 
+Expr *createAwaitExpr(Expr *expression, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_AWAIT;
+  expr->line = line;
+  expr->column = column;
+  expr->as.await_expr.expression = expression;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -332,7 +341,7 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
 }
 
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
-                         int line, int column) {
+                         bool isAsync, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_FUNC_DECL;
   stmt->line = line;
@@ -340,6 +349,7 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   stmt->as.func_decl.name = strdup(name);
   stmt->as.func_decl.params = params;
   stmt->as.func_decl.body = body;
+  stmt->as.func_decl.isAsync = isAsync; 
   return stmt;
 }
 
@@ -533,6 +543,9 @@ void freeExpr(Expr *expr) {
   case EXPR_LAMBDA:
     freeStringList(expr->as.lambda.params);
     freeStmtList(expr->as.lambda.body);
+    break;
+  case EXPR_AWAIT:
+    freeExpr(expr->as.await_expr.expression);
     break;
   }
 
