@@ -115,8 +115,10 @@ static int resolveLocal(BytecodeGen* gen, const char* name) {
 }
 
 static void addLocal(BytecodeGen* gen, const char* name) {
+    if (gen->hadError) return;
     if (gen->compiler->localCount == 256) {
         fprintf(stderr, "Too many local variables.\n");
+        gen->hadError = true;
         return;
     }
     Local* local = &gen->compiler->locals[gen->compiler->localCount++];
@@ -125,10 +127,12 @@ static void addLocal(BytecodeGen* gen, const char* name) {
 }
 
 static void emitConstant(BytecodeGen* gen, Value value, int line) {
+    if (gen->hadError) return;
     int constant = addConstant(gen->chunk, value);
     if (constant > 255) {
         writeChunk(gen->chunk, OP_CONSTANT, line); 
         fprintf(stderr, "Too many constants.\n");
+        gen->hadError = true;
     } else {
         writeChunk(gen->chunk, OP_CONSTANT, line);
         writeChunk(gen->chunk, (uint8_t)constant, line);
@@ -768,18 +772,19 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
     }
 }
 
-void generateBytecode(StmtList* statements, Chunk* chunk) {
+bool generateBytecode(StmtList* statements, Chunk* chunk) {
     BytecodeGen gen;
     Compiler compiler;
     
     gen.compiler = &compiler;
     gen.chunk = chunk;
+    gen.hadError = false;
     
     compiler.enclosing = NULL;
     compiler.function = newFunction(); 
     compiler.function->chunk = *chunk; 
     
-            compiler.type = COMP_SCRIPT; 
+    compiler.type = COMP_SCRIPT; 
     compiler.localCount = 0;
     compiler.scopeDepth = 0;
     compiler.loop = NULL;
@@ -790,9 +795,12 @@ void generateBytecode(StmtList* statements, Chunk* chunk) {
     if (statements) {
         for (int i = 0; i < statements->count; i++) {
             genStmt(&gen, statements->items[i]);
+            if (gen.hadError) break;
         }
     }
     
     writeChunk(gen.chunk, OP_NIL, 0);
     writeChunk(gen.chunk, OP_RETURN, 0);
+    
+    return !gen.hadError;
 }

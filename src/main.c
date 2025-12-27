@@ -93,7 +93,12 @@ static void repl() {
     // --- Pipeline: AST -> Bytecode -> VM ---
     Chunk chunk;
     initChunk(&chunk);
-    generateBytecode(statements, &chunk);
+    if (!generateBytecode(statements, &chunk)) {
+        fprintf(stderr, "Compilation error\n");
+        freeChunk(&chunk);
+        freeStmtList(statements);
+        continue;
+    }
     
     interpretChunk(&vm, &chunk);
 

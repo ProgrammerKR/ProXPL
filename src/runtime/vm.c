@@ -934,7 +934,10 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   ObjFunction* function = newFunction();
   
   // Connect the AST-based bytecode generator
-  generateBytecode(statements, &function->chunk);
+  if (!generateBytecode(statements, &function->chunk)) {
+      pvm->nextGC = oldNextGC;
+      return INTERPRET_COMPILE_ERROR;
+  }
   
   // Setup for execution
   push(pvm, OBJ_VAL(function));
