@@ -473,8 +473,7 @@ public:
             false
         );
         llvm::Function::Create(AwaitType, llvm::Function::ExternalLinkage, "prox_rt_await", ModuleOb.get());
-    }
-
+    
         // Value prox_rt_run_and_wait(Value task)
         llvm::FunctionType *RunWaitType = llvm::FunctionType::get(
             Builder->getInt64Ty(),

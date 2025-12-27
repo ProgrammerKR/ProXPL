@@ -148,6 +148,8 @@ struct ObjDictionary {
   Table items;
 };
 
+typedef struct ObjTask ObjTask;
+
 struct ObjTask {
   Obj obj;
   void* coroHandle; // LLVM Coroutine Handle
