@@ -25,10 +25,10 @@ DefaultGroupName={#MyAppName}
 PrivilegesRequired=admin
 OutputDir=output
 OutputBaseFilename=ProXPL_Installer_v{#MyAppVersion}
-SetupIconFile=assets\icon.ico
+;SetupIconFile=assets\icon.ico
 SolidCompression=yes
 WizardStyle=modern
-LicenseFile=doc\LICENSE.txt
+LicenseFile=LICENSE
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -43,7 +43,7 @@ Source: "bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
 ; Libraries
 Source: "lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Documentation
-Source: "doc\*"; DestDir: "{app}\doc"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

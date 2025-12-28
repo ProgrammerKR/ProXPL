@@ -111,6 +111,18 @@ jobs:
           echo "Running benchmarks with $EXE_PATH"
           python benchmarks/run_benchmarks.py --executable "$EXE_PATH"
 
+      - name: Build Installer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+          New-Item -ItemType Directory -Force -Path bin
+          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
+          if (Test-Path "build/Release/proxpl_lib.dll") {
+            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
+          }
+          iscc setup.iss
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -120,3 +132,4 @@ jobs:
           path: |
             ${{ matrix.bin_path }}
             benchmarks/
+            output/
