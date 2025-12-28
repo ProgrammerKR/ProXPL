@@ -37,8 +37,8 @@ function activate(context) {
             return;
         }
         const fileName = editor.document.fileName;
-        if (!fileName.endsWith('.prox') && !fileName.endsWith('.ppl') && !fileName.endsWith('.pxpl')) {
-            vscode.window.showErrorMessage('Not a ProXPL (.prox, .ppl or .pxpl) file.');
+        if (!fileName.endsWith('.prox') && !fileName.endsWith('.pxpl')) {
+            vscode.window.showErrorMessage('Not a ProXPL (.prox or .pxpl) file.');
             return;
         }
         // Check if proxpl is in PATH
@@ -103,7 +103,7 @@ function activate(context) {
     });
     context.subscriptions.push(watchCommand);
     vscode.workspace.onDidSaveTextDocument((document) => {
-        if (isWatchMode && (document.fileName.endsWith('.prox') || document.fileName.endsWith('.ppl') || document.fileName.endsWith('.pxpl'))) {
+        if (isWatchMode && (document.fileName.endsWith('.prox') || document.fileName.endsWith('.pxpl'))) {
             const terminalName = 'ProXPL Debugger';
             let terminal = vscode.window.terminals.find(t => t.name === terminalName);
             if (!terminal) {
