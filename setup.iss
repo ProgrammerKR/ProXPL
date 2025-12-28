@@ -53,7 +53,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks
 
 [Registry]
 Root: HKA; Subkey: "Software\Classes\.prox"; ValueType: string; ValueName: ""; ValueData: "ProXPLSourceFile"; Flags: uninsdeletevalue
-Root: HKA; Subkey: "Software\Classes\.ppl"; ValueType: string; ValueName: ""; ValueData: "ProXPLSourceFile"; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.pxpl"; ValueType: string; ValueName: ""; ValueData: "ProXPLSourceFile"; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\ProXPLSourceFile"; ValueType: string; ValueName: ""; ValueData: "ProXPL Source File"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\ProXPLSourceFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#MyAppExeName},0"
 Root: HKA; Subkey: "Software\Classes\ProXPLSourceFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\{#MyAppExeName}"" ""%1"""
