@@ -131,22 +131,55 @@ static InterpretResult run(VM *vm) {
 #ifdef __GNUC__
   #define DISPATCH() goto *dispatch_table[*frame->ip++]
   
-  static void* dispatch_table[] = {
-      &&DO_OP_CONSTANT, &&DO_OP_NOP, &&DO_OP_NIL, &&DO_OP_TRUE, &&DO_OP_FALSE,
-      &&DO_OP_POP, 
-      &&DO_OP_DUP, &&DO_OP_BUILD_LIST, &&DO_OP_BUILD_MAP, &&DO_OP_GET_INDEX, &&DO_OP_SET_INDEX,
-      &&DO_OP_GET_LOCAL, &&DO_OP_SET_LOCAL, 
-      &&DO_OP_GET_GLOBAL, &&DO_OP_DEFINE_GLOBAL, &&DO_OP_SET_GLOBAL,
-      &&DO_OP_GET_UPVALUE, &&DO_OP_SET_UPVALUE,
-      &&DO_OP_GET_PROPERTY, &&DO_OP_SET_PROPERTY, &&DO_OP_GET_SUPER,
-      &&DO_OP_EQUAL, &&DO_OP_GREATER, &&DO_OP_LESS,
-      &&DO_OP_ADD, &&DO_OP_SUBTRACT, &&DO_OP_MULTIPLY, 
-      &&DO_OP_DIVIDE, &&DO_OP_NOT, &&DO_OP_NEGATE, &&DO_OP_PRINT,
-      &&DO_OP_JUMP, &&DO_OP_JUMP_IF_FALSE, &&DO_OP_LOOP,
-      &&DO_OP_CALL, &&DO_OP_INVOKE, &&DO_OP_SUPER_INVOKE,
-      &&DO_OP_CLOSURE, &&DO_OP_CLOSE_UPVALUE,
-      &&DO_OP_RETURN, &&DO_OP_CLASS, &&DO_OP_INHERIT, &&DO_OP_METHOD,
-      &&DO_OP_USE, &&DO_OP_TRY, &&DO_OP_CATCH, &&DO_OP_END_TRY
+  static void* dispatch_table[256] = {
+      [0 ... 255] = &&DO_OP_UNKNOWN,
+      [OP_CONSTANT] = &&DO_OP_CONSTANT,
+      [OP_NOP] = &&DO_OP_NOP,
+      [OP_NIL] = &&DO_OP_NIL,
+      [OP_TRUE] = &&DO_OP_TRUE,
+      [OP_FALSE] = &&DO_OP_FALSE,
+      [OP_POP] = &&DO_OP_POP,
+      [OP_DUP] = &&DO_OP_DUP,
+      [OP_BUILD_LIST] = &&DO_OP_BUILD_LIST,
+      [OP_BUILD_MAP] = &&DO_OP_BUILD_MAP,
+      [OP_GET_INDEX] = &&DO_OP_GET_INDEX,
+      [OP_SET_INDEX] = &&DO_OP_SET_INDEX,
+      [OP_GET_LOCAL] = &&DO_OP_GET_LOCAL,
+      [OP_SET_LOCAL] = &&DO_OP_SET_LOCAL,
+      [OP_GET_GLOBAL] = &&DO_OP_GET_GLOBAL,
+      [OP_DEFINE_GLOBAL] = &&DO_OP_DEFINE_GLOBAL,
+      [OP_SET_GLOBAL] = &&DO_OP_SET_GLOBAL,
+      [OP_GET_UPVALUE] = &&DO_OP_GET_UPVALUE,
+      [OP_SET_UPVALUE] = &&DO_OP_SET_UPVALUE,
+      [OP_GET_PROPERTY] = &&DO_OP_GET_PROPERTY,
+      [OP_SET_PROPERTY] = &&DO_OP_SET_PROPERTY,
+      [OP_GET_SUPER] = &&DO_OP_GET_SUPER,
+      [OP_EQUAL] = &&DO_OP_EQUAL,
+      [OP_GREATER] = &&DO_OP_GREATER,
+      [OP_LESS] = &&DO_OP_LESS,
+      [OP_ADD] = &&DO_OP_ADD,
+      [OP_SUBTRACT] = &&DO_OP_SUBTRACT,
+      [OP_MULTIPLY] = &&DO_OP_MULTIPLY,
+      [OP_DIVIDE] = &&DO_OP_DIVIDE,
+      [OP_NOT] = &&DO_OP_NOT,
+      [OP_NEGATE] = &&DO_OP_NEGATE,
+      [OP_PRINT] = &&DO_OP_PRINT,
+      [OP_JUMP] = &&DO_OP_JUMP,
+      [OP_JUMP_IF_FALSE] = &&DO_OP_JUMP_IF_FALSE,
+      [OP_LOOP] = &&DO_OP_LOOP,
+      [OP_CALL] = &&DO_OP_CALL,
+      [OP_INVOKE] = &&DO_OP_INVOKE,
+      [OP_SUPER_INVOKE] = &&DO_OP_SUPER_INVOKE,
+      [OP_CLOSURE] = &&DO_OP_CLOSURE,
+      [OP_CLOSE_UPVALUE] = &&DO_OP_CLOSE_UPVALUE,
+      [OP_RETURN] = &&DO_OP_RETURN,
+      [OP_CLASS] = &&DO_OP_CLASS,
+      [OP_INHERIT] = &&DO_OP_INHERIT,
+      [OP_METHOD] = &&DO_OP_METHOD,
+      [OP_USE] = &&DO_OP_USE,
+      [OP_TRY] = &&DO_OP_TRY,
+      [OP_CATCH] = &&DO_OP_CATCH,
+      [OP_END_TRY] = &&DO_OP_END_TRY
   };
 
   DISPATCH();
@@ -538,6 +571,11 @@ static InterpretResult run(VM *vm) {
   DO_OP_CATCH:
   DO_OP_END_TRY: {
       runtimeError(vm, "Exception handling not yet implemented.");
+      return INTERPRET_RUNTIME_ERROR;
+  }
+  
+  DO_OP_UNKNOWN: {
+      runtimeError(vm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
   }
   
