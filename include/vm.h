@@ -12,7 +12,7 @@
 #include "table.h" 
 #include "importer.h"
 
-#define FRAMES_MAX 256
+#define FRAMES_MAX 1024
 #define STACK_MAX (FRAMES_MAX * 256)
 
 // CallFrame is now defined in common.h

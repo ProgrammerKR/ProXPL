@@ -12,18 +12,43 @@ def run_benchmark(executable, benchmark_file):
     
     cmd = [executable, benchmark_file]
     start = time.time()
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        end = time.time()
-        return end - start, result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error running {benchmark_file}: {e}")
-        print(f"Stdout: {e.stdout}")
-        print(f"Stderr: {e.stderr}")
-        return None, None
-    except Exception as e:
-        print(f"Execution failed: {e}")
-        return None, None
+    
+    # Use a temporary file for stdout/stderr to avoid MemoryError on huge output
+    import tempfile
+    
+    with tempfile.TemporaryFile() as out_tmp:
+        try:
+            # We don't use check=True so we can capture output even on failure
+            proc = subprocess.run(cmd, stdout=out_tmp, stderr=subprocess.STDOUT, timeout=60, text=False) # raw bytes
+            
+            end = time.time()
+            duration = end - start
+            
+            # Read output back (limit size)
+            out_tmp.seek(0)
+            # Read first 4KB and last 4KB if large? Or just read all and catch error?
+            # Let's read first 100KB which should be enough for any reasonable benchmark
+            # If it's huge, we truncate.
+            output_bytes = out_tmp.read(100 * 1024) 
+            if out_tmp.read(1): # check if there is more
+                 output_bytes += b"\n... [Output Truncated] ...\n"
+                 
+            output = output_bytes.decode('utf-8', errors='replace')
+            
+            if proc.returncode != 0:
+                print(f"Error running {benchmark_file}: Return Code {proc.returncode}")
+                # Print output snippet
+                print(f"Output:\n{output[-1000:]}") # Last 1000 chars
+                return None, None
+                
+            return duration, output
+
+        except subprocess.TimeoutExpired:
+            print(f"Benchmark {benchmark_file} timed out.")
+            return None, None
+        except Exception as e:
+             print(f"Execution failed: {e}")
+             return None, None
 
 def main():
     parser = argparse.ArgumentParser(description="Run ProXPL benchmarks.")

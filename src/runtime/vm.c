@@ -74,6 +74,15 @@ void runtimeError(VM* pvm, const char* format, ...) {
 }
 
 void push(VM* pvm, Value value) {
+  if (pvm->stackTop >= pvm->stack + STACK_MAX) {
+      // Emergency stack reset or hard abort to prevent segfault
+      // Since we can't easily return error code from push, we set a flag or just abort.
+      // Ideally, push checks should be done before calling logic. 
+      // check frame overflow handles recursion. 
+      // check value stack overflow:
+      fprintf(stderr, "Fatal Runtime Error: Value stack overflow.\n");
+      exit(1); 
+  }
   *pvm->stackTop = value;
   pvm->stackTop++;
 }
@@ -449,7 +458,7 @@ static InterpretResult run(VM *vm) {
               runtimeError(vm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
               return INTERPRET_RUNTIME_ERROR;
           }
-          if (vm->frameCount == 64) { // MAX_FRAMES
+          if (vm->frameCount == FRAMES_MAX) { // FRAMES_MAX
               runtimeError(vm, "Stack overflow.");
               return INTERPRET_RUNTIME_ERROR;
           }

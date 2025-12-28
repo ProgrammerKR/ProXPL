@@ -466,7 +466,7 @@ public:
         // Implement prox_rt_resume wrapper
         llvm::BasicBlock* Entry = llvm::BasicBlock::Create(*Context, "entry", FResume);
         llvm::IRBuilder<> ResBuilder(Entry);
-        llvm::Function* FCoroResume = llvm::Intrinsic::getOrInsertDeclaration(ModuleOb.get(), llvm::Intrinsic::coro_resume);
+        llvm::Function* FCoroResume = llvm::Intrinsic::getDeclaration(ModuleOb.get(), llvm::Intrinsic::coro_resume);
         // Note: getDeclaration is deprecated but for some LLVM versions getOrInsertDeclaration is for non-intrinsics?
         // Actually, for intrinsics, getDeclaration is still standard in many versions.
         // But the warning says use getOrInsertDeclaration? 
