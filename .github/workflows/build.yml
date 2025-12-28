@@ -132,4 +132,4 @@ jobs:
           path: |
             ${{ matrix.bin_path }}
             benchmarks/
-            output/
+            build/ProXPL_Installer_*.exe
