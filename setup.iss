@@ -23,7 +23,7 @@ DefaultGroupName={#MyAppName}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequired=admin
-OutputDir=output
+OutputDir=build
 OutputBaseFilename=ProXPL_Installer_v{#MyAppVersion}
 ;SetupIconFile=assets\icon.ico
 SolidCompression=yes
@@ -40,6 +40,7 @@ Name: "addtopath"; Description: "Add ProXPL to the system PATH environment varia
 [Files]
 ; Binaries
 Source: "bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
 ; Libraries
 Source: "lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Documentation
