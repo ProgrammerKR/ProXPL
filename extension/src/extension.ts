@@ -14,8 +14,8 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const fileName = editor.document.fileName;
-        if (!fileName.endsWith('.prox')) {
-            vscode.window.showErrorMessage('Not a ProXPL (.prox) file.');
+        if (!fileName.endsWith('.prox') && !fileName.endsWith('.pxpl')) {
+            vscode.window.showErrorMessage('Not a ProXPL (.prox or .pxpl) file.');
             return;
         }
 
@@ -63,7 +63,50 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(runCommand);
 
-    // 2. Formatter Provider
+    // 2. Watch Mode
+    let isWatchMode = false;
+    let watchStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    watchStatusBarItem.command = 'proxpl.startWatchMode';
+    context.subscriptions.push(watchStatusBarItem);
+
+    const updateStatusBar = () => {
+        if (isWatchMode) {
+            watchStatusBarItem.text = '$(eye) ProXPL Watch: ON';
+            watchStatusBarItem.tooltip = 'Stop Watching ProXPL Files';
+            watchStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+        } else {
+            watchStatusBarItem.text = '$(eye-closed) ProXPL Watch: OFF';
+            watchStatusBarItem.tooltip = 'Start Watching ProXPL Files';
+            watchStatusBarItem.backgroundColor = undefined;
+        }
+        watchStatusBarItem.show();
+    };
+    updateStatusBar();
+
+    let watchCommand = vscode.commands.registerCommand('proxpl.startWatchMode', () => {
+        isWatchMode = !isWatchMode;
+        updateStatusBar();
+        vscode.window.showInformationMessage(isWatchMode ? 'ProXPL Watch Mode Started' : 'ProXPL Watch Mode Stopped');
+    });
+    context.subscriptions.push(watchCommand);
+
+    vscode.workspace.onDidSaveTextDocument((document) => {
+        if (isWatchMode && (document.fileName.endsWith('.prox') || document.fileName.endsWith('.ppl'))) {
+            const terminalName = 'ProXPL Debugger';
+            let terminal = vscode.window.terminals.find(t => t.name === terminalName);
+
+            if (!terminal) {
+                terminal = vscode.window.createTerminal(terminalName);
+            }
+
+            terminal.show(); // Focus the terminal as requested
+            // Clear previous output
+            vscode.commands.executeCommand('workbench.action.terminal.clear');
+            terminal.sendText(`proxpl "${document.fileName}"`);
+        }
+    });
+
+    // 3. Formatter Provider
     const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider('proxpl', {
         provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
             const edits: vscode.TextEdit[] = [];
@@ -105,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(formattingProvider);
 
-    // 3. Hover Support
+    // 4. Hover Support
     const hoverProvider = vscode.languages.registerHoverProvider('proxpl', {
         provideHover(document: vscode.TextDocument, position: vscode.Position) {
             const range = document.getWordRangeAtPosition(position);

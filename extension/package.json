@@ -40,7 +40,8 @@
           "prox"
         ],
         "extensions": [
-          ".prox"
+          ".prox",
+          ".pxpl"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -63,6 +64,11 @@
         "command": "proxpl.run",
         "title": "ProXPL: Run File",
         "icon": "$(play)"
+      },
+      {
+        "command": "proxpl.startWatchMode",
+        "title": "ProXPL: Toggle Watch Mode",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
