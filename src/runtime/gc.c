@@ -154,6 +154,16 @@ static void markRoots() {
         markValue(*slot);
     }
 
+    // 2. Mark Frames (Function Closures)
+    for (int i = 0; i < vm.frameCount; i++) {
+        markObject((Obj*)vm.frames[i].closure);
+    }
+
+    // 3. Mark Open Upvalues
+    for (ObjUpvalue* upvalue = vm.openUpvalues; upvalue != NULL; upvalue = upvalue->next) {
+        markObject((Obj*)upvalue);
+    }
+
     // 2. Mark Globals
     markTable(&vm.globals);
     
