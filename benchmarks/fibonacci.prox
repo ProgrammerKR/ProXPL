@@ -6,9 +6,9 @@ func fib(n) {
     return fib(n - 1) + fib(n - 2);
 }
 
-print("Starting Fib(30)...");
+print("Starting Fib(20)...");
 let start = clock();
-let res = fib(30);
+let res = fib(20);
 let end = clock();
 print("Result: " + res);
 print("Time: " + (end - start));

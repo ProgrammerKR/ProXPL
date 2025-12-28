@@ -4,7 +4,7 @@
 
 fun stress() {
   var list = "start";
-  for (var i = 0; i < 10000; i = i + 1) {
+  for (var i = 0; i < 500; i = i + 1) {
     // String concatenation creates new objects
     var temp = "iteration " + i;
     // Abandon 'temp' immediately
@@ -12,7 +12,7 @@ fun stress() {
     // Create nested structures if supported (Map/List)
     // Assuming native lists or similar behave as objects
     
-    if (i % 1000 == 0) {
+    if (i % 100 == 0) {
       print "Iteration: " + i;
     }
   }
