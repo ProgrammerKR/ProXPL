@@ -28,7 +28,7 @@ void registerStdLib(VM* vm);
 static void repl() {
   char line[1024];
 
-  printf("ProXPL v1.0 REPL\n");
+  printf("ProXPL v0.2.0 REPL\n");
   printf("Type 'exit' to quit\n\n");
 
   for (;;) {

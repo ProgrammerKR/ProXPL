@@ -2,13 +2,16 @@
   "name": "proxpl",
   "displayName": "ProXPL Language Support",
   "description": "Syntax highlighting and language support for the ProXPL programming language",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "publisher": "ProgrammerKR",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
   },
   "main": "./out/extension.js",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
   "activationEvents": [
     "onLanguage:proxpl"
   ],
