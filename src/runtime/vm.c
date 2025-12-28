@@ -132,7 +132,7 @@ static InterpretResult run(VM *vm) {
   #define DISPATCH() goto *dispatch_table[*frame->ip++]
   
   static void* dispatch_table[] = {
-      &&DO_OP_CONSTANT, &&DO_OP_NIL, &&DO_OP_TRUE, &&DO_OP_FALSE,
+      &&DO_OP_CONSTANT, &&DO_OP_NOP, &&DO_OP_NIL, &&DO_OP_TRUE, &&DO_OP_FALSE,
       &&DO_OP_POP, 
       &&DO_OP_DUP, &&DO_OP_BUILD_LIST, &&DO_OP_BUILD_MAP, &&DO_OP_GET_INDEX, &&DO_OP_SET_INDEX,
       &&DO_OP_GET_LOCAL, &&DO_OP_SET_LOCAL, 
@@ -153,6 +153,9 @@ static InterpretResult run(VM *vm) {
 
   DO_OP_CONSTANT: {
       push(vm, READ_CONSTANT());
+      DISPATCH();
+  }
+  DO_OP_NOP: {
       DISPATCH();
   }
   DO_OP_NIL: {
@@ -544,6 +547,7 @@ static InterpretResult run(VM *vm) {
     uint8_t instruction;
     switch (instruction = READ_BYTE()) {
     case OP_CONSTANT: push(vm, READ_CONSTANT()); break;
+    case OP_NOP: break;
     case OP_NIL: push(vm, NULL_VAL); break;
     case OP_TRUE: push(vm, BOOL_VAL(true)); break;
     case OP_FALSE: push(vm, BOOL_VAL(false)); break;
