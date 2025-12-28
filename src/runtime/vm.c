@@ -8,6 +8,8 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#include <stdlib.h> // Required for exit()
+
 
 #include "../include/common.h"
 #include "../include/compiler.h"

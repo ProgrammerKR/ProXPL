@@ -75,7 +75,8 @@ typedef Value (*NativeFn)(int argCount, Value *args);
 #endif
 
 // Debugging
-#define DEBUG_TRACE_EXECUTION
-#define DEBUG_PRINT_CODE
+// Debugging
+// #define DEBUG_TRACE_EXECUTION
+// #define DEBUG_PRINT_CODE
 
 #endif // PROX_COMMON_H
