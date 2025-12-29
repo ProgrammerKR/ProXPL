@@ -330,9 +330,17 @@ static Stmt *useDecl(Parser *p) {
     strcat(path, partStr);
     free(partStr);
 
-    while (match(p, 1, TOKEN_SLASH)) {
-      part = consume(p, TOKEN_IDENTIFIER, "Expect module part after '/'.");
-      strcat(path, "/");
+    while (match(p, 1, TOKEN_SLASH) || match(p, 1, TOKEN_DOT)) {
+      part = consume(p, TOKEN_IDENTIFIER, "Expect module part after separator.");
+      strcat(path, "."); // Normalize to dot internally? Or keep as is? 
+      // The user uses dots (std.io). PROX might use dots or slashes.
+      // Let's standardise to dots for internal representation if that's what `vm` expects?
+      // `stdlib_core.c` registers "std.native.io".
+      // If user types `use std.io`, we get `std.io`.
+      // If user types `use std/io`, we get `std.io` if we normalize?
+      // The original code was: `strcat(path, "/");`
+      // Let's change it to just append the separator found? 
+      // Actually `stdlib_core.c` uses dots. So let's normalize to dots.
       partStr = tokenToString(part);
       strcat(path, partStr);
       free(partStr);
