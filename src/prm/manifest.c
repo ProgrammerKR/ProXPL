@@ -50,7 +50,7 @@ static void parseLine(char* line, Manifest* manifest) {
 }
 
 bool prm_load_manifest(Manifest* manifest) {
-    FILE* file = fopen("prox.toml", "r");
+    FILE* file = fopen("project.px", "r");
     if (!file) return false;
     
     // Defaults
@@ -77,16 +77,22 @@ void prm_init(const char* name) {
         return;
     }
 
-    FILE* file = fopen("prox.toml", "w");
+    FILE* file = fopen("project.px", "w");
     if (!file) {
-        printf("Error: Could not create prox.toml\n");
+        printf("Error: Could not create project.px\n");
         return;
     }
     
-    fprintf(file, "[package]\n");
+    fprintf(file, "[project]\n");
     fprintf(file, "name = \"%s\"\n", name);
     fprintf(file, "version = \"0.1.0\"\n");
+    fprintf(file, "description = \"A new ProXPL project\"\n");
+    fprintf(file, "authors = [\"Your Name <you@example.com>\"]\n");
+    fprintf(file, "license = \"MIT\"\n");
     fprintf(file, "entry = \"src/main.prox\"\n");
+
+    fprintf(file, "\n[dependencies]\n");
+    fprintf(file, "# std = \"1.0.0\"\n");
     
     fclose(file);
     
