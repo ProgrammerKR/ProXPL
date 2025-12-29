@@ -17,6 +17,8 @@ typedef struct {
   Token *tokens;
   int count;
   int current;
+  bool panicMode;
+  bool hadError;
 } Parser;
 
 // Initialize parser with token array

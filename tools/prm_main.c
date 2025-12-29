@@ -66,10 +66,10 @@ int main(int argc, char** argv) {
         if (argc < 3) { printf("Error: Missing project name.\nUsage: prm init <name>\n"); return 1; }
         prm_init(argv[2]);
     }
-    else if (strcmp(cmd, "version") == 0 || strcmp(cmd, "v") == 0) {
+    else if (strcmp(cmd, "version") == 0 || strcmp(cmd, "v") == 0 || strcmp(cmd, "--version") == 0 || strcmp(cmd, "-v") == 0) {
         prm_version();
     }
-    else if (strcmp(cmd, "help") == 0 || strcmp(cmd, "h") == 0) {
+    else if (strcmp(cmd, "help") == 0 || strcmp(cmd, "h") == 0 || strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) {
         print_help();
     }
     else if (strcmp(cmd, "doctor") == 0) {

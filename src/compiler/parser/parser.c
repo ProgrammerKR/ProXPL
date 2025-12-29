@@ -60,11 +60,45 @@ void initParser(Parser *parser, Token *tokens, int count) {
   parser->tokens = tokens;
   parser->count = count;
   parser->current = 0;
+  parser->panicMode = false;
+  parser->hadError = false;
 }
 
 void parserError(Parser *parser, const char *message) {
+  if (parser->panicMode) return;
+  parser->panicMode = true;
+  parser->hadError = true;
   Token token = peek(parser);
-  fprintf(stderr, "ParseError: %s at line %d\\n", message, token.line);
+  fprintf(stderr, "ParseError: %s at line %d\n", message, token.line);
+}
+
+static void synchronize(Parser *p) {
+  p->panicMode = false;
+
+  while (!isAtEnd(p)) {
+    if (previous(p).type == TOKEN_SEMICOLON) return;
+
+    switch (peek(p).type) {
+      case TOKEN_CLASS:
+      case TOKEN_FUNC:
+      case TOKEN_CONST:
+      case TOKEN_LET:
+      case TOKEN_FOR:
+      case TOKEN_IF:
+      case TOKEN_WHILE:
+      case TOKEN_PRINT:
+      case TOKEN_RETURN:
+      case TOKEN_SWITCH:
+      case TOKEN_TRY:
+      case TOKEN_ASYNC: // Assuming this is also a sync point
+        return;
+
+      default:
+        ;
+    }
+
+    advance(p);
+  }
 }
 
 // === Helper Functions ===
@@ -130,6 +164,9 @@ StmtList *parse(Parser *parser) {
     Stmt *decl = declaration(parser);
     if (decl) {
       appendStmt(statements, decl);
+    } else if (parser->panicMode) {
+      synchronize(parser);
+      // Removed 'decl' but no need to free as it's null.
     }
   }
 
