@@ -31,10 +31,7 @@ jobs:
               build/proxpl
               build/prm
           - os: windows-latest
-            bin_path: |
-              build/Release/proxpl.exe
-              build/Release/proxpl_lib.dll
-              build/Release/prm.exe
+            bin_path: build/ProXPL_Installer_*.exe
             
     steps:
       - name: Checkout source
@@ -138,4 +135,3 @@ jobs:
           path: |
             ${{ matrix.bin_path }}
             benchmarks/
-            build/ProXPL_Installer_*.exe
