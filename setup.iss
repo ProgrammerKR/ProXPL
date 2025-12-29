@@ -35,11 +35,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "addtopath"; Description: "Add ProXPL to the system PATH environment variable"; GroupDescription: "System Integration"; Flags: unchecked
+Name: "addtopath"; Description: "Add ProXPL to the system PATH environment variable"; GroupDescription: "System Integration"; Flags: checked
 
 [Files]
 ; Binaries
 Source: "bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "bin\prm.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
 ; Libraries
 Source: "lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
