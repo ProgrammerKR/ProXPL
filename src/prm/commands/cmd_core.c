@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../prm.h"
 
 // --- Core ---
@@ -136,11 +137,19 @@ void prm_cache(const char* action) {
 }
 
 void prm_link(const char* packageName) {
-    printf("Linking local package...\n");
+    if (packageName) {
+        printf("Linking local package '%s'...\n", packageName);
+    } else {
+        printf("Linking current package to global registry...\n");
+    }
 }
 
 void prm_unlink(const char* packageName) {
-    printf("Unlinking package...\n");
+    if (packageName) {
+        printf("Unlinking package '%s'...\n", packageName);
+    } else {
+        printf("Unlinking current package from global registry...\n");
+    }
 }
 
 void prm_doc() {
