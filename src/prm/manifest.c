@@ -10,6 +10,17 @@
 #include <string.h>
 #include "prm.h"
 
+#ifdef _WIN32
+#include <direct.h>
+#define MKDIR(d) _mkdir(d)
+#define CHDIR(d) _chdir(d)
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#define MKDIR(d) mkdir(d, 0777)
+#define CHDIR(d) chdir(d)
+#endif
+
 // Very basic TOML line parser for Phase 1
 // Looks for key = "value"
 static void parseLine(char* line, Manifest* manifest) {
@@ -57,6 +68,15 @@ bool prm_load_manifest(Manifest* manifest) {
 }
 
 void prm_init(const char* name) {
+    if (MKDIR(name) != 0) {
+        printf("Note: Directory '%s' might already exist.\n", name);
+    }
+    
+    if (CHDIR(name) != 0) {
+        printf("Error: Could not enter directory '%s'\n", name);
+        return;
+    }
+
     FILE* file = fopen("prox.toml", "w");
     if (!file) {
         printf("Error: Could not create prox.toml\n");
@@ -70,14 +90,15 @@ void prm_init(const char* name) {
     
     fclose(file);
     
+    
     // Create src directory
-    if (system("mkdir src") != 0) {
+    if (MKDIR("src") != 0) {
         // Ignore error if directory exists
     }
     
     FILE* mainFile = fopen("src/main.prox", "w");
     if (mainFile) {
-        fprintf(mainFile, "import std.io;\n\n");
+        fprintf(mainFile, "use std.io;\n\n");
         fprintf(mainFile, "std.io.print(\"Hello, %s!\");\n", name);
         fclose(mainFile);
     }
