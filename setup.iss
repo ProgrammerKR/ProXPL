@@ -35,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "addtopath"; Description: "Add ProXPL to the system PATH environment variable"; GroupDescription: "System Integration"; Flags: checked
+Name: "addtopath"; Description: "Add ProXPL to the system PATH environment variable"; GroupDescription: "System Integration"
 
 [Files]
 ; Binaries
