@@ -50,7 +50,7 @@ static void parseLine(char* line, Manifest* manifest) {
 }
 
 bool prm_load_manifest(Manifest* manifest) {
-    FILE* file = fopen("project.px", "r");
+    FILE* file = fopen("project.pxcf", "r");
     if (!file) return false;
     
     // Defaults
@@ -77,9 +77,9 @@ void prm_init(const char* name) {
         return;
     }
 
-    FILE* file = fopen("project.px", "w");
+    FILE* file = fopen("project.pxcf", "w");
     if (!file) {
-        printf("Error: Could not create project.px\n");
+        printf("Error: Could not create project.pxcf\n");
         return;
     }
     
