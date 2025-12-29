@@ -564,6 +564,7 @@ static InterpretResult run(VM *vm) {
   DO_OP_USE: {
       ObjString* name = READ_STRING();
       // Stub: loadModule(vm, name->chars...);
+      (void)name;
       runtimeError(vm, "Modules not yet implemented runtime-side.");
       return INTERPRET_RUNTIME_ERROR;
   }

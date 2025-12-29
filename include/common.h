@@ -55,6 +55,8 @@ typedef struct DictPair DictPair;
 typedef struct DictPairList DictPairList;
 typedef struct StringList StringList;
 // --- Type System ---
+typedef struct ObjList ObjList;
+typedef struct ObjDictionary ObjDictionary;
 typedef struct ObjModule ObjModule;
 typedef struct ObjClass ObjClass;
 typedef struct ObjInstance ObjInstance;
