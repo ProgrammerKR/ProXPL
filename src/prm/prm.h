@@ -35,4 +35,41 @@ void prm_build(const Manifest* manifest, bool releaseMode);
 // Run the project
 void prm_run(const Manifest* manifest);
 
+// --- Expanded Commands ---
+
+// Core
+void prm_version();
+void prm_help();
+void prm_doctor();
+void prm_config(const char* key, const char* value);
+
+// Project
+void prm_test(const Manifest* manifest);
+void prm_clean();
+void prm_watch(const Manifest* manifest);
+void prm_create(const char* templateName, const char* projectName);
+
+// Dependencies
+void prm_install(const char* packageName);
+void prm_remove(const char* packageName);
+void prm_update(const char* packageName);
+void prm_list();
+void prm_outdated();
+void prm_audit();
+
+// Registry
+void prm_publish();
+void prm_login();
+void prm_logout();
+void prm_search(const char* query);
+void prm_info(const char* packageName);
+
+// Misc
+void prm_cache(const char* action);
+void prm_link(const char* packageName);
+void prm_unlink(const char* packageName);
+void prm_doc();
+void prm_exec(const char* command);
+void prm_why(const char* packageName);
+
 #endif

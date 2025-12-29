@@ -71,8 +71,23 @@
         "icon": "$(eye)"
       }
     ],
+    "keybindings": [
+      {
+        "command": "proxpl.run",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "editorTextFocus && resourceLangId == proxpl"
+      }
+    ],
     "menus": {
       "editor/title": [
+        {
+          "when": "resourceExtname == .prox",
+          "command": "proxpl.run",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
         {
           "when": "resourceExtname == .prox",
           "command": "proxpl.run",

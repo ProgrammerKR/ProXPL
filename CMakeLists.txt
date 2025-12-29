@@ -86,6 +86,7 @@ add_executable(prm
     tools/prm_main.c 
     src/prm/manifest.c 
     src/prm/builder.c
+    src/prm/commands/cmd_core.c
 )
 # PRM doesn't strictly need proxpl_lib unless it uses core types?
 # For now, it's standalone, but let's link it if needed later.

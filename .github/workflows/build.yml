@@ -23,13 +23,18 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            bin_path: build/proxpl
+            bin_path: |
+              build/proxpl
+              build/prm
           - os: macos-latest
-            bin_path: build/proxpl
+            bin_path: |
+              build/proxpl
+              build/prm
           - os: windows-latest
             bin_path: |
               build/Release/proxpl.exe
               build/Release/proxpl_lib.dll
+              build/Release/prm.exe
             
     steps:
       - name: Checkout source

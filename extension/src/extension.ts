@@ -35,11 +35,17 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Save file before running
             editor.document.save().then(() => {
-                const terminal = vscode.window.activeTerminal || vscode.window.createTerminal('ProXPL');
+                let terminal = vscode.window.terminals.find(t => t.name === 'ProXPL'); 
+                if (!terminal) {
+                    terminal = vscode.window.createTerminal('ProXPL');
+                }
                 terminal.show();
                 terminal.sendText(`proxpl run "${fileName}"`);
 
                 // Background execution for diagnostics
+                // ERROR: 'proxpl check' is not yet implemented in the CLI. 
+                // Disabling to prevent errors.
+                /*
                 cp.exec(`proxpl check "${fileName}"`, (error: Error | null, stdout: string, stderr: string) => {
                     diagnosticCollection.clear();
                     const diagnostics: vscode.Diagnostic[] = [];
@@ -58,6 +64,8 @@ export function activate(context: vscode.ExtensionContext) {
 
                     diagnosticCollection.set(editor.document.uri, diagnostics);
                 });
+                */
+            });
             });
         });
     });
