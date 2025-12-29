@@ -34,7 +34,7 @@ void test_ir(const char* source) {
     }
 
     Parser parser;
-    initParser(&parser, tokens, tokenCount);
+    initParser(&parser, tokens, tokenCount, source);
     StmtList* statements = parse(&parser);
 
     if (!statements) {
