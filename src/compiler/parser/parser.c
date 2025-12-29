@@ -702,7 +702,34 @@ static Expr *call(Parser *p) {
       consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
       expr = createCallExpr(expr, arguments, previous(p).line, 0);
     } else if (match(p, 1, TOKEN_DOT)) {
-      Token name = consume(p, TOKEN_IDENTIFIER, "Expect property name.");
+      // Allow keywords as property names (e.g. std.io.print)
+      Token name;
+      if (check(p, TOKEN_IDENTIFIER)) {
+          name = advance(p);
+      } else if (check(p, TOKEN_PRINT) || check(p, TOKEN_TYPE) || 
+                 check(p, TOKEN_CLASS) || check(p, TOKEN_THIS) ||
+                 check(p, TOKEN_SUPER) || check(p, TOKEN_TRUE) ||
+                 check(p, TOKEN_FALSE) || check(p, TOKEN_NULL) ||
+                 check(p, TOKEN_OR) || check(p, TOKEN_AND) ||
+                 check(p, TOKEN_VAR) || check(p, TOKEN_LET) ||
+                 check(p, TOKEN_CONST) || check(p, TOKEN_IF) ||
+                 check(p, TOKEN_ELSE) || check(p, TOKEN_WHILE) ||
+                 check(p, TOKEN_FOR) || check(p, TOKEN_BREAK) ||
+                 check(p, TOKEN_CONTINUE) || check(p, TOKEN_RETURN) ||
+                 check(p, TOKEN_FUNC) || check(p, TOKEN_IMPORT) ||
+                 check(p, TOKEN_USE) || check(p, TOKEN_FROM) || 
+                 check(p, TOKEN_ASYNC) || check(p, TOKEN_AWAIT) ||
+                 check(p, TOKEN_TRY) || check(p, TOKEN_CATCH) || 
+                 check(p, TOKEN_FINALLY) || check(p, TOKEN_THROW) ||
+                 check(p, TOKEN_SWITCH) || check(p, TOKEN_CASE) || 
+                 check(p, TOKEN_DEFAULT) || check(p, TOKEN_EXTENDS)) {
+          // It's a keyword, but we want to use it as an identifier here.
+          name = advance(p);
+      } else {
+          parserError(p, "Expect property name.");
+          name = peek(p); // Recover
+      }
+      
       char *nameStr = tokenToString(name);
       expr = createGetExpr(expr, nameStr, name.line, 0);
       free(nameStr);
