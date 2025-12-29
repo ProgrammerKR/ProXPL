@@ -276,6 +276,8 @@ static PxTokenType identifierType(Scanner *scanner) {
           case 'p':
             if (scanner->current - scanner->start > 3) {
               switch (scanner->start[3]) {
+              case 'o':
+                return checkKeyword(scanner, 4, 2, "rt", TOKEN_IMPORT);
               case 'l':
                 return checkKeyword(scanner, 4, 7, "ements", TOKEN_IMPLEMENTS);
               }

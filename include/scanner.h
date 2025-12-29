@@ -99,7 +99,7 @@ typedef enum {
   TOKEN_ASYNC,
   TOKEN_AWAIT,
   TOKEN_USE,
-  // TOKEN_IMPORT removed
+  TOKEN_IMPORT,
   TOKEN_EXPORT,
   TOKEN_FROM,
   TOKEN_AS,

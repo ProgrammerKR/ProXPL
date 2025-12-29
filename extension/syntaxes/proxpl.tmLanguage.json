@@ -46,7 +46,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.proxpl",
-                    "match": "\\b(if|else|while|for|return|use)\\b"
+                    "match": "\\b(if|else|while|for|return|import)\\b"
                 },
                 {
                     "name": "keyword.declaration.proxpl",

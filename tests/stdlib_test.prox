@@ -1,9 +1,9 @@
 // Functional Test for ProXPL Stdlib v0.1
 
-use std.io;
-use std.fs;
-use std.sys;
-use std.core;
+import std.io;
+import std.fs;
+import std.sys;
+import std.core;
 
 // Test std.core
 print("Testing std.core...");
