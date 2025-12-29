@@ -375,10 +375,6 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
     }
 }
 
-static void genStmt(BytecodeGen* gen, Stmt* stmt) {
-    if (stmt == NULL) return;
-    
-    switch (stmt->type) {
 // Helper to generate function code
 static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     Compiler funcCompiler;
@@ -386,26 +382,14 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     
     beginScope(gen);
     
-    StmtList* params = stmt->as.func_decl.params; // Or method params
-    if (params) { // Wait, params is StringList, not StmtList. Struct def: StringList* params;
-         // Checked parser.c: StringList* params
-         // AST definition not seen, but parser passes StringList. 
-         // But code used `stmt->as.func_decl.params->items[i]` as char*?
-         // In bytecode_gen.c view: `addLocal(gen, stmt->as.func_decl.params->items[i]);`
-         // Yes, addLocal takes char*. So it IS StringList.
-         // Wait, the struct in the replaced code says `StmtList* body`.
-         // `params` type was NOT shown in snippet but implied.
-         // Let's assume StringList.
-         StringList* pList = (StringList*)stmt->as.func_decl.params; // Cast to avoid warning if type mismatch in my head
-         // Wait, checking STMT_FUNC_DECL case in original code:
-         // `stmt->as.func_decl.params->count`
-         // It seems correct.
-         for (int i=0; i < pList->count; i++) {
+    StringList* params = (StringList*)stmt->as.func_decl.params; 
+    if (params) {
+         for (int i=0; i < params->count; i++) {
              funcCompiler.function->arity++;
              if (funcCompiler.function->arity > 255) {
                  // Error
              }
-             addLocal(gen, pList->items[i]);
+             addLocal(gen, params->items[i]);
          }
     }
 
@@ -435,6 +419,12 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
         }
     }
 }
+
+static void genStmt(BytecodeGen* gen, Stmt* stmt) {
+    if (stmt == NULL) return;
+    
+    switch (stmt->type) {
+
 
         case STMT_FUNC_DECL: {
             genFunction(gen, stmt, true);
