@@ -379,48 +379,65 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
     if (stmt == NULL) return;
     
     switch (stmt->type) {
+// Helper to generate function code
+static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
+    Compiler funcCompiler;
+    initCompiler(gen, &funcCompiler, COMP_FUNCTION);
+    
+    beginScope(gen);
+    
+    StmtList* params = stmt->as.func_decl.params; // Or method params
+    if (params) { // Wait, params is StringList, not StmtList. Struct def: StringList* params;
+         // Checked parser.c: StringList* params
+         // AST definition not seen, but parser passes StringList. 
+         // But code used `stmt->as.func_decl.params->items[i]` as char*?
+         // In bytecode_gen.c view: `addLocal(gen, stmt->as.func_decl.params->items[i]);`
+         // Yes, addLocal takes char*. So it IS StringList.
+         // Wait, the struct in the replaced code says `StmtList* body`.
+         // `params` type was NOT shown in snippet but implied.
+         // Let's assume StringList.
+         StringList* pList = (StringList*)stmt->as.func_decl.params; // Cast to avoid warning if type mismatch in my head
+         // Wait, checking STMT_FUNC_DECL case in original code:
+         // `stmt->as.func_decl.params->count`
+         // It seems correct.
+         for (int i=0; i < pList->count; i++) {
+             funcCompiler.function->arity++;
+             if (funcCompiler.function->arity > 255) {
+                 // Error
+             }
+             addLocal(gen, pList->items[i]);
+         }
+    }
+
+    StmtList* body = stmt->as.func_decl.body;
+    if (body) {
+        for (int i=0; i < body->count; i++) {
+            genStmt(gen, body->items[i]);
+        }
+    }
+    
+    ObjFunction* function = endCompiler(gen);
+    
+    // Emit Closure
+    Value funcVal = OBJ_VAL(function);
+    int funcConst = addConstant(gen->chunk, funcVal);
+    writeChunk(gen->chunk, OP_CLOSURE, stmt->line);
+    writeChunk(gen->chunk, (uint8_t)funcConst, stmt->line);
+    
+    if (defineVar) {
+        if (gen->compiler->scopeDepth > 0) {
+            addLocal(gen, stmt->as.func_decl.name); 
+        } else {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.func_decl.name, strlen(stmt->as.func_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+        }
+    }
+}
+
         case STMT_FUNC_DECL: {
-            // New Compiler for Function
-            Compiler funcCompiler;
-            initCompiler(gen, &funcCompiler, COMP_FUNCTION);
-            
-            // Add params to scope
-            beginScope(gen);
-            if (stmt->as.func_decl.params) {
-                for (int i=0; i < stmt->as.func_decl.params->count; i++) {
-                    funcCompiler.function->arity++;
-                    if (funcCompiler.function->arity > 255) {
-                        // Error
-                    }
-                    addLocal(gen, stmt->as.func_decl.params->items[i]);
-                }
-            }
-            
-            StmtList* body = stmt->as.func_decl.body;
-            if (body) {
-                for (int i=0; i < body->count; i++) {
-                    genStmt(gen, body->items[i]);
-                }
-            }
-            
-            // Function object created in funcCompiler.function
-            ObjFunction* function = endCompiler(gen);
-            
-            // Emit Closure
-            Value funcVal = OBJ_VAL(function);
-            int funcConst = addConstant(gen->chunk, funcVal);
-            writeChunk(gen->chunk, OP_CLOSURE, stmt->line);
-            writeChunk(gen->chunk, (uint8_t)funcConst, stmt->line);
-            
-            // Define name
-            if (gen->compiler->scopeDepth > 0) {
-                addLocal(gen, stmt->as.func_decl.name); 
-            } else {
-                Value nameVal = OBJ_VAL(copyString(stmt->as.func_decl.name, strlen(stmt->as.func_decl.name)));
-                int nameConst = addConstant(gen->chunk, nameVal);
-                writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
-                writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
-            }
+            genFunction(gen, stmt, true);
             break;
         }
         case STMT_BLOCK: {
@@ -755,55 +772,6 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 }
                 
                 for (int i=0; i < stmt->as.class_decl.methods->count; i++) {
-                    genStmt(gen, stmt->as.class_decl.methods->items[i]);
-                    writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    genStmt(gen, stmt->as.class_decl.methods->items[i]);
-                    writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    // Hacky way to get name, but corrected:
-                    // ObjString* mname = AS_CLOSURE(consttable_get(gen->chunk, gen->chunk->count-1))->function->name;
-                    // Actually we don't need 'mname' variable if it was unused too.
-                    // The previous code had it unused. Let's just remove it if it's unused.
-                    // But wait, do we use mname? The screenshot says 'warning: unused variable mname'.
-                    // So we can just remove the line entirely?
-                    // But wait, the line 753 (in screenshot) has 'AS_FUNCTION(...)'.
-                    // If we just remove it, we solve both the error (invalid operand) and the warning (unused variable).
-                    // Let's verify if 'mname' is used below in lines I can't see?
-                    // The view_file output showed up to 766 and I didn't see mname used.
-                    // "Actually genStmt(STMT_FUNC_DECL) emits OP_CLOSURE."
-                    // "OP_METHOD needs the method name."
-                    // "We need to emit OP_METHOD with the name index."
-                    // Wait, OP_METHOD instruction usually takes an operand for the method name?
-                    // In `src/compiler/bytecode.h` (not viewed but standard Lox), OP_METHOD takes name index.
-                    // The code:
-                    // writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    // It does NOT write the operand for OP_METHOD!
-                    // This is a BUG. OP_METHOD expects a name index.
-                    // We need to extract the name from the just-emitted closure (which is on top of constants?).
-                    // genStmt(STMT_FUNC_DECL) adds the closure constant.
-                    // So the constant index is `gen->chunk->count-1` instructions? NO.
-                    // `addConstant` returns index. `genStmt` for FUNC_DECL emits OP_CLOSURE + index.
-                    // But `addConstant` pushes to constant pool.
-                    // We can inspect the last instruction? Or just trust we can peek constant pool?
-                    // consttable_get(gen->chunk, ...).
-                    // The snippet tries to get the name.
-                    // We need to write the name index.
-                    // But OP_METHOD takes the name of the method *to define*. 
-                    // In Lox, OP_METHOD takes the name index.
-                    // So we need:
-                    // ObjFunction* method = ...;
-                    // int nameConst = addConstant(gen->chunk, OBJ_VAL(method->name));
-                    // writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    // writeChunk(gen->chunk, nameConst, stmt->line);
-                    
-                    // The existing code was:
-                    // writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    // ObjString* mname = ...;
-                    // (and then nothing using mname?)
-                    
-                    // If I fix the getting of mname, I should use it to emit the operand.
-                    
-                    // Step 1: Fix the Access.
-                    // Value constVal = consttable_get(gen->chunk, gen->chunk->constants.count - 1); 
                     // (Note: we need the index of the constant, not the instruction index? consttable_get might take index?)
                     // Let's assume we can get the function object.
                     

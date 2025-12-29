@@ -563,10 +563,20 @@ static InterpretResult run(VM *vm) {
   }
   DO_OP_USE: {
       ObjString* name = READ_STRING();
-      // Stub: loadModule(vm, name->chars...);
-      (void)name;
-      runtimeError(vm, "Modules not yet implemented runtime-side.");
-      return INTERPRET_RUNTIME_ERROR;
+      Value moduleVal;
+      if (tableGet(&vm->importer.modules, name, &moduleVal)) {
+          // Module found.
+          // In a full implementation, we might bind it to a variable or ensure it's loaded.
+          // For now, finding it validates the 'use'.
+          // Pop implicit? use stmt usually doesn't leave value on stack.
+          // But our compiler doesn't push a result for USE stmt, it emits OP_USE.
+          // Wait, READ_STRING() reads operand. Stack is unchanged.
+      } else {
+          // Fallback: Try to load file? (Not implemented)
+          runtimeError(vm, "Could not find module '%s'.", name->chars);
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      DISPATCH();
   }
   DO_OP_TRY:
   DO_OP_CATCH:
