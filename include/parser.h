@@ -19,10 +19,11 @@ typedef struct {
   int current;
   bool panicMode;
   bool hadError;
+  const char *source;
 } Parser;
 
-// Initialize parser with token array
-void initParser(Parser *parser, Token *tokens, int count);
+// Initialize parser with token array and source code
+void initParser(Parser *parser, Token *tokens, int count, const char *source);
 
 // Main parse function - returns list of statements (program)
 StmtList *parse(Parser *parser);

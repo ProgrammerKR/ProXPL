@@ -99,7 +99,7 @@ typedef enum {
   TOKEN_ASYNC,
   TOKEN_AWAIT,
   TOKEN_USE,
-  TOKEN_IMPORT,
+  // TOKEN_IMPORT removed
   TOKEN_EXPORT,
   TOKEN_FROM,
   TOKEN_AS,
@@ -129,12 +129,15 @@ typedef struct {
   const char *start;
   int length;
   int line;
+  int column;
 } Token;
 
 typedef struct {
   const char *start;
   const char *current;
   int line;
+  int currentColumn;
+  int startColumn;
 } Scanner;
 
 void initScanner(Scanner *scanner, const char *source);

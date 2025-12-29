@@ -82,7 +82,7 @@ static void repl() {
 
     // Parse
     Parser parser;
-    initParser(&parser, tokens, tokenCount);
+    initParser(&parser, tokens, tokenCount, line);
     StmtList *statements = parse(&parser);
 
     if (statements == NULL || statements->count == 0) {
@@ -161,8 +161,22 @@ static void runFile(const char *path) {
     tokens[tokenCount++] = token;
 
     if (token.type == TOKEN_ERROR) {
-      fprintf(stderr, "Error at line %d: %.*s\n", token.line, token.length,
+      fprintf(stderr, "Error at line %d, column %d: %.*s\n", token.line, token.column, token.length,
               token.start);
+      // Print context
+      const char* lineStart = source;
+      int currentLine = 1;
+      while (currentLine < token.line && *lineStart != '\0') {
+          if (*lineStart == '\n') currentLine++;
+          lineStart++;
+      }
+      const char* lineEnd = lineStart;
+      while (*lineEnd != '\0' && *lineEnd != '\n') lineEnd++;
+      
+      fprintf(stderr, "%.*s\n", (int)(lineEnd - lineStart), lineStart);
+      for(int i=1; i < token.column; i++) fprintf(stderr, " ");
+      fprintf(stderr, "^\n");
+      
       free(source);
       exit(65);
     }
@@ -178,7 +192,7 @@ static void runFile(const char *path) {
 
   // Parse
   Parser parser;
-  initParser(&parser, tokens, tokenCount);
+  initParser(&parser, tokens, tokenCount, source);
   StmtList *statements = parse(&parser);
 
   if (statements == NULL || statements->count == 0) {
@@ -231,6 +245,23 @@ int main(int argc, const char *argv[]) {
 
   // Register standard library
   registerStdLib(&vm);
+  
+  // Populate CLI args
+  vm.cliArgs = newList();
+  push(&vm, OBJ_VAL(vm.cliArgs)); // Protect from GC
+  for(int i=0; i < argc; i++) {
+      ObjString* arg = copyString(argv[i], (int)strlen(argv[i]));
+      push(&vm, OBJ_VAL(arg));
+      // Manual list append since we don't have helper exposed clearly
+      if (vm.cliArgs->capacity < vm.cliArgs->count + 1) {
+          int oldCapacity = vm.cliArgs->capacity;
+          vm.cliArgs->capacity = GROW_CAPACITY(oldCapacity);
+          vm.cliArgs->items = GROW_ARRAY(Value, vm.cliArgs->items, oldCapacity, vm.cliArgs->capacity);
+      }
+      vm.cliArgs->items[vm.cliArgs->count++] = OBJ_VAL(arg);
+      pop(&vm); // arg
+  }
+  pop(&vm); // cliArgs
 
   if (argc == 1) {
     // REPL mode

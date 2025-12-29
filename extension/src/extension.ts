@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Save file before running
             editor.document.save().then(() => {
-                let terminal = vscode.window.terminals.find(t => t.name === 'ProXPL'); 
+                let terminal = vscode.window.terminals.find(t => t.name === 'ProXPL');
                 if (!terminal) {
                     terminal = vscode.window.createTerminal('ProXPL');
                 }
@@ -66,121 +66,191 @@ export function activate(context: vscode.ExtensionContext) {
                 });
                 */
             });
-            });
         });
     });
-    context.subscriptions.push(runCommand);
+});
+context.subscriptions.push(runCommand);
 
-    // 2. Watch Mode
-    let isWatchMode = false;
-    let watchStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    watchStatusBarItem.command = 'proxpl.startWatchMode';
-    context.subscriptions.push(watchStatusBarItem);
+// 2. Watch Mode
+let isWatchMode = false;
+let watchStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+watchStatusBarItem.command = 'proxpl.startWatchMode';
+context.subscriptions.push(watchStatusBarItem);
 
-    const updateStatusBar = () => {
-        if (isWatchMode) {
-            watchStatusBarItem.text = '$(eye) ProXPL Watch: ON';
-            watchStatusBarItem.tooltip = 'Stop Watching ProXPL Files';
-            watchStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-        } else {
-            watchStatusBarItem.text = '$(eye-closed) ProXPL Watch: OFF';
-            watchStatusBarItem.tooltip = 'Start Watching ProXPL Files';
-            watchStatusBarItem.backgroundColor = undefined;
-        }
-        watchStatusBarItem.show();
-    };
+const updateStatusBar = () => {
+    if (isWatchMode) {
+        watchStatusBarItem.text = '$(eye) ProXPL Watch: ON';
+        watchStatusBarItem.tooltip = 'Stop Watching ProXPL Files';
+        watchStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else {
+        watchStatusBarItem.text = '$(eye-closed) ProXPL Watch: OFF';
+        watchStatusBarItem.tooltip = 'Start Watching ProXPL Files';
+        watchStatusBarItem.backgroundColor = undefined;
+    }
+    watchStatusBarItem.show();
+};
+updateStatusBar();
+
+let watchCommand = vscode.commands.registerCommand('proxpl.startWatchMode', () => {
+    isWatchMode = !isWatchMode;
     updateStatusBar();
+    vscode.window.showInformationMessage(isWatchMode ? 'ProXPL Watch Mode Started' : 'ProXPL Watch Mode Stopped');
+});
+context.subscriptions.push(watchCommand);
 
-    let watchCommand = vscode.commands.registerCommand('proxpl.startWatchMode', () => {
-        isWatchMode = !isWatchMode;
-        updateStatusBar();
-        vscode.window.showInformationMessage(isWatchMode ? 'ProXPL Watch Mode Started' : 'ProXPL Watch Mode Stopped');
-    });
-    context.subscriptions.push(watchCommand);
+vscode.workspace.onDidSaveTextDocument((document) => {
+    if (isWatchMode && (document.fileName.endsWith('.prox') || document.fileName.endsWith('.pxpl'))) {
+        const terminalName = 'ProXPL Debugger';
+        let terminal = vscode.window.terminals.find(t => t.name === terminalName);
 
-    vscode.workspace.onDidSaveTextDocument((document) => {
-        if (isWatchMode && (document.fileName.endsWith('.prox') || document.fileName.endsWith('.pxpl'))) {
-            const terminalName = 'ProXPL Debugger';
-            let terminal = vscode.window.terminals.find(t => t.name === terminalName);
+        if (!terminal) {
+            terminal = vscode.window.createTerminal(terminalName);
+        }
 
-            if (!terminal) {
-                terminal = vscode.window.createTerminal(terminalName);
+        terminal.show(); // Focus the terminal as requested
+        // Clear previous output
+        vscode.commands.executeCommand('workbench.action.terminal.clear');
+        terminal.sendText(`proxpl "${document.fileName}"`);
+    }
+});
+
+// 3. Formatter Provider
+const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider('proxpl', {
+    provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+        const edits: vscode.TextEdit[] = [];
+        let lastLineWasEmpty = false;
+
+        for (let i = 0; i < document.lineCount; i++) {
+            const line = document.lineAt(i);
+            const text = line.text;
+
+            // 1. Remove extra empty lines (consecutive empty lines)
+            if (text.trim() === '') {
+                if (lastLineWasEmpty) {
+                    // Delete this extra empty line
+                    edits.push(vscode.TextEdit.delete(line.rangeIncludingLineBreak));
+                    continue;
+                }
+                lastLineWasEmpty = true;
+            } else {
+                lastLineWasEmpty = false;
             }
 
-            terminal.show(); // Focus the terminal as requested
-            // Clear previous output
-            vscode.commands.executeCommand('workbench.action.terminal.clear');
-            terminal.sendText(`proxpl "${document.fileName}"`);
-        }
-    });
+            // 2. Remove trailing whitespace
+            if (text.endsWith(' ') || text.endsWith('\t')) {
+                edits.push(vscode.TextEdit.delete(new vscode.Range(i, text.trimEnd().length, i, text.length)));
+            }
 
-    // 3. Formatter Provider
-    const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider('proxpl', {
-        provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
-            const edits: vscode.TextEdit[] = [];
-            let lastLineWasEmpty = false;
-
-            for (let i = 0; i < document.lineCount; i++) {
-                const line = document.lineAt(i);
-                const text = line.text;
-
-                // 1. Remove extra empty lines (consecutive empty lines)
-                if (text.trim() === '') {
-                    if (lastLineWasEmpty) {
-                        // Delete this extra empty line
-                        edits.push(vscode.TextEdit.delete(line.rangeIncludingLineBreak));
-                        continue;
-                    }
-                    lastLineWasEmpty = true;
-                } else {
-                    lastLineWasEmpty = false;
-                }
-
-                // 2. Remove trailing whitespace
-                if (text.endsWith(' ') || text.endsWith('\t')) {
-                    edits.push(vscode.TextEdit.delete(new vscode.Range(i, text.trimEnd().length, i, text.length)));
-                }
-
-                // 3. Basic Indentation (Fix to 4 spaces)
-                const indentMatch = text.match(/^(\s+)/);
-                if (indentMatch) {
-                    const oldIndent = indentMatch[1];
-                    const newIndent = oldIndent.replace(/\t/g, '    ');
-                    if (oldIndent !== newIndent) {
-                        edits.push(vscode.TextEdit.replace(new vscode.Range(i, 0, i, oldIndent.length), newIndent));
-                    }
+            // 3. Basic Indentation (Fix to 4 spaces)
+            const indentMatch = text.match(/^(\s+)/);
+            if (indentMatch) {
+                const oldIndent = indentMatch[1];
+                const newIndent = oldIndent.replace(/\t/g, '    ');
+                if (oldIndent !== newIndent) {
+                    edits.push(vscode.TextEdit.replace(new vscode.Range(i, 0, i, oldIndent.length), newIndent));
                 }
             }
-            return edits;
         }
-    });
-    context.subscriptions.push(formattingProvider);
+        return edits;
+    }
+});
+context.subscriptions.push(formattingProvider);
 
-    // 4. Hover Support
-    const hoverProvider = vscode.languages.registerHoverProvider('proxpl', {
-        provideHover(document: vscode.TextDocument, position: vscode.Position) {
-            const range = document.getWordRangeAtPosition(position);
-            if (!range) return null;
-            const word = document.getText(range);
+// 4. Hover Support
+const hoverProvider = vscode.languages.registerHoverProvider('proxpl', {
+    provideHover(document: vscode.TextDocument, position: vscode.Position) {
+        const range = document.getWordRangeAtPosition(position);
+        if (!range) return null;
+        const word = document.getText(range);
 
-            const descriptions: { [key: string]: string } = {
-                'func': 'Defines a new function in ProXPL. Syntax: `func name(params) { ... }`',
-                'var': 'Declares a new variable. ProXPL is dynamically typed but variables must be declared.',
-                'if': 'Conditional statement. Executes a block if the condition is true.',
-                'else': 'Defines an alternative block for an `if` statement.',
-                'while': 'Loop that continues as long as a condition is true.',
-                'return': 'Exits a function and optionally returns a value.',
-                'print': 'Built-in function to output values to the terminal.',
-                'import': 'Incorporates external modules into the current script.'
-            };
+        const descriptions: { [key: string]: string } = {
+            'func': 'Defines a new function in ProXPL. Syntax: `func name(params) { ... }`',
+            'var': 'Declares a new variable. ProXPL is dynamically typed but variables must be declared (using `let` or `const` preferred).',
+            'let': 'Declares a mutable variable.',
+            'const': 'Declares an immutable constant.',
+            'if': 'Conditional statement. Executes a block if the condition is true.',
+            'else': 'Defines an alternative block for an `if` statement.',
+            'while': 'Loop that continues as long as a condition is true.',
+            'for': 'Loop with initializer, condition, and increment.',
+            'return': 'Exits a function and optionally returns a value.',
+            'print': 'Built-in statement/function to output values to the terminal.',
+            'import': 'Incorporates external modules into the current script.',
+            'class': 'Defines a new class with methods and properties.',
+            'this': 'Refers to the current instance of the class.',
+            'super': 'Refers to the superclass.',
+            'true': 'Boolean true literal.',
+            'false': 'Boolean false literal.',
+            'null': 'Represents the absence of value.',
+            'len': 'Built-in function. Returns the length of a string or list.',
+            'str': 'Built-in function. Converts a value to a string.',
+            'clock': 'Built-in function. Returns the current time in seconds.',
+            'input': 'Built-in function. Reads a line of input from stdin.',
+            'type': 'Built-in function. Returns the type of a value.',
+            'try': 'Starts a block of code to test for errors.',
+            'catch': 'Handles errors thrown in the try block.',
+            'throw': 'Throws an error/exception.'
+        };
 
-            if (descriptions[word]) {
-                return new vscode.Hover(new vscode.MarkdownString(descriptions[word]));
-            }
-            return null;
+        if (descriptions[word]) {
+            return new vscode.Hover(new vscode.MarkdownString(descriptions[word]));
         }
-    });
-    context.subscriptions.push(hoverProvider);
+        return null;
+    }
+});
+context.subscriptions.push(hoverProvider);
+
+// 5. Definition Provider (Basic "Go to Definition")
+const definitionProvider = vscode.languages.registerDefinitionProvider('proxpl', {
+    provideDefinition(document: vscode.TextDocument, position: vscode.Position) {
+        const range = document.getWordRangeAtPosition(position);
+        if (!range) return null;
+        const word = document.getText(range);
+
+        const text = document.getText();
+        // Regex to find 'func word' or 'class word'
+        const funcRegex = new RegExp(`func\\s+${word}\\s*\\(`, 'g');
+        const classRegex = new RegExp(`class\\s+${word}\\s*\\{`, 'g');
+
+        const results: vscode.Location[] = [];
+
+        let match;
+        while ((match = funcRegex.exec(text)) !== null) {
+            const pos = document.positionAt(match.index);
+            results.push(new vscode.Location(document.uri, new vscode.Range(pos, pos)));
+        }
+        while ((match = classRegex.exec(text)) !== null) {
+            const pos = document.positionAt(match.index);
+            results.push(new vscode.Location(document.uri, new vscode.Range(pos, pos)));
+        }
+
+        return results;
+    }
+});
+context.subscriptions.push(definitionProvider);
+
+// 6. Completion Item Provider
+const completionProvider = vscode.languages.registerCompletionItemProvider('proxpl', {
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
+        const keywords = [
+            'func', 'class', 'if', 'else', 'while', 'for', 'return', 'print',
+            'var', 'let', 'const', 'true', 'false', 'null', 'import', 'export',
+            'from', 'as', 'try', 'catch', 'throw', 'async', 'await'
+        ];
+        const builtins = ['len', 'str', 'clock', 'input', 'type'];
+
+        const items: vscode.CompletionItem[] = [];
+
+        keywords.forEach(word => {
+            items.push(new vscode.CompletionItem(word, vscode.CompletionItemKind.Keyword));
+        });
+        builtins.forEach(word => {
+            items.push(new vscode.CompletionItem(word, vscode.CompletionItemKind.Function));
+        });
+
+        return items;
+    }
+});
+context.subscriptions.push(completionProvider);
 }
 
 function mapLineNumber(lineStr: string): number {

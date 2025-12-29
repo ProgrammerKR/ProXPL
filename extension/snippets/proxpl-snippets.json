@@ -29,5 +29,61 @@
             "}"
         ],
         "description": "If block"
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": [
+            "for (var ${1:i} = 0; ${1:i} < ${2:count}; ${1:i} = ${1:i} + 1) {",
+            "\t${3:// code}",
+            "}"
+        ],
+        "description": "For loop"
+    },
+    "While Loop": {
+        "prefix": "while",
+        "body": [
+            "while (${1:condition}) {",
+            "\t${2:// code}",
+            "}"
+        ],
+        "description": "While loop"
+    },
+    "Function": {
+        "prefix": "func",
+        "body": [
+            "func ${1:name}(${2:params}) {",
+            "\t${3:// code}",
+            "}"
+        ],
+        "description": "Function declaration"
+    },
+    "Class": {
+        "prefix": "class",
+        "body": [
+            "class ${1:Name} {",
+            "\tfunc ${1:Name}(${2:params}) {",
+            "\t\t${3:// constructor}",
+            "\t}",
+            "}"
+        ],
+        "description": "Class declaration"
+    },
+    "Print": {
+        "prefix": "print",
+        "body": [
+            "print ${1:value};"
+        ],
+        "description": "Print statement"
+    },
+    "Try-Catch": {
+        "prefix": "try",
+        "body": [
+            "try {",
+            "\t${1:// try code}",
+            "} catch (err) {",
+            "\t${2:// handle error}",
+            "}"
+        ],
+        "description": "Try-Catch block"
     }
 }

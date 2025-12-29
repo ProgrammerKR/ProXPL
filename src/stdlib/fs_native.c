@@ -9,6 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#define mkdir(p, m) _mkdir(p)
+#define rmdir _rmdir
+#else
+#include <unistd.h>
+#include <dirent.h>
+#endif
 
 #include "../../include/common.h"
 #include "../../include/vm.h"
@@ -117,6 +126,75 @@ static Value fs_metadata(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+// mkdir(path) -> Bool
+static Value fs_mkdir(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
+    return BOOL_VAL(mkdir(AS_CSTRING(args[0]), 0777) == 0);
+}
+
+// rmdir(path) -> Bool
+static Value fs_rmdir(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
+    return BOOL_VAL(rmdir(AS_CSTRING(args[0])) == 0);
+}
+
+// listdir(path) -> List<String>
+static Value fs_listdir(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    const char* path = AS_CSTRING(args[0]);
+    
+    ObjList* list = newList();
+    push(&vm, OBJ_VAL(list)); // GC protect
+
+#ifdef _WIN32
+    char searchPath[1024];
+    snprintf(searchPath, sizeof(searchPath), "%s\\*.*", path);
+    WIN32_FIND_DATA fd;
+    HANDLE hFind = FindFirstFile(searchPath, &fd);
+    
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if (strcmp(fd.cFileName, ".") != 0 && strcmp(fd.cFileName, "..") != 0) {
+                 ObjString* str = copyString(fd.cFileName, (int)strlen(fd.cFileName));
+                 push(&vm, OBJ_VAL(str));
+                 // Append
+                 if (list->capacity < list->count + 1) {
+                     int oldCapacity = list->capacity;
+                     list->capacity = GROW_CAPACITY(oldCapacity);
+                     list->items = GROW_ARRAY(Value, list->items, oldCapacity, list->capacity);
+                 }
+                 list->items[list->count++] = OBJ_VAL(str);
+                 pop(&vm);
+            }
+        } while (FindNextFile(hFind, &fd));
+        FindClose(hFind);
+    }
+#else
+    DIR* d = opendir(path);
+    if (d) {
+        struct dirent* dir;
+        while ((dir = readdir(d)) != NULL) {
+             if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+                 ObjString* str = copyString(dir->d_name, (int)strlen(dir->d_name));
+                 push(&vm, OBJ_VAL(str));
+                 // Append
+                 if (list->capacity < list->count + 1) {
+                     int oldCapacity = list->capacity;
+                     list->capacity = GROW_CAPACITY(oldCapacity);
+                     list->items = GROW_ARRAY(Value, list->items, oldCapacity, list->capacity);
+                 }
+                 list->items[list->count++] = OBJ_VAL(str);
+                 pop(&vm);
+             }
+        }
+        closedir(d);
+    }
+#endif
+
+    pop(&vm); // list
+    return OBJ_VAL(list);
+}
+
 ObjModule* create_std_fs_module() {
     ObjString* name = copyString("std.native.fs", 13);
     push(&vm, OBJ_VAL(name));
@@ -128,7 +206,10 @@ ObjModule* create_std_fs_module() {
     defineModuleFn(module, "append_file", fs_append_file);
     defineModuleFn(module, "exists", fs_exists);
     defineModuleFn(module, "remove", fs_remove);
-    defineModuleFn(module, "metadata", fs_metadata); // Currently returns size
+    defineModuleFn(module, "metadata", fs_metadata); 
+    defineModuleFn(module, "mkdir", fs_mkdir);
+    defineModuleFn(module, "rmdir", fs_rmdir);
+    defineModuleFn(module, "listdir", fs_listdir);
     
     pop(&vm);
     pop(&vm);

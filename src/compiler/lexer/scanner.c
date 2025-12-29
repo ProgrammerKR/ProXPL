@@ -14,6 +14,8 @@ void initScanner(Scanner *scanner, const char *source) {
   scanner->start = source;
   scanner->current = source;
   scanner->line = 1;
+  scanner->currentColumn = 1;
+  scanner->startColumn = 1;
 }
 
 static bool isAlpha(char c) {
@@ -26,6 +28,7 @@ static bool isAtEnd(Scanner *scanner) { return *scanner->current == '\0'; }
 
 static char advance(Scanner *scanner) {
   scanner->current++;
+  scanner->currentColumn++;
   return scanner->current[-1];
 }
 
@@ -57,6 +60,7 @@ static void skipWhitespace(Scanner *scanner) {
       break;
     case '\n':
       scanner->line++;
+      scanner->currentColumn = 1;
       advance(scanner);
       break;
     case '/':
@@ -69,8 +73,10 @@ static void skipWhitespace(Scanner *scanner) {
         advance(scanner); // consume /
         advance(scanner); // consume *
         while (!isAtEnd(scanner)) {
-          if (peek(scanner) == '\n')
+          if (peek(scanner) == '\n') {
             scanner->line++;
+            scanner->currentColumn = 1;
+          }
           if (peek(scanner) == '*' && peekNext(scanner) == '/') {
             advance(scanner); // consume *
             advance(scanner); // consume /
@@ -94,6 +100,7 @@ static Token makeToken(Scanner *scanner, PxTokenType type) {
   token.start = scanner->start;
   token.length = (int)(scanner->current - scanner->start);
   token.line = scanner->line;
+  token.column = scanner->startColumn;
   return token;
 }
 
@@ -103,6 +110,7 @@ static Token errorToken(Scanner *scanner, const char *message) {
   token.start = message;
   token.length = (int)strlen(message);
   token.line = scanner->line;
+  token.column = scanner->startColumn;
   return token;
 }
 
@@ -268,8 +276,6 @@ static PxTokenType identifierType(Scanner *scanner) {
           case 'p':
             if (scanner->current - scanner->start > 3) {
               switch (scanner->start[3]) {
-              case 'o':
-                return checkKeyword(scanner, 4, 2, "rt", TOKEN_IMPORT);
               case 'l':
                 return checkKeyword(scanner, 4, 7, "ements", TOKEN_IMPLEMENTS);
               }
@@ -400,6 +406,7 @@ static Token identifier(Scanner *scanner) {
 Token scanToken(Scanner *scanner) {
   skipWhitespace(scanner);
   scanner->start = scanner->current;
+  scanner->startColumn = scanner->currentColumn;
 
   if (isAtEnd(scanner))
     return makeToken(scanner, TOKEN_EOF);

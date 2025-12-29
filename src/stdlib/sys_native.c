@@ -106,7 +106,7 @@ static Value sys_cwd(int argCount, Value* args) {
 
 // args() -> List<String> 
 static Value sys_args(int argCount, Value* args) {
-    // TODO: Implement proper args passing from main.c -> VM
+    if (vm.cliArgs) return OBJ_VAL(vm.cliArgs);
     return NIL_VAL;
 }
 

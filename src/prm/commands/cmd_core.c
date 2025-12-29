@@ -58,13 +58,46 @@ void prm_create(const char* templateName, const char* projectName) {
 void prm_install(const char* packageName) {
     if (packageName) {
         printf("Installing package '%s'...\n", packageName);
-        printf("Fetch registry: https://registry.proxpl.org/packages/%s\n", packageName);
-        // Simulation
-        printf("Downloading %s v1.0.0...\n", packageName);
-        printf("Installed %s@1.0.0\n", packageName);
+        
+        // Ensure prox_modules directory exists
+        #ifdef _WIN32
+            system("if not exist prox_modules mkdir prox_modules");
+        #else
+            system("mkdir -p prox_modules");
+        #endif
+        
+        // Construct git clone command
+        char command[512];
+        // Assuming packageName is "user/repo" or just "repo" (we default to github.com)
+        // If it's a full URL, use it. Else prepend https://github.com/
+        
+        if (strstr(packageName, "://")) {
+             snprintf(command, sizeof(command), "git clone %s prox_modules/%s", packageName, packageName);
+             // Note: extracting basename for folder might be needed if using full URL.
+             // For simplicity, we assume packageName is "User/Repo" format which maps to prox_modules/Repo? 
+             // Or just clone into prox_modules.
+             // Let's assume standard usage: prm install ProgrammerKR/std.net
+             // Clone to prox_modules/std.net
+        } else {
+             // Handle "User/Repo"
+             const char* slash = strchr(packageName, '/');
+             const char* folderName = slash ? slash + 1 : packageName;
+             
+             snprintf(command, sizeof(command), "git clone https://github.com/%s.git prox_modules/%s", packageName, folderName);
+        }
+        
+        printf("Running: %s\n", command);
+        int result = system(command);
+        
+        if (result == 0) {
+            printf("Successfully installed %s.\n", packageName);
+        } else {
+            printf("Failed to install package. Ensure git is installed and the package exists.\n");
+        }
     } else {
         printf("Installing dependencies from prox.toml...\n");
-        printf("No dependencies found.\n");
+        // TODO: Parse toml and loop install
+        printf("No dependencies found in prox.toml (Parser not yet connected).\n");
     }
 }
 

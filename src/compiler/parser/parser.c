@@ -56,12 +56,37 @@ static Token consume(Parser *p, PxTokenType type, const char *message);
 
 // === Initialization ===
 
-void initParser(Parser *parser, Token *tokens, int count) {
+void initParser(Parser *parser, Token *tokens, int count, const char *source) {
   parser->tokens = tokens;
   parser->count = count;
   parser->current = 0;
   parser->panicMode = false;
   parser->hadError = false;
+  parser->source = source;
+}
+
+static void printErrorContext(const char* source, int line, int column) {
+    // Find line start
+    const char* lineStart = source;
+    int currentLine = 1;
+    while (currentLine < line && *lineStart != '\0') {
+        if (*lineStart == '\n') currentLine++;
+        lineStart++;
+    }
+    
+    // Find line end
+    const char* lineEnd = lineStart;
+    while (*lineEnd != '\0' && *lineEnd != '\n') {
+        lineEnd++;
+    }
+    
+    // Print line
+    int len = (int)(lineEnd - lineStart);
+    fprintf(stderr, "%.*s\n", len, lineStart);
+    
+    // Print caret
+    for(int i = 1; i < column; i++) fprintf(stderr, " ");
+    fprintf(stderr, "^\n");
 }
 
 void parserError(Parser *parser, const char *message) {
@@ -69,7 +94,11 @@ void parserError(Parser *parser, const char *message) {
   parser->panicMode = true;
   parser->hadError = true;
   Token token = peek(parser);
-  fprintf(stderr, "ParseError: %s at line %d\n", message, token.line);
+  fprintf(stderr, "ParseError: %s at line %d, column %d\n", message, token.line, token.column);
+  
+  if (parser->source) {
+      printErrorContext(parser->source, token.line, token.column);
+  }
 }
 
 static void synchronize(Parser *p) {
