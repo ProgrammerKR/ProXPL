@@ -28,6 +28,8 @@ OutputBaseFilename=ProXPL_Installer_v{#MyAppVersion}
 ;SetupIconFile=assets\icon.ico
 SolidCompression=yes
 WizardStyle=modern
+WizardImageFile=extension\logo.png
+WizardSmallImageFile=extension\logo.png
 LicenseFile=LICENSE
 
 [Languages]
