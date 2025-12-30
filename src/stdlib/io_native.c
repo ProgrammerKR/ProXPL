@@ -59,6 +59,21 @@ static Value native_eprint_raw(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+// println(val) - Print value with newline
+static Value native_println(int argCount, Value* args) {
+    if (argCount > 0) {
+        if (IS_STRING(args[0])) {
+            printf("%s\n", AS_CSTRING(args[0]));
+        } else {
+            printValue(args[0]);
+            printf("\n");
+        }
+    } else {
+        printf("\n");
+    }
+    return NIL_VAL;
+}
+
 // input_raw() - Read line from stdin
 static Value native_input_raw(int argCount, Value* args) {
     char buffer[1024];
@@ -97,6 +112,9 @@ ObjModule* create_std_io_module() {
     push(&vm, OBJ_VAL(module));
     
     defineModuleFn(module, "print_raw", native_print_raw);
+    defineModuleFn(module, "print", native_print_raw);
+    defineModuleFn(module, "write", native_print_raw);
+    defineModuleFn(module, "println", native_println);
     defineModuleFn(module, "eprint_raw", native_eprint_raw);
     defineModuleFn(module, "input_raw", native_input_raw);
     defineModuleFn(module, "flush_raw", native_flush_raw);

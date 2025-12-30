@@ -715,7 +715,7 @@ static Expr *call(Parser *p) {
                  check(p, TOKEN_ELSE) || check(p, TOKEN_WHILE) ||
                  check(p, TOKEN_FOR) || check(p, TOKEN_BREAK) ||
                  check(p, TOKEN_CONTINUE) || check(p, TOKEN_RETURN) ||
-                 check(p, TOKEN_FUNC) ||
+                 check(p, TOKEN_FUNC) || check(p, TOKEN_PRINT) ||
                  check(p, TOKEN_USE) || check(p, TOKEN_FROM) ||
                  check(p, TOKEN_ASYNC) || check(p, TOKEN_AWAIT) ||
                  check(p, TOKEN_TRY) || check(p, TOKEN_CATCH) ||
