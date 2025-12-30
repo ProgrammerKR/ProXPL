@@ -720,7 +720,8 @@ static Expr *call(Parser *p) {
                  check(p, TOKEN_ASYNC) || check(p, TOKEN_AWAIT) ||
                  check(p, TOKEN_TRY) || check(p, TOKEN_CATCH) ||
                  check(p, TOKEN_FINALLY) || check(p, TOKEN_THROW) ||
-                 check(p, TOKEN_SWITCH) || check(p, TOKEN_CASE)) {
+                 check(p, TOKEN_SWITCH) || check(p, TOKEN_CASE) ||
+                 check(p, TOKEN_DEFAULT) || check(p, TOKEN_EXTENDS)) {
           // It's a keyword, but we want to use it as an identifier here.
           name = advance(p);
       } else {
