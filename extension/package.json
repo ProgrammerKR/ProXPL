@@ -3,7 +3,7 @@
   "displayName": "ProXPL Language Support",
   "description": "Syntax highlighting and language support for the ProXPL programming language",
   "version": "0.2.0",
-  "publisher": "ProgrammerKR",
+  "publisher": "ProXentix",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
