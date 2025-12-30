@@ -25,7 +25,7 @@ DefaultGroupName={#MyAppName}
 PrivilegesRequired=admin
 OutputDir=build
 OutputBaseFilename=ProXPL_Installer_v{#MyAppVersion}
-;SetupIconFile=assets\icon.ico
+SetupIconFile=assets\icon.ico
 SolidCompression=yes
 WizardStyle=modern
 WizardImageFile=extension\logo.png
@@ -48,12 +48,14 @@ Source: "bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Documentation
 Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Assets
+Source: "assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; IconFilename: "{app}\assets\icon.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\assets\icon.ico"
 
 [Registry]
 Root: HKA; Subkey: "Software\Classes\.prox"; ValueType: string; ValueName: ""; ValueData: "ProXPLSourceFile"; Flags: uninsdeletevalue
