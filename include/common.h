@@ -7,6 +7,12 @@
 #ifndef PROX_COMMON_H
 #define PROX_COMMON_H
 
+#define PROXPL_VERSION_MAJOR 0
+#define PROXPL_VERSION_MINOR 3
+#define PROXPL_VERSION_PATCH 0
+#define PROXPL_VERSION_STRING "0.3.0"
+#define PROXPL_VERSION_PRERELEASE ""
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
