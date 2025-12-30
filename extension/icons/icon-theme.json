@@ -1,0 +1,14 @@
+{
+  "iconDefinitions": {
+    "_proxpl": {
+      "iconPath": "./proxpl.svg"
+    }
+  },
+  "fileExtensions": {
+    "prox": "_proxpl",
+    "pxpl": "_proxpl"
+  },
+  "languageIds": {
+    "proxpl": "_proxpl"
+  }
+}

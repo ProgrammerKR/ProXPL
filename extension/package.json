@@ -60,6 +60,13 @@
         "path": "./snippets/proxpl-snippets.json"
       }
     ],
+    "iconThemes": [
+      {
+        "id": "proxpl-icons",
+        "label": "ProXPL Icons",
+        "path": "./icons/icon-theme.json"
+      }
+    ],
     "commands": [
       {
         "command": "proxpl.run",

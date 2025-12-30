@@ -10,6 +10,9 @@
             "include": "#keywords"
         },
         {
+            "include": "#storage"
+        },
+        {
             "include": "#types"
         },
         {
@@ -26,6 +29,12 @@
         },
         {
             "include": "#functions"
+        },
+        {
+            "include": "#classes"
+        },
+        {
+            "include": "#constants"
         }
     ],
     "repository": {
@@ -46,19 +55,35 @@
             "patterns": [
                 {
                     "name": "keyword.control.proxpl",
-                    "match": "\\b(if|else|while|for|return|use)\\b"
+                    "match": "\\b(if|else|while|for|return|break|continue|switch|case|default|try|catch|finally|throw|await|async|defer|use|from|export)\\b"
                 },
                 {
-                    "name": "keyword.declaration.proxpl",
-                    "match": "\\b(var|func)\\b"
+                    "name": "keyword.operator.new.proxpl",
+                    "match": "\\b(new|in|is|as|typeof|extends|implements)\\b"
+                },
+                {
+                    "name": "variable.language.this.proxpl",
+                    "match": "\\b(this|super)\\b"
+                }
+            ]
+        },
+        "storage": {
+            "patterns": [
+                {
+                    "name": "storage.type.proxpl",
+                    "match": "\\b(let|const|var|func|class|struct|interface|enum)\\b"
+                },
+                {
+                    "name": "storage.modifier.proxpl",
+                    "match": "\\b(public|private|protected|static|abstract|native|async)\\b"
                 }
             ]
         },
         "types": {
             "patterns": [
                 {
-                    "name": "storage.type.proxpl",
-                    "match": "\\b(int|float|string|bool)\\b"
+                    "name": "storage.type.primitive.proxpl",
+                    "match": "\\b(void|int|float|string|bool)\\b"
                 }
             ]
         },
@@ -80,7 +105,11 @@
         "numbers": {
             "patterns": [
                 {
-                    "name": "constant.numeric.proxpl",
+                    "name": "constant.numeric.hex.proxpl",
+                    "match": "\\b0x[a-fA-F0-9]+\\b"
+                },
+                {
+                    "name": "constant.numeric.decimal.proxpl",
                     "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
                 }
             ]
@@ -88,8 +117,16 @@
         "booleans": {
             "patterns": [
                 {
-                    "name": "constant.language.proxpl",
+                    "name": "constant.language.boolean.proxpl",
                     "match": "\\b(true|false)\\b"
+                }
+            ]
+        },
+        "constants": {
+            "patterns": [
+                {
+                    "name": "constant.language.null.proxpl",
+                    "match": "\\b(null)\\b"
                 }
             ]
         },
@@ -97,7 +134,7 @@
             "patterns": [
                 {
                     "name": "keyword.operator.proxpl",
-                    "match": "(\\+|\\-|\\*|\\/|==|!=|>|<|=)"
+                    "match": "(\\+|\\-|\\*|\\/|%|\\^|&|\\||!|==|!=|>|<|=)"
                 }
             ]
         },
@@ -110,6 +147,21 @@
                 {
                     "name": "support.function.proxpl",
                     "match": "\\b(print)\\b"
+                }
+            ]
+        },
+        "classes": {
+            "patterns": [
+                {
+                    "match": "\\b(class|struct|interface|enum)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.proxpl"
+                        },
+                        "2": {
+                            "name": "entity.name.type.class.proxpl"
+                        }
+                    }
                 }
             ]
         }
