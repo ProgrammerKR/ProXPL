@@ -12,6 +12,7 @@
   "engines": {
     "vscode": "^1.107.0"
   },
+  "icon": "logo.png",
   "activationEvents": [
     "onLanguage:proxpl"
   ],
