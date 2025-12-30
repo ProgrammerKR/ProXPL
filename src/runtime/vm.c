@@ -350,20 +350,33 @@ static InterpretResult run(VM *vm) {
       DISPATCH();
   }
   DO_OP_GET_PROPERTY: {
-      if (!IS_INSTANCE(peek(vm, 0))) {
-        runtimeError(vm, "Only instances have properties.");
-        return INTERPRET_RUNTIME_ERROR;
-      }
-      struct ObjInstance* instance = AS_INSTANCE(peek(vm, 0));
+      Value target = peek(vm, 0);
       ObjString* name = READ_STRING();
-      Value value;
-      if (tableGet(&instance->fields, name, &value)) {
-        pop(vm); // Instance
-        push(vm, value);
-        DISPATCH();
-      }
-      if (!bindMethod(instance->klass, name, vm)) {
-        return INTERPRET_RUNTIME_ERROR;
+
+      if (IS_INSTANCE(target)) {
+          struct ObjInstance* instance = AS_INSTANCE(target);
+          Value value;
+          if (tableGet(&instance->fields, name, &value)) {
+              pop(vm); // Instance
+              push(vm, value);
+              DISPATCH();
+          }
+          if (!bindMethod(instance->klass, name, vm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+      } else if (IS_MODULE(target)) {
+          ObjModule* module = AS_MODULE(target);
+          Value value;
+          if (tableGet(&module->exports, name, &value)) {
+              pop(vm); // Module
+              push(vm, value);
+              DISPATCH();
+          }
+          runtimeError(vm, "Undefined property '%s' in module '%s'.", name->chars, module->name->chars);
+          return INTERPRET_RUNTIME_ERROR;
+      } else {
+          runtimeError(vm, "Only instances and modules have properties.");
+          return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
   }
@@ -741,21 +754,33 @@ static InterpretResult run(VM *vm) {
         break;
     }
     case OP_GET_PROPERTY: {
-        if (!IS_INSTANCE(peek(vm, 0))) {
-          runtimeError(vm, "Only instances have properties.");
-          return INTERPRET_RUNTIME_ERROR;
-        }
-        ObjInstance* instance = AS_INSTANCE(peek(vm, 0));
+        Value target = peek(vm, 0);
         ObjString* name = READ_STRING();
-        Value value;
-        if (tableGet(&instance->fields, name, &value)) {
-          pop(vm); // Instance
-          push(vm, value);
-          break;
-        }
-        // Bind method
-        if (!bindMethod(instance->klass, name, vm)) {
-          return INTERPRET_RUNTIME_ERROR;
+
+        if (IS_INSTANCE(target)) {
+            ObjInstance* instance = AS_INSTANCE(target);
+            Value value;
+            if (tableGet(&instance->fields, name, &value)) {
+                pop(vm); // Instance
+                push(vm, value);
+                break;
+            }
+            if (!bindMethod(instance->klass, name, vm)) {
+                return INTERPRET_RUNTIME_ERROR;
+            }
+        } else if (IS_MODULE(target)) {
+            ObjModule* module = AS_MODULE(target);
+            Value value;
+            if (tableGet(&module->exports, name, &value)) {
+                pop(vm); // Module
+                push(vm, value);
+                break;
+            }
+            runtimeError(vm, "Undefined property '%s' in module '%s'.", name->chars, module->name->chars);
+            return INTERPRET_RUNTIME_ERROR;
+        } else {
+            runtimeError(vm, "Only instances and modules have properties.");
+            return INTERPRET_RUNTIME_ERROR;
         }
         break;
     }
@@ -962,8 +987,14 @@ static InterpretResult run(VM *vm) {
     }
     case OP_USE: {
         ObjString* name = READ_STRING();
-        runtimeError(vm, "Modules not yet implemented runtime-side.");
-        return INTERPRET_RUNTIME_ERROR;
+        Value moduleVal;
+        if (tableGet(&vm->importer.modules, name, &moduleVal)) {
+            // Module found.
+        } else {
+            runtimeError(vm, "Could not find module '%s'.", name->chars);
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
     }
     case OP_TRY:
     case OP_CATCH:
