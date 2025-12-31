@@ -10,7 +10,7 @@
   },
   "main": "./out/extension.js",
   "engines": {
-    "vscode": "^1.107.0"
+    "vscode": "^1.104.0"
   },
   "icon": "logo.png",
   "activationEvents": [
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^16.18.126",
-    "@types/vscode": "^1.107.0",
+    "@types/vscode": "^1.104.0",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
     "eslint": "^8.36.0",
