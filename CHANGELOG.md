@@ -163,7 +163,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Async/await implementation
 - Pattern matching
 - Generic types
-- Module system
+- Module system (Initial support in v0.5.0)
 - Debugger integration
 
 ### Phase 4: Ecosystem (Q3 2025)
@@ -196,7 +196,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 1. **Type Checker**: Partial implementation, needs refinement for complex types
 2. **Object System**: Basic inheritance, needs method binding optimization
 3. **Memory Management**: Mark-and-sweep GC not yet implemented
-4. **Module System**: Not yet implemented
+4. **Module System**: Partial implementation (`use` keyword support added, std lib in progress)
 5. **Standard Library**: 44/75 functions (58% complete)
 6. **Error Messages**: Could be more detailed with suggestions
 7. **REPL**: Basic implementation, no history or autocompletion
@@ -204,7 +204,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Workarounds
 
 - For GC: Short-lived programs work fine with basic allocation
-- For modules: Use single-file programs or compile with preprocessor
+- For modules: Use the new `use` keyword or compile with single-file strategy
 - For missing functions: Implement in ProXPL or use system() calls
 
 ---
@@ -305,6 +305,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 0.9.0 (Development)  
-**Last Updated**: December 11, 2024  
-**Next Release**: 1.0.0 (Q2 2025)
+**Current Version**: 0.5.0-pre  
+**Last Updated**: December 31, 2025  
+**Next Release**: 0.5.0 (Early 2026)
