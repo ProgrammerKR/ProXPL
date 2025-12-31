@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
