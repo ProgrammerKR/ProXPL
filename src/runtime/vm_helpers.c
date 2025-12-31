@@ -47,6 +47,9 @@ ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
 void defineMethod(ObjString *name, VM *vm) {
   Value method = peek(vm, 0);
   ObjClass *klass = AS_CLASS(peek(vm, 1));
+  if (IS_CLOSURE(method)) {
+      AS_CLOSURE(method)->function->ownerClass = klass;
+  }
   tableSet(&klass->methods, name, method);
   pop(vm);
 }

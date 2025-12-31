@@ -54,6 +54,9 @@
 #define IS_DICTIONARY(value) isObjType(value, OBJ_DICTIONARY)
 #define AS_DICTIONARY(value) ((struct ObjDictionary *)AS_OBJ(value))
 
+#define IS_INTERFACE(value) isObjType(value, OBJ_INTERFACE)
+#define AS_INTERFACE(value) ((ObjInterface *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
@@ -66,7 +69,9 @@ typedef enum {
   OBJ_BOUND_METHOD,
   OBJ_LIST,
   OBJ_DICTIONARY,
-  OBJ_TASK
+  OBJ_DICTIONARY,
+  OBJ_TASK,
+  OBJ_INTERFACE
 } ObjType;
 
 struct Obj {
@@ -88,6 +93,10 @@ struct ObjFunction {
   int upvalueCount;
   Chunk chunk;
   ObjString *name;
+  AccessLevel access;
+  bool isStatic;
+  bool isAbstract;
+  struct ObjClass *ownerClass;
 };
 
 
@@ -118,10 +127,20 @@ typedef struct ObjClosure {
   int upvalueCount;
 } ObjClosure;
 
+// Interfaces are essentially named method tables?
+// Or just type markers? For now, simple marker with name.
+typedef struct ObjInterface {
+  Obj obj;
+  ObjString *name;
+  Table methods; 
+} ObjInterface;
+
 struct ObjClass {
   Obj obj;
   ObjString *name;
   Table methods;
+  int interfaceCount;
+  Value *interfaces; 
 };
 
 struct ObjInstance {
@@ -174,6 +193,7 @@ ObjModule *newModule(ObjString *name);
 ObjClosure *newClosure(ObjFunction *function);
 ObjUpvalue *newUpvalue(Value *slot);
 struct ObjClass *newClass(ObjString *name);
+struct ObjInterface *newInterface(ObjString *name);
 struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
 struct ObjList *newList();

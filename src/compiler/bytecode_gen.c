@@ -380,6 +380,11 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     Compiler funcCompiler;
     initCompiler(gen, &funcCompiler, COMP_FUNCTION);
     
+    // Set function properties from AST
+    funcCompiler.function->access = stmt->as.func_decl.access;
+    funcCompiler.function->isStatic = stmt->as.func_decl.isStatic;
+    funcCompiler.function->isAbstract = stmt->as.func_decl.isAbstract;
+    
     beginScope(gen);
     
     StringList* params = (StringList*)stmt->as.func_decl.params; 
@@ -739,7 +744,7 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             writeChunk(gen->chunk, OP_CLASS, stmt->line);
             writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
             
-            // Define name early
+            // Define name
             if (gen->compiler->scopeDepth > 0) {
                  addLocal(gen, stmt->as.class_decl.name);
             } else {
@@ -747,54 +752,126 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                  writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
             }
             
-            // Methods
-            if (stmt->as.class_decl.methods) {
-                // If scope > 0, we need to get the class back on stack?
-                // It is currently on stack if local?
-                // If global, we need to load it.
-                if (gen->compiler->scopeDepth == 0) {
+            // Inheritance
+            if (stmt->as.class_decl.superclass) {
+                // Load 'super' (superclass name)
+                genExpr(gen, (Expr*)stmt->as.class_decl.superclass); // variable expr
+                
+                // Get 'subclass' (current class)
+                // If local, it's at top of stack (if defineLocal didn't pop it - defineLocal usually keeps it? No, setLocal keeps it. addLocal just marks it.)
+                // OP_CLASS pushes class.
+                // defineGlobal pops it? No, usually defines assume value on stack.
+                // OP_DEFINE_GLOBAL documentation: "Pop value and define".
+                // So if we popped it, we need to get it back.
+                
+                if (gen->compiler->scopeDepth > 0) {
+                    // Local: It's on stack? OP_CLASS pushed it. addLocal "claims" it.
+                    // So it's on stack.
+                     writeChunk(gen->chunk, OP_GET_LOCAL, stmt->line);
+                     writeChunk(gen->chunk, (uint8_t)(gen->compiler->localCount - 1), stmt->line);
+                } else {
+                    // Global: We popped it. Reload it.
                      writeChunk(gen->chunk, OP_GET_GLOBAL, stmt->line);
                      writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
-                } else {
-                    // It's the top local.
+                }
+                
+                writeChunk(gen->chunk, OP_INHERIT, stmt->line);
+            }
+
+            // Interfaces
+            if (stmt->as.class_decl.interfaces) {
+                 // Push class again for each interface
+                 for (int i=0; i < stmt->as.class_decl.interfaces->count; i++) {
+                    // Load Class
+                    if (gen->compiler->scopeDepth > 0) {
+                        writeChunk(gen->chunk, OP_GET_LOCAL, stmt->line);
+                        writeChunk(gen->chunk, (uint8_t)(gen->compiler->localCount - 1), stmt->line);
+                    } else {
+                        writeChunk(gen->chunk, OP_GET_GLOBAL, stmt->line);
+                        writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+                    }
+
+                    // Load Interface
+                    char* iName = stmt->as.class_decl.interfaces->items[i];
+                    // Interface is a global variable usually?
+                    // Resolve variable manually or emit OP_GET_GLOBAL?
+                    // We need a constant index for the name string.
+                    Value iVal = OBJ_VAL(copyString(iName, strlen(iName)));
+                    int iConst = addConstant(gen->chunk, iVal);
+                    // Assume global for now
+                    writeChunk(gen->chunk, OP_GET_GLOBAL, stmt->line);
+                    writeChunk(gen->chunk, (uint8_t)iConst, stmt->line);
+                    
+                    writeChunk(gen->chunk, OP_IMPLEMENT, stmt->line);
+                 }
+            }
+            
+            // Methods
+            if (stmt->as.class_decl.methods) {
+                // Load class for methods
+                if (gen->compiler->scopeDepth == 0) { // Global
+                     writeChunk(gen->chunk, OP_GET_GLOBAL, stmt->line);
+                     writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+                } else { // Local
                      writeChunk(gen->chunk, OP_GET_LOCAL, stmt->line);
                      writeChunk(gen->chunk, (uint8_t)(gen->compiler->localCount - 1), stmt->line);
                 }
                 
                 for (int i=0; i < stmt->as.class_decl.methods->count; i++) {
-                    // (Note: we need the index of the constant, not the instruction index? consttable_get might take index?)
-                    // Let's assume we can get the function object.
-                    
-                    // Fixed line:
-                    // ObjString* mname = AS_CLOSURE(consttable_get(gen->chunk, gen->chunk->constants.count - 1))->function->name;
-                    
-                    // Wait, `consttable_get` signature? I don't see it defined. It is likely `Value consttable_get(Chunk*, int index)`.
-                    // But `genStmt` for FUNC_DECL emits OP_CLOSURE then Index.
-                    // The last constant added is the function closure? No, `addConstant` adds it.
-                    // So `chunk->constants.count - 1` is the index of the closure we just added.
-                    
-                    // Let's rewrite the block to be correct and warning-free.
-                    
-                    // Note: `genStmt` emits OP_CLOSURE and its operand.
-                    // The operand is the index of the closure in constants.
-                    // Value closureVal = chunk->constants.values[chunk->constants.count - 1];
-                    // ObjClosure* closure = AS_CLOSURE(closureVal);
-                    // ObjString* name = closure->function->name;
-                    // int nameConst = addConstant(gen->chunk, OBJ_VAL(name));
-                    // writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
-                    
-                    // But we already emitted OP_METHOD without operand?
-                    // Code shows: writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                    // Then the line that failed.
-                    // So we need to insert the operand emission.
-                    
-                    Value lastConst = gen->chunk->constants.values[gen->chunk->constants.count - 1];
-                    ObjString* mname = AS_CLOSURE(lastConst)->function->name;
-                    int nameConst = addConstant(gen->chunk, OBJ_VAL(mname));
-                    writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+                     genStmt(gen, stmt->as.class_decl.methods->items[i]);
+                     
+                     // Helper: OP_METHOD expects name operand.
+                     // genStmt(FUNC_DECL) emits OP_CLOSURE <idx>. 
+                     // We need the method name.
+                     // The last constant added was the function closure.
+                     // But we need the NAME constant.
+                     // Actually, genFunction adds name constant if defines global?
+                     // No, genFunc has logic: if defineVar...
+                     // Wait, for methods, `genFunction` call in `genStmt` will try to define variable!
+                     // But methods are properties of class, not variables.
+                     // We need to modify `genFunction` or `genStmt` to NOT define variable if it's a method?
+                     // Or just handle `STMT_FUNC_DECL` inside methods loop differently?
+                     // Existing code called `genStmt` inside loop.
+                     // But `genFunction` lines 411-420 define global or local.
+                     // We DON'T want that for methods.
+                     // We want to leave the closure on stack and then emit OP_METHOD.
+                     
+                     // FIX: Update `genStmt` to PASS `false` for `defineVar` if called from here?
+                     // `genStmt` signature is fixed.
+                     // I should call `genFunction` directly if I can?
+                     // Yes `genFunction` is static in this file.
+                     // So replace `genStmt(...)` with `genFunction(..., false)`.
+                     
+                     genFunction(gen, stmt->as.class_decl.methods->items[i], false);
+
+                     // Now get the name
+                     Stmt* methodStmt = stmt->as.class_decl.methods->items[i];
+                     Value mNameVal = OBJ_VAL(copyString(methodStmt->as.func_decl.name, strlen(methodStmt->as.func_decl.name)));
+                     int mNameConst = addConstant(gen->chunk, mNameVal);
+                     writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                     writeChunk(gen->chunk, (uint8_t)mNameConst, stmt->line);
                 }
                 writeChunk(gen->chunk, OP_POP, stmt->line); // Pop class
             }
+            break;
+        }
+        case STMT_INTERFACE_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.interface_decl.name, strlen(stmt->as.interface_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            writeChunk(gen->chunk, OP_INTERFACE, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            
+             // Define
+            if (gen->compiler->scopeDepth > 0) {
+                 addLocal(gen, stmt->as.interface_decl.name);
+            } else {
+                 writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            // Interface methods (signatures) are stored in AST but for now we don't code gen them.
+            // (Unless we want to fill the ObjInterface with method names at runtime?)
+            // We can emit OP_GET_GLOBAL (interface), OP_METHOD (abstract) ???
+            // For now, minimal implementation: create interface object.
             break;
         }
         default: break;

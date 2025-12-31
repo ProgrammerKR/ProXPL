@@ -19,7 +19,8 @@ typedef enum {
     TYPE_FLOAT,
     TYPE_STRING,
     TYPE_FUNCTION,
-    TYPE_CLASS
+    TYPE_CLASS,
+    TYPE_INTERFACE
 } TypeKind;
 
 struct TypeInfo {
@@ -40,7 +41,7 @@ typedef enum {
 } ExprType;
 
 typedef enum {
-  STMT_EXPRESSION, STMT_VAR_DECL, STMT_FUNC_DECL, STMT_CLASS_DECL,
+  STMT_EXPRESSION, STMT_VAR_DECL, STMT_FUNC_DECL, STMT_CLASS_DECL, STMT_INTERFACE_DECL,
   STMT_USE_DECL, STMT_IF, STMT_WHILE, STMT_FOR, STMT_RETURN,
   STMT_BLOCK, STMT_BREAK, STMT_CONTINUE, STMT_SWITCH,
   STMT_TRY_CATCH, STMT_PRINT
@@ -122,8 +123,9 @@ struct Expr {
 // --- Statement Data Structures ---
 typedef struct { Expr *expression; } ExpressionStmt;
 typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; } VarDeclStmt;
-typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; bool isAsync; } FuncDeclStmt;
-typedef struct { char *name; VariableExpr *superclass; StmtList *methods; } ClassDeclStmt;
+typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; bool isAsync; AccessLevel access; bool isStatic; bool isAbstract; } FuncDeclStmt;
+typedef struct { char *name; VariableExpr *superclass; StringList *interfaces; StmtList *methods; } ClassDeclStmt;
+typedef struct { char *name; StmtList *methods; } InterfaceDeclStmt;
 typedef struct { StringList *modules; } UseDeclStmt;
 typedef struct { Expr *condition; Stmt *then_branch; Stmt *else_branch; } IfStmt;
 typedef struct { Expr *condition; Stmt *body; } WhileStmt;
@@ -133,8 +135,8 @@ typedef struct { StmtList *statements; } BlockStmt;
 typedef struct { int dummy; } BreakStmt;
 typedef struct { int dummy; } ContinueStmt;
 typedef struct { Expr *value; SwitchCaseList *cases; StmtList *default_case; } SwitchStmt;
-typedef struct { Expr *expression; } PrintStmt;
 typedef struct { StmtList *try_block; char *catch_var; StmtList *catch_block; StmtList *finally_block; } TryCatchStmt;
+typedef struct { Expr *expression; } PrintStmt;
 
 struct Stmt {
   StmtType type;
@@ -142,7 +144,7 @@ struct Stmt {
   int column;
   union {
     ExpressionStmt expression; VarDeclStmt var_decl; FuncDeclStmt func_decl;
-    ClassDeclStmt class_decl; UseDeclStmt use_decl; IfStmt if_stmt;
+    ClassDeclStmt class_decl; InterfaceDeclStmt interface_decl; UseDeclStmt use_decl; IfStmt if_stmt;
     WhileStmt while_stmt; ForStmt for_stmt; ReturnStmt return_stmt;
     BlockStmt block; BreakStmt break_stmt; ContinueStmt continue_stmt;
     SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
@@ -169,8 +171,9 @@ Expr *createAwaitExpr(Expr *expression, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line, int column);
-Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, bool isAsync, int line, int column);
-Stmt *createClassDeclStmt(const char *name, VariableExpr *super, StmtList *methods, int line, int column);
+Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, int line, int column);
+Stmt *createClassDeclStmt(const char *name, VariableExpr *super, StringList *interfaces, StmtList *methods, int line, int column);
+Stmt *createInterfaceDeclStmt(const char *name, StmtList *methods, int line, int column);
 Stmt *createUseDeclStmt(StringList *modules, int line, int column);
 Stmt *createIfStmt(Expr *cond, Stmt *then_br, Stmt *else_br, int line, int column);
 Stmt *createWhileStmt(Expr *cond, Stmt *body, int line, int column);

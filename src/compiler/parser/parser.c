@@ -15,8 +15,9 @@
 // Forward declarations of parsing functions
 static Stmt *declaration(Parser *p);
 static Stmt *statement(Parser *p);
-static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync);
+static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract);
 static Stmt *classDecl(Parser *p);
+static Stmt *interfaceDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
@@ -207,15 +208,17 @@ StmtList *parse(Parser *parser) {
 static Stmt *declaration(Parser *p) {
   if (match(p, 1, TOKEN_ASYNC)) {
       if (match(p, 1, TOKEN_FUNC))
-          return funcDecl(p, "function", true);
+          return funcDecl(p, "function", true, ACCESS_PUBLIC, false, false);
       // TODO: Handle async arrow functions if supported later
       parserError(p, "Expect 'func' after 'async'.");
       return NULL;
   }
   if (match(p, 1, TOKEN_FUNC))
-    return funcDecl(p, "function", false);
+    return funcDecl(p, "function", false, ACCESS_PUBLIC, false, false);
   if (match(p, 1, TOKEN_CLASS))
     return classDecl(p);
+  if (match(p, 1, TOKEN_INTERFACE))
+    return interfaceDecl(p);
   if (match(p, 1, TOKEN_USE))
     return useDecl(p);
   if (match(p, 2, TOKEN_LET, TOKEN_CONST))
@@ -223,7 +226,7 @@ static Stmt *declaration(Parser *p) {
   return statement(p);
 }
 
-static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync) {
+static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract) {
   (void)kind;
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
   char *name = tokenToString(nameToken);
@@ -241,11 +244,17 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync) {
   }
 
   consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
-  consume(p, TOKEN_LEFT_BRACE, "Expect '{' before body.");
 
-  StmtList *body = block(p);
+  StmtList *body = NULL;
+  // If abstract or interface method, body is optional (expect semicolon)
+  if (isAbstract && match(p, 1, TOKEN_SEMICOLON)) {
+      // No body
+  } else {
+      consume(p, TOKEN_LEFT_BRACE, "Expect '{' before body.");
+      body = block(p);
+  }
 
-  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, nameToken.line, 0);
+  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, access, isStatic, isAbstract, nameToken.line, 0);
   free(name);
   return stmt;
 }
@@ -262,37 +271,72 @@ static Stmt *classDecl(Parser *p) {
     superclass = &superExpr->as.variable;
     free(superName);
   }
+  
+  StringList *interfaces = NULL;
+  if (match(p, 1, TOKEN_IMPLEMENTS)) {
+      interfaces = createStringList();
+      do {
+          Token interfaceName = consume(p, TOKEN_IDENTIFIER, "Expect interface name.");
+          char *iName = tokenToString(interfaceName);
+          appendString(interfaces, iName);
+          free(iName);
+      } while (match(p, 1, TOKEN_COMMA));
+  }
 
   consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
 
   StmtList *methods = createStmtList();
   while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+    AccessLevel access = ACCESS_PUBLIC;
+    if (match(p, 1, TOKEN_PUBLIC)) access = ACCESS_PUBLIC;
+    else if (match(p, 1, TOKEN_PRIVATE)) access = ACCESS_PRIVATE;
+    else if (match(p, 1, TOKEN_PROTECTED)) access = ACCESS_PROTECTED;
+    
+    bool isStatic = false;
+    if (match(p, 1, TOKEN_STATIC)) isStatic = true;
+    
+    bool isAbstract = false;
+    if (match(p, 1, TOKEN_ABSTRACT)) isAbstract = true;
+
     bool isAsync = false; 
     if (match(p, 1, TOKEN_ASYNC)) {
         isAsync = true;
-        // consume FUNC if present (methods might just be identifier in some langs, but here it calls funcDecl which expects identifier)
-        // Wait, funcDecl starts with identifier consumption.
-        // check if `funcDecl` handles `func` keyword? No, `declaration` consumes `func` before calling `funcDecl`.
-        // So for methods in classDecl, how are they parsed? 
-        // `createClassDeclStmt` calls `funcDecl`.
-        // `classDecl` loop calls `funcDecl(p, "method")`.
-        // `funcDecl` consumes IDENTIFIER name.
-        // So methods don't have `func` keyword?
-        // Let's check `funcDecl` implementation:
-        // `Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");`
-        // So yes, methods are `methodName() {}`.
     }
-    // Check if `async` was consumed. If so, pass true.
-    Stmt *method = funcDecl(p, "method", isAsync);
+    
+    Stmt *method = funcDecl(p, "method", isAsync, access, isStatic, isAbstract);
     appendStmt(methods, method);
   }
 
   consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
 
   Stmt *stmt =
-      createClassDeclStmt(name, superclass, methods, nameToken.line, 0);
+      createClassDeclStmt(name, superclass, interfaces, methods, nameToken.line, 0);
   free(name);
   return stmt;
+}
+
+static Stmt *interfaceDecl(Parser *p) {
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect interface name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    
+    StmtList *methods = createStmtList();
+    while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+        // Interface methods are public abstract by default
+        bool isAsync = false;
+        if (match(p, 1, TOKEN_ASYNC)) isAsync = true;
+        
+        // Pass isAbstract = true to allow semicolon body
+        Stmt *method = funcDecl(p, "method", isAsync, ACCESS_PUBLIC, false, true);
+        appendStmt(methods, method);
+    }
+    
+    consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
+    
+    Stmt *stmt = createInterfaceDeclStmt(name, methods, nameToken.line, 0);
+    free(name);
+    return stmt;
 }
 
 static Stmt *varDecl(Parser *p) {

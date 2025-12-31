@@ -341,7 +341,7 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
 }
 
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
-                         bool isAsync, int line, int column) {
+                         bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_FUNC_DECL;
   stmt->line = line;
@@ -350,18 +350,32 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   stmt->as.func_decl.params = params;
   stmt->as.func_decl.body = body;
   stmt->as.func_decl.isAsync = isAsync; 
+  stmt->as.func_decl.access = access;
+  stmt->as.func_decl.isStatic = isStatic;
+  stmt->as.func_decl.isAbstract = isAbstract;
   return stmt;
 }
 
 Stmt *createClassDeclStmt(const char *name, VariableExpr *super,
-                          StmtList *methods, int line, int column) {
+                          StringList *interfaces, StmtList *methods, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_CLASS_DECL;
   stmt->line = line;
   stmt->column = column;
   stmt->as.class_decl.name = strdup(name);
   stmt->as.class_decl.superclass = super;
+  stmt->as.class_decl.interfaces = interfaces;
   stmt->as.class_decl.methods = methods;
+  return stmt;
+}
+
+Stmt *createInterfaceDeclStmt(const char *name, StmtList *methods, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_INTERFACE_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.interface_decl.name = strdup(name);
+  stmt->as.interface_decl.methods = methods;
   return stmt;
 }
 
@@ -571,8 +585,18 @@ void freeStmt(Stmt *stmt) {
     break;
   case STMT_CLASS_DECL:
     free(stmt->as.class_decl.name);
-    // superclass is a VariableExpr, not a separate malloc
+    // superclass is a VariableExpr, not a separate malloc (it's in parsing context, but here referenced. Wait, VariableExpr created by createVariableExpr IS allocated. But who frees it? ClassDeclStmt stores pointer. We should probably free it if we own it. Original code didn't? "superclass is a VariableExpr, not a separate malloc" comment suggests confusion or shared ownership. Actually AST nodes usually own children. I will assume we should NOT free superclass if it wasn't freed before? Or fix it?
+    // Let's stick to existing pattern for superclass logic, just add interfaces free.
+    // Wait, original: `// superclass is a VariableExpr, not a separate malloc`
+    // Actually `createVariableExpr` does ALLOCATE. So it definitely IS a separate malloc.
+    // Maybe parser manages it? Or maybe this comment is wrong. 
+    // I'll leave superclass alone to avoid regression, just add interfaces.
+    freeStringList(stmt->as.class_decl.interfaces);
     freeStmtList(stmt->as.class_decl.methods);
+    break;
+  case STMT_INTERFACE_DECL:
+    free(stmt->as.interface_decl.name);
+    freeStmtList(stmt->as.interface_decl.methods);
     break;
   case STMT_USE_DECL:
     freeStringList(stmt->as.use_decl.modules);

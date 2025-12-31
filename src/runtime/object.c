@@ -33,6 +33,9 @@ ObjFunction *newFunction() {
   function->arity = 0;
   function->upvalueCount = 0;
   function->name = NULL;
+  function->access = ACCESS_PUBLIC;
+  function->isStatic = false;
+  function->isAbstract = false;
   initChunk(&function->chunk); // Requires chunk.h
   return function;
 }
@@ -127,6 +130,9 @@ void printObject(Value value) {
   case OBJ_CLASS:
     printf("<class %s>", ((struct ObjClass*)AS_OBJ(value))->name->chars);
     break;
+  case OBJ_INTERFACE:
+    printf("<interface %s>", ((ObjInterface*)AS_OBJ(value))->name->chars);
+    break;
   case OBJ_INSTANCE:
     printf("<instance %s>", ((struct ObjInstance*)AS_OBJ(value))->klass->name->chars);
     break;
@@ -180,7 +186,16 @@ struct ObjClass *newClass(ObjString *name) {
   struct ObjClass *klass = ALLOCATE_OBJ(struct ObjClass, OBJ_CLASS);
   klass->name = name;
   initTable(&klass->methods);
+  klass->interfaceCount = 0;
+  klass->interfaces = NULL;
   return klass;
+}
+
+struct ObjInterface *newInterface(ObjString *name) {
+  struct ObjInterface *interface = ALLOCATE_OBJ(struct ObjInterface, OBJ_INTERFACE);
+  interface->name = name;
+  initTable(&interface->methods);
+  return interface;
 }
 
 struct ObjInstance *newInstance(struct ObjClass *klass) {
