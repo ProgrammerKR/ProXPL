@@ -104,9 +104,22 @@
       ]
     }
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "proxpl",
+    "prox",
+    "programming language",
+    "compiler",
+    "interpreter",
+    "vm",
+    "system programming",
+    "language server",
+    "syntax highlighting",
+    "snippets",
+    "prm",
+    "package manager"
+  ],
+  "author": "Kanishk Raj <programmerkanishkraj@gmail.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ProgrammerKR/ProXPL/issues"
   },

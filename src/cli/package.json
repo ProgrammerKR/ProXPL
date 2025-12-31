@@ -9,6 +9,24 @@
     "scripts": {
         "start": "node index.js"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
+    },
+    "keywords": [
+        "proxpl",
+        "cli",
+        "programming language",
+        "compiler",
+        "scaffolding",
+        "package manager"
+    ],
+    "author": "Kanishk Raj <programmerkanishkraj@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ProgrammerKR/ProXPL/issues"
+    },
+    "homepage": "https://github.com/ProgrammerKR/ProXPL#readme",
     "dependencies": {
         "commander": "^11.1.0",
         "chalk": "^4.1.2",

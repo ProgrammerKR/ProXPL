@@ -25,9 +25,9 @@
 
 ## 📖 Introduction
 
-**ProXPL** (ProX Programming Language) is a modern, statically-typed programming language designed for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional compiler architecture with a custom bytecode VM, comprehensive type system, and integrated package management.
+**ProXPL** (ProX Programming Language) is a modern, statically-typed **systems programming language** designed for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional **compiler architecture**, a custom **stack-based bytecode VM**, a robust **static type system**, and an integrated **package manager (PRM)**.
 
-ProXPL is implemented entirely in C/C++ with zero runtime dependencies, making it ideal for systems programming, backend services, command-line tools, and performance-critical applications.
+ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, making it ideal for **high-performance systems**, **embedded applications**, **game development**, and **backend services**. It serves as an excellent reference for learning **compiler design** and **interpreter implementation**.
 
 ### Why ProXPL?
 
