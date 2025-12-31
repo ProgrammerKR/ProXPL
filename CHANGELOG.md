@@ -8,7 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.5.0-pre] - 2025-12-31
+
 ### Added
+- **Language**: Introduced `use` keyword to replace `import` for module loading, standardizing the syntax.
+- **Extension**: 
+  - Added material icons support with `vscode-material-icon-theme` integration.
+  - Fixed VSIX packaging errors.
+- **Runtime**:
+  - Implemented `OP_USE` opcode for dynamic module loading.
+  - Added `std.io` and standard library module resolution fixes.
 - Comprehensive documentation suite (400+ pages)
   - Professional README with architecture diagrams
   - Complete ARCHITECTURE.md with compiler pipeline details
@@ -35,6 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Refactor report documenting all changes
 
 ### Changed
+- **CLI**: Updated CLI version to match project version.
+- **Build**: Fixed CMake finding LLVM and compiler paths on Windows.
 - Reorganized repository structure for clarity and scalability
 - Upgraded CMakeLists.txt to modern best practices
 - Improved Makefile with multiple build targets
@@ -55,7 +66,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [0.9.0] - 2024-12-11
+## [0.1.0] - 2024-12-11
 
 ### Initial C-Based Release
 
