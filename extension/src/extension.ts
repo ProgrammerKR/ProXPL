@@ -174,7 +174,7 @@ export function activate(context: vscode.ExtensionContext) {
                 'for': 'Loop with initializer, condition, and increment.',
                 'return': 'Exits a function and optionally returns a value.',
                 'print': 'Built-in statement/function to output values to the terminal.',
-                'import': 'Incorporates external modules into the current script.',
+                'use': 'Incorporates external modules into the current script.',
                 'class': 'Defines a new class with methods and properties.',
                 'this': 'Refers to the current instance of the class.',
                 'super': 'Refers to the superclass.',
@@ -233,7 +233,8 @@ export function activate(context: vscode.ExtensionContext) {
         provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
             const keywords = [
                 'func', 'class', 'if', 'else', 'while', 'for', 'return', 'print',
-                'var', 'let', 'const', 'true', 'false', 'null', 'import', 'export',
+                'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export',
+                'prox', 'loop', // User requested specific keywords
                 'from', 'as', 'try', 'catch', 'throw', 'async', 'await'
             ];
             const builtins = ['len', 'str', 'clock', 'input', 'type'];
