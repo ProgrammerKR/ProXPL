@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [0.5.0-pre] - 2025-12-31
+## [0.5.1] - 2025-12-31
 
 ### Added
 - **Language**: Introduced `use` keyword to replace `import` for module loading, standardizing the syntax.
@@ -305,6 +305,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 0.5.0-pre  
+**Current Version**: 0.5.1  
 **Last Updated**: December 31, 2025  
-**Next Release**: 0.5.0 (Early 2026)
+**Next Release**: 0.6.0 (Early 2026)
