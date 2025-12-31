@@ -2,7 +2,7 @@
 
 **Complete Documentation for Built-in Functions**
 
-**Version:** 1.0.0  
+**Version:** 0.4.0  
 **Last Updated:** December 2024  
 **Status:** Stable
 

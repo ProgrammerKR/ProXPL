@@ -1,6 +1,6 @@
 # ProXPL Language Specification
 
-**Version: 0.1.0**  
+**Version: 0.4.0**  
 **Last Updated: December 2024**
 
 ---
