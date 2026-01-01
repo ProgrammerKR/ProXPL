@@ -69,7 +69,7 @@ typedef enum {
   OBJ_BOUND_METHOD,
   OBJ_LIST,
   OBJ_DICTIONARY,
-  OBJ_DICTIONARY,
+
   OBJ_TASK,
   OBJ_INTERFACE
 } ObjType;
@@ -188,7 +188,7 @@ ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn function);
-ObjNative *newNative(NativeFn function);
+
 ObjModule *newModule(ObjString *name);
 ObjClosure *newClosure(ObjFunction *function);
 ObjUpvalue *newUpvalue(Value *slot);

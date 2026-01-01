@@ -60,7 +60,7 @@ typedef enum {
   OP_USE,
   OP_TRY,
   OP_CATCH,
-  OP_CATCH,
+
   OP_END_TRY,
   OP_INTERFACE,
   OP_IMPLEMENT,
