@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-0.5.0--pre-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
@@ -372,6 +372,7 @@ graph LR
     K --> M[Stack-Based VM]
     L --> N[Direct Execution]
     M --> O[Runtime Execution]
+    N --> O
 ```
 
 ### Core Components
@@ -518,9 +519,10 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 We warmly welcome contribut## 🛣️ Roadmap
 
-### v0.5.0 (Current - January 2026)
-**Status**: Production-Ready Core
-- ✅ Complete compiler pipeline (Lexer → Parser → Type Checker → IR → Codegen)
+### v0.5.0-pre (Current - January 2026)
+**Status**: Pre-release Candidate
+- ✅ 0.5.0 Features Complete
+- ✅ Testing Phase with Pre-release builds
 - ✅ Stack-based VM with bytecode execution
 - ✅ LLVM backend for AOT native compilation
 - ✅ 75+ standard library functions
