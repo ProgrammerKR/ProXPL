@@ -1,11 +1,54 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
+import * as path from 'path';
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    TransportKind
+} from 'vscode-languageclient/node';
+
+let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
     const diagnosticCollection = vscode.languages.createDiagnosticCollection('proxpl');
     context.subscriptions.push(diagnosticCollection);
 
     vscode.window.showInformationMessage('ProX Studio Alpha started.');
+
+    // --- LSP Client Setup ---
+    const serverModule = context.asAbsolutePath(
+        path.join('server', 'out', 'server.js')
+    );
+    // If the extension is launched in debug mode then the debug server options are used
+    // Otherwise the run options are used
+    const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+
+    const serverOptions: ServerOptions = {
+        run: { module: serverModule, transport: TransportKind.ipc },
+        debug: {
+            module: serverModule,
+            transport: TransportKind.ipc,
+            options: debugOptions
+        }
+    };
+
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [{ scheme: 'file', language: 'proxpl' }],
+        synchronize: {
+            fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
+        }
+    };
+
+    client = new LanguageClient(
+        'proxplLanguageServer',
+        'ProXPL Language Server',
+        serverOptions,
+        clientOptions
+    );
+
+    client.start();
+
 
     // 1. Code Runner Command
     let runCommand = vscode.commands.registerCommand('proxpl.run', () => {
@@ -130,30 +173,62 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(definitionProvider);
 
-    // 6. Completion Item Provider
+    // 6. Completion Item Provider (DEPRECATED: Now handled by LSP)
+    /*
     const completionProvider = vscode.languages.registerCompletionItemProvider('proxpl', {
         provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-            const keywords = [
-                'func', 'class', 'if', 'else', 'while', 'for', 'return', 'print',
-                'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export',
-                'prox', 'loop', // User requested specific keywords
-                'from', 'as', 'try', 'catch', 'throw', 'async', 'await'
-            ];
-            const builtins = ['len', 'str', 'clock', 'input', 'type'];
-
-            const items: vscode.CompletionItem[] = [];
-
-            keywords.forEach(word => {
-                items.push(new vscode.CompletionItem(word, vscode.CompletionItemKind.Keyword));
-            });
-            builtins.forEach(word => {
-                items.push(new vscode.CompletionItem(word, vscode.CompletionItemKind.Function));
-            });
-
-            return items;
+            // ... (old logic) ...
+            return [];
         }
     });
     context.subscriptions.push(completionProvider);
+    */
+
+    // --- DAP Setup ---
+    context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('proxpl', new ProXDebugAdapterDescriptorFactory()));
+}
+
+class ProXDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+    createDebugAdapterDescriptor(_session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+        // For now, use a simple inline implementation or rely on an executable
+        // This is a placeholder for the future DAP implementation
+        // return new vscode.DebugAdapterExecutable('proxpl', ['--debug-adapter']);
+        return new vscode.DebugAdapterInlineImplementation(new ProXDebugAdapter());
+    }
+}
+
+class ProXDebugAdapter implements vscode.DebugAdapter {
+    private _sendMessage = new vscode.EventEmitter<vscode.DebugProtocolMessage>();
+    readonly onDidSendMessage: vscode.Event<vscode.DebugProtocolMessage> = this._sendMessage.event;
+
+    handleMessage(message: vscode.DebugProtocolMessage): void {
+        // Minimal Mock Handler
+        if (message.type === 'request') {
+            const request = message as any;
+            if (request.command === 'initialize') {
+                this._sendMessage.fire({
+                    type: 'response',
+                    request_seq: request.seq,
+                    success: true,
+                    command: request.command,
+                    body: {
+                        supportsConfigurationDoneRequest: true
+                    }
+                } as any);
+            } else {
+                this._sendMessage.fire({
+                    type: 'response',
+                    request_seq: request.seq,
+                    success: true,
+                    command: request.command
+                } as any);
+            }
+        }
+    }
+
+    dispose() {
+
+    }
 }
 
 function mapLineNumber(lineStr: string): number {
@@ -161,4 +236,9 @@ function mapLineNumber(lineStr: string): number {
     return isNaN(num) ? 0 : num - 1;
 }
 
-export function deactivate() { }
+export function deactivate(): Thenable<void> | undefined {
+    if (!client) {
+        return undefined;
+    }
+    return client.stop();
+}

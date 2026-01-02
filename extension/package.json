@@ -2,7 +2,7 @@
   "name": "proxpl",
   "displayName": "ProXPL Language Support",
   "description": "Syntax highlighting and language support for the ProXPL programming language",
-  "version": "0.5.0-pre",
+  "version": "0.5.0",
   "publisher": "ProXentix",
   "repository": {
     "type": "git",
@@ -31,6 +31,9 @@
     "@typescript-eslint/parser": "^5.55.0",
     "eslint": "^8.36.0",
     "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
   },
   "contributes": {
     "languages": [
@@ -102,7 +105,51 @@
           "group": "navigation"
         }
       ]
-    }
+    },
+    "debuggers": [
+      {
+        "type": "proxpl",
+        "label": "ProXPL Debug",
+        "program": "./out/extension.js",
+        "runtime": "node",
+        "languages": [
+          "proxpl"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceFolder}/${command:AskForProgramName}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "proxpl",
+            "request": "launch",
+            "name": "Ask for file name",
+            "program": "${workspaceFolder}/${command:AskForProgramName}",
+            "stopOnEntry": true
+          }
+        ]
+      }
+    ]
   },
   "keywords": [
     "proxpl",
