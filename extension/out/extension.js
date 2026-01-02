@@ -191,8 +191,9 @@ class ProXDebugAdapter {
     }
     handleMessage(message) {
         // Minimal Mock Handler
-        if (message.type === 'request') {
-            const request = message;
+        const msg = message;
+        if (msg.type === 'request') {
+            const request = msg;
             if (request.command === 'initialize') {
                 this._sendMessage.fire({
                     type: 'response',

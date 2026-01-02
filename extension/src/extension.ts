@@ -203,8 +203,9 @@ class ProXDebugAdapter implements vscode.DebugAdapter {
 
     handleMessage(message: vscode.DebugProtocolMessage): void {
         // Minimal Mock Handler
-        if (message.type === 'request') {
-            const request = message as any;
+        const msg = message as any;
+        if (msg.type === 'request') {
+            const request = msg;
             if (request.command === 'initialize') {
                 this._sendMessage.fire({
                     type: 'response',
