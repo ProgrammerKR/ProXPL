@@ -25,7 +25,7 @@ This document outlines the development phases for ProXPL, tracking our journey f
 - [x] System Interface (`std.sys`)
 
 ## 🚧 Phase D - Ecosystem & Tooling (Current Focus)
-**Status: In Progress (v0.4.0)**
+**Status: In Progress (v0.5.0)**
 - [x] VS Code Extension (Syntax Highlighting, Snippets)
 - [x] Package Manager (PRM) foundation
 - [x] Module System (`use` keyword)

@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [Unreleased]
+## [0.5.0-pre] - 2026-01-02
+
+### Added
+- Pre-release build configuration.
+- Updated version strings to 0.5.0-pre.
+
+
 
 ## [0.5.1] - 2025-12-31
 
