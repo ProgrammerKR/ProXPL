@@ -518,7 +518,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 We warmly welcome contribut## 🛣️ Roadmap
 
-### v0.2.0 (Current - December 2024)
+### v0.5.0 (Current - January 2026)
 **Status**: Production-Ready Core
 - ✅ Complete compiler pipeline (Lexer → Parser → Type Checker → IR → Codegen)
 - ✅ Stack-based VM with bytecode execution

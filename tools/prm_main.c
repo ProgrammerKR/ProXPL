@@ -11,7 +11,7 @@
 #include "../src/prm/prm.h"
 
 void print_help() {
-    printf("ProX Resource Manager (v0.2.0)\n");
+    printf("ProX Resource Manager (v0.5.0)\n");
     printf("Usage: prm <command> [args]\n\n");
     
     printf("Core Commands:\n");
