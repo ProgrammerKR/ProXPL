@@ -52,8 +52,19 @@ if (NOT LLVM_FOUND)
     list(FILTER LIB_SOURCES EXCLUDE REGEX ".*backend_llvm\\.cpp$")
 endif()
 
+
+# --- Build Configuration ---
+option(PROX_STATIC_BUILD "Build as a single static executable" ON)
+
+if (PROX_STATIC_BUILD)
+    set(LIB_TYPE STATIC)
+    add_definitions(-DPROX_STATIC)
+else()
+    set(LIB_TYPE SHARED)
+endif()
+
 # --- Core Library ---
-add_library(proxpl_lib SHARED ${LIB_SOURCES})
+add_library(proxpl_lib ${LIB_TYPE} ${LIB_SOURCES})
 if (LLVM_FOUND)
     target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
 endif()

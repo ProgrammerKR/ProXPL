@@ -2,7 +2,7 @@
 # Generated documentation will be in build/docs/
 
 PROJECT_NAME           = ProXPL
-PROJECT_NUMBER         = 0.5.0
+PROJECT_NUMBER         = 0.6.0
 PROJECT_BRIEF          = "A Modern Programming Language Compiler"
 PROJECT_LOGO           = 
 

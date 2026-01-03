@@ -78,7 +78,9 @@ typedef struct TypeInfo TypeInfo;
 typedef Value (*NativeFn)(int argCount, Value *args);
 
 // --- Cross-Platform API Visibility ---
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
+#if defined(PROX_STATIC)
+  #define PROX_API
+#elif defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
   #ifdef proxpl_lib_EXPORTS
     #define PROX_API __declspec(dllexport)
   #else

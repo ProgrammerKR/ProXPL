@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "ProXPL"
-#define MyAppVersion "0.5.0"
+#define MyAppVersion "0.6.0"
 #define MyAppPublisher "ProXentix"
 #define MyAppURL "https://github.com/ProgrammerKR/ProXPL"
 #define MyAppExeName "proxpl.exe"
