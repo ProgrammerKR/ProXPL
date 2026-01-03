@@ -1,0 +1,4 @@
+use std.io;
+print("Loaded");
+print(std.io.input_raw);
+print("Access OK");

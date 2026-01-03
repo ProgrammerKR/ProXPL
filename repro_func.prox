@@ -1,0 +1,6 @@
+func foo() {
+    print("Inside foo");
+}
+print("Calling foo");
+foo();
+print("Done");
