@@ -43,7 +43,7 @@ Name: "addtopath"; Description: "Add ProXPL to the system PATH environment varia
 ; Binaries
 Source: "bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "bin\prm.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
 ; Libraries
 Source: "lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Documentation

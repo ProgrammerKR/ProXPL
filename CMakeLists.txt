@@ -97,8 +97,14 @@ add_executable(ir_gen_test tools/ir_gen_test.c)
 if(PROX_STATIC_BUILD)
     # Link directly to sources for static build since proxpl_lib doesn't exist
     target_sources(ir_gen_test PRIVATE ${LIB_SOURCES})
+    if (LLVM_FOUND)
+         target_link_libraries(ir_gen_test PRIVATE ${llvm_libs})
+    endif()
 else()
     target_link_libraries(ir_gen_test PRIVATE proxpl_lib)
+    if (LLVM_FOUND)
+        target_link_libraries(ir_gen_test PRIVATE ${llvm_libs})
+    endif()
 endif()
 
 # --- LLVM Gen Test Executable ---
