@@ -59,6 +59,8 @@ void test_ir(const char* source) {
 }
 
 int main() {
+    initVM(&vm); // Initialize VM for string interning and GC
+
     const char* code = 
         "let x = 10;\n"
         "if (x > 5) {\n"
@@ -73,5 +75,7 @@ int main() {
         "return x + z;";
     
     test_ir(code);
+    
+    freeVM(&vm); // Cleanup
     return 0;
 }

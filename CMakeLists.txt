@@ -24,7 +24,7 @@ if (LLVM_FOUND)
     link_directories(${LLVM_LIBRARY_DIRS})
 
     # Map generic components to specific libs
-    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo)
+    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
 else()
     message(WARNING "LLVM not found. Building without LLVM backend.")
     set(llvm_libs "")
@@ -36,7 +36,6 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 # --- Include Directories ---
 include_directories(include)
 include_directories(src)
-
 
 # --- Library Sources ---
 file(GLOB_RECURSE LIB_SOURCES 
@@ -74,6 +73,9 @@ if (PROX_STATIC_BUILD)
 else()
     # Traditional split build
     add_library(proxpl_lib SHARED ${LIB_SOURCES})
+    if (LLVM_FOUND)
+        target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
+    endif()
     add_executable(proxpl src/main.c)
     target_link_libraries(proxpl PRIVATE proxpl_lib)
 endif()
