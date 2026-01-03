@@ -37,6 +37,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 include_directories(include)
 include_directories(src)
 
+
 # --- Library Sources ---
 file(GLOB_RECURSE LIB_SOURCES 
     "src/*.c"
@@ -47,6 +48,8 @@ list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_v2\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_dispatch\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*instr_handlers_template\\.c$")
+# Exclude prototype VM register which has its own main
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_register\\.c$")
 
 if (NOT LLVM_FOUND)
     list(FILTER LIB_SOURCES EXCLUDE REGEX ".*backend_llvm\\.cpp$")
@@ -91,12 +94,24 @@ endif()
 
 # --- IR Test Executable ---
 add_executable(ir_gen_test tools/ir_gen_test.c)
-target_link_libraries(ir_gen_test PRIVATE proxpl_lib)
+if(PROX_STATIC_BUILD)
+    # Link directly to sources for static build since proxpl_lib doesn't exist
+    target_sources(ir_gen_test PRIVATE ${LIB_SOURCES})
+else()
+    target_link_libraries(ir_gen_test PRIVATE proxpl_lib)
+endif()
 
 # --- LLVM Gen Test Executable ---
 add_executable(llvm_gen_test tools/llvm_gen_test.c)
 
-target_link_libraries(llvm_gen_test PRIVATE proxpl_lib ${llvm_libs})
+if(PROX_STATIC_BUILD)
+    target_sources(llvm_gen_test PRIVATE ${LIB_SOURCES})
+    if (LLVM_FOUND)
+        target_link_libraries(llvm_gen_test PRIVATE ${llvm_libs})
+    endif()
+else()
+    target_link_libraries(llvm_gen_test PRIVATE proxpl_lib ${llvm_libs})
+endif()
 
 # --- PRM Executable ---
 add_executable(prm 

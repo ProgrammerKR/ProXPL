@@ -4,7 +4,7 @@
 
 static void printLine(const char* source, int targetLine) {
   int currentLine = 1;
-  const char* lineStart = source;
+
   const char* lineEnd = source;
 
   while (*lineEnd != '\0') {
