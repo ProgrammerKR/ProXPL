@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-VM vm;
+
 
 // Forward declaration from ir_gen.c
 IRModule* generateSSA_IR(StmtList* program);
