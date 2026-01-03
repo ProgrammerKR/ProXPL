@@ -224,7 +224,11 @@ static void runFile(const char *path) {
     // --- Pipeline Step 3: Bytecode Gen & Execution ---
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
     printf("Executing...\n");
+    // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
+    printf("Executing...\n");
+    printf("DEBUG: Calling interpretAST from main...\n");
     InterpretResult result = interpretAST(&vm, statements);
+    printf("DEBUG: Returned from interpretAST.\n");
     
     if (result != INTERPRET_OK) {
         fprintf(stderr, "Execution Failed.\n");
