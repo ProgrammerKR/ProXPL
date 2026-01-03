@@ -54,32 +54,38 @@ endif()
 
 
 # --- Build Configuration ---
+# --- Build Configuration ---
 option(PROX_STATIC_BUILD "Build as a single static executable" ON)
 
 if (PROX_STATIC_BUILD)
-    set(LIB_TYPE STATIC)
     add_definitions(-DPROX_STATIC)
+    
+    # Configure Static CRT for MSVC to avoid DLL dependencies
+    if(MSVC)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        add_compile_options($<$<CONFIG:Release>:/MT> $<$<CONFIG:Debug>:/MTd>)
+    endif()
+
+    # Monolithic build: Sources directly in executable to ensure all symbols are included
+    add_executable(proxpl src/main.c ${LIB_SOURCES})
 else()
-    set(LIB_TYPE SHARED)
+    # Traditional split build
+    add_library(proxpl_lib SHARED ${LIB_SOURCES})
+    add_executable(proxpl src/main.c)
+    target_link_libraries(proxpl PRIVATE proxpl_lib)
 endif()
 
-# --- Core Library ---
-add_library(proxpl_lib ${LIB_TYPE} ${LIB_SOURCES})
+# --- Main Executable Linking ---
+# (Common linking logic)
 if (LLVM_FOUND)
-    target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
+    target_link_libraries(proxpl PRIVATE ${llvm_libs})
 endif()
-
-# --- Main Executable ---
-add_executable(proxpl src/main.c)
-target_link_libraries(proxpl PRIVATE proxpl_lib ${llvm_libs})
 
 if(UNIX)
     if(APPLE)
         target_link_libraries(proxpl PRIVATE pthread dl z)
-        target_link_libraries(proxpl_lib PRIVATE pthread dl z)
     else()
         target_link_libraries(proxpl PRIVATE pthread dl z tinfo)
-        target_link_libraries(proxpl_lib PRIVATE pthread dl z tinfo)
     endif()
 endif()
 

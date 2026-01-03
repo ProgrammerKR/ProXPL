@@ -81,12 +81,22 @@ jobs:
         shell: bash
         run: |
           mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
+          
+      - name: Build Installer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
+          dir build
+
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: ${{ matrix.asset_name }}
+          path: |
+            ${{ matrix.asset_name }}
+            build/ProXPL_Installer_*.exe
 
   release:
     name: Create Release
@@ -97,6 +107,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: proxpl-windows.exe
+      
+      - name: Download Windows Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: proxpl-windows.exe
+          path: .
+          pattern: ProXPL_Installer_*.exe
+          merge-multiple: true
           
       - name: Download Linux Artifact
         uses: actions/download-artifact@v4
@@ -113,6 +131,7 @@ jobs:
         with:
           files: |
             proxpl-windows.exe
+            ProXPL_Installer_*.exe
             proxpl-linux
             proxpl-macos
           generate_release_notes: true
