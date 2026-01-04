@@ -306,6 +306,8 @@ static PxTokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'a':
         return checkKeyword(scanner, 2, 4, "tive", TOKEN_NATIVE);
+      case 'e':
+        return checkKeyword(scanner, 2, 1, "w", TOKEN_NEW);
       case 'u':
         return checkKeyword(scanner, 2, 2, "ll", TOKEN_NULL);
       }
@@ -323,7 +325,10 @@ static PxTokenType identifierType(Scanner *scanner) {
               case 'n':
                 return checkKeyword(scanner, 4, 1, "t", TOKEN_PRINT);
               case 'v':
-                return checkKeyword(scanner, 4, 3, "ate", TOKEN_PRIVATE);
+                if (scanner->current - scanner->start > 4) {
+                     return checkKeyword(scanner, 4, 3, "ate", TOKEN_PRIVATE);
+                }
+                return checkKeyword(scanner, 4, 0, "", TOKEN_PRIVATE);
               }
             }
             break;
@@ -333,6 +338,17 @@ static PxTokenType identifierType(Scanner *scanner) {
         }
         break;
       case 'u':
+        if (scanner->current - scanner->start > 2) {
+             switch (scanner->start[2]) {
+                 case 'b':
+                     if (scanner->current - scanner->start > 3) {
+                         // publ...
+                         return checkKeyword(scanner, 4, 2, "ic", TOKEN_PUBLIC);
+                     }
+                     // pub
+                     return checkKeyword(scanner, 2, 1, "b", TOKEN_PUBLIC);
+             }
+        }
         return checkKeyword(scanner, 2, 4, "blic", TOKEN_PUBLIC);
       }
     }
