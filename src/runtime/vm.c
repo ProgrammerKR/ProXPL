@@ -188,14 +188,7 @@ static bool invoke(ObjString* name, int argCount, VM* vm) {
   return invokeFromClass(instance->klass, name, argCount, vm);
 }
 
-// ... (Rest of file) ...
-
-// DO_OP_CALL update in run() to be patched separately or via full file rewrite if preferred.
-// But `replace_file_content` targets blocks. 
-// I will create a separate tool call for DO_OP_CALL update to be safe and precise.
-// This block just adds the helpers at the end of file (or before run/where needed).
-// Since `run` uses them, they must be forward declared or defined before `run`.
-// I will insert them BEFORE `run`.
+static InterpretResult run(VM* vm) {
   printf("DEBUG: Entering run()\n");
   CallFrame* frame = &vm->frames[vm->frameCount - 1];
 
