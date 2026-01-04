@@ -528,9 +528,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ---
 
-## 🛠️ Contributing
-
-We warmly welcome contribut## 🛣️ Roadmap
+## 🛣️ Roadmap
 
 ### v0.7.0 (Current - January 2026)
 **Status**: Released
@@ -546,7 +544,7 @@ We warmly welcome contribut## 🛣️ Roadmap
 - ✅ CLI tools and LSP foundation
 - ✅ Cross-platform support (Windows/Linux/macOS)
 
-### v1.1.0 (Q1 2025)
+### v1.1.0 (Q1 2026)
 **Focus**: Enhanced Developer Experience & System APIs
 - 🚧 **Advanced Diagnostics**: Enhanced error reporting with **Column Tracking** and visual pointers (`^`) for precise debugging.
 - 🚧 **VS Code Tooling**: Implementation of **Snippets** and **Hover Support** (documentation tooltips) in the official extension.
@@ -554,19 +552,19 @@ We warmly welcome contribut## 🛣️ Roadmap
 - 🚧 **LSP Evolution**: Transition from foundation to a functional Language Server (Go-to-definition, basic autocomplete).
 - 🚧 **PRM Remote Support**: Enabling PRM to fetch and install packages directly from **GitHub repositories**.
 
-### v1.2.0 (Q2 2025)
+### v1.2.0 (Q2 2026)
 **Focus**: Object-Oriented Programming & Ecosystem
 - 📋 Class-based OOP with inheritance and interfaces.
 - 📋 Access modifiers (`pub`, `priv`) and constructors/destructors.
 - 📋 **ProX Studio Alpha**: Initial fork of VS Code tailored for ProXPL development.
 
-### v1.3.0 (Q3 2025)
+### v1.3.0 (Q3 2026)
 **Focus**: Advanced Features
 - 📋 Pattern matching and Algebraic Data Types (Enums).
 - 📋 Generics, Traits, and Type Parameters.
 - 📋 Option/Result types for robust error handling.
 
-### v2.0.0 (Q4 2025+)
+### v2.0.0 (Q4 2026+)
 **Focus**: Concurrency & Integrated Tooling
 - 📋 **ProX Studio (Stable)**: A fully branded, dedicated IDE with integrated debugger, PRM GUI, and zero-config ProXPL environment.
 - 📋 Async/await, Green threads, and Actor model concurrency.
@@ -576,7 +574,11 @@ We warmly welcome contribut## 🛣️ Roadmap
 ### Future Considerations
 - 📋 Memory safety guarantees (ownership/borrowing).
 - 📋 Compile-time reflection and metaprogramming.
-- 📋 Dedicated ProXPL Package Registry.ions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
+- 📋 Dedicated ProXPL Package Registry.
+
+## 🛠️ Contributing
+
+We warmly welcome contribut
 
 ### How to Contribute
 
