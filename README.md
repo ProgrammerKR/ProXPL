@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
@@ -552,16 +552,18 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - ✅ **LSP Evolution**: Transition from foundation to a functional Language Server (Go-to-definition, basic autocomplete).
 - ✅ **PRM Remote Support**: Enabling PRM to fetch and install packages directly from **GitHub repositories**.
 
-### v1.1.0 (Planned)
-**Focus**: Optimization & Stability
-- 📋 Optimized GC & Memory footprint.
-- 📋 Further Stdlib expansion.
+### v0.9.0 (Current - Q1 2026)
+**Status**: Released
+- ✅ **GC Optimization**: New `std.gc` module for manual collection control and memory statistics.
+- ✅ **Stdlib Expansion**: Enhanced `std.time` with `strftime`/`timestamp` and `std.fs` with `move`/`abspath`.
+- ✅ **Stability Improvements**: General bug fixes and performance tweaks in memory management.
 
-### v1.2.0 (Q2 2026)
-**Focus**: Object-Oriented Programming & Ecosystem
-- 📋 Class-based OOP with inheritance and interfaces.
-- 📋 Access modifiers (`pub`, `priv`) and constructors/destructors.
-- 📋 **ProX Studio Alpha**: Initial fork of VS Code tailored for ProXPL development.
+### v1.0.0 (Planned - Q2 2026)
+**Focus**: OOP & Ecosystem (Major Release)
+- 📋 **Class-based OOP**: First-class support for Classes, Objects, Inheritance, and Interfaces.
+- 📋 **Access Control**: `pub`, `priv` modifiers for encapsulation.
+- 📋 **OOP Tooling**: IDE support for OOP constructs.
+- 📋 **ProX Studio Alpha**: Initial tailored IDE release.
 
 ### v1.3.0 (Q3 2026)
 **Focus**: Advanced Features
