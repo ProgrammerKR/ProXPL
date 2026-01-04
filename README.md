@@ -302,6 +302,19 @@ func showcase_stdlib() {
 }
 ```
 
+### Foreign Function Interface (FFI)
+
+ProXPL can invoke native C functions from dynamic libraries (`.dll`, `.so`) using the `extern` keyword.
+
+```javascript
+// Load C standard library
+extern "msvcrt.dll" "puts" func c_puts(text);
+extern "msvcrt.dll" "abs" func c_abs(n);
+
+c_puts("Hello from C!");
+let dist = c_abs(-100);
+```
+
 ---
 
 ## 📦 Package Manager (PRM)

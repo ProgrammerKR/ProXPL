@@ -986,6 +986,34 @@ func main() {
 main();
 ```
 
+
+---
+
+## Foreign Function Interface
+
+ProXPL supports loading and calling external native functions using the `extern` declaration.
+
+### Syntax
+```javascript
+extern "libname" "symbol" func name(param1, param2);
+```
+
+- **libname**: Path or name of the dynamic library (`.dll`, `.so`, `.dylib`).
+- **symbol**: Exact name of the exported symbol in the library.
+- **name**: Name used to call the function within ProXPL.
+- **params**: Parameter names (types are marshalled automatically).
+
+### Type Marshalling
+
+| ProXPL Type | C Type (Argument) | C Type (Return) |
+|-------------|-------------------|-----------------|
+| `Number`    | `int` / `double`  | `int` (default) |
+| `String`    | `char*`           | `char*`         |
+| `Bool`      | `int`             | `int`           |
+| `Null`      | `NULL`            | `NULL`          |
+
+> **Note**: The current implementation primarily supports integer return types. Support for floating-point and void returns is planned.
+
 ---
 
 ## Conclusion
