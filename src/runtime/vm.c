@@ -121,14 +121,14 @@ static void concatenate(VM* pvm) {
 
 // Helper Functions for OOP
 
-static void defineMethod(ObjString* name, VM* vm) {
+void defineMethod(ObjString* name, VM* vm) {
   Value method = peek(vm, 0);
   ObjClass* klass = AS_CLASS(peek(vm, 1));
   tableSet(&klass->methods, name, method);
   pop(vm);
 }
 
-static bool bindMethod(ObjClass* klass, ObjString* name, VM* vm) {
+bool bindMethod(ObjClass* klass, ObjString* name, VM* vm) {
   Value method;
   if (!tableGet(&klass->methods, name, &method)) {
     runtimeError(vm, "Undefined property '%s'.", name->chars);
@@ -141,7 +141,7 @@ static bool bindMethod(ObjClass* klass, ObjString* name, VM* vm) {
   return true;
 }
 
-static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount, VM* vm) {
+bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount, VM* vm) {
   Value method;
   if (!tableGet(&klass->methods, name, &method)) {
     runtimeError(vm, "Undefined property '%s'.", name->chars);
@@ -161,7 +161,7 @@ static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount, VM* 
   return true;
 }
 
-static bool invoke(ObjString* name, int argCount, VM* vm) {
+bool invoke(ObjString* name, int argCount, VM* vm) {
   Value receiver = peek(vm, argCount);
 
   if (!IS_INSTANCE(receiver)) {
