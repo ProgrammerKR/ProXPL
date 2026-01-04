@@ -62,9 +62,10 @@ let upper = string::toUpper("hello");
 | **String** | 15 | String manipulation |
 | **Collections** | 15 | List and dictionary operations |
 | **Conversion** | 10 | Type conversion utilities |
-| **File I/O** | 5 | File operations |
+| **File I/O** | 7 | File operations |
 | **System** | 5 | System and environment |
-| **DateTime** | 5 | Date and time utilities |
+| **DateTime** | 7 | Date and time utilities |
+| **Garbage Collector** | 3 | Memory management |
 
 ---
 
@@ -773,6 +774,22 @@ Collection functions operate on lists and dictionaries.
 | `keys()` | `keys(dict: dict) -> list` | Get all keys |
 | `values()` | `values(dict: dict) -> list` | Get all values |
 | `clone()` | `clone(collection: any) -> any` | Shallow copy |
+
+---
+
+## Garbage Collection
+
+### Overview
+
+The `std.gc` module provides manual control over memory management.
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `collect()` | `gc.collect() -> int` | Force garbage collection |
+| `stats()` | `gc.stats() -> list` | Get memory statistics |
+| `usage()` | `gc.usage() -> int` | Get current memory usage |
+
+See [GC.md](GC.md) for full details.
 
 ---
 

@@ -13,9 +13,6 @@
     "vscode": "^1.104.0"
   },
   "icon": "logo.png",
-  "activationEvents": [
-    "onLanguage:proxpl"
-  ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
