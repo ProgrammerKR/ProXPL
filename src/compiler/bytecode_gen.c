@@ -481,6 +481,33 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             writeChunk(gen->chunk, OP_RETURN, stmt->line);
             break;
         }
+        case STMT_EXTERN_DECL: {
+            // Push library path
+            Value libVal = OBJ_VAL(copyString(stmt->as.extern_decl.libraryPath, strlen(stmt->as.extern_decl.libraryPath)));
+            int libConst = addConstant(gen->chunk, libVal);
+            writeChunk(gen->chunk, OP_CONSTANT, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)libConst, stmt->line);
+            
+            // Push symbol name
+            Value symVal = OBJ_VAL(copyString(stmt->as.extern_decl.symbolName, strlen(stmt->as.extern_decl.symbolName)));
+            int symConst = addConstant(gen->chunk, symVal);
+            writeChunk(gen->chunk, OP_CONSTANT, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)symConst, stmt->line);
+            
+            // Make Foreign Object
+            writeChunk(gen->chunk, OP_MAKE_FOREIGN, stmt->line);
+            
+            // Define Global
+             if (gen->compiler->scopeDepth > 0) {
+                addLocal(gen, stmt->as.extern_decl.name);
+            } else {
+                Value nameVal = OBJ_VAL(copyString(stmt->as.extern_decl.name, strlen(stmt->as.extern_decl.name)));
+                int nameConst = addConstant(gen->chunk, nameVal);
+                writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            break;
+        }
         case STMT_IF: {
             genExpr(gen, stmt->as.if_stmt.condition);
             writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);

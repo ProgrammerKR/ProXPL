@@ -57,6 +57,9 @@
 #define IS_INTERFACE(value) isObjType(value, OBJ_INTERFACE)
 #define AS_INTERFACE(value) ((ObjInterface *)AS_OBJ(value))
 
+#define IS_FOREIGN(value) isObjType(value, OBJ_FOREIGN)
+#define AS_FOREIGN(value) ((ObjForeign *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
@@ -69,6 +72,7 @@ typedef enum {
   OBJ_BOUND_METHOD,
   OBJ_LIST,
   OBJ_DICTIONARY,
+  OBJ_FOREIGN,
 
   OBJ_TASK,
   OBJ_INTERFACE
@@ -167,6 +171,13 @@ struct ObjDictionary {
   Table items;
 };
 
+typedef struct ObjForeign {
+  Obj obj;
+  ObjString* name;
+  void* library; // dlopen/LoadLibrary handle
+  void* function; // dlsym/GetProcAddress pointer
+} ObjForeign;
+
 typedef struct ObjTask ObjTask;
 
 typedef void (*ResumeFn)(void*);
@@ -198,6 +209,7 @@ struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
 struct ObjList *newList();
 struct ObjDictionary *newDictionary();
+ObjForeign *newForeign(ObjString* name, void* library, void* function);
 struct ObjTask *newTask(void* hdl, ResumeFn resume);
 void printObject(Value value);
 

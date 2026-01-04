@@ -242,7 +242,13 @@ static PxTokenType identifierType(Scanner *scanner) {
           case 'p':
             return checkKeyword(scanner, 3, 3, "ort", TOKEN_EXPORT);
           case 't':
-            return checkKeyword(scanner, 3, 4, "ends", TOKEN_EXTENDS);
+            if (scanner->current - scanner->start > 3) {
+                 switch(scanner->start[3]) {
+                     case 'e': return checkKeyword(scanner, 4, 2, "rn", TOKEN_EXTERN);
+                     case 'n': return checkKeyword(scanner, 4, 3, "nds", TOKEN_EXTENDS);
+                 }
+            }
+            break;
           }
         }
         break;

@@ -492,6 +492,18 @@ Stmt *createPrintStmt(Expr *expression, int line, int column) {
   return stmt;
 }
 
+Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char *name, StringList *params, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_EXTERN_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.extern_decl.libraryPath = strdup(libPath);
+  stmt->as.extern_decl.symbolName = strdup(symName);
+  stmt->as.extern_decl.name = strdup(name);
+  stmt->as.extern_decl.params = params;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -639,6 +651,12 @@ void freeStmt(Stmt *stmt) {
     break;
   case STMT_PRINT:
     freeExpr(stmt->as.print.expression);
+    break;
+  case STMT_EXTERN_DECL:
+    free(stmt->as.extern_decl.libraryPath);
+    free(stmt->as.extern_decl.symbolName);
+    free(stmt->as.extern_decl.name);
+    freeStringList(stmt->as.extern_decl.params);
     break;
   }
 

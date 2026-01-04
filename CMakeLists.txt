@@ -15,7 +15,34 @@ else()
 endif()
 
 # --- LLVM Configuration ---
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
+
+# --- LLVM Configuration ---
 find_package(LLVM CONFIG)
+
+# --- LibFFI Configuration ---
+# specialized find_package might be needed if not in standard path, but let's try standard first
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(LIBFFI libffi)
+endif()
+
+# Fallback or manual find if pkg-config fails or on simple windows setups
+if(NOT LIBFFI_FOUND)
+    find_path(LIBFFI_INCLUDE_DIRS ffi.h)
+    find_library(LIBFFI_LIBRARIES NAMES ffi libffi)
+    if(LIBFFI_INCLUDE_DIRS AND LIBFFI_LIBRARIES)
+        set(LIBFFI_FOUND TRUE)
+    endif()
+endif()
+
+if(LIBFFI_FOUND)
+    message(STATUS "Found LibFFI: ${LIBFFI_LIBRARIES}")
+    include_directories(${LIBFFI_INCLUDE_DIRS})
+    add_definitions(-DUSE_LIBFFI)
+else()
+    message(WARNING "LibFFI not found. FFI features will be disabled.")
+endif()
 
 if (LLVM_FOUND)
     message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -76,6 +103,9 @@ else()
     if (LLVM_FOUND)
         target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
     endif()
+    if (LIBFFI_FOUND)
+        target_link_libraries(proxpl_lib PRIVATE ${LIBFFI_LIBRARIES})
+    endif()
     add_executable(proxpl src/main.c)
     target_link_libraries(proxpl PRIVATE proxpl_lib)
 endif()
@@ -84,6 +114,10 @@ endif()
 # (Common linking logic)
 if (LLVM_FOUND)
     target_link_libraries(proxpl PRIVATE ${llvm_libs})
+endif()
+
+if (LIBFFI_FOUND)
+    target_link_libraries(proxpl PRIVATE ${LIBFFI_LIBRARIES})
 endif()
 
 if(UNIX)

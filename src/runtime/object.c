@@ -46,6 +46,14 @@ ObjNative *newNative(NativeFn function) {
   return native;
 }
 
+ObjForeign *newForeign(ObjString* name, void* library, void* function) {
+  ObjForeign *foreign = ALLOCATE_OBJ(ObjForeign, OBJ_FOREIGN);
+  foreign->name = name;
+  foreign->library = library;
+  foreign->function = function;
+  return foreign;
+}
+
 ObjModule *newModule(ObjString *name) {
   ObjModule *module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
   module->name = name;
@@ -138,6 +146,9 @@ void printObject(Value value) {
     break;
   case OBJ_BOUND_METHOD:
     printObject(OBJ_VAL(((struct ObjBoundMethod*)AS_OBJ(value))->method->function));
+    break;
+  case OBJ_FOREIGN:
+    printf("<foreign fn %s>", ((ObjForeign*)AS_OBJ(value))->name->chars);
     break;
   case OBJ_LIST:
     printf("[list]");

@@ -64,6 +64,7 @@ typedef enum {
   OP_END_TRY,
   OP_INTERFACE,
   OP_IMPLEMENT,
+  OP_MAKE_FOREIGN,
   OP_HALT = 0xFF
 } OpCode;
 

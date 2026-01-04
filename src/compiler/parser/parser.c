@@ -205,6 +205,8 @@ StmtList *parse(Parser *parser) {
 
 // === Declarations ===
 
+static Stmt *externDecl(Parser *p);
+
 static Stmt *declaration(Parser *p) {
   if (match(p, 1, TOKEN_ASYNC)) {
       if (match(p, 1, TOKEN_FUNC))
@@ -217,6 +219,8 @@ static Stmt *declaration(Parser *p) {
     return funcDecl(p, "function", false, ACCESS_PUBLIC, false, false);
   if (match(p, 1, TOKEN_CLASS))
     return classDecl(p);
+  if (match(p, 1, TOKEN_EXTERN))
+    return externDecl(p);
   if (match(p, 1, TOKEN_INTERFACE))
     return interfaceDecl(p);
   if (match(p, 1, TOKEN_USE))
@@ -396,6 +400,39 @@ static Stmt *useDecl(Parser *p) {
   consume(p, TOKEN_SEMICOLON, "Expect ';'.");
 
   return createUseDeclStmt(modules, previous(p).line, 0);
+}
+
+static Stmt *externDecl(Parser *p) {
+    Token libToken = consume(p, TOKEN_STRING, "Expect library path string.");
+    char *libPath = tokenToString(libToken);
+    
+    Token symToken = consume(p, TOKEN_STRING, "Expect symbol name string.");
+    char *symName = tokenToString(symToken);
+    
+    consume(p, TOKEN_FUNC, "Expect 'func' after extern strings.");
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_PAREN, "Expect '(' after name.");
+    
+    StringList *params = createStringList();
+    if (!check(p, TOKEN_RIGHT_PAREN)) {
+        do {
+            Token param = consume(p, TOKEN_IDENTIFIER, "Expect parameter name.");
+            char *paramName = tokenToString(param);
+            appendString(params, paramName);
+            free(paramName);
+        } while (match(p, 1, TOKEN_COMMA));
+    }
+    
+    consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(p, TOKEN_SEMICOLON, "Expect ';' after extern declaration.");
+    
+    Stmt *stmt = createExternDeclStmt(libPath, symName, name, params, libToken.line, 0);
+    free(libPath);
+    free(symName);
+    free(name);
+    return stmt;
 }
 
 // === Statements ===

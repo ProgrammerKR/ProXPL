@@ -101,6 +101,11 @@ static void blackenObject(Obj* object) {
             markTable(&module->exports);
             break;
         }
+        case OBJ_FOREIGN: {
+            ObjForeign* foreign = (ObjForeign*)object;
+            markObject((Obj*)foreign->name);
+            break;
+        }
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
             markObject((Obj*)closure->function);
@@ -217,6 +222,12 @@ static void freeObject(Obj* object) {
         }
         case OBJ_NATIVE: {
             FREE(ObjNative, object);
+            break;
+        }
+        case OBJ_FOREIGN: {
+            // Note: We do not close the library handle here as it might be shared.
+            // Future improvement: Reference counting for libraries.
+            FREE(ObjForeign, object);
             break;
         }
         case OBJ_MODULE: {

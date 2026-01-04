@@ -19,6 +19,7 @@
 #include "../include/gc.h"
 #include "../include/vm.h"
 #include "../include/error_report.h"
+#include "../include/ffi_bridge.h"
 
 
 VM vm;
@@ -179,7 +180,8 @@ static InterpretResult run(VM *vm) {
       [OP_USE] = &&DO_OP_USE,
       [OP_TRY] = &&DO_OP_TRY,
       [OP_CATCH] = &&DO_OP_CATCH,
-      [OP_END_TRY] = &&DO_OP_END_TRY
+      [OP_END_TRY] = &&DO_OP_END_TRY,
+      [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN
   };
 
   DISPATCH();
@@ -524,8 +526,17 @@ static InterpretResult run(VM *vm) {
           vm->stackTop -= argCount + 1;
           push(vm, result);
           DISPATCH();
+          vm->stackTop -= argCount + 1;
+          push(vm, result);
+          DISPATCH();
+      } else if (IS_FOREIGN(callee)) {
+          ObjForeign* foreign = AS_FOREIGN(callee);
+          Value result = callForeign(foreign, argCount, vm->stackTop - argCount);
+          vm->stackTop -= argCount + 1;
+          push(vm, result);
+          DISPATCH();
       } else {
-          runtimeError(vm, "Can only call functions and classes.");
+          runtimeError(vm, "Can only call functions, classes, and foreign functions.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -596,6 +607,17 @@ static InterpretResult run(VM *vm) {
   DO_OP_END_TRY: {
       runtimeError(vm, "Exception handling not yet implemented.");
       return INTERPRET_RUNTIME_ERROR;
+  }
+  DO_OP_MAKE_FOREIGN: {
+      ObjString* symbol = AS_STRING(pop(vm));
+      ObjString* libName = AS_STRING(pop(vm));
+      ObjForeign* foreign = loadForeign(libName, symbol);
+      if (foreign == NULL) {
+          runtimeError(vm, "Failed to load foreign symbol '%s' from '%s'.", symbol->chars, libName->chars);
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      push(vm, OBJ_VAL(foreign));
+      DISPATCH();
   }
   
   DO_OP_UNKNOWN: {
@@ -922,8 +944,17 @@ static InterpretResult run(VM *vm) {
             vm->stackTop -= argCount + 1;
             push(vm, result);
             break;
+            vm->stackTop -= argCount + 1;
+            push(vm, result);
+            break;
+        } else if (IS_FOREIGN(callee)) {
+            ObjForeign* foreign = AS_FOREIGN(callee);
+            Value result = callForeign(foreign, argCount, vm->stackTop - argCount);
+            vm->stackTop -= argCount + 1;
+            push(vm, result);
+            break;
         } else {
-            runtimeError(vm, "Can only call functions and classes.");
+            runtimeError(vm, "Can only call functions, classes, and foreign functions.");
             return INTERPRET_RUNTIME_ERROR;
         }
     }
@@ -1045,6 +1076,17 @@ static InterpretResult run(VM *vm) {
     case OP_END_TRY: {
         runtimeError(vm, "Exception handling not yet implemented.");
         return INTERPRET_RUNTIME_ERROR;
+    }
+    case OP_MAKE_FOREIGN: {
+        ObjString* symbol = AS_STRING(pop(vm));
+        ObjString* libName = AS_STRING(pop(vm));
+        ObjForeign* foreign = loadForeign(libName, symbol);
+        if (foreign == NULL) {
+            runtimeError(vm, "Failed to load foreign symbol '%s' from '%s'.", symbol->chars, libName->chars);
+           return INTERPRET_RUNTIME_ERROR;
+        }
+        push(vm, OBJ_VAL(foreign));
+        break;
     }
     case OP_RETURN: {
       vm->frameCount--;
