@@ -37,7 +37,7 @@ typedef enum {
   EXPR_VARIABLE, EXPR_ASSIGN, EXPR_LOGICAL, EXPR_CALL,
   EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_LIST,
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
-  EXPR_AWAIT
+  EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW
 } ExprType;
 
 typedef enum {
@@ -105,6 +105,9 @@ typedef struct { DictPairList *pairs; } DictionaryExpr;
 typedef struct { Expr *condition; Expr *true_branch; Expr *false_branch; } TernaryExpr;
 typedef struct { StringList *params; StmtList *body; } LambdaExpr;
 typedef struct { Expr *expression; } AwaitExpr;
+typedef struct { int dummy; } ThisExpr;
+typedef struct { char *method; } SuperExpr; 
+typedef struct { Expr *clazz; ExprList *args; } NewExpr;
 
 struct Expr {
   ExprType type;
@@ -117,6 +120,7 @@ struct Expr {
     LogicalExpr logical; CallExpr call; GetExpr get; SetExpr set;
     IndexExpr index; ListExpr list; DictionaryExpr dictionary;
     TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
+    ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
   } as;
 };
 
@@ -170,6 +174,9 @@ Expr *createDictionaryExpr(DictPairList *pairs, int line, int column);
 Expr *createTernaryExpr(Expr *cond, Expr *true_br, Expr *false_br, int line, int column);
 Expr *createLambdaExpr(StringList *params, StmtList *body, int line, int column);
 Expr *createAwaitExpr(Expr *expression, int line, int column);
+Expr *createThisExpr(int line, int column);
+Expr *createSuperExpr(const char *method, int line, int column);
+Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line, int column);
