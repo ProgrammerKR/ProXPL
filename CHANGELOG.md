@@ -9,8 +9,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.7.0-pre] - 2026-01-04
 
 ### Added
+- **FFI System**: Initial implementation of the Foreign Function Interface using `libffi`.
+- **Extension**:
+  - Added icon support for `.iss` (Inno Setup) files.
+  - Added icon support for `.internal_ingore` and `.internal_ignore`.
+- **Runtime**:
+  - `ffi_bridge.c` for handling native function calls.
 - Pre-release build configuration for version 0.7.0.
 - Updated version strings across the codebase.
+
+### Fixed
+- **Build**: Resolved linker errors on Ubuntu and macOS where `libffi` was not being linked to test executables (`ir_gen_test`, `llvm_gen_test`).
+- **Stability**: Fixed runtime crashes related to stack management and `input` function usage.
 
 ## [0.5.0-pre] - 2026-01-02
 
