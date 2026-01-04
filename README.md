@@ -578,7 +578,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ## 🛠️ Contributing
 
-We warmly welcome contribut
+We warmly welcome contributions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
 
 ### How to Contribute
 
