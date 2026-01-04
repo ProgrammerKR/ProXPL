@@ -1129,37 +1129,17 @@ static InterpretResult run(VM* vm) {
     }
     case OP_IMPLEMENT: {
         Value interfaceVal = pop(vm);
-        Value classVal = peek(vm, 0);
-        if (!IS_INTERFACE(interfaceVal)) {
-            // runtimeError(vm, "Expected interface."); 
-            // IS_INTERFACE macro needs to be defined?
-            // object.h: #define IS_INTERFACE(value) isObjType(value, OBJ_INTERFACE)
-            // I should double check object.h if I added the macro. I didn't add the macro IS_INTERFACE! I added OBJ_INTERFACE enum.
-            // I should add IS_INTERFACE macro to object.h. 
-            // For now, I'll use isObjType(interfaceVal, OBJ_INTERFACE).
-            if (!isObjType(interfaceVal, OBJ_INTERFACE)) {
-                 runtimeError(vm, "Superclass must be a class."); // Reuse error or new one
-                 return INTERPRET_RUNTIME_ERROR;
-            }
-        }
-        // Add interface to class
-        // ObjClass has interfaces array.
-        // Assume simple append for now.
-        ObjClass* klass = AS_CLASS(classVal);
-        // Resize logic?
-        // Using GC allocator or manual realloc?
-        // Memory.h has GROW_ARRAY.
-        // But ObjClass interfaces is Value*.
-        // Need to update interfaceCount.
-        // I need to use the memory manager.
-        // REALLOCATE uses vm.
-        // I'll assume simple realloc or max limit for now to avoid complexity?
-        // Or properly use GROW_ARRAY.
+        Value classVal = peek(vm, 0); // Class remains on stack
         
-        // Proper:
+        if (!IS_INTERFACE(interfaceVal)) {
+             runtimeError(vm, "Expected interface.");
+             return INTERPRET_RUNTIME_ERROR;
+        }
+
+        ObjClass* klass = AS_CLASS(classVal);
         int oldCapacity = klass->interfaceCount;
         int newCapacity = oldCapacity + 1;
-        klass->interfaces = (Value*)realloc(klass->interfaces, sizeof(Value) * newCapacity);
+        klass->interfaces = GROW_ARRAY(Value, klass->interfaces, oldCapacity, newCapacity);
         klass->interfaces[oldCapacity] = interfaceVal;
         klass->interfaceCount = newCapacity;
         
