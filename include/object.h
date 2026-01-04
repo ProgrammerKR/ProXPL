@@ -212,6 +212,7 @@ struct ObjDictionary *newDictionary();
 ObjForeign *newForeign(ObjString* name, void* library, void* function);
 struct ObjTask *newTask(void* hdl, ResumeFn resume);
 void printObject(Value value);
+void appendToList(struct ObjList* list, Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;

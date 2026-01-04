@@ -151,3 +151,12 @@ bool invoke(ObjString *name, int argCount, VM *vm) {
 
   return invokeFromClass(instance->klass, name, argCount, vm);
 }
+
+void appendToList(ObjList* list, Value value) {
+    if (list->capacity < list->count + 1) {
+        int oldCapacity = list->capacity;
+        list->capacity = GROW_CAPACITY(oldCapacity);
+        list->items = GROW_ARRAY(Value, list->items, oldCapacity, list->capacity);
+    }
+    list->items[list->count++] = value;
+}

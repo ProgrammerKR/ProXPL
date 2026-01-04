@@ -119,74 +119,8 @@ static void concatenate(VM* pvm) {
   push(pvm, OBJ_VAL(result));
 }
 
-// Helper Functions for OOP
+// Helper functions moved to vm_helpers.c to avoid duplication
 
-void defineMethod(ObjString* name, VM* vm) {
-  Value method = peek(vm, 0);
-  ObjClass* klass = AS_CLASS(peek(vm, 1));
-  tableSet(&klass->methods, name, method);
-  pop(vm);
-}
-
-bool bindMethod(ObjClass* klass, ObjString* name, VM* vm) {
-  Value method;
-  if (!tableGet(&klass->methods, name, &method)) {
-    runtimeError(vm, "Undefined property '%s'.", name->chars);
-    return false;
-  }
-
-  ObjBoundMethod* bound = newBoundMethod(peek(vm, 0), AS_CLOSURE(method));
-  pop(vm);
-  push(vm, OBJ_VAL(bound));
-  return true;
-}
-
-bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount, VM* vm) {
-  Value method;
-  if (!tableGet(&klass->methods, name, &method)) {
-    runtimeError(vm, "Undefined property '%s'.", name->chars);
-    return false;
-  }
-  
-  if (vm->frameCount == FRAMES_MAX) {
-      runtimeError(vm, "Stack overflow.");
-      return false;
-  }
-
-  CallFrame* frame = &vm->frames[vm->frameCount++];
-  ObjClosure* closure = AS_CLOSURE(method);
-  frame->closure = closure;
-  frame->ip = closure->function->chunk.code;
-  frame->slots = vm->stackTop - argCount - 1;
-  return true;
-}
-
-bool invoke(ObjString* name, int argCount, VM* vm) {
-  Value receiver = peek(vm, argCount);
-
-  if (!IS_INSTANCE(receiver)) {
-    runtimeError(vm, "Only instances have methods.");
-    return false;
-  }
-
-  ObjInstance* instance = AS_INSTANCE(receiver);
-
-  Value value;
-  if (tableGet(&instance->fields, name, &value)) {
-    vm->stackTop[-argCount - 1] = value;
-    // Call value logic... but strictly speaking, invoke expects a method call.
-    // If field is a closure, we call it.
-    // Simplified: Delegate to call logic if field found?
-    // Optimization: OpInvoke is for methods. If field found, treat as property access + call.
-    // But OpInvoke optimizes method lookup.
-    // Let's stick to method lookup first.
-    return invokeFromClass(instance->klass, name, argCount, vm); 
-    // Wait, if it is a field, we want to call check if it's callable.
-    // For normal invoke, we look for method in class.
-  }
-
-  return invokeFromClass(instance->klass, name, argCount, vm);
-}
 
 static InterpretResult run(VM* vm) {
   printf("DEBUG: Entering run()\n");
