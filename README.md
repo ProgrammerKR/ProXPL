@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-0.7.0--pre-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
@@ -532,8 +532,8 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 We warmly welcome contribut## 🛣️ Roadmap
 
-### v0.7.0-pre (Current - January 2026)
-**Status**: Pre-release Candidate
+### v0.7.0 (Current - January 2026)
+**Status**: Released
 - ✅ 0.7.0 Features Complete
 - ✅ Testing Phase with Pre-release builds
 - ✅ Stack-based VM with bytecode execution

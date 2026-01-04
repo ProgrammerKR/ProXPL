@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [0.7.0-pre] - 2026-01-04
+## [0.7.0] - 2026-01-04
 
 ### Added
 - **FFI System**: Initial implementation of the Foreign Function Interface using `libffi`.
@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Added icon support for `.internal_ingore` and `.internal_ignore`.
 - **Runtime**:
   - `ffi_bridge.c` for handling native function calls.
-- Pre-release build configuration for version 0.7.0.
+- Official release build configuration for version 0.7.0.
 - Updated version strings across the codebase.
 
 ### Fixed
@@ -327,6 +327,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 0.7.0-pre
+**Current Version**: 0.7.0
 **Last Updated**: January 04, 2026
-**Next Release**: 0.7.0 (Q1 2026)
+**Next Release**: 1.1.0 (Q1 2026)
