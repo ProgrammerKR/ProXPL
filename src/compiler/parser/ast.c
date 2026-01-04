@@ -312,6 +312,33 @@ Expr *createAwaitExpr(Expr *expression, int line, int column) {
   return expr;
 }
 
+Expr *createThisExpr(int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_THIS;
+  expr->line = line;
+  expr->column = column;
+  return expr;
+}
+
+Expr *createSuperExpr(const char *method, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_SUPER;
+  expr->line = line;
+  expr->column = column;
+  expr->as.super_expr.method = method ? strdup(method) : NULL;
+  return expr;
+}
+
+Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_NEW;
+  expr->line = line;
+  expr->column = column;
+  expr->as.new_expr.clazz = clazz;
+  expr->as.new_expr.args = args;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -572,6 +599,16 @@ void freeExpr(Expr *expr) {
     break;
   case EXPR_AWAIT:
     freeExpr(expr->as.await_expr.expression);
+    break;
+  case EXPR_THIS:
+    // Nothing to free
+    break;
+  case EXPR_SUPER:
+    if (expr->as.super_expr.method) free(expr->as.super_expr.method);
+    break;
+  case EXPR_NEW:
+    freeExpr(expr->as.new_expr.clazz);
+    freeExprList(expr->as.new_expr.args);
     break;
   }
 

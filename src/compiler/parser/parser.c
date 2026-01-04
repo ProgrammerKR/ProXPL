@@ -857,6 +857,47 @@ static Expr *primary(Parser *p) {
     return expr;
   }
 
+    return expr;
+  }
+
+  if (match(p, 1, TOKEN_THIS)) {
+      return createThisExpr(previous(p).line, 0);
+  }
+
+  if (match(p, 1, TOKEN_SUPER)) {
+      Token keyword = previous(p);
+      consume(p, TOKEN_DOT, "Expect '.' after 'super'.");
+      Token method = consume(p, TOKEN_IDENTIFIER, "Expect superclass method name.");
+      char *methodName = tokenToString(method);
+      Expr *expr = createSuperExpr(methodName, keyword.line, 0);
+      free(methodName);
+      return expr;
+  }
+
+  if (match(p, 1, TOKEN_NEW)) {
+      Token keyword = previous(p);
+      // createNewExpr expects an Expr* for the class/callee
+      // Parse the class name (or expression evaluating to class)
+      // Usually "new Identifier(args)" or "new Identifier"
+      // Let's assume syntax: new Primary() or new Primary
+      // Using call() logic but starting with primary?
+      // Actually standard: new CallExpr
+      // Parse primary for class
+      Expr *clazz = primary(p); // Recursive primary? `new Foo` -> variable `Foo`
+      
+      ExprList *args = createExprList();
+      if (match(p, 1, TOKEN_LEFT_PAREN)) {
+           if (!check(p, TOKEN_RIGHT_PAREN)) {
+             do {
+               appendExpr(args, expression(p));
+             } while (match(p, 1, TOKEN_COMMA));
+           }
+           consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+      }
+      
+      return createNewExpr(clazz, args, keyword.line, 0);
+  }
+
   if (match(p, 1, TOKEN_IDENTIFIER)) {
     Token token = previous(p);
     char *name = tokenToString(token);
