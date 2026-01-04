@@ -327,6 +327,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 0.5.1  
-**Last Updated**: December 31, 2025  
-**Next Release**: 0.6.0 (Early 2026)
+**Current Version**: 0.7.0-pre
+**Last Updated**: January 04, 2026
+**Next Release**: 0.7.0 (Q1 2026)
