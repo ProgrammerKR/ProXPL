@@ -8,8 +8,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
+
 
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
 
@@ -528,60 +529,39 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ---
 
-## 🛣️ Roadmap
+## 🗺️ Roadmap
 
-### v0.7.0 (Current - January 2026)
+- **v0.5.0 (Alpha)**: Core language features (variables, functions, control flow). ✅
+- **v0.8.0**: Advanced memory management, closures, upvalues. ✅
+- **v0.9.0**: Standard Library (fs, time, gc), IO improvements. ✅
+- **v1.0.0 (Current)**:
+  - **Object-Oriented Programming**: Classes, Methods, Inheritance, Properties.
+  - **Keywords**: `class`, `new`, `this`, `extends`, `interface`.
+  - **Runtime**: Optimized VM with Object Support.
+- **v1.1.0** (Planned): 
+  - Advanced Strings/Lists.
+  - Exception Handling (`try`/`catch`).
+  - Module System refinements.
+- **v1.2.0**: Native Interface (FFI) full stability.
+
+### v1.0.0 (Current - Alpha)
 **Status**: Released
-- ✅ 0.7.0 Features Complete
-- ✅ Testing Phase with Pre-release builds
-- ✅ Stack-based VM with bytecode execution
-- ✅ LLVM backend for AOT native compilation
-- ✅ 75+ standard library functions
-- ✅ Garbage collector (Mark & Sweep)
-- ✅ Type system with inference
-- ✅ Module system with `use` keyword
-- ✅ PRM package manager (basic)
-- ✅ CLI tools and LSP foundation
-- ✅ Cross-platform support (Windows/Linux/macOS)
+- ✅ **Class-based OOP**: First-class support for Classes, Objects, Inheritance, and Interfaces.
+- ✅ **Runtime Architecture**: Enhanced VM with Class, Instance, and BoundMethod support.
+- ✅ **New Keywords**: `class`, `new`, `this`, `extends`, `interface`, `static`.
+- ✅ **Inheritance**: Single inheritance model with superclass method lookup.
+- ✅ **Verification**: Verified via `tests/oop_v1.0.0.prox`.
 
-### v0.8.0 (Current - Q1 2026)
-**Status**: Released
-- ✅ **Advanced Diagnostics**: Enhanced error reporting with **Column Tracking** and visual pointers (`^`) for precise debugging.
-- ✅ **VS Code Tooling**: Implementation of **Snippets** and **Hover Support** (documentation tooltips) in the official extension.
-- ✅ **System Standard Library**: Expansion of `std.fs` (File System I/O) and `std.sys` (Process args, exit codes, and env).
-- ✅ **LSP Evolution**: Transition from foundation to a functional Language Server (Go-to-definition, basic autocomplete).
-- ✅ **PRM Remote Support**: Enabling PRM to fetch and install packages directly from **GitHub repositories**.
+### v1.1.0 (Upcoming)
+**Status**: Planned
+- 📋 **Access Control**: `pub`/`priv` visibility enforcement.
+- 📋 **Constructors**: `init` constructor method.
+- 📋 **Exception Handling**: `try`/`catch` blocks.
 
-### v0.9.0 (Current - Q1 2026)
-**Status**: Released
-- ✅ **GC Optimization**: New `std.gc` module for manual collection control and memory statistics.
-- ✅ **Stdlib Expansion**: Enhanced `std.time` with `strftime`/`timestamp` and `std.fs` with `move`/`abspath`.
-- ✅ **Stability Improvements**: General bug fixes and performance tweaks in memory management.
-
-### v1.0.0 (Planned - Q2 2026)
-**Focus**: OOP & Ecosystem (Major Release)
-- 📋 **Class-based OOP**: First-class support for Classes, Objects, Inheritance, and Interfaces.
-- 📋 **Access Control**: `pub`, `priv` modifiers for encapsulation.
-- 📋 **OOP Tooling**: IDE support for OOP constructs.
-- 📋 **ProX Studio Alpha**: Initial tailored IDE release.
-
-### v1.3.0 (Q3 2026)
-**Focus**: Advanced Features
-- 📋 Pattern matching and Algebraic Data Types (Enums).
-- 📋 Generics, Traits, and Type Parameters.
-- 📋 Option/Result types for robust error handling.
-
-### v2.0.0 (Q4 2026+)
-**Focus**: Concurrency & Integrated Tooling
-- 📋 **ProX Studio (Stable)**: A fully branded, dedicated IDE with integrated debugger, PRM GUI, and zero-config ProXPL environment.
-- 📋 Async/await, Green threads, and Actor model concurrency.
-- 📋 Foreign Function Interface (FFI) and WebAssembly target.
-- 📋 JIT compilation and advanced LLVM optimizations.
-
-### Future Considerations
-- 📋 Memory safety guarantees (ownership/borrowing).
-- 📋 Compile-time reflection and metaprogramming.
-- 📋 Dedicated ProXPL Package Registry.
+### Future Roadmap (2026+)
+- 📋 **v1.2.0**: FFI Stability & ProX Studio Alpha.
+- 📋 **v1.3.0**: Pattern Matching, Enums, Generics.
+- 📋 **v2.0.0**: Async/Await, WebAssembly, JIT.
 
 ## 🛠️ Contributing
 

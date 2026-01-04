@@ -2,7 +2,7 @@
   "name": "proxpl",
   "displayName": "ProXPL Language Support",
   "description": "Syntax highlighting and language support for the ProXPL programming language",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "publisher": "ProXentix",
   "repository": {
     "type": "git",

@@ -3498,6 +3498,7 @@
     "tailwind.config.mjs": "_tailwindcss",
     "tailwind.config.ts": "_tailwindcss",
     "tailwind.config.cts": "_tailwindcss",
+    "Doxyfile": "_settings",
     "tailwind.config.mts": "_tailwindcss",
     "buildkite.yml": "_buildkite",
     "buildkite.yaml": "_buildkite",
