@@ -1,0 +1,56 @@
+// tests/oop_v1.0.0.prox
+// Verification script for ProXPL v1.0.0 OOP Features
+
+print("--- Testing Class Declarations ---");
+
+class Animal {
+  func speak() {
+    print("Animal makes a sound.");
+  }
+}
+
+class Dog extends Animal {
+  func speak() {
+    print("Dog barks!");
+  }
+}
+
+print("Classes declared.");
+
+print("--- Testing Instantiation & Methods ---");
+
+// Test explicit new
+let d = new Dog();
+d.speak(); 
+
+// Test inheritance (if automatic lookup works)
+// Note: OP_INHERIT copies methods, so d.speak should be Dog's speak. 
+// If generic Animal instance:
+let a = new Animal();
+a.speak();
+
+print("--- Testing Properties ---");
+
+d.name = "Buddy";
+print("Dog name: " + d.name);
+
+// Test updates
+d.name = "Max";
+print("Dog renamed: " + d.name);
+
+print("--- Testing 'this' Binding ---");
+
+class Person {
+  func setAge(age) {
+    this.age = age;
+  }
+  func greet() {
+    print("Hello, I am " + this.age + " years old.");
+  }
+}
+
+let p = new Person();
+p.setAge(30);
+p.greet();
+
+print("--- OOP Verification Complete ---");
