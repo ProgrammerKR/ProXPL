@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
@@ -544,13 +544,18 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - ✅ CLI tools and LSP foundation
 - ✅ Cross-platform support (Windows/Linux/macOS)
 
-### v1.1.0 (Q1 2026)
-**Focus**: Enhanced Developer Experience & System APIs
-- 🚧 **Advanced Diagnostics**: Enhanced error reporting with **Column Tracking** and visual pointers (`^`) for precise debugging.
-- 🚧 **VS Code Tooling**: Implementation of **Snippets** and **Hover Support** (documentation tooltips) in the official extension.
-- 🚧 **System Standard Library**: Expansion of `std.fs` (File System I/O) and `std.sys` (Process args, exit codes, and env).
-- 🚧 **LSP Evolution**: Transition from foundation to a functional Language Server (Go-to-definition, basic autocomplete).
-- 🚧 **PRM Remote Support**: Enabling PRM to fetch and install packages directly from **GitHub repositories**.
+### v0.8.0 (Current - Q1 2026)
+**Status**: Released
+- ✅ **Advanced Diagnostics**: Enhanced error reporting with **Column Tracking** and visual pointers (`^`) for precise debugging.
+- ✅ **VS Code Tooling**: Implementation of **Snippets** and **Hover Support** (documentation tooltips) in the official extension.
+- ✅ **System Standard Library**: Expansion of `std.fs` (File System I/O) and `std.sys` (Process args, exit codes, and env).
+- ✅ **LSP Evolution**: Transition from foundation to a functional Language Server (Go-to-definition, basic autocomplete).
+- ✅ **PRM Remote Support**: Enabling PRM to fetch and install packages directly from **GitHub repositories**.
+
+### v1.1.0 (Planned)
+**Focus**: Optimization & Stability
+- 📋 Optimized GC & Memory footprint.
+- 📋 Further Stdlib expansion.
 
 ### v1.2.0 (Q2 2026)
 **Focus**: Object-Oriented Programming & Ecosystem

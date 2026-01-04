@@ -155,7 +155,23 @@ void registerStdLib(VM* vm) {
         tableSet(&stdMod->exports, field, sysVal);
         pop(vm);
     }
-    pop(vm);
+    // GC
+    extern ObjModule* create_std_gc_module();
+    ObjModule* gcMod = create_std_gc_module();
+    registerModule(vm, "std.native.gc", gcMod);
+    registerModule(vm, "std.gc", gcMod);
+
+    // std.gc (bind to main std object)
+    Value gcVal;
+    ObjString* gcKey = copyString("std.native.gc", 13);
+    push(vm, OBJ_VAL(gcKey));
+    if (tableGet(&vm->importer.modules, gcKey, &gcVal)) {
+        ObjString* field = copyString("gc", 2);
+        push(vm, OBJ_VAL(field));
+        tableSet(&stdMod->exports, field, gcVal);
+        pop(vm); // field
+    }
+    pop(vm); // gcKey
 
     // Register 'std' as global
     tableSet(&vm->globals, stdName, OBJ_VAL(stdMod));

@@ -66,33 +66,42 @@ void prm_install(const char* packageName) {
             system("mkdir -p prox_modules");
         #endif
         
+        // Determine target folder name from package name
+        // Use the part after the last slash
+        const char* folderName = packageName;
+        const char* lastSlash = strrchr(packageName, '/');
+        if (lastSlash) {
+            folderName = lastSlash + 1; // "repo" from "user/repo" or "https://.../repo"
+        }
+
+        // Construct target path: prox_modules/<folderName>
+        char targetPath[256];
+        snprintf(targetPath, sizeof(targetPath), "prox_modules/%s", folderName);
+
+        // Remove .git suffix if present in targetPath
+        size_t len = strlen(targetPath);
+        if (len > 4 && strcmp(targetPath + len - 4, ".git") == 0) {
+            targetPath[len - 4] = '\0';
+        }
+        
         // Construct git clone command
         char command[512];
-        // Assuming packageName is "user/repo" or just "repo" (we default to github.com)
-        // If it's a full URL, use it. Else prepend https://github.com/
         
         if (strstr(packageName, "://")) {
-             snprintf(command, sizeof(command), "git clone %s prox_modules/%s", packageName, packageName);
-             // Note: extracting basename for folder might be needed if using full URL.
-             // For simplicity, we assume packageName is "User/Repo" format which maps to prox_modules/Repo? 
-             // Or just clone into prox_modules.
-             // Let's assume standard usage: prm install ProgrammerKR/std.net
-             // Clone to prox_modules/std.net
+             // Full URL
+             snprintf(command, sizeof(command), "git clone %s %s", packageName, targetPath);
         } else {
-             // Handle "User/Repo"
-             const char* slash = strchr(packageName, '/');
-             const char* folderName = slash ? slash + 1 : packageName;
-             
-             snprintf(command, sizeof(command), "git clone https://github.com/%s.git prox_modules/%s", packageName, folderName);
+             // "User/Repo" format -> GitHub
+             snprintf(command, sizeof(command), "git clone https://github.com/%s.git %s", packageName, targetPath);
         }
         
         printf("Running: %s\n", command);
         int result = system(command);
         
         if (result == 0) {
-            printf("Successfully installed %s.\n", packageName);
+            printf("Successfully installed %s to %s.\n", packageName, targetPath);
         } else {
-            printf("Failed to install package. Ensure git is installed and the package exists.\n");
+            printf("Failed to install package. Ensure git is installed and the package/URL exists.\n");
         }
     } else {
         printf("Installing dependencies from prox.toml...\n");

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.8.0] - 2026-01-04
+
+### Added
+- **Diagnostics**: Enhanced error reporting with column tracking and visual caret pointers (`^`).
+- **Standard Library**:
+  - `std.fs`: Added `copy`, `is_file`, `is_dir`.
+  - `std.sys`: Added `exec` for command execution.
+- **Tooling**:
+  - **LSP**: Added "Go to Definition" support and basic keyword completion.
+  - **Extension**: Enabled Snippets and Hover support.
+  - **PRM**: Enabled remote package installation from GitHub (`prm install User/Repo`).
+
 ## [0.7.0] - 2026-01-04
 
 ### Added
@@ -327,6 +339,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 0.7.0
+**Current Version**: 0.8.0
 **Last Updated**: January 04, 2026
 **Next Release**: 1.1.0 (Q1 2026)

@@ -110,6 +110,14 @@ static Value sys_args(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+// exec(command) -> int
+static Value sys_exec(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NUMBER_VAL(-1);
+    const char* command = AS_CSTRING(args[0]);
+    int result = system(command);
+    return NUMBER_VAL((double)result);
+}
+
 ObjModule* create_std_sys_module() {
     ObjString* name = copyString("std.native.sys", 14);
     push(&vm, OBJ_VAL(name));
@@ -121,6 +129,7 @@ ObjModule* create_std_sys_module() {
     defineModuleFn(module, "set_env", sys_set_env);
     defineModuleFn(module, "cwd", sys_cwd);
     defineModuleFn(module, "args", sys_args);
+    defineModuleFn(module, "exec", sys_exec);
     
     defineModuleConst(module, "OS_NAME", OBJ_VAL(copyString(OS_NAME_STR, strlen(OS_NAME_STR))));
     defineModuleConst(module, "ARCH", OBJ_VAL(copyString(ARCH_STR, strlen(ARCH_STR))));

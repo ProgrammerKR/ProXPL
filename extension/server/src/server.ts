@@ -7,8 +7,10 @@ import {
 	CompletionItem,
 	CompletionItemKind,
 	TextDocumentPositionParams,
+	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+	Location
 } from 'vscode-languageserver/node';
 import {
 	TextDocument
@@ -48,7 +50,8 @@ connection.onInitialize((params: InitializeParams) => {
 			// Tell the client that this server supports code completion.
 			completionProvider: {
 				resolveProvider: true
-			}
+			},
+			definitionProvider: true
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -81,7 +84,7 @@ documents.onDidChangeContent(_change => {
 
 connection.onDidChangeWatchedFiles(_change => {
 	// Monitored files have change in VSCode
-    connection.console.log('We received an file change event');
+	connection.console.log('We received an file change event');
 });
 
 // This handler provides the initial list of the completion items.
@@ -90,31 +93,31 @@ connection.onCompletion(
 		// The pass parameter contains the position of the text document in
 		// which code complete got requested. For the example we ignore this
 		// info and always provide the same completion items.
-        
-        const keywords = [
-            'func', 'class', 'if', 'else', 'while', 'for', 'return', 'print',
-            'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export',
-            'prox', 'loop', 'from', 'as', 'try', 'catch', 'throw', 'async', 'await'
-        ];
-        const builtins = ['len', 'str', 'clock', 'input', 'type'];
 
-        const items: CompletionItem[] = [];
+		const keywords = [
+			'func', 'class', 'if', 'else', 'while', 'for', 'return', 'print',
+			'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export',
+			'prox', 'loop', 'from', 'as', 'try', 'catch', 'throw', 'async', 'await'
+		];
+		const builtins = ['len', 'str', 'clock', 'input', 'type'];
 
-        for (const word of keywords) {
-            items.push({
-                label: word,
-                kind: CompletionItemKind.Keyword,
-                data: 1
-            });
-        }
-        
-        for (const word of builtins) {
-            items.push({
-                label: word,
-                kind: CompletionItemKind.Function,
-                data: 2
-            });
-        }
+		const items: CompletionItem[] = [];
+
+		for (const word of keywords) {
+			items.push({
+				label: word,
+				kind: CompletionItemKind.Keyword,
+				data: 1
+			});
+		}
+
+		for (const word of builtins) {
+			items.push({
+				label: word,
+				kind: CompletionItemKind.Function,
+				data: 2
+			});
+		}
 
 		return items;
 	}
@@ -132,6 +135,60 @@ connection.onCompletionResolve(
 			item.documentation = 'A built-in function or type.';
 		}
 		return item;
+	}
+);
+
+connection.onDefinition(
+	(params: TextDocumentPositionParams): Location | null => {
+		const document = documents.get(params.textDocument.uri);
+		if (!document) return null;
+
+		const position = params.position;
+		const offset = document.offsetAt(position);
+		const text = document.getText();
+
+		// Simple word extraction
+		const wordRegex = /[a-zA-Z0-9_]+/g;
+		let match;
+		let word = "";
+
+		while ((match = wordRegex.exec(text)) !== null) {
+			if (offset >= match.index && offset <= match.index + match[0].length) {
+				word = match[0];
+				break;
+			}
+		}
+
+		if (!word) return null;
+
+		// Regex to find definition
+		// func <word> or class <word>
+		const funcRegex = new RegExp(`func\\s+${word}\\s*\\(`, 'g');
+		const classRegex = new RegExp(`class\\s+${word}\\s*\\{`, 'g');
+
+		let defMatch;
+		// Check functions
+		while ((defMatch = funcRegex.exec(text)) !== null) {
+			return Location.create(
+				params.textDocument.uri,
+				{
+					start: document.positionAt(defMatch.index),
+					end: document.positionAt(defMatch.index + match[0].length + 5)
+				}
+			);
+		}
+		// Check classes
+		while ((defMatch = classRegex.exec(text)) !== null) {
+			return Location.create(
+				params.textDocument.uri,
+				{
+					start: document.positionAt(defMatch.index),
+					end: document.positionAt(defMatch.index + match[0].length + 6)
+				}
+			);
+		}
+
+		return null;
 	}
 );
 

@@ -17,6 +17,12 @@
 #else
 #include <unistd.h>
 #include <dirent.h>
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
 #endif
 
 #include "../../include/common.h"
@@ -138,6 +144,54 @@ static Value fs_rmdir(int argCount, Value* args) {
     return BOOL_VAL(rmdir(AS_CSTRING(args[0])) == 0);
 }
 
+// is_file(path) -> Bool
+static Value fs_is_file(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
+    struct stat st;
+    if (stat(AS_CSTRING(args[0]), &st) == 0) {
+        return BOOL_VAL(S_ISREG(st.st_mode));
+    }
+    return BOOL_VAL(false);
+}
+
+// is_dir(path) -> Bool
+static Value fs_is_dir(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
+    struct stat st;
+    if (stat(AS_CSTRING(args[0]), &st) == 0) {
+        return BOOL_VAL(S_ISDIR(st.st_mode));
+    }
+    return BOOL_VAL(false);
+}
+
+// copy(src, dest) -> Bool
+static Value fs_copy(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return BOOL_VAL(false);
+    
+    FILE* src = fopen(AS_CSTRING(args[0]), "rb");
+    if (!src) return BOOL_VAL(false);
+    
+    FILE* dest = fopen(AS_CSTRING(args[1]), "wb");
+    if (!dest) {
+        fclose(src);
+        return BOOL_VAL(false);
+    }
+    
+    char buf[4096];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), src)) > 0) {
+        if (fwrite(buf, 1, n, dest) != n) {
+            fclose(src);
+            fclose(dest);
+            return BOOL_VAL(false);
+        }
+    }
+    
+    fclose(src);
+    fclose(dest);
+    return BOOL_VAL(true);
+}
+
 // listdir(path) -> List<String>
 static Value fs_listdir(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
@@ -195,6 +249,30 @@ static Value fs_listdir(int argCount, Value* args) {
     return OBJ_VAL(list);
 }
 
+// move(src, dest) -> Bool
+static Value fs_move(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return BOOL_VAL(false);
+    return BOOL_VAL(rename(AS_CSTRING(args[0]), AS_CSTRING(args[1])) == 0);
+}
+
+// abspath(path) -> String or Null
+static Value fs_abspath(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    const char* path = AS_CSTRING(args[0]);
+    char resolved[4096]; // Max path buffer
+
+#ifdef _WIN32
+    if (_fullpath(resolved, path, 4096) != NULL) {
+        return OBJ_VAL(copyString(resolved, (int)strlen(resolved)));
+    }
+#else
+    if (realpath(path, resolved) != NULL) {
+        return OBJ_VAL(copyString(resolved, (int)strlen(resolved)));
+    }
+#endif
+    return NIL_VAL;
+}
+
 ObjModule* create_std_fs_module() {
     ObjString* name = copyString("std.native.fs", 13);
     push(&vm, OBJ_VAL(name));
@@ -210,6 +288,13 @@ ObjModule* create_std_fs_module() {
     defineModuleFn(module, "mkdir", fs_mkdir);
     defineModuleFn(module, "rmdir", fs_rmdir);
     defineModuleFn(module, "listdir", fs_listdir);
+    defineModuleFn(module, "is_file", fs_is_file);
+    defineModuleFn(module, "is_dir", fs_is_dir);
+    defineModuleFn(module, "copy", fs_copy);
+    
+    // New Functions
+    defineModuleFn(module, "move", fs_move);
+    defineModuleFn(module, "abspath", fs_abspath);
     
     pop(&vm);
     pop(&vm);
