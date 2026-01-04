@@ -200,6 +200,8 @@ static InterpretResult run(VM* vm) {
 #ifdef __GNUC__
   #define DISPATCH() goto *dispatch_table[*frame->ip++]
   
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Woverride-init"
   static void* dispatch_table[256] = {
       [0 ... 255] = &&DO_OP_UNKNOWN,
       [OP_CONSTANT] = &&DO_OP_CONSTANT,
@@ -251,6 +253,7 @@ static InterpretResult run(VM* vm) {
       [OP_END_TRY] = &&DO_OP_END_TRY,
       [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN
   };
+  #pragma GCC diagnostic pop
 
   DISPATCH();
 
@@ -606,7 +609,6 @@ static InterpretResult run(VM* vm) {
       } else if (IS_CLASS(callee)) {
           ObjClass* klass = AS_CLASS(callee);
           vm->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
-          Value initializer;
           // Check for 'init' method
           // If init exists, call it.
           // Note: we can't easily string check without an ObjString for "init".
@@ -634,8 +636,25 @@ static InterpretResult run(VM* vm) {
       }
       DISPATCH();
   }
-  DO_OP_INVOKE:
-  DO_OP_SUPER_INVOKE:
+  DO_OP_INVOKE: {
+      ObjString* method = READ_STRING();
+      int argCount = READ_BYTE();
+      if (!invoke(method, argCount, vm)) {
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      frame = &vm->frames[vm->frameCount - 1];
+      DISPATCH();
+  }
+  DO_OP_SUPER_INVOKE: {
+      ObjString* method = READ_STRING();
+      int argCount = READ_BYTE();
+      ObjClass* superclass = AS_CLASS(pop(vm));
+      if (!invokeFromClass(superclass, method, argCount, vm)) {
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      frame = &vm->frames[vm->frameCount - 1];
+      DISPATCH();
+  }
   DO_OP_CLOSURE: {
       ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
       ObjClosure* closure = newClosure(function);
