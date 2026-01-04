@@ -857,8 +857,7 @@ static Expr *primary(Parser *p) {
     return expr;
   }
 
-    return expr;
-  }
+
 
   if (match(p, 1, TOKEN_THIS)) {
       return createThisExpr(previous(p).line, 0);
