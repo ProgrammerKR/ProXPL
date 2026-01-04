@@ -2432,6 +2432,7 @@
     "tofu": "_opentofu",
     "blade.php": "_laravel",
     "inky.php": "_laravel",
+    "iss": "_installation",
     "applescript": "_applescript",
     "ipa": "_applescript",
     "cake": "_cake",
@@ -2845,6 +2846,8 @@
     "sls": "_salt"
   },
   "fileNames": {
+    ".internal_ingore": "_settings",
+    ".internal_ignore": "_settings",
     ".pug-lintrc": "_pug",
     ".pug-lintrc.js": "_pug",
     ".pug-lintrc.json": "_pug",
