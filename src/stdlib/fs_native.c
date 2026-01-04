@@ -14,6 +14,12 @@
 #include <windows.h>
 #define mkdir(p, m) _mkdir(p)
 #define rmdir _rmdir
+#ifndef S_ISREG
+#define S_ISREG(mode) (((mode) & _S_IFMT) == _S_IFREG)
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
+#endif
 #else
 #include <unistd.h>
 #include <dirent.h>
