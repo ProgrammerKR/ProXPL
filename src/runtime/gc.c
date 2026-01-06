@@ -171,6 +171,8 @@ static void markRoots() {
 
     // 2. Mark Globals
     markTable(&vm.globals);
+    markObject((Obj*)vm.initString);
+    markObject((Obj*)vm.cliArgs);
     
     // 3. Mark Loaded Modules & Search Paths?
     // Modules are strong refs in importer.modules

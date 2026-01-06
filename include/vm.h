@@ -38,6 +38,7 @@ struct VM {
   const char* source;
   Importer importer;
   struct ObjList* cliArgs;
+  struct ObjString* initString;
 };
 
 typedef enum {

@@ -37,6 +37,8 @@ void initVM(VM *pvm) {
     initTable(&pvm->strings);
     pvm->source = NULL;
     initImporter(&pvm->importer);
+    pvm->initString = copyString("init", 4);
+    pvm->cliArgs = newList(); // Initialize CLI args list
 }
 
 void freeVM(VM *pvm) {
@@ -541,15 +543,10 @@ static InterpretResult run(VM* vm) {
           push(vm, result);
           DISPATCH();
       } else if (IS_CLASS(callee)) {
-          ObjClass* klass = AS_CLASS(callee);
-          vm->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
-          // Check for 'init' method
-          // If init exists, call it.
-          // Note: we can't easily string check without an ObjString for "init".
-          // We should pre-intern "init" or create it here.
-          // Performance cost? 
-          // For now, assume no init call in Alpha or use vm->strings lookup.
-          // Re-visit for 'init'.
+          if (!callValue(callee, argCount, vm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          frame = &vm->frames[vm->frameCount - 1]; // Update frame pointer after potential push
           DISPATCH();
       } else if (IS_BOUND_METHOD(callee)) {
           ObjBoundMethod* bound = AS_BOUND_METHOD(callee);

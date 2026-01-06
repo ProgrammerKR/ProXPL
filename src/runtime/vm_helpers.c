@@ -98,7 +98,7 @@ bool callValue(Value callee, int argCount, VM *vm) {
       ObjClass *klass = AS_CLASS(callee);
       vm->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
       Value initializer;
-      if (tableGet(&klass->methods, copyString("init", 4), &initializer)) {
+      if (tableGet(&klass->methods, vm->initString, &initializer)) {
         return call(AS_CLOSURE(initializer), argCount, vm);
       } else if (argCount != 0) {
         runtimeError(vm, "Expected 0 arguments but got %d.", argCount);
