@@ -1,0 +1,17 @@
+use std.native.os;
+
+class OS {
+    static const NAME = native.os.PLATFORM;
+    
+    static func platform() {
+        return native.os.platform();
+    }
+    
+    static func cpuCount() {
+        return native.os.cpu_count();
+    }
+    
+    static func execute(cmd) {
+        return native.os.exec(to_string(cmd));
+    }
+}

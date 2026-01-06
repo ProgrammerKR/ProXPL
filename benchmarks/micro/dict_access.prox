@@ -1,0 +1,19 @@
+
+func main() {
+    let start = time();
+    let dict = {};
+    for (let i = 0; i < 10000; i = i + 1) {
+        dict["key" + to_string(i)] = i;
+    }
+    
+    let sum = 0;
+    for (let i = 0; i < 10000; i = i + 1) {
+        sum = sum + dict["key" + to_string(i)];
+    }
+    
+    print("Dict Sum: " + to_string(sum));
+     let elapsed = time() - start;
+    print("Time: " + to_string(elapsed));
+}
+
+main();

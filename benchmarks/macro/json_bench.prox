@@ -1,0 +1,122 @@
+// benchmarks/macro/json_bench.prox
+// Simulated JSON Parsing Benchmark
+
+class JsonParser {
+    init(input) {
+        this.input = input;
+        this.pos = 0;
+        this.len = length(input);
+    }
+    
+    func peek() {
+        if (this.pos >= this.len) return "";
+        return substr(this.input, this.pos, 1);
+    }
+    
+    func consume() {
+        if (this.pos >= this.len) return "";
+        let c = substr(this.input, this.pos, 1);
+        this.pos = this.pos + 1;
+        return c;
+    }
+    
+    func parse() {
+        this.skipWhitespace();
+        let c = this.peek();
+        
+        if (c == "{") return this.parseObject();
+        if (c == "[") return this.parseArray();
+        if (c == "\"") return this.parseString();
+        // Fallback for number or other types
+        return this.parseString(); 
+    }
+    
+    func skipWhitespace() {
+        while (this.pos < this.len) {
+            let c = this.peek();
+            if (c == " " or c == "\n" or c == "\t") {
+                this.consume();
+            } else {
+                return;
+            }
+        }
+    }
+    
+    func parseObject() {
+        this.consume(); // {
+        let obj = {};
+        this.skipWhitespace();
+        
+        while (this.peek() != "}") {
+            this.skipWhitespace();
+            let key = this.parseString();
+            this.skipWhitespace();
+            this.consume(); // :
+            this.skipWhitespace();
+            let val = this.parse();
+            
+            obj[key] = val;
+            
+            this.skipWhitespace();
+            if (this.peek() == ",") {
+                this.consume();
+            }
+        }
+        this.consume(); // }
+        return obj;
+    }
+    
+    func parseArray() {
+        this.consume(); // [
+        let arr = [];
+        this.skipWhitespace();
+        
+        while (this.peek() != "]") {
+            let val = this.parse();
+            push(arr, val);
+            
+            this.skipWhitespace();
+            if (this.peek() == ",") {
+                this.consume();
+            }
+        }
+        this.consume(); // ]
+        return arr;
+    }
+    
+    func parseString() {
+        this.consume(); // "
+        let res = "";
+        while (this.peek() != "\"") {
+            res = res + this.consume();
+        }
+        this.consume(); // "
+        return res;
+    }
+}
+
+func main() {
+    // Generate a large JSON-like string
+    let json_str = "{\"users\":[";
+    for (let i = 0; i < 500; i = i + 1) {
+        json_str = json_str + "{\"id\":\"" + to_string(i) + "\",\"name\":\"User" + to_string(i) + "\"}";
+        if (i < 499) json_str = json_str + ",";
+    }
+    json_str = json_str + "]}";
+    
+    print("JSON Length: " + to_string(length(json_str)));
+    
+    let start = time();
+    
+    let parser = JsonParser(json_str);
+    let res = parser.parse();
+    
+    let elapsed = time() - start;
+    
+    // Check result
+    let users = res["users"];
+    print("Parsed " + to_string(length(users)) + " users");
+    print("Time: " + to_string(elapsed));
+}
+
+main();

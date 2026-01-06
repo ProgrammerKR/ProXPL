@@ -1,0 +1,171 @@
+{
+  "name": "proxpl",
+  "displayName": "ProXPL Language Support",
+  "description": "Syntax highlighting and language support for the ProXPL programming language",
+  "version": "1.0.0",
+  "publisher": "ProXentix",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
+  },
+  "main": "./out/extension.js",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "icon": "logo.png",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.104.0",
+    "@typescript-eslint/eslint-plugin": "^5.55.0",
+    "@typescript-eslint/parser": "^5.55.0",
+    "eslint": "^8.36.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "proxpl",
+        "aliases": [
+          "ProXPL",
+          "prox"
+        ],
+        "extensions": [
+          ".prox",
+          ".pxpl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "proxpl",
+        "scopeName": "source.proxpl",
+        "path": "./syntaxes/proxpl.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "proxpl",
+        "path": "./snippets/proxpl-snippets.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "proxpl-icons",
+        "label": "ProXPL Icons",
+        "path": "./icons/icon-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "proxpl.run",
+        "title": "ProXPL: Run File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "proxpl.startWatchMode",
+        "title": "ProXPL: Toggle Watch Mode",
+        "icon": "$(eye)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "proxpl.run",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "editorTextFocus && resourceLangId == proxpl"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceExtname == .prox",
+          "command": "proxpl.run",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceExtname == .prox",
+          "command": "proxpl.run",
+          "group": "navigation"
+        }
+      ]
+    },
+    "debuggers": [
+      {
+        "type": "proxpl",
+        "label": "ProXPL Debug",
+        "program": "./out/extension.js",
+        "runtime": "node",
+        "languages": [
+          "proxpl"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceFolder}/${command:AskForProgramName}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "proxpl",
+            "request": "launch",
+            "name": "Ask for file name",
+            "program": "${workspaceFolder}/${command:AskForProgramName}",
+            "stopOnEntry": true
+          }
+        ]
+      }
+    ]
+  },
+  "keywords": [
+    "proxpl",
+    "prox",
+    "programming language",
+    "compiler",
+    "interpreter",
+    "vm",
+    "system programming",
+    "language server",
+    "syntax highlighting",
+    "snippets",
+    "prm",
+    "package manager"
+  ],
+  "author": "Kanishk Raj <programmerkanishkraj@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ProgrammerKR/ProXPL/issues"
+  },
+  "homepage": "https://github.com/ProgrammerKR/ProXPL#readme"
+}

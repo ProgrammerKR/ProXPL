@@ -1,0 +1,30 @@
+// Verification script for ProXPL v1.0.0 OOP Features
+
+class Animal {
+    init(name) {
+        this.name = name;
+    }
+    
+    speak() {
+        print "Generic noise";
+    }
+}
+
+class Dog extends Animal {
+    init(name) {
+        // Manually setting property since super.init() support is pending/limited
+        this.name = name; 
+    }
+    
+    speak() {
+        print "Woof! My name is " + this.name;
+    }
+}
+
+print "Testing Classes and Inheritance...";
+let d = Dog("Rex");
+d.speak(); 
+
+// Expected Output:
+// Testing Classes and Inheritance...
+// Woof! My name is Rex

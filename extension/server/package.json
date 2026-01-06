@@ -1,0 +1,18 @@
+{
+    "name": "proxpl-language-server",
+    "version": "1.0.0",
+    "description": "Language Server for ProXPL",
+    "main": "out/server.js",
+    "scripts": {
+        "compile": "tsc -b",
+        "watch": "tsc -b -w"
+    },
+    "dependencies": {
+        "vscode-languageserver": "^9.0.1",
+        "vscode-languageserver-textdocument": "^1.0.11"
+    },
+    "devDependencies": {
+        "@types/node": "^16.18.126",
+        "typescript": "^4.9.5"
+    }
+}

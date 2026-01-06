@@ -1,0 +1,27 @@
+use std.native.sys;
+
+class Sys {
+    static const OS = native.sys.OS_NAME;
+    static const ARCH = native.sys.ARCH;
+
+    static func exit(code) {
+        if (code == null) code = 0;
+        native.sys.exit(code);
+    }
+
+    static func argv() {
+        return native.sys.args();
+    }
+
+    static func getEnv(key) {
+        return native.sys.env(to_string(key));
+    }
+
+    static func setEnv(key, val) {
+        native.sys.set_env(to_string(key), to_string(val));
+    }
+
+    static func cwd() {
+        return native.sys.cwd();
+    }
+}

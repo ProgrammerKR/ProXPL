@@ -1,0 +1,37 @@
+use std.native.io;
+
+class IO {
+    static func print(msg) {
+        print_raw(to_string(msg));
+    }
+
+    static func println(msg) {
+        print_raw(to_string(msg) + "\n");
+    }
+
+    static func error(msg) {
+        eprint_raw(to_string(msg) + "\n");
+    }
+
+    static func readLine() {
+        return input_raw();
+    }
+
+    static func flush() {
+        flush_raw();
+    }
+
+    // Colors
+    static const COLOR_RESET = 0;
+    static const COLOR_RED = 31;
+    static const COLOR_GREEN = 32;
+    static const COLOR_YELLOW = 33;
+    static const COLOR_BLUE = 34;
+    static const COLOR_MAGENTA = 35;
+    static const COLOR_CYAN = 36;
+    static const COLOR_WHITE = 37;
+
+    static func setColor(code) {
+        set_color_raw(code);
+    }
+}

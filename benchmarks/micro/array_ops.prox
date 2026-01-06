@@ -1,0 +1,25 @@
+
+func main() {
+    let start = time();
+    let arr = [];
+    for (let i = 0; i < 50000; i = i + 1) {
+        push(arr, i);
+    }
+    
+    let sum = 0;
+    for (let i = 0; i < length(arr); i = i + 1) {
+        sum = sum + arr[i];
+    }
+    
+    // Pop half
+    for (let i = 0; i < 25000; i = i + 1) {
+        pop(arr);
+    }
+    
+    print("Array Sum: " + to_string(sum));
+    print("Array Length: " + to_string(length(arr)));
+     let elapsed = time() - start;
+    print("Time: " + to_string(elapsed));
+}
+
+main();

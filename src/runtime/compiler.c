@@ -1,0 +1,484 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../include/common.h"
+#include "../include/compiler.h"
+#include "../include/scanner.h"
+#include "../include/object.h"
+#include "../include/error_report.h"
+#include "../include/gc.h"
+
+#ifdef DEBUG_PRINT_CODE
+#include "../include/debug.h"
+#endif
+
+typedef struct {
+  Token name;
+  int depth;
+} Local;
+
+typedef enum {
+  COMP_TYPE_FUNCTION,
+  COMP_TYPE_SCRIPT
+} CompFunctionType;
+
+typedef struct Compiler {
+  struct Compiler* enclosing;
+  ObjFunction* function;
+  CompFunctionType type;
+
+  Local locals[UINT8_COUNT];
+  int localCount;
+  int scopeDepth;
+} Compiler;
+
+typedef struct {
+  const char* source;
+  Scanner* scanner;
+  Token current;
+  Token previous;
+  bool hadError;
+  bool panicMode;
+} CompilerParser;
+
+CompilerParser compParser;
+Compiler* current = NULL;
+
+static Chunk* currentChunk() {
+  return &current->function->chunk;
+}
+
+static void errorAt(Token* token, const char* message) {
+  if (compParser.panicMode) return;
+  compParser.panicMode = true;
+  
+  reportCompileError(compParser.source, *token, message);
+  
+  compParser.hadError = true;
+}
+
+static void error(const char* message) {
+  errorAt(&compParser.previous, message);
+}
+
+static void errorAtCurrent(const char* message) {
+  errorAt(&compParser.current, message);
+}
+
+static void advance() {
+  compParser.previous = compParser.current;
+
+  for (;;) {
+    compParser.current = scanToken(compParser.scanner); 
+    if (compParser.current.type != TOKEN_ERROR) break;
+
+    errorAtCurrent(compParser.current.start);
+  }
+}
+
+static void consume(PxTokenType type, const char* message) {
+  if (compParser.current.type == type) {
+    advance();
+    return;
+  }
+
+  errorAtCurrent(message);
+}
+
+static bool check(PxTokenType type) {
+  return compParser.current.type == type;
+}
+
+static bool match(PxTokenType type) {
+  if (!check(type)) return false;
+  advance();
+  return true;
+}
+
+static void emitByte(uint8_t byte) {
+  writeChunk(currentChunk(), byte, compParser.previous.line);
+}
+
+static void emitBytes(uint8_t byte1, uint8_t byte2) {
+  emitByte(byte1);
+  emitByte(byte2);
+}
+
+static void emitReturn() {
+  emitByte(OP_NIL);
+  emitByte(OP_RETURN);
+}
+
+static uint8_t makeConstant(Value value) {
+  int constant = addConstant(currentChunk(), value);
+  if (constant > UINT8_MAX) {
+    error("Too many constants in one chunk.");
+    return 0;
+  }
+
+  return (uint8_t)constant;
+}
+
+static void emitConstant(Value value) {
+  emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
+static void initCompiler(Compiler* compiler, CompFunctionType type) {
+  compiler->enclosing = current;
+  compiler->function = NULL;
+  compiler->type = type;
+  compiler->localCount = 0;
+  compiler->scopeDepth = 0;
+  compiler->function = newFunction();
+  current = compiler;
+
+  Local* local = &current->locals[current->localCount++];
+  local->depth = 0;
+  local->name.start = "";
+  local->name.length = 0;
+}
+
+static ObjFunction* endCompiler() {
+  emitReturn();
+  ObjFunction* function = current->function;
+
+#ifdef DEBUG_PRINT_CODE
+  if (!compParser.hadError) {
+    disassembleChunk(currentChunk(), function->name != NULL ? function->name->chars : "script");
+  }
+#endif
+
+  current = current->enclosing;
+  return function;
+}
+
+static void expression();
+static void statement();
+static void declaration();
+static ParseRule* getRule(PxTokenType type);
+static void parsePrecedence(Precedence precedence);
+
+static uint8_t identifierConstant(Token* name) {
+  return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static bool identifiersEqual(Token* a, Token* b) {
+  if (a->length != b->length) return false;
+  return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static int resolveLocal(Compiler* compiler, Token* name) {
+  for (int i = compiler->localCount - 1; i >= 0; i--) {
+    Local* local = &compiler->locals[i];
+    if (identifiersEqual(name, &local->name)) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+static void addLocal(Token name) {
+  if (current->localCount == UINT8_COUNT) {
+    error("Too many local variables in function.");
+    return;
+  }
+
+  Local* local = &current->locals[current->localCount++];
+  local->name = name;
+  local->depth = -1; // Unitialized
+}
+
+static void declareVariable() {
+  if (current->scopeDepth == 0) return;
+
+  Token* name = &compParser.previous;
+  for (int i = current->localCount - 1; i >= 0; i--) {
+    Local* local = &current->locals[i];
+    if (local->depth != -1 && local->depth < current->scopeDepth) break;
+
+    if (identifiersEqual(name, &local->name)) {
+      error("Already a variable with this name in this scope.");
+    }
+  }
+
+  addLocal(*name);
+}
+
+static uint8_t parseVariable(const char* errorMessage) {
+  consume(TOKEN_IDENTIFIER, errorMessage);
+
+  declareVariable();
+  if (current->scopeDepth > 0) return 0;
+
+  return identifierConstant(&compParser.previous);
+}
+
+static void markInitialized() {
+  if (current->scopeDepth == 0) return;
+  current->locals[current->localCount - 1].depth = current->scopeDepth;
+}
+
+static void defineVariable(uint8_t global) {
+  if (current->scopeDepth > 0) {
+    markInitialized();
+    return;
+  }
+
+  emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+static void namedVariable(Token name, bool canAssign) {
+  uint8_t getOp, setOp;
+  int arg = resolveLocal(current, &name);
+  if (arg != -1) {
+    getOp = OP_GET_LOCAL;
+    setOp = OP_SET_LOCAL;
+  } else {
+    arg = identifierConstant(&name);
+    getOp = OP_GET_GLOBAL;
+    setOp = OP_SET_GLOBAL;
+  }
+
+  if (canAssign && match(TOKEN_EQUAL)) {
+    expression();
+    emitBytes(setOp, (uint8_t)arg);
+  } else {
+    emitBytes(getOp, (uint8_t)arg);
+  }
+}
+
+static void variable(bool canAssign) {
+  namedVariable(compParser.previous, canAssign);
+}
+
+static void binary(bool canAssign) {
+  (void)canAssign;
+  PxTokenType operatorType = compParser.previous.type;
+  ParseRule* rule = getRule(operatorType);
+  parsePrecedence((Precedence)(rule->precedence + 1));
+
+  switch (operatorType) {
+    case TOKEN_EQUAL_EQUAL:   emitByte(OP_EQUAL); break;
+    case TOKEN_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
+    case TOKEN_GREATER:       emitByte(OP_GREATER); break;
+    case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+    case TOKEN_LESS:          emitByte(OP_LESS); break;
+    case TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
+    case TOKEN_PLUS:          emitByte(OP_ADD); break;
+    case TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
+    case TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
+    case TOKEN_SLASH:         emitByte(OP_DIVIDE); break;
+    default: return; // Unreachable.
+  }
+}
+
+static void literal(bool canAssign) {
+  (void)canAssign;
+  switch (compParser.previous.type) {
+    case TOKEN_FALSE: emitByte(OP_FALSE); break;
+    case TOKEN_NULL:  emitByte(OP_NIL); break;
+    case TOKEN_TRUE:  emitByte(OP_TRUE); break;
+    default: return; // Unreachable.
+  }
+}
+
+static void grouping(bool canAssign) {
+  (void)canAssign;
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+}
+
+static void number(bool canAssign) {
+  (void)canAssign;
+  double value = strtod(compParser.previous.start, NULL);
+  emitConstant(NUMBER_VAL(value));
+}
+
+static void string(bool canAssign) {
+  (void)canAssign;
+  emitConstant(OBJ_VAL(copyString(compParser.previous.start + 1,
+                                  compParser.previous.length - 2)));
+}
+
+static void unary(bool canAssign) {
+  (void)canAssign;
+  PxTokenType operatorType = compParser.previous.type;
+  parsePrecedence(PREC_UNARY);
+
+  switch (operatorType) {
+    case TOKEN_BANG: emitByte(OP_NOT); break;
+    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+    default: return; // Unreachable.
+  }
+}
+
+ParseRule rules[] = {
+  [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
+  [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, 
+  [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
+  [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
+  [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
+  [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
+  [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
+  [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
+  [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
+  [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
+  [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
+  [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
+  [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+  [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
+  [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
+  [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FUNC]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_NULL]          = {literal,  NULL,   PREC_NONE},
+  [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
+  [TOKEN_LET]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+};
+
+static void parsePrecedence(Precedence precedence) {
+  advance();
+  ParseFn prefixRule = getRule(compParser.previous.type)->prefix;
+  if (prefixRule == NULL) {
+    error("Expect expression.");
+    return;
+  }
+
+  bool canAssign = precedence <= PREC_ASSIGNMENT;
+  prefixRule(canAssign);
+
+  while (precedence <= getRule(compParser.current.type)->precedence) {
+    advance();
+    ParseFn infixRule = getRule(compParser.previous.type)->infix;
+    infixRule(canAssign);
+  }
+
+  if (canAssign && match(TOKEN_EQUAL)) {
+    error("Invalid assignment target.");
+  }
+}
+
+static ParseRule* getRule(PxTokenType type) {
+  return &rules[type];
+}
+
+static void expression() {
+  parsePrecedence(PREC_ASSIGNMENT);
+}
+
+static void varDeclaration() {
+  uint8_t global = parseVariable("Expect variable name.");
+
+  if (match(TOKEN_EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_NIL);
+  }
+  consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+  defineVariable(global);
+}
+
+static void printStatement() {
+  expression();
+  consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+  emitByte(OP_PRINT);
+}
+
+static void expressionStatement() {
+  expression();
+  consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+  emitByte(OP_POP);
+}
+
+static void synchronize() {
+  compParser.panicMode = false;
+
+  while (compParser.current.type != TOKEN_EOF) {
+    if (compParser.previous.type == TOKEN_SEMICOLON) return;
+    switch (compParser.current.type) {
+      case TOKEN_CLASS:
+      case TOKEN_FUNC:
+      case TOKEN_LET:
+      case TOKEN_FOR:
+      case TOKEN_IF:
+      case TOKEN_WHILE:
+      case TOKEN_PRINT:
+      case TOKEN_RETURN:
+        return;
+
+      default:
+        ; // Do nothing.
+    }
+
+    advance();
+  }
+}
+
+static void declaration() {
+  if (match(TOKEN_LET)) {
+    varDeclaration();
+  } else {
+    statement();
+  }
+
+  if (compParser.panicMode) synchronize();
+}
+
+static void statement() {
+  if (match(TOKEN_PRINT)) {
+    printStatement();
+  } else {
+    expressionStatement();
+  }
+}
+
+ObjFunction* compile(const char* source) {
+  Scanner scanner;
+  initScanner(&scanner, source);
+  Compiler compiler;
+  initCompiler(&compiler, COMP_TYPE_SCRIPT);
+
+  compParser.scanner = &scanner;
+  compParser.source = source;
+  compParser.hadError = false;
+  compParser.panicMode = false;
+
+  advance();
+
+  while (!match(TOKEN_EOF)) {
+    declaration();
+  }
+
+  ObjFunction* function = endCompiler();
+  return compParser.hadError ? NULL : function;
+}
+
+void markCompilerRoots() {
+  Compiler* compiler = current;
+  while (compiler != NULL) {
+    markObject((Obj*)compiler->function);
+    compiler = compiler->enclosing;
+  }
+}

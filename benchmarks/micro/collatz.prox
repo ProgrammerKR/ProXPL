@@ -1,0 +1,27 @@
+
+func collatz(n) {
+    let steps = 0;
+    while (n > 1) {
+        if (n % 2 == 0) {
+            n = n / 2;
+        } else {
+            n = 3 * n + 1;
+        }
+        steps = steps + 1;
+    }
+    return steps;
+}
+
+func main() {
+    let start = time();
+    let max_steps = 0;
+    for (let i = 1; i <= 20000; i = i + 1) {
+        let steps = collatz(i);
+        if (steps > max_steps) max_steps = steps;
+    }
+    print("Max Collatz steps: " + to_string(max_steps));
+     let elapsed = time() - start;
+    print("Time: " + to_string(elapsed));
+}
+
+main();

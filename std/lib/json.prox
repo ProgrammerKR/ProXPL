@@ -1,0 +1,11 @@
+use std.native.json;
+
+class JSON {
+    static func parse(str) {
+        return native.json.parse(to_string(str));
+    }
+
+    static func stringify(val) {
+        return native.json.stringify(val);
+    }
+}

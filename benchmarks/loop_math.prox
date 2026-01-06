@@ -1,0 +1,17 @@
+// benchmarks/loop_math.prox
+// Stress Test: Tight Loop & Arithmetic
+
+const ITERATIONS = 10000000;
+print("Starting Loop Math...");
+
+let start = clock();
+let sum = 0;
+let i = 0;
+while (i < ITERATIONS) {
+    sum = sum + i;
+    i = i + 1;
+}
+let end = clock();
+
+print("Sum: " + sum);
+print("Time: " + (end - start));

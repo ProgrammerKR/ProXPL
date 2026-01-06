@@ -1,0 +1,14 @@
+// hello.prox
+// A simple Hello World program in ProXPL
+
+func main() {
+    print("Welcome to ProXPL!");
+    
+    let name = input("What is your name? ");
+    print("Hello, " + name + "!");
+    
+    let r = random(1, 100);
+    print("Here is a lucky number for you: " + to_string(r));
+}
+
+main();

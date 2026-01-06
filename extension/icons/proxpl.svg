@@ -1,0 +1,6 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="60" fill="#0f172a"/>
+  <ellipse cx="256" cy="256" rx="200" ry="80" stroke="#a855f7" stroke-width="20" fill="none" transform="rotate(45 256 256)"/>
+  <ellipse cx="256" cy="256" rx="200" ry="80" stroke="#ec4899" stroke-width="20" fill="none" transform="rotate(-45 256 256)"/>
+  <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-family="Courier New, monospace" font-weight="bold" font-size="90" fill="#ffffff" style="text-shadow: 4px 4px 0px #000;">ProXPL</text>
+</svg>

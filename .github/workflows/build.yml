@@ -1,0 +1,137 @@
+name: ProXPL CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            bin_path: |
+              build/proxpl
+              build/prm
+          - os: macos-latest
+            bin_path: |
+              build/proxpl
+              build/prm
+          - os: windows-latest
+            bin_path: build/ProXPL_Installer_*.exe
+            
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install LLVM (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-dev libclang-dev clang
+
+      - name: Install LLVM (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install llvm
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix llvm)" >> $GITHUB_ENV
+
+      - name: Setup LLVM (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install llvm --version 17.0.6 -y --force
+          $llvmRoot = "C:\Program Files\LLVM"
+          if (-not (Test-Path $llvmRoot)) { $llvmRoot = "C:\Program Files (x86)\LLVM" }
+          
+          $llvmDir = ""
+          $candidates = @("$llvmRoot\lib\cmake\llvm", "$llvmRoot\share\llvm\cmake", "$llvmRoot\lib\llvm\cmake", "$llvmRoot\cmake")
+          foreach ($c in $candidates) {
+            if (Test-Path "$c\LLVMConfig.cmake") { $llvmDir = $c; break }
+          }
+          
+          if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
+             $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
+          }
+          
+          if ($llvmDir) {
+            $llvmDir = $llvmDir -replace "\\", "/"
+            $llvmRoot = $llvmRoot -replace "\\", "/"
+            Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
+            Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
+            Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
+          } else {
+            exit 1
+          }
+
+      - name: Configure (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_BENCH=OFF
+
+      - name: Configure (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+             -DBUILD_TESTS=OFF `
+             -DBUILD_BENCH=OFF `
+             -DLLVM_DIR="$env:LLVM_DIR" `
+             -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release --verbose
+
+      - name: Run Benchmarks
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            EXE_PATH="build/Release/proxpl.exe"
+          else
+            EXE_PATH="build/proxpl"
+          fi
+          
+          echo "Running benchmarks with $EXE_PATH"
+          python benchmarks/run_benchmarks.py --executable "$EXE_PATH"
+
+      - name: Build Installer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+          New-Item -ItemType Directory -Force -Path bin
+          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
+          Copy-Item "build/Release/prm.exe" -Destination "bin/"
+          if (Test-Path "build/Release/proxpl_lib.dll") {
+            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
+          }
+          iscc setup.iss
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProXPL-${{ matrix.os }}
+          # UPDATED: This will now upload the .exe and the .dll for Windows
+          # For Linux/Mac, it still uploads the single binary.
+          path: |
+            ${{ matrix.bin_path }}
+            benchmarks/

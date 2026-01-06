@@ -1,0 +1,16 @@
+use std.native.str;
+
+class StringUtils {
+    static func upper(s) => native.str.upper(to_string(s));
+    static func lower(s) => native.str.lower(to_string(s));
+    static func trim(s) => native.str.trim(to_string(s));
+    static func split(s, d) => native.str.split(to_string(s), to_string(d));
+    static func replace(s, old, new_vals) => native.str.replace(to_string(s), to_string(old), to_string(new_vals));
+    static func contains(s, sub) => native.str.contains(to_string(s), to_string(sub));
+    static func startsWith(s, p) => native.str.startswith(to_string(s), to_string(p));
+    static func endsWith(s, su) => native.str.endswith(to_string(s), to_string(su));
+    static func sub(s, start, len) {
+        if (len == null) return native.str.substr(to_string(s), start);
+        return native.str.substr(to_string(s), start, len);
+    }
+}

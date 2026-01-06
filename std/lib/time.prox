@@ -1,0 +1,21 @@
+use std.native.time;
+
+class Time {
+    static func now() {
+        return native.time.now();
+    }
+
+    static func sleep(ms) {
+        native.time.sleep(ms);
+    }
+
+    static func clock() {
+        return native.time.clock();
+    }
+    
+    static func measure(callback) {
+        let start = native.time.clock();
+        callback();
+        return native.time.clock() - start;
+    }
+}

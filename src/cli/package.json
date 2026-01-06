@@ -1,0 +1,37 @@
+{
+    "name": "proxpl-cli",
+    "version": "0.5.1",
+    "description": "Professional CLI tool for ProXPL",
+    "main": "index.js",
+    "bin": {
+        "prox": "./index.js"
+    },
+    "scripts": {
+        "start": "node index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
+    },
+    "keywords": [
+        "proxpl",
+        "cli",
+        "programming language",
+        "compiler",
+        "scaffolding",
+        "package manager"
+    ],
+    "author": "Kanishk Raj <programmerkanishkraj@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ProgrammerKR/ProXPL/issues"
+    },
+    "homepage": "https://github.com/ProgrammerKR/ProXPL#readme",
+    "dependencies": {
+        "commander": "^11.1.0",
+        "chalk": "^4.1.2",
+        "chokidar": "^3.5.3",
+        "fs-extra": "^11.2.0"
+    },
+    "type": "module"
+}

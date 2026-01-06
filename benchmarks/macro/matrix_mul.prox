@@ -1,0 +1,39 @@
+
+func main() {
+    let start = time();
+    let size = 50;
+    let a = [];
+    let b = [];
+    
+    // Init matrices
+    for (let i = 0; i < size; i = i + 1) {
+        let row_a = [];
+        let row_b = [];
+        for (let j = 0; j < size; j = j + 1) {
+            push(row_a, i + j);
+            push(row_b, i - j);
+        }
+        push(a, row_a);
+        push(b, row_b);
+    }
+    
+    // Multiply
+    let c = [];
+    for (let i = 0; i < size; i = i + 1) {
+        let row_c = [];
+        for (let j = 0; j < size; j = j + 1) {
+            let sum = 0;
+            for (let k = 0; k < size; k = k + 1) {
+                sum = sum + a[i][k] * b[k][j];
+            }
+            push(row_c, sum);
+        }
+        push(c, row_c);
+    }
+    
+    print("Matrix[0][0]: " + to_string(c[0][0]));
+     let elapsed = time() - start;
+    print("Time: " + to_string(elapsed));
+}
+
+main();

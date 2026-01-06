@@ -1,0 +1,11 @@
+use std.native.hash;
+
+class Hash {
+    static func md5(str) {
+        return native.hash.md5(to_string(str));
+    }
+    
+    static func sha256(str) {
+        return native.hash.sha256(to_string(str));
+    }
+}

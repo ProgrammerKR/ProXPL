@@ -1,0 +1,136 @@
+# ===========================================
+# ProXPL .gitignore for C/Hybrid Project
+# ===========================================
+
+# ============================================
+# C/C++ Build & Compilation
+# ============================================
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+build/
+cmake-build-debug/
+cmake-build-release/
+bin/
+obj/
+*.elf
+*.hex
+*.dSYM/
+
+# ============================================
+# CMake
+# ============================================
+CMakeFiles/
+CMakeCache.txt
+CMakeUserPresets.json
+cmake_install.cmake
+Makefile
+*.cmake
+
+# ============================================
+# Python Artifacts (for future reference)
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+htmlcov/
+*.egg
+
+# ============================================
+# Virtual Environments
+# ============================================
+venv/
+env/
+ENV/
+.venv
+.env
+
+# ============================================
+# IDE & Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+*.cbp
+*.depend
+*.layout
+tags
+.vim/
+
+# ============================================
+# Documentation & Auto-Generated
+# ============================================
+site/
+docs/_build/
+docs/.doctrees/
+api_docs/
+*.dvi
+*.pdf
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.tmp
+
+# ============================================
+# Generated Files
+# ============================================
+/dist
+/packages
+*.tar.gz
+*.zip
+
+# ============================================
+# Test Coverage
+# ============================================
+.coverage
+htmlcov/
+*.cover
+
+# ============================================
+# Node.js
+# ============================================
+node_modules/
+extension/node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# ============================================
+# Project-Specific
+# ============================================
+.internal_ignore
+*.prox.bak
+temp/
+debug/

@@ -1,0 +1,11 @@
+use std.native.net;
+
+class Net {
+    static func get(url) {
+        return native.net.http_get(to_string(url));
+    }
+    
+    static func post(url, body) {
+        return native.net.http_post(to_string(url), to_string(body));
+    }
+}
