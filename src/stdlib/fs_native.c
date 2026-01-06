@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-<<<<<<< HEAD
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
@@ -31,8 +30,6 @@
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif
 #endif
-=======
->>>>>>> fix-ci-build
 
 #include "../../include/common.h"
 #include "../../include/vm.h"
@@ -54,19 +51,11 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
 }
 
 // --------------------------------------------------
-<<<<<<< HEAD
 // std.native.fs Implementation
 // --------------------------------------------------
 
 // read_file(path) -> String or Null
 static Value fs_read_file(int argCount, Value* args) {
-=======
-// std.fs Implementation
-// --------------------------------------------------
-
-// readFile(path) -> String or Null
-static Value fs_readFile(int argCount, Value* args) {
->>>>>>> fix-ci-build
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     const char* path = AS_CSTRING(args[0]);
@@ -87,20 +76,11 @@ static Value fs_readFile(int argCount, Value* args) {
     buffer[bytesRead] = '\0';
     fclose(file);
     
-<<<<<<< HEAD
     return OBJ_VAL(takeString(buffer, (int)bytesRead));
 }
 
 // write_file(path, content) -> Bool
 static Value fs_write_file(int argCount, Value* args) {
-=======
-    Value result = OBJ_VAL(takeString(buffer, (int)bytesRead));
-    return result;
-}
-
-// writeFile(path, content) -> Bool
-static Value fs_writeFile(int argCount, Value* args) {
->>>>>>> fix-ci-build
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return BOOL_VAL(false);
     
     const char* path = AS_CSTRING(args[0]);
@@ -113,7 +93,6 @@ static Value fs_writeFile(int argCount, Value* args) {
     return BOOL_VAL(true);
 }
 
-<<<<<<< HEAD
 // append_file(path, content) -> Bool
 static Value fs_append_file(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return BOOL_VAL(false);
@@ -128,13 +107,10 @@ static Value fs_append_file(int argCount, Value* args) {
     return BOOL_VAL(true);
 }
 
-=======
->>>>>>> fix-ci-build
 // exists(path) -> Bool
 static Value fs_exists(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
     
-<<<<<<< HEAD
     struct stat buffer;   
     return BOOL_VAL(stat(AS_CSTRING(args[0]), &buffer) == 0);
 }
@@ -180,17 +156,10 @@ static Value fs_is_file(int argCount, Value* args) {
     struct stat st;
     if (stat(AS_CSTRING(args[0]), &st) == 0) {
         return BOOL_VAL(S_ISREG(st.st_mode));
-=======
-    FILE* file = fopen(AS_CSTRING(args[0]), "r");
-    if (file) {
-        fclose(file);
-        return BOOL_VAL(true);
->>>>>>> fix-ci-build
     }
     return BOOL_VAL(false);
 }
 
-<<<<<<< HEAD
 // is_dir(path) -> Bool
 static Value fs_is_dir(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return BOOL_VAL(false);
@@ -312,15 +281,10 @@ static Value fs_abspath(int argCount, Value* args) {
 
 ObjModule* create_std_fs_module() {
     ObjString* name = copyString("std.native.fs", 13);
-=======
-ObjModule* create_std_fs_module() {
-    ObjString* name = copyString("std.fs", 6);
->>>>>>> fix-ci-build
     push(&vm, OBJ_VAL(name));
     ObjModule* module = newModule(name);
     push(&vm, OBJ_VAL(module));
     
-<<<<<<< HEAD
     defineModuleFn(module, "read_file", fs_read_file);
     defineModuleFn(module, "write_file", fs_write_file);
     defineModuleFn(module, "append_file", fs_append_file);
@@ -337,11 +301,6 @@ ObjModule* create_std_fs_module() {
     // New Functions
     defineModuleFn(module, "move", fs_move);
     defineModuleFn(module, "abspath", fs_abspath);
-=======
-    defineModuleFn(module, "readFile", fs_readFile);
-    defineModuleFn(module, "writeFile", fs_writeFile);
-    defineModuleFn(module, "exists", fs_exists);
->>>>>>> fix-ci-build
     
     pop(&vm);
     pop(&vm);

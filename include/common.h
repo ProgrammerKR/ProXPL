@@ -7,15 +7,12 @@
 #ifndef PROX_COMMON_H
 #define PROX_COMMON_H
 
-<<<<<<< HEAD
 #define PROXPL_VERSION_MAJOR 1
 #define PROXPL_VERSION_MINOR 0
 #define PROXPL_VERSION_PATCH 0
 #define PROXPL_VERSION_STRING "1.0.0"
 #define PROXPL_VERSION_PRERELEASE ""
 
-=======
->>>>>>> fix-ci-build
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -32,15 +29,12 @@ typedef int16_t  i16;
 typedef int32_t  i32;
 typedef int64_t  i64;
 
-<<<<<<< HEAD
 typedef enum {
     ACCESS_PUBLIC,
     ACCESS_PRIVATE,
     ACCESS_PROTECTED
 } AccessLevel;
 
-=======
->>>>>>> fix-ci-build
 #ifndef UINT8_MAX
 #define UINT8_MAX 255
 #endif
@@ -73,21 +67,16 @@ typedef struct DictPair DictPair;
 typedef struct DictPairList DictPairList;
 typedef struct StringList StringList;
 // --- Type System ---
-<<<<<<< HEAD
 typedef struct ObjList ObjList;
 typedef struct ObjDictionary ObjDictionary;
 typedef struct ObjModule ObjModule;
 typedef struct ObjClass ObjClass;
 typedef struct ObjInstance ObjInstance;
 typedef struct ObjBoundMethod ObjBoundMethod;
-=======
-typedef struct ObjModule ObjModule;
->>>>>>> fix-ci-build
 typedef struct TypeInfo TypeInfo;
 
 typedef Value (*NativeFn)(int argCount, Value *args);
 
-<<<<<<< HEAD
 // --- Cross-Platform API Visibility ---
 #if defined(PROX_STATIC)
   #define PROX_API
@@ -105,10 +94,5 @@ typedef Value (*NativeFn)(int argCount, Value *args);
 // Debugging
 // #define DEBUG_TRACE_EXECUTION
 // #define DEBUG_PRINT_CODE
-=======
-// Debugging
-#define DEBUG_TRACE_EXECUTION
-#define DEBUG_PRINT_CODE
->>>>>>> fix-ci-build
 
 #endif // PROX_COMMON_H

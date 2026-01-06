@@ -13,11 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-<<<<<<< HEAD
 
-=======
-VM vm;
->>>>>>> fix-ci-build
 
 // Forward declaration from ir_gen.c
 IRModule* generateSSA_IR(StmtList* program);
@@ -38,11 +34,7 @@ void test_ir(const char* source) {
     }
 
     Parser parser;
-<<<<<<< HEAD
     initParser(&parser, tokens, tokenCount, source);
-=======
-    initParser(&parser, tokens, tokenCount);
->>>>>>> fix-ci-build
     StmtList* statements = parse(&parser);
 
     if (!statements) {
@@ -67,11 +59,8 @@ void test_ir(const char* source) {
 }
 
 int main() {
-<<<<<<< HEAD
     initVM(&vm); // Initialize VM for string interning and GC
 
-=======
->>>>>>> fix-ci-build
     const char* code = 
         "let x = 10;\n"
         "if (x > 5) {\n"
@@ -86,10 +75,7 @@ int main() {
         "return x + z;";
     
     test_ir(code);
-<<<<<<< HEAD
     
     freeVM(&vm); // Cleanup
-=======
->>>>>>> fix-ci-build
     return 0;
 }

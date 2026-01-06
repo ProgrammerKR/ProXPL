@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
-<<<<<<< HEAD
 import * as path from 'path';
 import {
     LanguageClient,
@@ -10,14 +9,11 @@ import {
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
-=======
->>>>>>> fix-ci-build
 
 export function activate(context: vscode.ExtensionContext) {
     const diagnosticCollection = vscode.languages.createDiagnosticCollection('proxpl');
     context.subscriptions.push(diagnosticCollection);
 
-<<<<<<< HEAD
     vscode.window.showInformationMessage('ProX Studio Alpha started.');
 
     // --- LSP Client Setup ---
@@ -54,8 +50,6 @@ export function activate(context: vscode.ExtensionContext) {
     client.start();
 
 
-=======
->>>>>>> fix-ci-build
     // 1. Code Runner Command
     let runCommand = vscode.commands.registerCommand('proxpl.run', () => {
         const editor = vscode.window.activeTextEditor;
@@ -65,13 +59,8 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const fileName = editor.document.fileName;
-<<<<<<< HEAD
         if (!fileName.endsWith('.prox') && !fileName.endsWith('.pxpl')) {
             vscode.window.showErrorMessage('Not a ProXPL (.prox or .pxpl) file.');
-=======
-        if (!fileName.endsWith('.prox')) {
-            vscode.window.showErrorMessage('Not a ProXPL (.prox) file.');
->>>>>>> fix-ci-build
             return;
         }
 
@@ -91,7 +80,6 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Save file before running
             editor.document.save().then(() => {
-<<<<<<< HEAD
                 let terminal = vscode.window.terminals.find(t => t.name === 'ProXPL');
                 if (!terminal) {
                     terminal = vscode.window.createTerminal('ProXPL');
@@ -107,79 +95,6 @@ export function activate(context: vscode.ExtensionContext) {
     // ... (intermediate code skipped) ...
 
     // 4. Hover Support
-=======
-                const terminal = vscode.window.activeTerminal || vscode.window.createTerminal('ProXPL');
-                terminal.show();
-                terminal.sendText(`proxpl run "${fileName}"`);
-
-                // Background execution for diagnostics
-                cp.exec(`proxpl check "${fileName}"`, (error: Error | null, stdout: string, stderr: string) => {
-                    diagnosticCollection.clear();
-                    const diagnostics: vscode.Diagnostic[] = [];
-                    const errorLog = stderr || stdout;
-                    const errorLines = errorLog.split('\n');
-
-                    errorLines.forEach((line: string) => {
-                        const match = line.match(/Error at line (\d+): (.*)/);
-                        if (match) {
-                            const lineNum = mapLineNumber(match[1]);
-                            const message = match[2];
-                            const range = new vscode.Range(lineNum, 0, lineNum, 100);
-                            diagnostics.push(new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error));
-                        }
-                    });
-
-                    diagnosticCollection.set(editor.document.uri, diagnostics);
-                });
-            });
-        });
-    });
-    context.subscriptions.push(runCommand);
-
-    // 2. Formatter Provider
-    const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider('proxpl', {
-        provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
-            const edits: vscode.TextEdit[] = [];
-            let lastLineWasEmpty = false;
-
-            for (let i = 0; i < document.lineCount; i++) {
-                const line = document.lineAt(i);
-                const text = line.text;
-
-                // 1. Remove extra empty lines (consecutive empty lines)
-                if (text.trim() === '') {
-                    if (lastLineWasEmpty) {
-                        // Delete this extra empty line
-                        edits.push(vscode.TextEdit.delete(line.rangeIncludingLineBreak));
-                        continue;
-                    }
-                    lastLineWasEmpty = true;
-                } else {
-                    lastLineWasEmpty = false;
-                }
-
-                // 2. Remove trailing whitespace
-                if (text.endsWith(' ') || text.endsWith('\t')) {
-                    edits.push(vscode.TextEdit.delete(new vscode.Range(i, text.trimEnd().length, i, text.length)));
-                }
-
-                // 3. Basic Indentation (Fix to 4 spaces)
-                const indentMatch = text.match(/^(\s+)/);
-                if (indentMatch) {
-                    const oldIndent = indentMatch[1];
-                    const newIndent = oldIndent.replace(/\t/g, '    ');
-                    if (oldIndent !== newIndent) {
-                        edits.push(vscode.TextEdit.replace(new vscode.Range(i, 0, i, oldIndent.length), newIndent));
-                    }
-                }
-            }
-            return edits;
-        }
-    });
-    context.subscriptions.push(formattingProvider);
-
-    // 3. Hover Support
->>>>>>> fix-ci-build
     const hoverProvider = vscode.languages.registerHoverProvider('proxpl', {
         provideHover(document: vscode.TextDocument, position: vscode.Position) {
             const range = document.getWordRangeAtPosition(position);
@@ -188,7 +103,6 @@ export function activate(context: vscode.ExtensionContext) {
 
             const descriptions: { [key: string]: string } = {
                 'func': 'Defines a new function in ProXPL. Syntax: `func name(params) { ... }`',
-<<<<<<< HEAD
                 'var': 'Declares a new variable.',
                 'let': 'Declares a mutable variable.',
                 'const': 'Declares an immutable constant.',
@@ -220,15 +134,6 @@ export function activate(context: vscode.ExtensionContext) {
                 'try': 'Starts a block of code to test for errors.',
                 'catch': 'Handles errors thrown in the try block.',
                 'throw': 'Throws an error/exception.'
-=======
-                'var': 'Declares a new variable. ProXPL is dynamically typed but variables must be declared.',
-                'if': 'Conditional statement. Executes a block if the condition is true.',
-                'else': 'Defines an alternative block for an `if` statement.',
-                'while': 'Loop that continues as long as a condition is true.',
-                'return': 'Exits a function and optionally returns a value.',
-                'print': 'Built-in function to output values to the terminal.',
-                'import': 'Incorporates external modules into the current script.'
->>>>>>> fix-ci-build
             };
 
             if (descriptions[word]) {
@@ -238,7 +143,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
     context.subscriptions.push(hoverProvider);
-<<<<<<< HEAD
 
     // 5. Definition Provider (Basic "Go to Definition")
     const definitionProvider = vscode.languages.registerDefinitionProvider('proxpl', {
@@ -326,8 +230,6 @@ class ProXDebugAdapter implements vscode.DebugAdapter {
     dispose() {
 
     }
-=======
->>>>>>> fix-ci-build
 }
 
 function mapLineNumber(lineStr: string): number {
@@ -335,13 +237,9 @@ function mapLineNumber(lineStr: string): number {
     return isNaN(num) ? 0 : num - 1;
 }
 
-<<<<<<< HEAD
 export function deactivate(): Thenable<void> | undefined {
     if (!client) {
         return undefined;
     }
     return client.stop();
 }
-=======
-export function deactivate() { }
->>>>>>> fix-ci-build

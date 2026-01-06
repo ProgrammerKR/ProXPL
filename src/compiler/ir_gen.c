@@ -6,10 +6,7 @@
 
 #include "../../include/ir.h"
 #include "../../include/ast.h"
-<<<<<<< HEAD
 #include "../../include/object.h"
-=======
->>>>>>> fix-ci-build
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -135,7 +132,6 @@ static int visitExpr(IRGen* gen, Expr* expr) {
             return -1;
         }
 
-<<<<<<< HEAD
         case EXPR_AWAIT: {
              int val = visitExpr(gen, expr->as.await_expr.expression);
              int r = newReg(gen);
@@ -198,8 +194,6 @@ static int visitExpr(IRGen* gen, Expr* expr) {
              return r;
         }
 
-=======
->>>>>>> fix-ci-build
         default:
             return -1;
     }
@@ -359,7 +353,6 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
             break;
         }
 
-<<<<<<< HEAD
         case STMT_FUNC_DECL: {
             // Save current context
             IRFunction* prevFunc = gen->currentFunc;
@@ -412,8 +405,6 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
             break;
         }
 
-=======
->>>>>>> fix-ci-build
         default:
             break;
     }
@@ -422,12 +413,8 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
 IRModule* generateSSA_IR(StmtList* program) {
     IRGen gen;
     gen.module = createIRModule();
-<<<<<<< HEAD
     // Main function wrapper
     gen.currentFunc = createIRFunction("main", false);
-=======
-    gen.currentFunc = createIRFunction("main");
->>>>>>> fix-ci-build
     gen.currentBlock = createIRBasicBlock(gen.currentFunc);
     gen.symbolCount = 0;
     gen.nextReg = 0;

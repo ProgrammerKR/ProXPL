@@ -32,10 +32,7 @@ typedef enum {
     IR_OP_GET_MEMBER,
     IR_OP_SET_MEMBER,
     IR_OP_ALLOCA,
-<<<<<<< HEAD
     IR_OP_AWAIT,
-=======
->>>>>>> fix-ci-build
 } IROpcode;
 
 typedef struct IRInstruction IRInstruction;
@@ -89,10 +86,7 @@ typedef struct IRFunction {
     int blockCapacity;
     
     int nextSsaVal; // For unique register generation
-<<<<<<< HEAD
     bool isAsync;
-=======
->>>>>>> fix-ci-build
 } IRFunction;
 
 typedef struct IRModule {
@@ -107,11 +101,7 @@ extern "C" {
 
 // Constructor functions
 IRModule* createIRModule();
-<<<<<<< HEAD
 IRFunction* createIRFunction(const char* name, bool isAsync);
-=======
-IRFunction* createIRFunction(const char* name);
->>>>>>> fix-ci-build
 IRBasicBlock* createIRBasicBlock(IRFunction* func);
 IRInstruction* createIRInstruction(IROpcode opcode, int result);
 void addOperand(IRInstruction* instr, IROperand op);

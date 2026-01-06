@@ -20,14 +20,11 @@ typedef enum {
   OP_TRUE,
   OP_FALSE,
   OP_POP,
-<<<<<<< HEAD
   OP_DUP,
   OP_BUILD_LIST,
   OP_BUILD_MAP,
   OP_GET_INDEX,
   OP_SET_INDEX,
-=======
->>>>>>> fix-ci-build
   OP_GET_LOCAL,
   OP_SET_LOCAL,
   OP_GET_GLOBAL,
@@ -63,15 +60,11 @@ typedef enum {
   OP_USE,
   OP_TRY,
   OP_CATCH,
-<<<<<<< HEAD
 
   OP_END_TRY,
   OP_INTERFACE,
   OP_IMPLEMENT,
   OP_MAKE_FOREIGN,
-=======
-  OP_END_TRY,
->>>>>>> fix-ci-build
   OP_HALT = 0xFF
 } OpCode;
 

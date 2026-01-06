@@ -45,7 +45,6 @@
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define AS_BOUND_METHOD(value) ((struct ObjBoundMethod *)AS_OBJ(value))
 
-<<<<<<< HEAD
 #define IS_TASK(value) isObjType(value, OBJ_TASK)
 #define AS_TASK(value) ((struct ObjTask *)AS_OBJ(value))
 
@@ -61,8 +60,6 @@
 #define IS_FOREIGN(value) isObjType(value, OBJ_FOREIGN)
 #define AS_FOREIGN(value) ((ObjForeign *)AS_OBJ(value))
 
-=======
->>>>>>> fix-ci-build
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
@@ -73,15 +70,12 @@ typedef enum {
   OBJ_CLASS,
   OBJ_INSTANCE,
   OBJ_BOUND_METHOD,
-<<<<<<< HEAD
   OBJ_LIST,
   OBJ_DICTIONARY,
   OBJ_FOREIGN,
 
   OBJ_TASK,
   OBJ_INTERFACE
-=======
->>>>>>> fix-ci-build
 } ObjType;
 
 struct Obj {
@@ -103,13 +97,10 @@ struct ObjFunction {
   int upvalueCount;
   Chunk chunk;
   ObjString *name;
-<<<<<<< HEAD
   AccessLevel access;
   bool isStatic;
   bool isAbstract;
   struct ObjClass *ownerClass;
-=======
->>>>>>> fix-ci-build
 };
 
 
@@ -140,7 +131,6 @@ typedef struct ObjClosure {
   int upvalueCount;
 } ObjClosure;
 
-<<<<<<< HEAD
 // Interfaces are essentially named method tables?
 // Or just type markers? For now, simple marker with name.
 typedef struct ObjInterface {
@@ -149,17 +139,12 @@ typedef struct ObjInterface {
   Table methods; 
 } ObjInterface;
 
-=======
->>>>>>> fix-ci-build
 struct ObjClass {
   Obj obj;
   ObjString *name;
   Table methods;
-<<<<<<< HEAD
   int interfaceCount;
   Value *interfaces; 
-=======
->>>>>>> fix-ci-build
 };
 
 struct ObjInstance {
@@ -174,7 +159,6 @@ struct ObjBoundMethod {
   ObjClosure *method;
 };
 
-<<<<<<< HEAD
 struct ObjList {
   Obj obj;
   int count;
@@ -207,8 +191,6 @@ struct ObjTask {
   struct ObjTask* next; // For scheduler queue
 };
 
-=======
->>>>>>> fix-ci-build
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -217,16 +199,11 @@ ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn function);
-<<<<<<< HEAD
 
-=======
-ObjNative *newNative(NativeFn function);
->>>>>>> fix-ci-build
 ObjModule *newModule(ObjString *name);
 ObjClosure *newClosure(ObjFunction *function);
 ObjUpvalue *newUpvalue(Value *slot);
 struct ObjClass *newClass(ObjString *name);
-<<<<<<< HEAD
 struct ObjInterface *newInterface(ObjString *name);
 struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
@@ -236,11 +213,6 @@ ObjForeign *newForeign(ObjString* name, void* library, void* function);
 struct ObjTask *newTask(void* hdl, ResumeFn resume);
 void printObject(Value value);
 void appendToList(struct ObjList* list, Value value);
-=======
-struct ObjInstance *newInstance(struct ObjClass *klass);
-struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
-void printObject(Value value);
->>>>>>> fix-ci-build
 
 static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;

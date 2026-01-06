@@ -4,11 +4,7 @@
 
 static void printLine(const char* source, int targetLine) {
   int currentLine = 1;
-<<<<<<< HEAD
 
-=======
-  const char* lineStart = source;
->>>>>>> fix-ci-build
   const char* lineEnd = source;
 
   while (*lineEnd != '\0') {

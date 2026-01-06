@@ -14,11 +14,8 @@ void initScanner(Scanner *scanner, const char *source) {
   scanner->start = source;
   scanner->current = source;
   scanner->line = 1;
-<<<<<<< HEAD
   scanner->currentColumn = 1;
   scanner->startColumn = 1;
-=======
->>>>>>> fix-ci-build
 }
 
 static bool isAlpha(char c) {
@@ -31,10 +28,7 @@ static bool isAtEnd(Scanner *scanner) { return *scanner->current == '\0'; }
 
 static char advance(Scanner *scanner) {
   scanner->current++;
-<<<<<<< HEAD
   scanner->currentColumn++;
-=======
->>>>>>> fix-ci-build
   return scanner->current[-1];
 }
 
@@ -66,10 +60,7 @@ static void skipWhitespace(Scanner *scanner) {
       break;
     case '\n':
       scanner->line++;
-<<<<<<< HEAD
       scanner->currentColumn = 1;
-=======
->>>>>>> fix-ci-build
       advance(scanner);
       break;
     case '/':
@@ -82,15 +73,10 @@ static void skipWhitespace(Scanner *scanner) {
         advance(scanner); // consume /
         advance(scanner); // consume *
         while (!isAtEnd(scanner)) {
-<<<<<<< HEAD
           if (peek(scanner) == '\n') {
             scanner->line++;
             scanner->currentColumn = 1;
           }
-=======
-          if (peek(scanner) == '\n')
-            scanner->line++;
->>>>>>> fix-ci-build
           if (peek(scanner) == '*' && peekNext(scanner) == '/') {
             advance(scanner); // consume *
             advance(scanner); // consume /
@@ -114,10 +100,7 @@ static Token makeToken(Scanner *scanner, PxTokenType type) {
   token.start = scanner->start;
   token.length = (int)(scanner->current - scanner->start);
   token.line = scanner->line;
-<<<<<<< HEAD
   token.column = scanner->startColumn;
-=======
->>>>>>> fix-ci-build
   return token;
 }
 
@@ -127,10 +110,7 @@ static Token errorToken(Scanner *scanner, const char *message) {
   token.start = message;
   token.length = (int)strlen(message);
   token.line = scanner->line;
-<<<<<<< HEAD
   token.column = scanner->startColumn;
-=======
->>>>>>> fix-ci-build
   return token;
 }
 
@@ -262,7 +242,6 @@ static PxTokenType identifierType(Scanner *scanner) {
           case 'p':
             return checkKeyword(scanner, 3, 3, "ort", TOKEN_EXPORT);
           case 't':
-<<<<<<< HEAD
             if (scanner->current - scanner->start > 3) {
                  switch(scanner->start[3]) {
                      case 'e': return checkKeyword(scanner, 4, 2, "rn", TOKEN_EXTERN);
@@ -270,9 +249,6 @@ static PxTokenType identifierType(Scanner *scanner) {
                  }
             }
             break;
-=======
-            return checkKeyword(scanner, 3, 4, "ends", TOKEN_EXTENDS);
->>>>>>> fix-ci-build
           }
         }
         break;
@@ -303,21 +279,8 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'm':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
-<<<<<<< HEAD
           case 'l':
             return checkKeyword(scanner, 4, 7, "ements", TOKEN_IMPLEMENTS);
-=======
-          case 'p':
-            if (scanner->current - scanner->start > 3) {
-              switch (scanner->start[3]) {
-              case 'o':
-                return checkKeyword(scanner, 4, 2, "rt", TOKEN_IMPORT);
-              case 'l':
-                return checkKeyword(scanner, 4, 7, "ements", TOKEN_IMPLEMENTS);
-              }
-            }
-            break;
->>>>>>> fix-ci-build
           }
         }
         break;
@@ -343,11 +306,8 @@ static PxTokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'a':
         return checkKeyword(scanner, 2, 4, "tive", TOKEN_NATIVE);
-<<<<<<< HEAD
       case 'e':
         return checkKeyword(scanner, 2, 1, "w", TOKEN_NEW);
-=======
->>>>>>> fix-ci-build
       case 'u':
         return checkKeyword(scanner, 2, 2, "ll", TOKEN_NULL);
       }
@@ -365,14 +325,10 @@ static PxTokenType identifierType(Scanner *scanner) {
               case 'n':
                 return checkKeyword(scanner, 4, 1, "t", TOKEN_PRINT);
               case 'v':
-<<<<<<< HEAD
                 if (scanner->current - scanner->start > 4) {
                      return checkKeyword(scanner, 4, 3, "ate", TOKEN_PRIVATE);
                 }
                 return checkKeyword(scanner, 4, 0, "", TOKEN_PRIVATE);
-=======
-                return checkKeyword(scanner, 4, 3, "ate", TOKEN_PRIVATE);
->>>>>>> fix-ci-build
               }
             }
             break;
@@ -382,7 +338,6 @@ static PxTokenType identifierType(Scanner *scanner) {
         }
         break;
       case 'u':
-<<<<<<< HEAD
         if (scanner->current - scanner->start > 2) {
              switch (scanner->start[2]) {
                  case 'b':
@@ -394,8 +349,6 @@ static PxTokenType identifierType(Scanner *scanner) {
                      return checkKeyword(scanner, 2, 1, "b", TOKEN_PUBLIC);
              }
         }
-=======
->>>>>>> fix-ci-build
         return checkKeyword(scanner, 2, 4, "blic", TOKEN_PUBLIC);
       }
     }
@@ -469,10 +422,7 @@ static Token identifier(Scanner *scanner) {
 Token scanToken(Scanner *scanner) {
   skipWhitespace(scanner);
   scanner->start = scanner->current;
-<<<<<<< HEAD
   scanner->startColumn = scanner->currentColumn;
-=======
->>>>>>> fix-ci-build
 
   if (isAtEnd(scanner))
     return makeToken(scanner, TOKEN_EOF);

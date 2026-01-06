@@ -19,12 +19,8 @@ typedef enum {
     TYPE_FLOAT,
     TYPE_STRING,
     TYPE_FUNCTION,
-<<<<<<< HEAD
     TYPE_CLASS,
     TYPE_INTERFACE
-=======
-    TYPE_CLASS
->>>>>>> fix-ci-build
 } TypeKind;
 
 struct TypeInfo {
@@ -40,7 +36,6 @@ typedef enum {
   EXPR_BINARY, EXPR_UNARY, EXPR_LITERAL, EXPR_GROUPING,
   EXPR_VARIABLE, EXPR_ASSIGN, EXPR_LOGICAL, EXPR_CALL,
   EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_LIST,
-<<<<<<< HEAD
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
   EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW
 } ExprType;
@@ -50,16 +45,6 @@ typedef enum {
   STMT_USE_DECL, STMT_IF, STMT_WHILE, STMT_FOR, STMT_RETURN,
   STMT_BLOCK, STMT_BREAK, STMT_CONTINUE, STMT_SWITCH,
   STMT_TRY_CATCH, STMT_PRINT, STMT_EXTERN_DECL
-=======
-  EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA
-} ExprType;
-
-typedef enum {
-  STMT_EXPRESSION, STMT_VAR_DECL, STMT_FUNC_DECL, STMT_CLASS_DECL,
-  STMT_USE_DECL, STMT_IF, STMT_WHILE, STMT_FOR, STMT_RETURN,
-  STMT_BLOCK, STMT_BREAK, STMT_CONTINUE, STMT_SWITCH,
-  STMT_TRY_CATCH, STMT_PRINT
->>>>>>> fix-ci-build
 } StmtType;
 
 // --- List Structures ---
@@ -119,13 +104,10 @@ typedef struct { ExprList *elements; } ListExpr;
 typedef struct { DictPairList *pairs; } DictionaryExpr;
 typedef struct { Expr *condition; Expr *true_branch; Expr *false_branch; } TernaryExpr;
 typedef struct { StringList *params; StmtList *body; } LambdaExpr;
-<<<<<<< HEAD
 typedef struct { Expr *expression; } AwaitExpr;
 typedef struct { int dummy; } ThisExpr;
 typedef struct { char *method; } SuperExpr; 
 typedef struct { Expr *clazz; ExprList *args; } NewExpr;
-=======
->>>>>>> fix-ci-build
 
 struct Expr {
   ExprType type;
@@ -137,26 +119,17 @@ struct Expr {
     GroupingExpr grouping; VariableExpr variable; AssignExpr assign;
     LogicalExpr logical; CallExpr call; GetExpr get; SetExpr set;
     IndexExpr index; ListExpr list; DictionaryExpr dictionary;
-<<<<<<< HEAD
     TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
     ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
-=======
-    TernaryExpr ternary; LambdaExpr lambda;
->>>>>>> fix-ci-build
   } as;
 };
 
 // --- Statement Data Structures ---
 typedef struct { Expr *expression; } ExpressionStmt;
 typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; } VarDeclStmt;
-<<<<<<< HEAD
 typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; bool isAsync; AccessLevel access; bool isStatic; bool isAbstract; } FuncDeclStmt;
 typedef struct { char *name; VariableExpr *superclass; StringList *interfaces; StmtList *methods; } ClassDeclStmt;
 typedef struct { char *name; StmtList *methods; } InterfaceDeclStmt;
-=======
-typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; } FuncDeclStmt;
-typedef struct { char *name; VariableExpr *superclass; StmtList *methods; } ClassDeclStmt;
->>>>>>> fix-ci-build
 typedef struct { StringList *modules; } UseDeclStmt;
 typedef struct { Expr *condition; Stmt *then_branch; Stmt *else_branch; } IfStmt;
 typedef struct { Expr *condition; Stmt *body; } WhileStmt;
@@ -166,14 +139,9 @@ typedef struct { StmtList *statements; } BlockStmt;
 typedef struct { int dummy; } BreakStmt;
 typedef struct { int dummy; } ContinueStmt;
 typedef struct { Expr *value; SwitchCaseList *cases; StmtList *default_case; } SwitchStmt;
-<<<<<<< HEAD
 typedef struct { StmtList *try_block; char *catch_var; StmtList *catch_block; StmtList *finally_block; } TryCatchStmt;
 typedef struct { Expr *expression; } PrintStmt;
 typedef struct { char *libraryPath; char *symbolName; char *name; StringList *params; } ExternDeclStmt;
-=======
-typedef struct { Expr *expression; } PrintStmt;
-typedef struct { StmtList *try_block; char *catch_var; StmtList *catch_block; StmtList *finally_block; } TryCatchStmt;
->>>>>>> fix-ci-build
 
 struct Stmt {
   StmtType type;
@@ -181,18 +149,11 @@ struct Stmt {
   int column;
   union {
     ExpressionStmt expression; VarDeclStmt var_decl; FuncDeclStmt func_decl;
-<<<<<<< HEAD
     ClassDeclStmt class_decl; InterfaceDeclStmt interface_decl; UseDeclStmt use_decl; IfStmt if_stmt;
     WhileStmt while_stmt; ForStmt for_stmt; ReturnStmt return_stmt;
     BlockStmt block; BreakStmt break_stmt; ContinueStmt continue_stmt;
     SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
     ExternDeclStmt extern_decl;
-=======
-    ClassDeclStmt class_decl; UseDeclStmt use_decl; IfStmt if_stmt;
-    WhileStmt while_stmt; ForStmt for_stmt; ReturnStmt return_stmt;
-    BlockStmt block; BreakStmt break_stmt; ContinueStmt continue_stmt;
-    SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
->>>>>>> fix-ci-build
   } as;
 };
 
@@ -212,7 +173,6 @@ Expr *createListExpr(ExprList *elements, int line, int column);
 Expr *createDictionaryExpr(DictPairList *pairs, int line, int column);
 Expr *createTernaryExpr(Expr *cond, Expr *true_br, Expr *false_br, int line, int column);
 Expr *createLambdaExpr(StringList *params, StmtList *body, int line, int column);
-<<<<<<< HEAD
 Expr *createAwaitExpr(Expr *expression, int line, int column);
 Expr *createThisExpr(int line, int column);
 Expr *createSuperExpr(const char *method, int line, int column);
@@ -223,13 +183,6 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line, i
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, int line, int column);
 Stmt *createClassDeclStmt(const char *name, VariableExpr *super, StringList *interfaces, StmtList *methods, int line, int column);
 Stmt *createInterfaceDeclStmt(const char *name, StmtList *methods, int line, int column);
-=======
-
-Stmt *createExpressionStmt(Expr *expression, int line, int column);
-Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line, int column);
-Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, int line, int column);
-Stmt *createClassDeclStmt(const char *name, VariableExpr *super, StmtList *methods, int line, int column);
->>>>>>> fix-ci-build
 Stmt *createUseDeclStmt(StringList *modules, int line, int column);
 Stmt *createIfStmt(Expr *cond, Stmt *then_br, Stmt *else_br, int line, int column);
 Stmt *createWhileStmt(Expr *cond, Stmt *body, int line, int column);
@@ -241,10 +194,7 @@ Stmt *createContinueStmt(int line, int column);
 Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def, int line, int column);
 Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var, StmtList *catch_blk, StmtList *finally_blk, int line, int column);
 Stmt *createPrintStmt(Expr *expression, int line, int column);
-<<<<<<< HEAD
 Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char *name, StringList *params, int line, int column);
-=======
->>>>>>> fix-ci-build
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

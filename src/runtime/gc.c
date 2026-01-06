@@ -101,14 +101,11 @@ static void blackenObject(Obj* object) {
             markTable(&module->exports);
             break;
         }
-<<<<<<< HEAD
         case OBJ_FOREIGN: {
             ObjForeign* foreign = (ObjForeign*)object;
             markObject((Obj*)foreign->name);
             break;
         }
-=======
->>>>>>> fix-ci-build
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
             markObject((Obj*)closure->function);
@@ -138,7 +135,6 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)bound->method);
             break;
         }
-<<<<<<< HEAD
         case OBJ_LIST: {
             struct ObjList* list = (struct ObjList*)object;
             for (int i = 0; i < list->count; i++) {
@@ -151,9 +147,6 @@ static void blackenObject(Obj* object) {
             markTable(&dict->items);
             break;
         }
-=======
-        // Case OBJ_CLASS, OBJ_INSTANCE would go here
->>>>>>> fix-ci-build
         default:
             // Warn or ignore?
             break;
@@ -166,7 +159,6 @@ static void markRoots() {
         markValue(*slot);
     }
 
-<<<<<<< HEAD
     // 2. Mark Frames (Function Closures)
     for (int i = 0; i < vm.frameCount; i++) {
         markObject((Obj*)vm.frames[i].closure);
@@ -181,10 +173,6 @@ static void markRoots() {
     markTable(&vm.globals);
     markObject((Obj*)vm.initString);
     markObject((Obj*)vm.cliArgs);
-=======
-    // 2. Mark Globals
-    markTable(&vm.globals);
->>>>>>> fix-ci-build
     
     // 3. Mark Loaded Modules & Search Paths?
     // Modules are strong refs in importer.modules
@@ -238,15 +226,12 @@ static void freeObject(Obj* object) {
             FREE(ObjNative, object);
             break;
         }
-<<<<<<< HEAD
         case OBJ_FOREIGN: {
             // Note: We do not close the library handle here as it might be shared.
             // Future improvement: Reference counting for libraries.
             FREE(ObjForeign, object);
             break;
         }
-=======
->>>>>>> fix-ci-build
         case OBJ_MODULE: {
             ObjModule* module = (ObjModule*)object;
             freeTable(&module->exports);
@@ -277,7 +262,6 @@ static void freeObject(Obj* object) {
         case OBJ_BOUND_METHOD:
             FREE(struct ObjBoundMethod, object);
             break;
-<<<<<<< HEAD
         case OBJ_LIST: {
             struct ObjList* list = (struct ObjList*)object;
             FREE_ARRAY(Value, list->items, list->capacity);
@@ -303,8 +287,6 @@ static void freeObject(Obj* object) {
             FREE(struct ObjTask, object);
             break;
         }
-=======
->>>>>>> fix-ci-build
         default:
             FREE(Obj, object); // Fallback
             break;

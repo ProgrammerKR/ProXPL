@@ -1,10 +1,6 @@
 {
     "name": "proxpl-cli",
-<<<<<<< HEAD
     "version": "0.5.1",
-=======
-    "version": "1.0.0",
->>>>>>> fix-ci-build
     "description": "Professional CLI tool for ProXPL",
     "main": "index.js",
     "bin": {
@@ -13,7 +9,6 @@
     "scripts": {
         "start": "node index.js"
     },
-<<<<<<< HEAD
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
@@ -32,8 +27,6 @@
         "url": "https://github.com/ProgrammerKR/ProXPL/issues"
     },
     "homepage": "https://github.com/ProgrammerKR/ProXPL#readme",
-=======
->>>>>>> fix-ci-build
     "dependencies": {
         "commander": "^11.1.0",
         "chalk": "^4.1.2",

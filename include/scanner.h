@@ -99,10 +99,6 @@ typedef enum {
   TOKEN_ASYNC,
   TOKEN_AWAIT,
   TOKEN_USE,
-<<<<<<< HEAD
-=======
-  TOKEN_IMPORT,
->>>>>>> fix-ci-build
   TOKEN_EXPORT,
   TOKEN_FROM,
   TOKEN_AS,
@@ -110,10 +106,7 @@ typedef enum {
   TOKEN_IS,
   TOKEN_TYPEOF,
   TOKEN_EXTENDS,
-<<<<<<< HEAD
   TOKEN_EXTERN,
-=======
->>>>>>> fix-ci-build
   TOKEN_IMPLEMENTS,
   TOKEN_INTERFACE,
   TOKEN_ENUM,
@@ -124,10 +117,7 @@ typedef enum {
   TOKEN_PROTECTED,
   TOKEN_ABSTRACT,
   TOKEN_NATIVE,
-<<<<<<< HEAD
   TOKEN_NEW,
-=======
->>>>>>> fix-ci-build
   TOKEN_VOID,
   TOKEN_DEFER,
 
@@ -140,21 +130,15 @@ typedef struct {
   const char *start;
   int length;
   int line;
-<<<<<<< HEAD
   int column;
-=======
->>>>>>> fix-ci-build
 } Token;
 
 typedef struct {
   const char *start;
   const char *current;
   int line;
-<<<<<<< HEAD
   int currentColumn;
   int startColumn;
-=======
->>>>>>> fix-ci-build
 } Scanner;
 
 void initScanner(Scanner *scanner, const char *source);

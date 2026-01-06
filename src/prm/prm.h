@@ -35,7 +35,6 @@ void prm_build(const Manifest* manifest, bool releaseMode);
 // Run the project
 void prm_run(const Manifest* manifest);
 
-<<<<<<< HEAD
 // --- Expanded Commands ---
 
 // Core
@@ -73,6 +72,4 @@ void prm_doc();
 void prm_exec(const char* command);
 void prm_why(const char* packageName);
 
-=======
->>>>>>> fix-ci-build
 #endif
