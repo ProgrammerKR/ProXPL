@@ -93,19 +93,26 @@ static void repl() {
     }
 
     // --- Pipeline: AST -> Bytecode -> VM ---
-    Chunk chunk;
-    initChunk(&chunk);
-    if (!generateBytecode(statements, &chunk)) {
+    // --- Pipeline: AST -> Bytecode -> VM ---
+    // Use heap-allocated function for compilation to support nested functions properly
+    ObjFunction* function = newFunction();
+    // Temporarily root function to prevent GC during compilation (if any alloc happens)
+    push(&vm, OBJ_VAL(function));
+    
+    if (!generateBytecode(statements, function)) {
         fprintf(stderr, "Compilation error\n");
-        freeChunk(&chunk);
+        pop(&vm); // unroot
+        // Function remains in vm.objects, cleared by GC or shutdown
         freeStmtList(statements);
         continue;
     }
+    pop(&vm); // unroot
     
-    interpretChunk(&vm, &chunk);
+    interpretChunk(&vm, &function->chunk);
 
     // Free resources
-    freeChunk(&chunk);
+    // chunk freed by function destructor eventually
+
     freeStmtList(statements);
   }
 }

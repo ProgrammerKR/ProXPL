@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
     - name: Checkout source
@@ -55,6 +55,14 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y llvm-dev libclang-dev clang build-essential
+
+    - name: Install LLVM (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew update
+        brew install llvm
+        echo "LLVM_DIR=$(brew --prefix llvm)/lib/cmake/llvm" >> $GITHUB_ENV
+        echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
     - name: Setup LLVM (Windows)
       if: matrix.os == 'windows-latest'

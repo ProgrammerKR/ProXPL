@@ -1143,7 +1143,7 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   ObjFunction* function = newFunction();
   
   // Connect the AST-based bytecode generator
-  if (!generateBytecode(statements, &function->chunk)) {
+  if (!generateBytecode(statements, function)) {
       pvm->nextGC = oldNextGC;
       return INTERPRET_COMPILE_ERROR;
   }

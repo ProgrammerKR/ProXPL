@@ -916,17 +916,16 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
     }
 }
 
-bool generateBytecode(StmtList* statements, Chunk* chunk) {
+bool generateBytecode(StmtList* statements, ObjFunction* function) {
     BytecodeGen gen;
     Compiler compiler;
     
     gen.compiler = &compiler;
-    gen.chunk = chunk;
+    gen.chunk = &function->chunk;
     gen.hadError = false;
     
     compiler.enclosing = NULL;
-    compiler.function = newFunction(); 
-    compiler.function->chunk = *chunk; 
+    compiler.function = function; 
     
     compiler.type = COMP_SCRIPT; 
     compiler.localCount = 0;
