@@ -533,9 +533,7 @@ static InterpretResult run(VM* vm) {
           vm->stackTop -= argCount + 1;
           push(vm, result);
           DISPATCH();
-          vm->stackTop -= argCount + 1;
-          push(vm, result);
-          DISPATCH();
+
       } else if (IS_FOREIGN(callee)) {
           ObjForeign* foreign = AS_FOREIGN(callee);
           Value result = callForeign(foreign, argCount, vm->stackTop - argCount);
