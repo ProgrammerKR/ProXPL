@@ -26,6 +26,7 @@ public:
         Builder = std::make_unique<llvm::IRBuilder<>>(*Context);
         
         setupRuntimeTypes();
+<<<<<<< HEAD
         setupCoroIntrinsics();
     }
 
@@ -85,6 +86,8 @@ public:
              false
         );
         llvm::Function::Create(NewTaskType, llvm::Function::ExternalLinkage, "prox_rt_new_task", ModuleOb.get());
+=======
+>>>>>>> fix-ci-build
     }
 
     void setupRuntimeTypes() {
@@ -135,6 +138,7 @@ public:
             snprintf(name, sizeof(name), "block%d", func->blocks[i]->id);
             blockMap[func->blocks[i]] = llvm::BasicBlock::Create(*Context, name, F);
         }
+<<<<<<< HEAD
         
         // Async Setup
         llvm::Value* CoroId = nullptr;
@@ -240,6 +244,8 @@ public:
              // Does `blocks[0]` have predecessors?
              // If we jump to it from ResumeBB, it's fine.
         }
+=======
+>>>>>>> fix-ci-build
 
         // Pass 2: Emit instructions (except Phi operands)
         for (int i = 0; i < func->blockCount; i++) {
@@ -249,7 +255,11 @@ public:
 
             IRInstruction* instr = irBlock->first;
             while (instr) {
+<<<<<<< HEAD
                 emitInstruction(instr, CoroHdl); // Pass coroutine handle if needed
+=======
+                emitInstruction(instr);
+>>>>>>> fix-ci-build
                 instr = instr->next;
             }
         }
@@ -275,6 +285,7 @@ public:
         // Generate return 0 if block is unterminated (fallback)
          if (!F->back().getTerminator()) {
              Builder->SetInsertPoint(&F->back());
+<<<<<<< HEAD
              if (func->isAsync) {
                  // For async, falling off end means task complete with NIL
                  // TODO: Mark task complete in runtime?
@@ -286,18 +297,31 @@ public:
                  uint64_t nilVal = 0x7ffc000000000001; 
                  Builder->CreateRet(llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false)));
              }
+=======
+             // Return NIL (0x7ffc000000000001)
+             uint64_t nilVal = 0x7ffc000000000001; 
+             Builder->CreateRet(llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false)));
+>>>>>>> fix-ci-build
          }
 
         // Verify function
         std::string err;
         llvm::raw_string_ostream os(err);
         if (llvm::verifyFunction(*F, &os)) {
+<<<<<<< HEAD
             std::cerr << "LLVM Verification Error in " << func->name << ": " << os.str() << "\n";
             // F->dump();
         }
     }
 
     void emitInstruction(IRInstruction* instr, llvm::Value* CoroHdl = nullptr) {
+=======
+            std::cerr << "LLVM Verification Error: " << os.str() << "\n";
+        }
+    }
+
+    void emitInstruction(IRInstruction* instr) {
+>>>>>>> fix-ci-build
         switch (instr->opcode) {
             case IR_OP_CONST: {
                 llvm::Value* v = nullptr;
@@ -333,6 +357,7 @@ public:
                 llvm::Value* L = getOperand(instr->operands[0]);
                 llvm::Value* R = getOperand(instr->operands[1]);
                 llvm::Function *AddFunc = ModuleOb->getFunction("prox_rt_add");
+<<<<<<< HEAD
                 // if (L && R && AddFunc) 
                 ssaValues[instr->result] = Builder->CreateCall(AddFunc, {L, R}, "addtmp");
                 break;
@@ -409,6 +434,13 @@ public:
                 break;
             }
 
+=======
+                if (L && R && AddFunc) ssaValues[instr->result] = Builder->CreateCall(AddFunc, {L, R}, "addtmp");
+                break;
+            }
+            // TODO: Implement other math ops similarly with runtime helpers OR inline check
+            
+>>>>>>> fix-ci-build
             case IR_OP_JUMP: {
                 Builder->CreateBr(blockMap[instr->operands[0].as.block]);
                 break;
@@ -418,7 +450,11 @@ public:
                 llvm::BasicBlock* Then = blockMap[instr->operands[1].as.block];
                 llvm::BasicBlock* Else = blockMap[instr->operands[2].as.block];
                 
+<<<<<<< HEAD
                 // Temporary: Treat 0 as false
+=======
+                // Temporary: Treat 0 as false (legacy behavior until full type lowering)
+>>>>>>> fix-ci-build
                  if (Cond) {
                     llvm::Value* boolCond = Builder->CreateICmpNE(Cond, llvm::ConstantInt::get(*Context, llvm::APInt(64, 0)), "ifcond");
                     Builder->CreateCondBr(boolCond, Then, Else);
@@ -431,10 +467,15 @@ public:
             }
             case IR_OP_RETURN: {
                 llvm::Value* V = getOperand(instr->operands[0]);
+<<<<<<< HEAD
+=======
+                // Default return NIL
+>>>>>>> fix-ci-build
                 if (!V) {
                    uint64_t nilVal = 0x7ffc000000000001; 
                    V = llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false));
                 }
+<<<<<<< HEAD
                 
                 if (CoroHdl) {
                     // Async return: Mark task as complete with value V
@@ -446,12 +487,16 @@ public:
                 } else {
                     Builder->CreateRet(V);
                 }
+=======
+                Builder->CreateRet(V);
+>>>>>>> fix-ci-build
                 break;
             }
             default:
                 break;
         }
     }
+<<<<<<< HEAD
     
 
     void setupSchedulerHelpers() {
@@ -500,6 +545,9 @@ public:
 
     // Call this from setupRuntimeTypes or Constructor
     
+=======
+
+>>>>>>> fix-ci-build
     llvm::Value* getOperand(IROperand& op) {
         if (op.type == OPERAND_CONST) {
              if (IS_NUMBER(op.as.constant)) {
@@ -522,7 +570,10 @@ public:
 
 extern "C" void emitLLVM(IRModule* module) {
     LLVMEmitter emitter;
+<<<<<<< HEAD
     emitter.setupSchedulerHelpers(); // Add helpers
+=======
+>>>>>>> fix-ci-build
     emitter.emitModule(module);
 }
 

@@ -1,7 +1,11 @@
 // --------------------------------------------------
 //   Project: ProX Programming Language (ProXPL)
 //   Author:  ProgrammerKR
+<<<<<<< HEAD
 //   Created: 2025-12-23
+=======
+//   Created: 2025-12-22
+>>>>>>> fix-ci-build
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
 // --------------------------------------------------
 
@@ -41,7 +45,10 @@ static void invoke_compiler(const char* file, bool run) {
 }
 
 void prm_build(const Manifest* manifest, bool releaseMode) {
+<<<<<<< HEAD
     (void)releaseMode;
+=======
+>>>>>>> fix-ci-build
     printf("[PRM] Building project: %s v%s\n", manifest->name, manifest->version);
     // Phase 1: Just invoke compiler on entry point
     invoke_compiler(manifest->entryPoint, false);
@@ -50,4 +57,8 @@ void prm_build(const Manifest* manifest, bool releaseMode) {
 void prm_run(const Manifest* manifest) {
     printf("[PRM] Running project: %s v%s\n", manifest->name, manifest->version);
     invoke_compiler(manifest->entryPoint, true);
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> fix-ci-build

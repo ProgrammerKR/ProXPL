@@ -29,6 +29,7 @@
             "}"
         ],
         "description": "If block"
+<<<<<<< HEAD
     },
     "For Loop": {
         "prefix": "for",
@@ -85,5 +86,7 @@
             "}"
         ],
         "description": "Try-Catch block"
+=======
+>>>>>>> fix-ci-build
     }
 }

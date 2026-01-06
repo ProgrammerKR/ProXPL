@@ -3,7 +3,10 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+<<<<<<< HEAD
 // --------------------------------------------------
+=======
+>>>>>>> fix-ci-build
 
 /*
  * ProXPL Standard Library - Math Module  
@@ -16,6 +19,7 @@
 #include "common.h"
 #include "vm.h"
 #include "value.h"
+<<<<<<< HEAD
 #include "object.h"
 #include <math.h>
 #include <stdlib.h>
@@ -33,6 +37,11 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
     pop(&vm);
     pop(&vm);
 }
+=======
+#include <math.h>
+#include <stdlib.h>
+#include <time.h>
+>>>>>>> fix-ci-build
 
 // abs(x) - Absolute value
 static Value native_abs(int argCount, Value* args) {
@@ -129,6 +138,7 @@ static Value native_tan(int argCount, Value* args) {
     return NUMBER_VAL(tan(AS_NUMBER(args[0])));
 }
 
+<<<<<<< HEAD
 static Value native_asin(int argCount, Value* args) {
     if (argCount < 1 || !IS_NUMBER(args[0])) return NUMBER_VAL(0);
     return NUMBER_VAL(asin(AS_NUMBER(args[0])));
@@ -144,6 +154,8 @@ static Value native_atan(int argCount, Value* args) {
     return NUMBER_VAL(atan(AS_NUMBER(args[0])));
 }
 
+=======
+>>>>>>> fix-ci-build
 // log(x, base) - Logarithm
 static Value native_log(int argCount, Value* args) {
     if (argCount < 1 || !IS_NUMBER(args[0])) return NUMBER_VAL(0);
@@ -192,6 +204,7 @@ static Value native_randint(int argCount, Value* args) {
     return NUMBER_VAL(min + (rand() % range));
 }
 
+<<<<<<< HEAD
 // seed(val)
 static Value native_seed(int argCount, Value* args) {
     if (argCount > 0 && IS_NUMBER(args[0])) {
@@ -241,3 +254,27 @@ ObjModule* create_std_math_module() {
     pop(&vm); // name
     return module;
 }
+=======
+// Register all math functions with the VM
+void register_math_natives(VM* vm) {
+    // Initialize random seed
+    srand((unsigned int)time(NULL));
+    
+    defineNative(vm, "abs", native_abs);
+    defineNative(vm, "ceil", native_ceil);
+    defineNative(vm, "floor", native_floor);
+    defineNative(vm, "round", native_round);
+    defineNative(vm, "max", native_max);
+    defineNative(vm, "min", native_min);
+    defineNative(vm, "pow", native_pow);
+    defineNative(vm, "sqrt", native_sqrt);
+    defineNative(vm, "sin", native_sin);
+    defineNative(vm, "cos", native_cos);
+    defineNative(vm, "tan", native_tan);
+    defineNative(vm, "log", native_log);
+    defineNative(vm, "exp", native_exp);
+    defineNative(vm, "random", native_random);
+    defineNative(vm, "randint", native_randint);
+}
+
+>>>>>>> fix-ci-build

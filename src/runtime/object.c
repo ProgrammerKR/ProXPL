@@ -33,9 +33,12 @@ ObjFunction *newFunction() {
   function->arity = 0;
   function->upvalueCount = 0;
   function->name = NULL;
+<<<<<<< HEAD
   function->access = ACCESS_PUBLIC;
   function->isStatic = false;
   function->isAbstract = false;
+=======
+>>>>>>> fix-ci-build
   initChunk(&function->chunk); // Requires chunk.h
   return function;
 }
@@ -46,6 +49,7 @@ ObjNative *newNative(NativeFn function) {
   return native;
 }
 
+<<<<<<< HEAD
 ObjForeign *newForeign(ObjString* name, void* library, void* function) {
   ObjForeign *foreign = ALLOCATE_OBJ(ObjForeign, OBJ_FOREIGN);
   foreign->name = name;
@@ -54,6 +58,8 @@ ObjForeign *newForeign(ObjString* name, void* library, void* function) {
   return foreign;
 }
 
+=======
+>>>>>>> fix-ci-build
 ObjModule *newModule(ObjString *name) {
   ObjModule *module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
   module->name = name;
@@ -138,15 +144,19 @@ void printObject(Value value) {
   case OBJ_CLASS:
     printf("<class %s>", ((struct ObjClass*)AS_OBJ(value))->name->chars);
     break;
+<<<<<<< HEAD
   case OBJ_INTERFACE:
     printf("<interface %s>", ((ObjInterface*)AS_OBJ(value))->name->chars);
     break;
+=======
+>>>>>>> fix-ci-build
   case OBJ_INSTANCE:
     printf("<instance %s>", ((struct ObjInstance*)AS_OBJ(value))->klass->name->chars);
     break;
   case OBJ_BOUND_METHOD:
     printObject(OBJ_VAL(((struct ObjBoundMethod*)AS_OBJ(value))->method->function));
     break;
+<<<<<<< HEAD
   case OBJ_FOREIGN:
     printf("<foreign fn %s>", ((ObjForeign*)AS_OBJ(value))->name->chars);
     break;
@@ -172,6 +182,11 @@ struct ObjTask *newTask(void* hdl, ResumeFn resume) {
   return task;
 }
 
+=======
+  }
+}
+
+>>>>>>> fix-ci-build
 ObjClosure *newClosure(ObjFunction *function) {
   ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
   for (int i = 0; i < function->upvalueCount; i++) {
@@ -197,6 +212,7 @@ struct ObjClass *newClass(ObjString *name) {
   struct ObjClass *klass = ALLOCATE_OBJ(struct ObjClass, OBJ_CLASS);
   klass->name = name;
   initTable(&klass->methods);
+<<<<<<< HEAD
   klass->interfaceCount = 0;
   klass->interfaces = NULL;
   return klass;
@@ -209,6 +225,11 @@ struct ObjInterface *newInterface(ObjString *name) {
   return interface;
 }
 
+=======
+  return klass;
+}
+
+>>>>>>> fix-ci-build
 struct ObjInstance *newInstance(struct ObjClass *klass) {
   struct ObjInstance *instance = ALLOCATE_OBJ(struct ObjInstance, OBJ_INSTANCE);
   instance->klass = klass;
@@ -223,6 +244,7 @@ struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method) {
   return bound;
 }
 
+<<<<<<< HEAD
 struct ObjList *newList() {
   struct ObjList *list = ALLOCATE_OBJ(struct ObjList, OBJ_LIST);
   list->count = 0;
@@ -237,3 +259,5 @@ struct ObjDictionary *newDictionary() {
   return dict;
 }
 
+=======
+>>>>>>> fix-ci-build

@@ -1,9 +1,16 @@
 // Functional Test for ProXPL Stdlib v0.1
 
+<<<<<<< HEAD
 use std.io;
 use std.fs;
 use std.sys;
 use std.core;
+=======
+import std.io;
+import std.fs;
+import std.sys;
+import std.core;
+>>>>>>> fix-ci-build
 
 // Test std.core
 print("Testing std.core...");

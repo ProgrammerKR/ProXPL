@@ -17,6 +17,7 @@ typedef struct {
   Token *tokens;
   int count;
   int current;
+<<<<<<< HEAD
   bool panicMode;
   bool hadError;
   const char *source;
@@ -24,6 +25,12 @@ typedef struct {
 
 // Initialize parser with token array and source code
 void initParser(Parser *parser, Token *tokens, int count, const char *source);
+=======
+} Parser;
+
+// Initialize parser with token array
+void initParser(Parser *parser, Token *tokens, int count);
+>>>>>>> fix-ci-build
 
 // Main parse function - returns list of statements (program)
 StmtList *parse(Parser *parser);

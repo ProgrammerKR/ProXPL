@@ -48,6 +48,7 @@ jobs:
 
       - name: Install LLVM (Windows)
         if: matrix.os == 'windows-latest'
+<<<<<<< HEAD
         shell: pwsh
         run: |
           choco install llvm --version 17.0.6 -y --force
@@ -88,6 +89,20 @@ jobs:
              -DCMAKE_BUILD_TYPE=Release `
              -DLLVM_DIR="$env:LLVM_DIR" `
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
+=======
+        run: |
+          choco install llvm -y
+          echo "C:/Program Files/LLVM/bin" >> $GITHUB_PATH
+          echo "LLVM_DIR=C:/Program Files/LLVM/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "LLVM_ROOT=C:/Program Files/LLVM" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM" \
+            -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+>>>>>>> fix-ci-build
 
       - name: Build
         shell: bash
@@ -105,6 +120,7 @@ jobs:
             exit 1
           fi
 
+<<<<<<< HEAD
       - name: Build Installer (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -127,14 +143,24 @@ jobs:
           else
              mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
           fi
+=======
+      - name: Rename Binary
+        shell: bash
+        run: |
+          mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
+>>>>>>> fix-ci-build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
+<<<<<<< HEAD
           path: |
             ${{ matrix.asset_name }}
             build/ProXPL_Installer_*.exe
+=======
+          path: ${{ matrix.asset_name }}
+>>>>>>> fix-ci-build
 
   release:
     name: Create Release
@@ -145,6 +171,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: proxpl-windows.exe
+<<<<<<< HEAD
       
       - name: Download Windows Installer
         uses: actions/download-artifact@v4
@@ -153,6 +180,8 @@ jobs:
           path: .
           pattern: ProXPL_Installer_*.exe
           merge-multiple: true
+=======
+>>>>>>> fix-ci-build
           
       - name: Download Linux Artifact
         uses: actions/download-artifact@v4
@@ -169,7 +198,10 @@ jobs:
         with:
           files: |
             proxpl-windows.exe
+<<<<<<< HEAD
             ProXPL_Installer_*.exe
+=======
+>>>>>>> fix-ci-build
             proxpl-linux
             proxpl-macos
           generate_release_notes: true

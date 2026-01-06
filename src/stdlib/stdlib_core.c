@@ -40,6 +40,7 @@ static void registerModule(VM* vm, const char* name, ObjModule* module) {
  * Called during VM initialization
  */
 void registerStdLib(VM* vm) {
+<<<<<<< HEAD
     // New Module System + Aliases
     ObjModule* ioMod = create_std_io_module();
     registerModule(vm, "std.native.io", ioMod);
@@ -107,10 +108,18 @@ void registerStdLib(VM* vm) {
     registerModule(vm, "std.native.reflect", reflectMod);
     registerModule(vm, "std.reflect", reflectMod);
 
+=======
+    // New Module System
+    registerModule(vm, "std.io", create_std_io_module());
+    registerModule(vm, "std.fs", create_std_fs_module());
+    registerModule(vm, "std.sys", create_std_sys_module());
+    
+>>>>>>> fix-ci-build
     // std.core creator is usually registered as std.core
     extern ObjModule* create_std_core_module();
     registerModule(vm, "std.core", create_std_core_module());
 
+<<<<<<< HEAD
     // Legacy
     register_convert_natives(vm);
 
@@ -177,4 +186,11 @@ void registerStdLib(VM* vm) {
     tableSet(&vm->globals, stdName, OBJ_VAL(stdMod));
     pop(vm); // stdMod
     pop(vm); // stdName
+=======
+    // Legacy (Global Scope) - keep for now or refactor later
+    register_math_natives(vm);
+    register_string_natives(vm);
+    register_convert_natives(vm);
+    // register_system_natives(vm); // Replaced by std.sys
+>>>>>>> fix-ci-build
 }

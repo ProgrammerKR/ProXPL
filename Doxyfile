@@ -2,7 +2,11 @@
 # Generated documentation will be in build/docs/
 
 PROJECT_NAME           = ProXPL
+<<<<<<< HEAD
 PROJECT_NUMBER         = 0.7.0-pre
+=======
+PROJECT_NUMBER         = 0.1.0
+>>>>>>> fix-ci-build
 PROJECT_BRIEF          = "A Modern Programming Language Compiler"
 PROJECT_LOGO           = 
 

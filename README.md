@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 <div align="center"><h1> ProXPL - ProX Programming Language  </h1></div>
+=======
+# ProXPL Programming Language
+>>>>>>> fix-ci-build
 
 <p align="center">
   <b>A Modern, High-Performance Programming Language</b>
@@ -7,11 +11,18 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<<<<<<< HEAD
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
+=======
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/ProgrammerKR/ProXPL)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
+
+>>>>>>> fix-ci-build
 **Clean Syntax • Static Typing • Stack-Based VM • C-Level Performance**
 
 [Quick Start](#-quick-start) •
@@ -26,9 +37,15 @@
 
 ## 📖 Introduction
 
+<<<<<<< HEAD
 **ProXPL** (ProX Programming Language) is a modern, statically-typed **systems programming language** designed for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional **compiler architecture**, a custom **stack-based bytecode VM**, a robust **static type system**, and an integrated **package manager (PRM)**.
 
 ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, making it ideal for **high-performance systems**, **embedded applications**, **game development**, and **backend services**. It serves as an excellent reference for learning **compiler design** and **interpreter implementation**.
+=======
+**ProXPL** (ProX Programming Language) is a modern, statically-typed programming language designed for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional compiler architecture with a custom bytecode VM, comprehensive type system, and integrated package management.
+
+ProXPL is implemented entirely in C/C++ with zero runtime dependencies, making it ideal for systems programming, backend services, command-line tools, and performance-critical applications.
+>>>>>>> fix-ci-build
 
 ### Why ProXPL?
 
@@ -46,14 +63,20 @@ ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, maki
 | Feature | Description |
 |---------|-------------|
 | 🔤 **Modern Syntax** | JavaScript-like syntax with curly braces, familiar control flow, and clean function definitions |
+<<<<<<< HEAD
 | 🎨 **ProXPL Icons** | **1100+ File Icons** support via the official extension (Material Icon Theme integration) |
+=======
+>>>>>>> fix-ci-build
 | ⚡ **Fast Execution** | Custom stack-based VM executing optimized bytecode with LLVM AOT compilation support |
 | 📦 **Rich Standard Library** | **75+ native functions** for I/O, mathematics, string manipulation, collections, and system tasks |
 | 🛡️ **Static Type System** | Compile-time type checking with type inference reduces runtime errors |
 | 🧩 **Module System** | Robust `use` keyword for importing standard libraries, packages, and local files |
 | 🔧 **PRM Package Manager** | Integrated **ProX Repository Manager** for dependency management and project scaffolding |
 | 🏗️ **Multi-Phase Compiler** | Lexer → Parser (AST) → Type Checker → IR Optimizer → Bytecode/LLVM |
+<<<<<<< HEAD
 | ⏩ **Async/Await** | Native asynchronous programming with LLVM Coroutines support |
+=======
+>>>>>>> fix-ci-build
 | 🔍 **Developer Tools** | CLI with watch mode, LSP for IDE integration, comprehensive error reporting |
 | 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
 | 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
@@ -253,11 +276,15 @@ use local_helper;
 
 func main() {
     let result = std.math.sqrt(16);
+<<<<<<< HEAD
 
+=======
+>>>>>>> fix-ci-build
     print("Square root of 16: " + to_string(result));
 }
 ```
 
+<<<<<<< HEAD
 ### Async/Await
 
 ProXPL supports native asynchronous programming:
@@ -275,6 +302,8 @@ async func main() {
 }
 ```
 
+=======
+>>>>>>> fix-ci-build
 ### Standard Library Examples
 
 ```javascript
@@ -303,6 +332,7 @@ func showcase_stdlib() {
 }
 ```
 
+<<<<<<< HEAD
 ### Foreign Function Interface (FFI)
 
 ProXPL can invoke native C functions from dynamic libraries (`.dll`, `.so`) using the `extern` keyword.
@@ -316,6 +346,8 @@ c_puts("Hello from C!");
 let dist = c_abs(-100);
 ```
 
+=======
+>>>>>>> fix-ci-build
 ---
 
 ## 📦 Package Manager (PRM)
@@ -386,7 +418,10 @@ graph LR
     K --> M[Stack-Based VM]
     L --> N[Direct Execution]
     M --> O[Runtime Execution]
+<<<<<<< HEAD
     N --> O
+=======
+>>>>>>> fix-ci-build
 ```
 
 ### Core Components
@@ -481,6 +516,7 @@ ProXPL/
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
+<<<<<<< HEAD
 - **[Language Specification](docs/spec.md)**: A detailed guide to ProXPL grammar, keywords, operators, data types, and core semantics.
 - **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all built-in functions and modules.
 - **[Architecture Guide](docs/architecture/)**: A deep dive into the compiler design and Virtual Machine (VM) internals.
@@ -492,6 +528,78 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 ---
 
+=======
+- **[Language Specification](docs/language-spec/)**: Complete grammar, keywords, operators, and semantics
+- **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all 75+ built-in functions
+- **[Architecture Guide](docs/architecture/)**: Deep dive into compiler and VM internals
+- **[IR Specification](docs/ir-spec/)**: SSA intermediate representation documentation
+- **[Build Guide](CONTRIBUTING.md)**: Platform-specific build instructions
+- **[Coding Standards](CODING_STANDARD.md)**: Code style and contribution guidelines
+- **[Benchmarks](BENCHMARKS.md)**: Performance comparisons and optimization notes
+- **[Ecosystem Design](ECOSYSTEM_DESIGN.md)**: Stdlib and PRM architecture
+
+---
+
+## 🛣️ Roadmap
+
+### v1.0.0 (Current - December 2024)
+**Status**: Production-Ready Core
+- ✅ Complete compiler pipeline (Lexer → Parser → Type Checker → IR → Codegen)
+- ✅ Stack-based VM with bytecode execution
+- ✅ LLVM backend for AOT native compilation
+- ✅ 75+ standard library functions
+- ✅ Garbage collector (Mark & Sweep)
+- ✅ Type system with inference
+- ✅ Module system with `use` keyword
+- ✅ PRM package manager (basic)
+- ✅ CLI tools and LSP foundation
+- ✅ Cross-platform support (Windows/Linux/macOS)
+
+### v1.1.0 (Q1 2025)
+**Focus**: Enhanced Developer Experience
+- 🚧 LSP server with full IDE support (autocomplete, go-to-definition, diagnostics)
+- 🚧 Enhanced error messages with suggestions
+- 🚧 Debugger integration (source maps, breakpoints)
+- 🚧 Standard library expansion (`std.net`, `std.json`, `std.regex`)
+- 🚧 PRM registry service (centralized package repository)
+- 🚧 Watch mode and hot reload
+
+### v1.2.0 (Q2 2025)
+**Focus**: Object-Oriented Programming
+- 📋 Class-based OOP with inheritance
+- 📋 Interfaces and abstract classes
+- 📋 Method overloading and operator overloading
+- 📋 Property accessors (getters/setters)
+- 📋 Access modifiers (`pub`, `priv`, `protected`)
+- 📋 Constructors and destructors
+
+### v1.3.0 (Q3 2025)
+**Focus**: Advanced Features
+- 📋 Pattern matching (match expressions)
+- 📋 Algebraic data types (enums with associated values)
+- 📋 Generics and type parameters
+- 📋 Trait system (type classes)
+- 📋 Option and Result types for error handling
+- 📋 Lambda expressions and closures
+
+### v2.0.0 (Q4 2025+)
+**Focus**: Concurrency & Advanced Systems
+- 📋 Async/await support
+- 📋 Green threads / coroutines
+- 📋 Actor model concurrency
+- 📋 Foreign Function Interface (FFI) for C interop
+- 📋 WebAssembly compilation target
+- 📋 JIT compilation with tiered optimization
+- 📋 Advanced optimizations (inlining, escape analysis)
+
+### Future Considerations
+- 📋 Memory safety guarantees (ownership/borrowing system)
+- 📋 Compile-time reflection and metaprogramming
+- 📋 Package registry with namespace management
+- 📋 Incremental compilation
+- 📋 Language server protocol v3.0 features
+- 📋 IDE plugins (VS Code, JetBrains, Vim)
+>>>>>>> fix-ci-build
 
 ---
 
@@ -529,6 +637,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ---
 
+<<<<<<< HEAD
 ## 🗺️ Roadmap
 
 - **v0.5.0 (Alpha)**: Core language features (variables, functions, control flow). ✅
@@ -563,6 +672,8 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - 📋 **v1.3.0**: Pattern Matching, Enums, Generics.
 - 📋 **v2.0.0**: Async/Await, WebAssembly, JIT.
 
+=======
+>>>>>>> fix-ci-build
 ## 🛠️ Contributing
 
 We warmly welcome contributions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
@@ -599,10 +710,17 @@ This project is licensed under the ProXPL Professional License - see the [LICENS
 
 <p align="center">
   <b>Built with ❤️ by the ProXPL Community</b><br>
+<<<<<<< HEAD
   <i>Making programming easy, accessible and enjoyable</i>
+=======
+  <i>Making systems programming accessible and enjoyable</i>
+>>>>>>> fix-ci-build
 </p>
 
 <p align="center">
   <sub>ProXPL - A Modern Programming Language for the Future</sub>
 </p>
+<<<<<<< HEAD
 
+=======
+>>>>>>> fix-ci-build

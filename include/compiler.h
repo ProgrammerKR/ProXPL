@@ -38,7 +38,11 @@ typedef struct {
 ObjFunction* compile(const char *source);
 
 #include "ast.h"
+<<<<<<< HEAD
 bool generateBytecode(StmtList* statements, ObjFunction* function);
+=======
+void generateBytecode(StmtList* statements, Chunk* chunk);
+>>>>>>> fix-ci-build
 
 void markCompilerRoots();
 

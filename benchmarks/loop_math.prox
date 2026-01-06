@@ -4,14 +4,24 @@
 const ITERATIONS = 10000000;
 print("Starting Loop Math...");
 
+<<<<<<< HEAD
 let start = clock();
 let sum = 0;
 let i = 0;
+=======
+start = clock();
+sum = 0;
+i = 0;
+>>>>>>> fix-ci-build
 while (i < ITERATIONS) {
     sum = sum + i;
     i = i + 1;
 }
+<<<<<<< HEAD
 let end = clock();
+=======
+end = clock();
+>>>>>>> fix-ci-build
 
 print("Sum: " + sum);
 print("Time: " + (end - start));
