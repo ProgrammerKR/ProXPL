@@ -3,26 +3,16 @@
   "displayName": "ProXPL Language Support",
   "description": "Syntax highlighting and language support for the ProXPL programming language",
   "version": "1.0.0",
-<<<<<<< HEAD
   "publisher": "ProXentix",
-=======
-  "publisher": "ProgrammerKR",
->>>>>>> fix-ci-build
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ProgrammerKR/ProXPL.git"
   },
   "main": "./out/extension.js",
-<<<<<<< HEAD
   "engines": {
     "vscode": "^1.104.0"
   },
   "icon": "logo.png",
-=======
-  "activationEvents": [
-    "onLanguage:proxpl"
-  ],
->>>>>>> fix-ci-build
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -33,22 +23,15 @@
   },
   "devDependencies": {
     "@types/node": "^16.18.126",
-<<<<<<< HEAD
     "@types/vscode": "^1.104.0",
-=======
-    "@types/vscode": "^1.107.0",
->>>>>>> fix-ci-build
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
     "eslint": "^8.36.0",
     "typescript": "^4.9.5"
   },
-<<<<<<< HEAD
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
   },
-=======
->>>>>>> fix-ci-build
   "contributes": {
     "languages": [
       {
@@ -58,12 +41,8 @@
           "prox"
         ],
         "extensions": [
-<<<<<<< HEAD
           ".prox",
           ".pxpl"
-=======
-          ".prox"
->>>>>>> fix-ci-build
         ],
         "configuration": "./language-configuration.json"
       }
@@ -81,7 +60,6 @@
         "path": "./snippets/proxpl-snippets.json"
       }
     ],
-<<<<<<< HEAD
     "iconThemes": [
       {
         "id": "proxpl-icons",
@@ -89,14 +67,11 @@
         "path": "./icons/icon-theme.json"
       }
     ],
-=======
->>>>>>> fix-ci-build
     "commands": [
       {
         "command": "proxpl.run",
         "title": "ProXPL: Run File",
         "icon": "$(play)"
-<<<<<<< HEAD
       },
       {
         "command": "proxpl.startWatchMode",
@@ -110,8 +85,6 @@
         "key": "ctrl+f5",
         "mac": "cmd+f5",
         "when": "editorTextFocus && resourceLangId == proxpl"
-=======
->>>>>>> fix-ci-build
       }
     ],
     "menus": {
@@ -121,7 +94,6 @@
           "command": "proxpl.run",
           "group": "navigation"
         }
-<<<<<<< HEAD
       ],
       "explorer/context": [
         {
@@ -192,20 +164,8 @@
   ],
   "author": "Kanishk Raj <programmerkanishkraj@gmail.com>",
   "license": "MIT",
-=======
-      ]
-    }
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
->>>>>>> fix-ci-build
   "bugs": {
     "url": "https://github.com/ProgrammerKR/ProXPL/issues"
   },
   "homepage": "https://github.com/ProgrammerKR/ProXPL#readme"
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> fix-ci-build

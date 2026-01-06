@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-<<<<<<< HEAD
 project(ProXPL VERSION 1.0.0 LANGUAGES C CXX)
-=======
-project(ProXPL)
->>>>>>> fix-ci-build
 
 # Enable C and C++
 enable_language(C CXX)
@@ -19,7 +15,6 @@ else()
 endif()
 
 # --- LLVM Configuration ---
-<<<<<<< HEAD
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # --- LLVM Configuration ---
@@ -49,10 +44,6 @@ else()
     message(WARNING "LibFFI not found. FFI features will be disabled.")
 endif()
 
-=======
-find_package(LLVM CONFIG)
-
->>>>>>> fix-ci-build
 if (LLVM_FOUND)
     message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
     include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
@@ -60,11 +51,7 @@ if (LLVM_FOUND)
     link_directories(${LLVM_LIBRARY_DIRS})
 
     # Map generic components to specific libs
-<<<<<<< HEAD
     llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
-=======
-    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo)
->>>>>>> fix-ci-build
 else()
     message(WARNING "LLVM not found. Building without LLVM backend.")
     set(llvm_libs "")
@@ -87,17 +74,13 @@ list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_v2\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_dispatch\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*instr_handlers_template\\.c$")
-<<<<<<< HEAD
 # Exclude prototype VM register which has its own main
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_register\\.c$")
-=======
->>>>>>> fix-ci-build
 
 if (NOT LLVM_FOUND)
     list(FILTER LIB_SOURCES EXCLUDE REGEX ".*backend_llvm\\.cpp$")
 endif()
 
-<<<<<<< HEAD
 
 # --- Build Configuration ---
 # --- Build Configuration ---
@@ -136,36 +119,17 @@ endif()
 if (LIBFFI_FOUND)
     target_link_libraries(proxpl PRIVATE ${LIBFFI_LIBRARIES})
 endif()
-=======
-# --- Core Library ---
-add_library(proxpl_lib SHARED ${LIB_SOURCES})
-if (LLVM_FOUND)
-    target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
-endif()
-
-# --- Main Executable ---
-add_executable(proxpl src/main.c)
-target_link_libraries(proxpl PRIVATE proxpl_lib ${llvm_libs})
->>>>>>> fix-ci-build
 
 if(UNIX)
     if(APPLE)
         target_link_libraries(proxpl PRIVATE pthread dl z)
-<<<<<<< HEAD
     else()
         target_link_libraries(proxpl PRIVATE pthread dl z tinfo)
-=======
-        target_link_libraries(proxpl_lib PRIVATE pthread dl z)
-    else()
-        target_link_libraries(proxpl PRIVATE pthread dl z tinfo)
-        target_link_libraries(proxpl_lib PRIVATE pthread dl z tinfo)
->>>>>>> fix-ci-build
     endif()
 endif()
 
 # --- IR Test Executable ---
 add_executable(ir_gen_test tools/ir_gen_test.c)
-<<<<<<< HEAD
 if(PROX_STATIC_BUILD)
     # Link directly to sources for static build since proxpl_lib doesn't exist
     target_sources(ir_gen_test PRIVATE ${LIB_SOURCES})
@@ -184,14 +148,10 @@ else()
         target_link_libraries(ir_gen_test PRIVATE ${LIBFFI_LIBRARIES})
     endif()
 endif()
-=======
-target_link_libraries(ir_gen_test PRIVATE proxpl_lib)
->>>>>>> fix-ci-build
 
 # --- LLVM Gen Test Executable ---
 add_executable(llvm_gen_test tools/llvm_gen_test.c)
 
-<<<<<<< HEAD
 if(PROX_STATIC_BUILD)
     target_sources(llvm_gen_test PRIVATE ${LIB_SOURCES})
     if (LLVM_FOUND)
@@ -206,19 +166,13 @@ else()
         target_link_libraries(llvm_gen_test PRIVATE ${LIBFFI_LIBRARIES})
     endif()
 endif()
-=======
-target_link_libraries(llvm_gen_test PRIVATE proxpl_lib ${llvm_libs})
->>>>>>> fix-ci-build
 
 # --- PRM Executable ---
 add_executable(prm 
     tools/prm_main.c 
     src/prm/manifest.c 
     src/prm/builder.c
-<<<<<<< HEAD
     src/prm/commands/cmd_core.c
-=======
->>>>>>> fix-ci-build
 )
 # PRM doesn't strictly need proxpl_lib unless it uses core types?
 # For now, it's standalone, but let's link it if needed later.

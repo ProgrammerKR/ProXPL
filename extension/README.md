@@ -1,6 +1,5 @@
 # ProXPL VS Code Extension
 
-<<<<<<< HEAD
 Professional language support for **ProXPL** (ProX Programming Language) in Visual Studio Code. This extension provides a rich development experience with syntax highlighting, code snippets, and language configuration.
 
 ## ✨ Features
@@ -89,25 +88,3 @@ Found a bug or want to improve the syntax highlighting? Contributions are welcom
 ## 📄 License
 
 This extension is part of the ProXPL project and is licensed under the [MIT License](../LICENSE).
-=======
-Official language support for ProXPL.
-
-## Features
-
-- **Syntax Highlighting**: Supports keywords, types, operators, and comments.
-- **Snippets**: Quick boilerplate for `main` function and control flow.
-- **Language Configuration**: Smart brackets, auto-closing pairs, and indentation.
-
-## Installation
-
-To test locally:
-1. Open this `extension/` folder in VS Code.
-2. Press `F5` to open the Extension Development Host.
-3. Open or create a `.prox` file to see the extension in action.
-
-## Development
-
-- Grammar resides in `syntaxes/proxpl.tmLanguage.json`.
-- Snippets are defined in `snippets/proxpl-snippets.json`.
-- General settings are in `language-configuration.json`.
->>>>>>> fix-ci-build

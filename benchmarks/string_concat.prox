@@ -1,30 +1,17 @@
 // benchmarks/string_concat.prox
 // Stress Test: Allocation & GC
 
-<<<<<<< HEAD
 const ITERATIONS = 20000;
 print("Starting String Concat...");
 
 let start = clock();
 let s = "";
 let i = 0;
-=======
-const ITERATIONS = 100000;
-print("Starting String Concat...");
-
-start = clock();
-s = "";
-i = 0;
->>>>>>> fix-ci-build
 while (i < ITERATIONS) {
     s = s + ".";
     i = i + 1;
 }
-<<<<<<< HEAD
 let end = clock();
-=======
-end = clock();
->>>>>>> fix-ci-build
 
 print("String Length: " + len(s));
 print("Time: " + (end - start));

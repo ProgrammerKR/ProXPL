@@ -1,10 +1,6 @@
 # ProXPL Language Specification
 
-<<<<<<< HEAD
 **Version: 0.4.0**  
-=======
-**Version: 0.1.0**  
->>>>>>> fix-ci-build
 **Last Updated: December 2024**
 
 ---
@@ -990,7 +986,6 @@ func main() {
 main();
 ```
 
-<<<<<<< HEAD
 
 ---
 
@@ -1019,8 +1014,6 @@ extern "libname" "symbol" func name(param1, param2);
 
 > **Note**: The current implementation primarily supports integer return types. Support for floating-point and void returns is planned.
 
-=======
->>>>>>> fix-ci-build
 ---
 
 ## Conclusion

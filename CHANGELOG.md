@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-<<<<<<< HEAD
 ## [1.0.0] - 2026-01-06
 
 ### Added
@@ -67,11 +66,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Runtime**:
   - Implemented `OP_USE` opcode for dynamic module loading.
   - Added `std.io` and standard library module resolution fixes.
-=======
-## [Unreleased]
-
-### Added
->>>>>>> fix-ci-build
 - Comprehensive documentation suite (400+ pages)
   - Professional README with architecture diagrams
   - Complete ARCHITECTURE.md with compiler pipeline details
@@ -98,11 +92,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Refactor report documenting all changes
 
 ### Changed
-<<<<<<< HEAD
 - **CLI**: Updated CLI version to match project version.
 - **Build**: Fixed CMake finding LLVM and compiler paths on Windows.
-=======
->>>>>>> fix-ci-build
 - Reorganized repository structure for clarity and scalability
 - Upgraded CMakeLists.txt to modern best practices
 - Improved Makefile with multiple build targets
@@ -123,11 +114,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-<<<<<<< HEAD
 ## [0.1.0] - 2024-12-11
-=======
-## [0.9.0] - 2024-12-11
->>>>>>> fix-ci-build
 
 ### Initial C-Based Release
 
@@ -224,11 +211,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Async/await implementation
 - Pattern matching
 - Generic types
-<<<<<<< HEAD
 - Module system (Initial support in v0.5.0)
-=======
-- Module system
->>>>>>> fix-ci-build
 - Debugger integration
 
 ### Phase 4: Ecosystem (Q3 2025)
@@ -261,11 +244,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 1. **Type Checker**: Partial implementation, needs refinement for complex types
 2. **Object System**: Basic inheritance, needs method binding optimization
 3. **Memory Management**: Mark-and-sweep GC not yet implemented
-<<<<<<< HEAD
 4. **Module System**: Partial implementation (`use` keyword support added, std lib in progress)
-=======
-4. **Module System**: Not yet implemented
->>>>>>> fix-ci-build
 5. **Standard Library**: 44/75 functions (58% complete)
 6. **Error Messages**: Could be more detailed with suggestions
 7. **REPL**: Basic implementation, no history or autocompletion
@@ -273,11 +252,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Workarounds
 
 - For GC: Short-lived programs work fine with basic allocation
-<<<<<<< HEAD
 - For modules: Use the new `use` keyword or compile with single-file strategy
-=======
-- For modules: Use single-file programs or compile with preprocessor
->>>>>>> fix-ci-build
 - For missing functions: Implement in ProXPL or use system() calls
 
 ---
@@ -378,12 +353,6 @@ This project is licensed under the MIT License.
 
 ---
 
-<<<<<<< HEAD
 **Current Version**: 1.0.0
 **Last Updated**: January 06, 2026
 **Next Release**: 1.1.0 (Q1 2026)
-=======
-**Current Version**: 0.9.0 (Development)  
-**Last Updated**: December 11, 2024  
-**Next Release**: 1.0.0 (Q2 2025)
->>>>>>> fix-ci-build
