@@ -8,8 +8,11 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+<<<<<<< HEAD
 #include <stdlib.h> // Required for exit()
 
+=======
+>>>>>>> fix-ci-build
 
 #include "../include/common.h"
 #include "../include/compiler.h"
@@ -19,8 +22,11 @@
 #include "../include/gc.h"
 #include "../include/vm.h"
 #include "../include/error_report.h"
+<<<<<<< HEAD
 #include "../include/ffi_bridge.h"
 
+=======
+>>>>>>> fix-ci-build
 
 VM vm;
 
@@ -37,8 +43,11 @@ void initVM(VM *pvm) {
     initTable(&pvm->strings);
     pvm->source = NULL;
     initImporter(&pvm->importer);
+<<<<<<< HEAD
     pvm->initString = copyString("init", 4);
     pvm->cliArgs = newList(); // Initialize CLI args list
+=======
+>>>>>>> fix-ci-build
 }
 
 void freeVM(VM *pvm) {
@@ -49,7 +58,11 @@ void freeVM(VM *pvm) {
 }
 
 // Runtime Error Helper
+<<<<<<< HEAD
 void runtimeError(VM* pvm, const char* format, ...) {
+=======
+static void runtimeError(VM* pvm, const char* format, ...) {
+>>>>>>> fix-ci-build
   char message[1024];
   va_list args;
   va_start(args, format);
@@ -79,6 +92,7 @@ void runtimeError(VM* pvm, const char* format, ...) {
 }
 
 void push(VM* pvm, Value value) {
+<<<<<<< HEAD
   if (pvm->stackTop >= pvm->stack + STACK_MAX) {
       // Emergency stack reset or hard abort to prevent segfault
       // Since we can't easily return error code from push, we set a flag or just abort.
@@ -88,6 +102,8 @@ void push(VM* pvm, Value value) {
       fprintf(stderr, "Fatal Runtime Error: Value stack overflow.\n");
       exit(1); 
   }
+=======
+>>>>>>> fix-ci-build
   *pvm->stackTop = value;
   pvm->stackTop++;
 }
@@ -121,11 +137,15 @@ static void concatenate(VM* pvm) {
   push(pvm, OBJ_VAL(result));
 }
 
+<<<<<<< HEAD
 // Helper functions moved to vm_helpers.c to avoid duplication
 
 
 static InterpretResult run(VM* vm) {
   printf("DEBUG: Entering run()\n");
+=======
+static InterpretResult run(VM *vm) {
+>>>>>>> fix-ci-build
   CallFrame* frame = &vm->frames[vm->frameCount - 1];
 
 #define READ_BYTE() (*frame->ip++)
@@ -136,6 +156,7 @@ static InterpretResult run(VM* vm) {
 #ifdef __GNUC__
   #define DISPATCH() goto *dispatch_table[*frame->ip++]
   
+<<<<<<< HEAD
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Woverride-init"
   static void* dispatch_table[256] = {
@@ -190,6 +211,22 @@ static InterpretResult run(VM* vm) {
       [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN
   };
   #pragma GCC diagnostic pop
+=======
+  static void* dispatch_table[] = {
+      &&DO_OP_CONSTANT, &&DO_OP_NIL, &&DO_OP_TRUE, &&DO_OP_FALSE,
+      &&DO_OP_POP, &&DO_OP_GET_LOCAL, &&DO_OP_SET_LOCAL, 
+      &&DO_OP_GET_GLOBAL, &&DO_OP_DEFINE_GLOBAL, &&DO_OP_SET_GLOBAL,
+      &&DO_OP_GET_UPVALUE, &&DO_OP_SET_UPVALUE,
+      &&DO_OP_GET_PROPERTY, &&DO_OP_SET_PROPERTY, &&DO_OP_GET_SUPER,
+      &&DO_OP_EQUAL, &&DO_OP_GREATER, &&DO_OP_LESS,
+      &&DO_OP_ADD, &&DO_OP_SUBTRACT, &&DO_OP_MULTIPLY, 
+      &&DO_OP_DIVIDE, &&DO_OP_NOT, &&DO_OP_NEGATE, &&DO_OP_PRINT,
+      &&DO_OP_JUMP, &&DO_OP_JUMP_IF_FALSE, &&DO_OP_LOOP,
+      &&DO_OP_CALL, &&DO_OP_INVOKE, &&DO_OP_SUPER_INVOKE,
+      &&DO_OP_CLOSURE, &&DO_OP_CLOSE_UPVALUE,
+      &&DO_OP_RETURN, &&DO_OP_CLASS, &&DO_OP_INHERIT, &&DO_OP_METHOD
+  };
+>>>>>>> fix-ci-build
 
   DISPATCH();
 
@@ -197,9 +234,12 @@ static InterpretResult run(VM* vm) {
       push(vm, READ_CONSTANT());
       DISPATCH();
   }
+<<<<<<< HEAD
   DO_OP_NOP: {
       DISPATCH();
   }
+=======
+>>>>>>> fix-ci-build
   DO_OP_NIL: {
       push(vm, NULL_VAL);
       DISPATCH();
@@ -216,6 +256,7 @@ static InterpretResult run(VM* vm) {
       pop(vm);
       DISPATCH();
   }
+<<<<<<< HEAD
   DO_OP_DUP: {
       push(vm, peek(vm, 0));
       DISPATCH();
@@ -313,6 +354,8 @@ static InterpretResult run(VM* vm) {
       }
       DISPATCH();
   }
+=======
+>>>>>>> fix-ci-build
   DO_OP_GET_LOCAL: {
       uint8_t slot = READ_BYTE();
       push(vm, frame->slots[slot]);
@@ -348,6 +391,7 @@ static InterpretResult run(VM* vm) {
       }
       DISPATCH();
   }
+<<<<<<< HEAD
   DO_OP_GET_UPVALUE: {
       uint8_t slot = READ_BYTE();
       push(vm, *frame->closure->upvalues[slot]->location);
@@ -407,6 +451,14 @@ static InterpretResult run(VM* vm) {
       if (!bindMethod(superclass, name, vm)) {
         return INTERPRET_RUNTIME_ERROR;
       }
+=======
+  DO_OP_GET_UPVALUE:
+  DO_OP_SET_UPVALUE:
+  DO_OP_GET_PROPERTY:
+  DO_OP_SET_PROPERTY:
+  DO_OP_GET_SUPER: {
+      // Stubs
+>>>>>>> fix-ci-build
       DISPATCH();
   }
   DO_OP_EQUAL: {
@@ -434,6 +486,7 @@ static InterpretResult run(VM* vm) {
           double b = AS_NUMBER(pop(vm));
           double a = AS_NUMBER(pop(vm));
           push(vm, NUMBER_VAL(a + b));
+<<<<<<< HEAD
       } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
           // String + Number
           Value numVal = pop(vm); // b
@@ -452,6 +505,8 @@ static InterpretResult run(VM* vm) {
           push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
           push(vm, strVal);
           concatenate(vm);
+=======
+>>>>>>> fix-ci-build
       } else {
           runtimeError(vm, "Operands must be two numbers or two strings.");
           return INTERPRET_RUNTIME_ERROR;
@@ -508,6 +563,7 @@ static InterpretResult run(VM* vm) {
       frame->ip -= offset;
       DISPATCH();
   }
+<<<<<<< HEAD
   DO_OP_CALL: {
       int argCount = READ_BYTE();
       // callValue logic
@@ -599,12 +655,24 @@ static InterpretResult run(VM* vm) {
   }
   DO_OP_RETURN: {
       Value result = pop(vm);
+=======
+  DO_OP_CALL:
+  DO_OP_INVOKE:
+  DO_OP_SUPER_INVOKE:
+  DO_OP_CLOSURE:
+  DO_OP_CLOSE_UPVALUE: {
+      // Stubs
+      DISPATCH();
+  }
+  DO_OP_RETURN: {
+>>>>>>> fix-ci-build
       vm->frameCount--;
       if (vm->frameCount == 0) {
         pop(vm);
         return INTERPRET_OK;
       }
       vm->stackTop = frame->slots;
+<<<<<<< HEAD
       push(vm, result);
       frame = &vm->frames[vm->frameCount - 1];
       DISPATCH();
@@ -668,6 +736,17 @@ static InterpretResult run(VM* vm) {
       runtimeError(vm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
   }
+=======
+      frame = &vm->frames[vm->frameCount - 1];
+      DISPATCH();
+  }
+  DO_OP_CLASS:
+  DO_OP_INHERIT:
+  DO_OP_METHOD: {
+      // Stubs
+      DISPATCH();
+  }
+>>>>>>> fix-ci-build
   
 #else
   // Fallback for MSVC / Standard C
@@ -675,11 +754,15 @@ static InterpretResult run(VM* vm) {
     uint8_t instruction;
     switch (instruction = READ_BYTE()) {
     case OP_CONSTANT: push(vm, READ_CONSTANT()); break;
+<<<<<<< HEAD
     case OP_NOP: break;
+=======
+>>>>>>> fix-ci-build
     case OP_NIL: push(vm, NULL_VAL); break;
     case OP_TRUE: push(vm, BOOL_VAL(true)); break;
     case OP_FALSE: push(vm, BOOL_VAL(false)); break;
     case OP_POP: pop(vm); break;
+<<<<<<< HEAD
     case OP_DUP: push(vm, peek(vm, 0)); break;
     case OP_BUILD_LIST: {
         int count = READ_BYTE();
@@ -774,6 +857,8 @@ static InterpretResult run(VM* vm) {
         }
         break;
     }
+=======
+>>>>>>> fix-ci-build
     case OP_GET_LOCAL: {
         uint8_t slot = READ_BYTE();
         push(vm, frame->slots[slot]);
@@ -809,6 +894,7 @@ static InterpretResult run(VM* vm) {
         }
         break;
     }
+<<<<<<< HEAD
     case OP_GET_UPVALUE: {
         uint8_t slot = READ_BYTE();
         push(vm, *frame->closure->upvalues[slot]->location);
@@ -870,6 +956,8 @@ static InterpretResult run(VM* vm) {
         }
         break;
     }
+=======
+>>>>>>> fix-ci-build
     case OP_EQUAL: {
         Value b = pop(vm);
         Value a = pop(vm);
@@ -895,6 +983,7 @@ static InterpretResult run(VM* vm) {
           double b = AS_NUMBER(pop(vm));
           double a = AS_NUMBER(pop(vm));
           push(vm, NUMBER_VAL(a + b));
+<<<<<<< HEAD
         } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
           Value numVal = pop(vm);
           Value strVal = pop(vm);
@@ -911,6 +1000,8 @@ static InterpretResult run(VM* vm) {
           push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
           push(vm, strVal);
           concatenate(vm);
+=======
+>>>>>>> fix-ci-build
         } else {
           runtimeError(vm, "Operands must be two numbers or two strings.");
           return INTERPRET_RUNTIME_ERROR;
@@ -964,6 +1055,7 @@ static InterpretResult run(VM* vm) {
         frame->ip -= offset;
         break;
     }
+<<<<<<< HEAD
     case OP_CALL: {
         int argCount = READ_BYTE();
         Value callee = peek(vm, argCount);
@@ -1113,6 +1205,8 @@ static InterpretResult run(VM* vm) {
         push(vm, OBJ_VAL(foreign));
         break;
     }
+=======
+>>>>>>> fix-ci-build
     case OP_RETURN: {
       vm->frameCount--;
       if (vm->frameCount == 0) {
@@ -1136,6 +1230,7 @@ static InterpretResult run(VM* vm) {
 }
 
 InterpretResult interpretAST(VM* pvm, StmtList* statements) {
+<<<<<<< HEAD
   // Disable GC during compilation to prevent freeing unrooted function/constants
   size_t oldNextGC = pvm->nextGC;
   pvm->nextGC = (size_t)-1; // SIZE_MAX
@@ -1143,7 +1238,7 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   ObjFunction* function = newFunction();
   
   // Connect the AST-based bytecode generator
-  if (!generateBytecode(statements, &function->chunk)) {
+  if (!generateBytecode(statements, function)) {
       pvm->nextGC = oldNextGC;
       return INTERPRET_COMPILE_ERROR;
   }
@@ -1157,22 +1252,38 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
 
   
   // Setup for execution
+=======
+  ObjFunction* function = newFunction();
+  
+  // Connect the AST-based bytecode generator
+  generateBytecode(statements, &function->chunk);
+  
+  // Setup for execution
+  // Setup for execution
+>>>>>>> fix-ci-build
   push(pvm, OBJ_VAL(function));
   ObjClosure* closure = newClosure(function);
   pop(pvm);
   push(pvm, OBJ_VAL(closure));
   
+<<<<<<< HEAD
   // Restore GC
   pvm->nextGC = oldNextGC;
   
+=======
+>>>>>>> fix-ci-build
   CallFrame* frame = &pvm->frames[pvm->frameCount++];
   frame->closure = closure;
   frame->ip = function->chunk.code;
   frame->slots = pvm->stack;
 
+<<<<<<< HEAD
   printf("DEBUG: Starting execution...\n");
   InterpretResult result = run(pvm);
   printf("DEBUG: Execution finished with result: %d\n", result);
+=======
+  InterpretResult result = run(pvm);
+>>>>>>> fix-ci-build
 
   return result;
 }

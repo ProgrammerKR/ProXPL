@@ -6,8 +6,13 @@
 // --------------------------------------------------
 
 /*
+<<<<<<< HEAD
  * ProXPL Standard Library - I/O Module (Native)
  * Native C implementation of low-level I/O functions
+=======
+ * ProXPL Standard Library - I/O Module
+ * Native C implementation of I/O functions
+>>>>>>> fix-ci-build
  */
 
 #include <stdio.h>
@@ -32,6 +37,7 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
     pop(&vm);
 }
 
+<<<<<<< HEAD
 // print_raw(str) - Print string to stdout without newline
 static Value native_print_raw(int argCount, Value* args) {
     if (argCount > 0) {
@@ -76,6 +82,24 @@ static Value native_println(int argCount, Value* args) {
 
 // input_raw() - Read line from stdin
 static Value native_input_raw(int argCount, Value* args) {
+=======
+// print(...) - Print values to stdout
+static Value native_print(int argCount, Value* args) {
+    for (int i = 0; i < argCount; i++) {
+        printValue(args[i]);
+        if (i < argCount - 1) printf(" ");
+    }
+    printf("\n");
+    return NIL_VAL;
+}
+
+// input(prompt) - Read line from stdin
+static Value native_input(int argCount, Value* args) {
+    if (argCount > 0) {
+        printValue(args[0]);
+    }
+    
+>>>>>>> fix-ci-build
     char buffer[1024];
     if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
         // Remove newline
@@ -86,6 +110,7 @@ static Value native_input_raw(int argCount, Value* args) {
         }
         return OBJ_VAL(copyString(buffer, (int)len));
     }
+<<<<<<< HEAD
     return NIL_VAL;
 }
 
@@ -107,10 +132,21 @@ static Value native_set_color_raw(int argCount, Value* args) {
 // Register all I/O functions with the VM
 ObjModule* create_std_io_module() {
     ObjString* name = copyString("std.native.io", 13);
+=======
+    
+    return NIL_VAL;
+}
+
+
+// Register all I/O functions with the VM
+ObjModule* create_std_io_module() {
+    ObjString* name = copyString("std.io", 6);
+>>>>>>> fix-ci-build
     push(&vm, OBJ_VAL(name));
     ObjModule* module = newModule(name);
     push(&vm, OBJ_VAL(module));
     
+<<<<<<< HEAD
     defineModuleFn(module, "print_raw", native_print_raw);
     defineModuleFn(module, "print", native_print_raw);
     defineModuleFn(module, "write", native_print_raw);
@@ -120,6 +156,11 @@ ObjModule* create_std_io_module() {
     defineModuleFn(module, "flush_raw", native_flush_raw);
     defineModuleFn(module, "set_color_raw", native_set_color_raw);
 
+=======
+    defineModuleFn(module, "print", native_print);
+    defineModuleFn(module, "input", native_input);
+    
+>>>>>>> fix-ci-build
     pop(&vm); // module
     pop(&vm); // name
     return module;

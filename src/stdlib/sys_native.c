@@ -11,10 +11,15 @@
 
 #ifdef _WIN32
 #include <windows.h>
+<<<<<<< HEAD
 #include <direct.h>
 #define OS_NAME_STR "Windows"
 #define setenv(k, v, o) _putenv_s(k, v)
 #define getcwd _getcwd
+=======
+#define OS_NAME_STR "Windows"
+#define setenv(k, v, o) _putenv_s(k, v)
+>>>>>>> fix-ci-build
 #else
 #include <unistd.h>
 #define OS_NAME_STR "Linux/Unix"
@@ -58,7 +63,11 @@ static void defineModuleConst(ObjModule* module, const char* name, Value value) 
 }
 
 // --------------------------------------------------
+<<<<<<< HEAD
 // std.native.sys Implementation
+=======
+// std.sys Implementation
+>>>>>>> fix-ci-build
 // --------------------------------------------------
 
 // exit(code)
@@ -84,6 +93,7 @@ static Value sys_env(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+<<<<<<< HEAD
 // set_env(key, val)
 static Value sys_set_env(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return NIL_VAL;
@@ -120,16 +130,33 @@ static Value sys_exec(int argCount, Value* args) {
 
 ObjModule* create_std_sys_module() {
     ObjString* name = copyString("std.native.sys", 14);
+=======
+// args() -> List<String> 
+// Note: We don't have List object in C yet easily, so let's return Array or just count for now
+// Phase 1 limitation: accessing global args requires VM support to store them first (in main.c)
+// For now, return empty list or simulated args
+static Value sys_args(int argCount, Value* args) {
+    // TODO: Implement proper args passing from main.c -> VM
+    return NIL_VAL;
+}
+
+ObjModule* create_std_sys_module() {
+    ObjString* name = copyString("std.sys", 7);
+>>>>>>> fix-ci-build
     push(&vm, OBJ_VAL(name));
     ObjModule* module = newModule(name);
     push(&vm, OBJ_VAL(module));
     
     defineModuleFn(module, "exit", sys_exit);
     defineModuleFn(module, "env", sys_env);
+<<<<<<< HEAD
     defineModuleFn(module, "set_env", sys_set_env);
     defineModuleFn(module, "cwd", sys_cwd);
     defineModuleFn(module, "args", sys_args);
     defineModuleFn(module, "exec", sys_exec);
+=======
+    defineModuleFn(module, "args", sys_args);
+>>>>>>> fix-ci-build
     
     defineModuleConst(module, "OS_NAME", OBJ_VAL(copyString(OS_NAME_STR, strlen(OS_NAME_STR))));
     defineModuleConst(module, "ARCH", OBJ_VAL(copyString(ARCH_STR, strlen(ARCH_STR))));

@@ -13,6 +13,14 @@
 *.exe
 *.out
 *.app
+<<<<<<< HEAD
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+=======
+>>>>>>> fix-ci-build
 build/
 cmake-build-debug/
 cmake-build-release/
@@ -114,6 +122,18 @@ htmlcov/
 *.cover
 
 # ============================================
+<<<<<<< HEAD
+# Node.js
+# ============================================
+node_modules/
+extension/node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# ============================================
+=======
+>>>>>>> fix-ci-build
 # Project-Specific
 # ============================================
 .internal_ignore

@@ -16,8 +16,11 @@
 #include "parser.h"
 #include "scanner.h"
 #include "vm.h"
+<<<<<<< HEAD
 #include "object.h"
 #include "memory.h"
+=======
+>>>>>>> fix-ci-build
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +33,11 @@ void registerStdLib(VM* vm);
 static void repl() {
   char line[1024];
 
+<<<<<<< HEAD
   printf("ProXPL v" PROXPL_VERSION_STRING " REPL\n");
+=======
+  printf("ProXPL v1.0 REPL\n");
+>>>>>>> fix-ci-build
   printf("Type 'exit' to quit\n\n");
 
   for (;;) {
@@ -84,7 +91,11 @@ static void repl() {
 
     // Parse
     Parser parser;
+<<<<<<< HEAD
     initParser(&parser, tokens, tokenCount, line);
+=======
+    initParser(&parser, tokens, tokenCount);
+>>>>>>> fix-ci-build
     StmtList *statements = parse(&parser);
 
     if (statements == NULL || statements->count == 0) {
@@ -93,19 +104,37 @@ static void repl() {
     }
 
     // --- Pipeline: AST -> Bytecode -> VM ---
-    Chunk chunk;
-    initChunk(&chunk);
-    if (!generateBytecode(statements, &chunk)) {
+<<<<<<< HEAD
+    // --- Pipeline: AST -> Bytecode -> VM ---
+    // Use heap-allocated function for compilation to support nested functions properly
+    ObjFunction* function = newFunction();
+    // Temporarily root function to prevent GC during compilation (if any alloc happens)
+    push(&vm, OBJ_VAL(function));
+    
+    if (!generateBytecode(statements, function)) {
         fprintf(stderr, "Compilation error\n");
-        freeChunk(&chunk);
+        pop(&vm); // unroot
+        // Function remains in vm.objects, cleared by GC or shutdown
         freeStmtList(statements);
         continue;
     }
+    pop(&vm); // unroot
+    
+    interpretChunk(&vm, &function->chunk);
+
+    // Free resources
+    // chunk freed by function destructor eventually
+
+=======
+    Chunk chunk;
+    initChunk(&chunk);
+    generateBytecode(statements, &chunk);
     
     interpretChunk(&vm, &chunk);
 
     // Free resources
     freeChunk(&chunk);
+>>>>>>> fix-ci-build
     freeStmtList(statements);
   }
 }
@@ -163,6 +192,7 @@ static void runFile(const char *path) {
     tokens[tokenCount++] = token;
 
     if (token.type == TOKEN_ERROR) {
+<<<<<<< HEAD
       fprintf(stderr, "Error at line %d, column %d: %.*s\n", token.line, token.column, token.length,
               token.start);
       // Print context
@@ -179,6 +209,10 @@ static void runFile(const char *path) {
       for(int i=1; i < token.column; i++) fprintf(stderr, " ");
       fprintf(stderr, "^\n");
       
+=======
+      fprintf(stderr, "Error at line %d: %.*s\n", token.line, token.length,
+              token.start);
+>>>>>>> fix-ci-build
       free(source);
       exit(65);
     }
@@ -194,7 +228,11 @@ static void runFile(const char *path) {
 
   // Parse
   Parser parser;
+<<<<<<< HEAD
   initParser(&parser, tokens, tokenCount, source);
+=======
+  initParser(&parser, tokens, tokenCount);
+>>>>>>> fix-ci-build
   StmtList *statements = parse(&parser);
 
   if (statements == NULL || statements->count == 0) {
@@ -224,11 +262,15 @@ static void runFile(const char *path) {
     // --- Pipeline Step 3: Bytecode Gen & Execution ---
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
     printf("Executing...\n");
+<<<<<<< HEAD
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
     printf("Executing...\n");
     printf("DEBUG: Calling interpretAST from main...\n");
     InterpretResult result = interpretAST(&vm, statements);
     printf("DEBUG: Returned from interpretAST.\n");
+=======
+    InterpretResult result = interpretAST(&vm, statements);
+>>>>>>> fix-ci-build
     
     if (result != INTERPRET_OK) {
         fprintf(stderr, "Execution Failed.\n");
@@ -251,6 +293,7 @@ int main(int argc, const char *argv[]) {
 
   // Register standard library
   registerStdLib(&vm);
+<<<<<<< HEAD
   
   // Populate CLI args
   vm.cliArgs = newList();
@@ -268,6 +311,8 @@ int main(int argc, const char *argv[]) {
       pop(&vm); // arg
   }
   pop(&vm); // cliArgs
+=======
+>>>>>>> fix-ci-build
 
   if (argc == 1) {
     // REPL mode

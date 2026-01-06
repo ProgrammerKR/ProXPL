@@ -16,7 +16,11 @@ IRModule* createIRModule() {
     return module;
 }
 
+<<<<<<< HEAD
 IRFunction* createIRFunction(const char* name, bool isAsync) {
+=======
+IRFunction* createIRFunction(const char* name) {
+>>>>>>> fix-ci-build
     IRFunction* func = (IRFunction*)malloc(sizeof(IRFunction));
     func->name = strdup(name);
     func->entry = NULL;
@@ -24,7 +28,10 @@ IRFunction* createIRFunction(const char* name, bool isAsync) {
     func->blockCount = 0;
     func->blockCapacity = 0;
     func->nextSsaVal = 0;
+<<<<<<< HEAD
     func->isAsync = isAsync;
+=======
+>>>>>>> fix-ci-build
     return func;
 }
 
@@ -92,7 +99,10 @@ static const char* irOpName(IROpcode op) {
         case IR_OP_GET_MEMBER: return "get_member";
         case IR_OP_SET_MEMBER: return "set_member";
         case IR_OP_ALLOCA: return "alloca";
+<<<<<<< HEAD
         case IR_OP_AWAIT: return "await";
+=======
+>>>>>>> fix-ci-build
         default: return "unknown";
     }
 }

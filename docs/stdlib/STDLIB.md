@@ -2,7 +2,11 @@
 
 **Complete Documentation for Built-in Functions**
 
+<<<<<<< HEAD
 **Version:** 0.4.0  
+=======
+**Version:** 1.0.0  
+>>>>>>> fix-ci-build
 **Last Updated:** December 2024  
 **Status:** Stable
 
@@ -62,10 +66,16 @@ let upper = string::toUpper("hello");
 | **String** | 15 | String manipulation |
 | **Collections** | 15 | List and dictionary operations |
 | **Conversion** | 10 | Type conversion utilities |
+<<<<<<< HEAD
 | **File I/O** | 7 | File operations |
 | **System** | 5 | System and environment |
 | **DateTime** | 7 | Date and time utilities |
 | **Garbage Collector** | 3 | Memory management |
+=======
+| **File I/O** | 5 | File operations |
+| **System** | 5 | System and environment |
+| **DateTime** | 5 | Date and time utilities |
+>>>>>>> fix-ci-build
 
 ---
 
@@ -777,6 +787,7 @@ Collection functions operate on lists and dictionaries.
 
 ---
 
+<<<<<<< HEAD
 ## Garbage Collection
 
 ### Overview
@@ -793,6 +804,8 @@ See [GC.md](GC.md) for full details.
 
 ---
 
+=======
+>>>>>>> fix-ci-build
 ## Type Conversion
 
 ### Overview

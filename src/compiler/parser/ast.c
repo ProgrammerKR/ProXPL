@@ -303,6 +303,7 @@ Expr *createLambdaExpr(StringList *params, StmtList *body, int line,
   return expr;
 }
 
+<<<<<<< HEAD
 Expr *createAwaitExpr(Expr *expression, int line, int column) {
   Expr *expr = ALLOCATE(Expr, 1);
   expr->type = EXPR_AWAIT;
@@ -339,6 +340,8 @@ Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column) {
   return expr;
 }
 
+=======
+>>>>>>> fix-ci-build
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -359,16 +362,23 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
   stmt->as.var_decl.name = strdup(name);
   stmt->as.var_decl.initializer = init;
   stmt->as.var_decl.is_const = is_const;
+<<<<<<< HEAD
   stmt->as.var_decl.type.kind = TYPE_UNKNOWN;
   stmt->as.var_decl.type.name = NULL;
   stmt->as.var_decl.type.returnType = NULL;
   stmt->as.var_decl.type.paramTypes = NULL;
   stmt->as.var_decl.type.paramCount = 0;
+=======
+>>>>>>> fix-ci-build
   return stmt;
 }
 
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
+<<<<<<< HEAD
                          bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, int line, int column) {
+=======
+                         int line, int column) {
+>>>>>>> fix-ci-build
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_FUNC_DECL;
   stmt->line = line;
@@ -376,26 +386,37 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   stmt->as.func_decl.name = strdup(name);
   stmt->as.func_decl.params = params;
   stmt->as.func_decl.body = body;
+<<<<<<< HEAD
   stmt->as.func_decl.isAsync = isAsync; 
   stmt->as.func_decl.access = access;
   stmt->as.func_decl.isStatic = isStatic;
   stmt->as.func_decl.isAbstract = isAbstract;
+=======
+>>>>>>> fix-ci-build
   return stmt;
 }
 
 Stmt *createClassDeclStmt(const char *name, VariableExpr *super,
+<<<<<<< HEAD
                           StringList *interfaces, StmtList *methods, int line, int column) {
+=======
+                          StmtList *methods, int line, int column) {
+>>>>>>> fix-ci-build
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_CLASS_DECL;
   stmt->line = line;
   stmt->column = column;
   stmt->as.class_decl.name = strdup(name);
   stmt->as.class_decl.superclass = super;
+<<<<<<< HEAD
   stmt->as.class_decl.interfaces = interfaces;
+=======
+>>>>>>> fix-ci-build
   stmt->as.class_decl.methods = methods;
   return stmt;
 }
 
+<<<<<<< HEAD
 Stmt *createInterfaceDeclStmt(const char *name, StmtList *methods, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_INTERFACE_DECL;
@@ -406,6 +427,8 @@ Stmt *createInterfaceDeclStmt(const char *name, StmtList *methods, int line, int
   return stmt;
 }
 
+=======
+>>>>>>> fix-ci-build
 Stmt *createUseDeclStmt(StringList *modules, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_USE_DECL;
@@ -519,6 +542,7 @@ Stmt *createPrintStmt(Expr *expression, int line, int column) {
   return stmt;
 }
 
+<<<<<<< HEAD
 Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char *name, StringList *params, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_EXTERN_DECL;
@@ -531,6 +555,8 @@ Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char 
   return stmt;
 }
 
+=======
+>>>>>>> fix-ci-build
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -597,6 +623,7 @@ void freeExpr(Expr *expr) {
     freeStringList(expr->as.lambda.params);
     freeStmtList(expr->as.lambda.body);
     break;
+<<<<<<< HEAD
   case EXPR_AWAIT:
     freeExpr(expr->as.await_expr.expression);
     break;
@@ -610,6 +637,8 @@ void freeExpr(Expr *expr) {
     freeExpr(expr->as.new_expr.clazz);
     freeExprList(expr->as.new_expr.args);
     break;
+=======
+>>>>>>> fix-ci-build
   }
 
   FREE(Expr, expr);
@@ -634,6 +663,7 @@ void freeStmt(Stmt *stmt) {
     break;
   case STMT_CLASS_DECL:
     free(stmt->as.class_decl.name);
+<<<<<<< HEAD
     // superclass is a VariableExpr, not a separate malloc (it's in parsing context, but here referenced. Wait, VariableExpr created by createVariableExpr IS allocated. But who frees it? ClassDeclStmt stores pointer. We should probably free it if we own it. Original code didn't? "superclass is a VariableExpr, not a separate malloc" comment suggests confusion or shared ownership. Actually AST nodes usually own children. I will assume we should NOT free superclass if it wasn't freed before? Or fix it?
     // Let's stick to existing pattern for superclass logic, just add interfaces free.
     // Wait, original: `// superclass is a VariableExpr, not a separate malloc`
@@ -647,6 +677,11 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.interface_decl.name);
     freeStmtList(stmt->as.interface_decl.methods);
     break;
+=======
+    // superclass is a VariableExpr, not a separate malloc
+    freeStmtList(stmt->as.class_decl.methods);
+    break;
+>>>>>>> fix-ci-build
   case STMT_USE_DECL:
     freeStringList(stmt->as.use_decl.modules);
     break;
@@ -689,12 +724,15 @@ void freeStmt(Stmt *stmt) {
   case STMT_PRINT:
     freeExpr(stmt->as.print.expression);
     break;
+<<<<<<< HEAD
   case STMT_EXTERN_DECL:
     free(stmt->as.extern_decl.libraryPath);
     free(stmt->as.extern_decl.symbolName);
     free(stmt->as.extern_decl.name);
     freeStringList(stmt->as.extern_decl.params);
     break;
+=======
+>>>>>>> fix-ci-build
   }
 
   FREE(Stmt, stmt);

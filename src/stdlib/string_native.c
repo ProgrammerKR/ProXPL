@@ -3,7 +3,10 @@
 //   Author:  ProgrammerKR
 //   Created: 2025-12-16
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
+<<<<<<< HEAD
 // --------------------------------------------------
+=======
+>>>>>>> fix-ci-build
 
 /*
  * ProXPL Standard Library - String Module
@@ -19,6 +22,7 @@
 #include <string.h>
 #include <ctype.h>
 
+<<<<<<< HEAD
 extern VM vm;
 
 // Helper to define native function in a module
@@ -33,12 +37,20 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
 
 // upper(str) - Convert to uppercase
 static Value native_upper(int argCount, Value* args) {
+=======
+// str_upper(str) - Convert to uppercase
+static Value native_str_upper(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     ObjString* original = AS_STRING(args[0]);
     char* buffer = (char*)malloc(original->length + 1);
     
     for (int i = 0; i < original->length; i++) {
+<<<<<<< HEAD
+=======
+        // Cast to unsigned char to safely handle non-ASCII characters
+>>>>>>> fix-ci-build
         buffer[i] = toupper((unsigned char)original->chars[i]);
     }
     buffer[original->length] = '\0';
@@ -48,8 +60,13 @@ static Value native_upper(int argCount, Value* args) {
     return result;
 }
 
+<<<<<<< HEAD
 // lower(str) - Convert to lowercase
 static Value native_lower(int argCount, Value* args) {
+=======
+// str_lower(str) - Convert to lowercase
+static Value native_str_lower(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     ObjString* original = AS_STRING(args[0]);
@@ -65,16 +82,29 @@ static Value native_lower(int argCount, Value* args) {
     return result;
 }
 
+<<<<<<< HEAD
 // trim(str) - Remove leading/trailing whitespace
 static Value native_trim(int argCount, Value* args) {
+=======
+// str_trim(str) - Remove leading/trailing whitespace
+static Value native_str_trim(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     const char* str = AS_CSTRING(args[0]);
     int len = AS_STRING(args[0])->length;
     
+<<<<<<< HEAD
     int start = 0;
     while (start < len && isspace((unsigned char)str[start])) start++;
     
+=======
+    // Find start
+    int start = 0;
+    while (start < len && isspace((unsigned char)str[start])) start++;
+    
+    // Find end
+>>>>>>> fix-ci-build
     int end = len - 1;
     while (end >= start && isspace((unsigned char)str[end])) end--;
     
@@ -84,18 +114,32 @@ static Value native_trim(int argCount, Value* args) {
     return OBJ_VAL(copyString(str + start, newLen));
 }
 
+<<<<<<< HEAD
 // split(str, delimiter) - Split string by delimiter
 static Value native_split(int argCount, Value* args) {
+=======
+// str_split(str, delimiter) - Split string by delimiter
+static Value native_str_split(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return NIL_VAL;
     }
     
     // TODO: Return array/list once collections are implemented
+<<<<<<< HEAD
     return args[0];
 }
 
 // replace(str, old, new) - Replace occurrences
 static Value native_replace(int argCount, Value* args) {
+=======
+    // For now, return the original string
+    return args[0];
+}
+
+// str_replace(str, old, new) - Replace occurrences
+static Value native_str_replace(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 3 || !IS_STRING(args[0]) || 
         !IS_STRING(args[1]) || !IS_STRING(args[2])) {
         return args[0];
@@ -103,13 +147,21 @@ static Value native_replace(int argCount, Value* args) {
     
     const char* str = AS_CSTRING(args[0]);
     const char* old = AS_CSTRING(args[1]);
+<<<<<<< HEAD
     const char* new_str = AS_CSTRING(args[2]); 
+=======
+    const char* new_str = AS_CSTRING(args[2]); // Renamed 'new' to 'new_str' (C++ keyword safety)
+>>>>>>> fix-ci-build
     
     int oldLen = AS_STRING(args[1])->length;
     int newLen = AS_STRING(args[2])->length;
     
     if (oldLen == 0) return args[0];
     
+<<<<<<< HEAD
+=======
+    // Simple implementation: replace first occurrence
+>>>>>>> fix-ci-build
     const char* pos = strstr(str, old);
     if (!pos) return args[0];
     
@@ -119,8 +171,16 @@ static Value native_replace(int argCount, Value* args) {
     
     char* buffer = (char*)malloc(totalLen + 1);
     
+<<<<<<< HEAD
     memcpy(buffer, str, prefixLen);
     memcpy(buffer + prefixLen, new_str, newLen);
+=======
+    // Copy prefix
+    memcpy(buffer, str, prefixLen);
+    // Copy replacement
+    memcpy(buffer + prefixLen, new_str, newLen);
+    // Copy suffix
+>>>>>>> fix-ci-build
     memcpy(buffer + prefixLen + newLen, pos + oldLen, suffixLen);
     
     buffer[totalLen] = '\0';
@@ -130,8 +190,13 @@ static Value native_replace(int argCount, Value* args) {
     return result;
 }
 
+<<<<<<< HEAD
 // contains(str, substr)
 static Value native_contains(int argCount, Value* args) {
+=======
+// str_contains(str, substr) - Check if string contains substring
+static Value native_str_contains(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return BOOL_VAL(false);
     }
@@ -142,8 +207,13 @@ static Value native_contains(int argCount, Value* args) {
     return BOOL_VAL(strstr(str, substr) != NULL);
 }
 
+<<<<<<< HEAD
 // startswith(str, prefix)
 static Value native_startswith(int argCount, Value* args) {
+=======
+// str_startswith(str, prefix) - Check if string starts with prefix
+static Value native_str_startswith(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return BOOL_VAL(false);
     }
@@ -155,8 +225,13 @@ static Value native_startswith(int argCount, Value* args) {
     return BOOL_VAL(strncmp(str, prefix, prefixLen) == 0);
 }
 
+<<<<<<< HEAD
 // endswith(str, suffix)
 static Value native_endswith(int argCount, Value* args) {
+=======
+// str_endswith(str, suffix) - Check if string ends with suffix
+static Value native_str_endswith(int argCount, Value* args) {
+>>>>>>> fix-ci-build
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return BOOL_VAL(false);
     }
@@ -172,7 +247,11 @@ static Value native_endswith(int argCount, Value* args) {
     return BOOL_VAL(strcmp(str + strLen - suffixLen, suffix) == 0);
 }
 
+<<<<<<< HEAD
 // substr(str, start, length)
+=======
+// substr(str, start, length) - Extract substring
+>>>>>>> fix-ci-build
 static Value native_substr(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_NUMBER(args[1])) {
         return NIL_VAL;
@@ -194,11 +273,16 @@ static Value native_substr(int argCount, Value* args) {
         length = strLen - start;
     }
     
+<<<<<<< HEAD
+=======
+    // Ensure length is not negative
+>>>>>>> fix-ci-build
     if (length < 0) length = 0;
     
     return OBJ_VAL(copyString(str + start, length));
 }
 
+<<<<<<< HEAD
 ObjModule* create_std_str_module() {
     ObjString* name = copyString("std.native.str", 14);
     push(&vm, OBJ_VAL(name));
@@ -219,3 +303,18 @@ ObjModule* create_std_str_module() {
     pop(&vm);
     return module;
 }
+=======
+// Register all string functions with the VM
+void register_string_natives(VM* vm) {
+    defineNative(vm, "str_upper", native_str_upper);
+    defineNative(vm, "str_lower", native_str_lower);
+    defineNative(vm, "str_trim", native_str_trim);
+    defineNative(vm, "str_split", native_str_split);
+    defineNative(vm, "str_replace", native_str_replace);
+    defineNative(vm, "str_contains", native_str_contains);
+    defineNative(vm, "str_startswith", native_str_startswith);
+    defineNative(vm, "str_endswith", native_str_endswith);
+    defineNative(vm, "substr", native_substr);
+}
+
+>>>>>>> fix-ci-build

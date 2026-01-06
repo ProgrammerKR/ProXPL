@@ -31,6 +31,22 @@ static bool isTypesEqual(TypeInfo t1, TypeInfo t2) {
     return true;
 }
 
+<<<<<<< HEAD
+=======
+static const char* typeToString(TypeKind kind) {
+    switch (kind) {
+        case TYPE_UNKNOWN: return "Unknown";
+        case TYPE_VOID: return "Void";
+        case TYPE_BOOL: return "Bool";
+        case TYPE_INT: return "Int";
+        case TYPE_FLOAT: return "Float";
+        case TYPE_STRING: return "String";
+        case TYPE_FUNCTION: return "Function";
+        case TYPE_CLASS: return "Class";
+        default: return "Invalid";
+    }
+}
+>>>>>>> fix-ci-build
 
 // --- Symbol Table Helpers ---
 
@@ -423,6 +439,7 @@ void initTypeChecker(TypeChecker *checker) {
     checker->currentScope = NULL;
     beginScope(checker); // Global Scope
     
+<<<<<<< HEAD
     // Define Builtins
     
     // clock() -> Float
@@ -436,6 +453,10 @@ void initTypeChecker(TypeChecker *checker) {
     lenType.returnType = (TypeInfo*)malloc(sizeof(TypeInfo));
     *lenType.returnType = createType(TYPE_FLOAT);
     defineSymbol(checker, "len", lenType);
+=======
+    // Define Builtins?
+    // defineSymbol(checker, "print", ...);
+>>>>>>> fix-ci-build
 }
 
 bool checkTypes(TypeChecker *checker, StmtList *statements) {

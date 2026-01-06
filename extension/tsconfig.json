@@ -14,7 +14,11 @@
     },
     "exclude": [
         "node_modules",
+<<<<<<< HEAD
         ".vscode-test",
         "server"
+=======
+        ".vscode-test"
+>>>>>>> fix-ci-build
     ]
 }

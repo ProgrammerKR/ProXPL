@@ -12,12 +12,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+<<<<<<< HEAD
 // Forward declarations of parsing functions
 static Stmt *declaration(Parser *p);
 static Stmt *statement(Parser *p);
 static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract);
 static Stmt *classDecl(Parser *p);
 static Stmt *interfaceDecl(Parser *p);
+=======
+
+// Forward declarations of parsing functions
+static Stmt *declaration(Parser *p);
+static Stmt *statement(Parser *p);
+static Stmt *funcDecl(Parser *p, const char *kind);
+static Stmt *classDecl(Parser *p);
+>>>>>>> fix-ci-build
 static Stmt *varDecl(Parser *p);
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
@@ -53,6 +62,7 @@ static Token advance(Parser *p);
 static bool check(Parser *p, PxTokenType type);
 static bool match(Parser *p, int count, ...);
 static Token consume(Parser *p, PxTokenType type, const char *message);
+<<<<<<< HEAD
 
 
 // === Initialization ===
@@ -129,6 +139,21 @@ static void synchronize(Parser *p) {
 
     advance(p);
   }
+=======
+static void synchronize(Parser *p);
+
+// === Initialization ===
+
+void initParser(Parser *parser, Token *tokens, int count) {
+  parser->tokens = tokens;
+  parser->count = count;
+  parser->current = 0;
+}
+
+void parserError(Parser *parser, const char *message) {
+  Token token = peek(parser);
+  fprintf(stderr, "ParseError: %s at line %d\\n", message, token.line);
+>>>>>>> fix-ci-build
 }
 
 // === Helper Functions ===
@@ -175,6 +200,30 @@ static Token consume(Parser *p, PxTokenType type, const char *message) {
   return peek(p); // Return current token on error
 }
 
+<<<<<<< HEAD
+=======
+static void synchronize(Parser *p) {
+  advance(p);
+  while (!isAtEnd(p)) {
+    if (previous(p).type == TOKEN_SEMICOLON)
+      return;
+
+    switch (peek(p).type) {
+    case TOKEN_CLASS:
+    case TOKEN_FUNC:
+    case TOKEN_LET:
+    case TOKEN_FOR:
+    case TOKEN_IF:
+    case TOKEN_RETURN:
+      return;
+    default:
+      break;
+    }
+
+    advance(p);
+  }
+}
+>>>>>>> fix-ci-build
 
 // Helper to extract token value as string
 static char *tokenToString(Token token) {
@@ -194,9 +243,12 @@ StmtList *parse(Parser *parser) {
     Stmt *decl = declaration(parser);
     if (decl) {
       appendStmt(statements, decl);
+<<<<<<< HEAD
     } else if (parser->panicMode) {
       synchronize(parser);
       // Removed 'decl' but no need to free as it's null.
+=======
+>>>>>>> fix-ci-build
     }
   }
 
@@ -205,6 +257,7 @@ StmtList *parse(Parser *parser) {
 
 // === Declarations ===
 
+<<<<<<< HEAD
 static Stmt *externDecl(Parser *p);
 
 static Stmt *declaration(Parser *p) {
@@ -223,6 +276,13 @@ static Stmt *declaration(Parser *p) {
     return externDecl(p);
   if (match(p, 1, TOKEN_INTERFACE))
     return interfaceDecl(p);
+=======
+static Stmt *declaration(Parser *p) {
+  if (match(p, 1, TOKEN_FUNC))
+    return funcDecl(p, "function");
+  if (match(p, 1, TOKEN_CLASS))
+    return classDecl(p);
+>>>>>>> fix-ci-build
   if (match(p, 1, TOKEN_USE))
     return useDecl(p);
   if (match(p, 2, TOKEN_LET, TOKEN_CONST))
@@ -230,7 +290,11 @@ static Stmt *declaration(Parser *p) {
   return statement(p);
 }
 
+<<<<<<< HEAD
 static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract) {
+=======
+static Stmt *funcDecl(Parser *p, const char *kind) {
+>>>>>>> fix-ci-build
   (void)kind;
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
   char *name = tokenToString(nameToken);
@@ -248,6 +312,7 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
   }
 
   consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+<<<<<<< HEAD
 
   StmtList *body = NULL;
   // If abstract or interface method, body is optional (expect semicolon)
@@ -259,6 +324,13 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
   }
 
   Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, access, isStatic, isAbstract, nameToken.line, 0);
+=======
+  consume(p, TOKEN_LEFT_BRACE, "Expect '{' before body.");
+
+  StmtList *body = block(p);
+
+  Stmt *stmt = createFuncDeclStmt(name, params, body, nameToken.line, 0);
+>>>>>>> fix-ci-build
   free(name);
   return stmt;
 }
@@ -275,6 +347,7 @@ static Stmt *classDecl(Parser *p) {
     superclass = &superExpr->as.variable;
     free(superName);
   }
+<<<<<<< HEAD
   
   StringList *interfaces = NULL;
   if (match(p, 1, TOKEN_IMPLEMENTS)) {
@@ -286,11 +359,14 @@ static Stmt *classDecl(Parser *p) {
           free(iName);
       } while (match(p, 1, TOKEN_COMMA));
   }
+=======
+>>>>>>> fix-ci-build
 
   consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
 
   StmtList *methods = createStmtList();
   while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+<<<<<<< HEAD
     AccessLevel access = ACCESS_PUBLIC;
     if (match(p, 1, TOKEN_PUBLIC)) access = ACCESS_PUBLIC;
     else if (match(p, 1, TOKEN_PRIVATE)) access = ACCESS_PRIVATE;
@@ -308,17 +384,25 @@ static Stmt *classDecl(Parser *p) {
     }
     
     Stmt *method = funcDecl(p, "method", isAsync, access, isStatic, isAbstract);
+=======
+    Stmt *method = funcDecl(p, "method");
+>>>>>>> fix-ci-build
     appendStmt(methods, method);
   }
 
   consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
 
   Stmt *stmt =
+<<<<<<< HEAD
       createClassDeclStmt(name, superclass, interfaces, methods, nameToken.line, 0);
+=======
+      createClassDeclStmt(name, superclass, methods, nameToken.line, 0);
+>>>>>>> fix-ci-build
   free(name);
   return stmt;
 }
 
+<<<<<<< HEAD
 static Stmt *interfaceDecl(Parser *p) {
     Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect interface name.");
     char *name = tokenToString(nameToken);
@@ -343,6 +427,8 @@ static Stmt *interfaceDecl(Parser *p) {
     return stmt;
 }
 
+=======
+>>>>>>> fix-ci-build
 static Stmt *varDecl(Parser *p) {
   bool is_const = (previous(p).type == TOKEN_CONST);
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect variable name.");
@@ -378,6 +464,7 @@ static Stmt *useDecl(Parser *p) {
     strcat(path, partStr);
     free(partStr);
 
+<<<<<<< HEAD
     while (match(p, 1, TOKEN_SLASH) || match(p, 1, TOKEN_DOT)) {
       part = consume(p, TOKEN_IDENTIFIER, "Expect module part after separator.");
       strcat(path, "."); // Normalize to dot internally? Or keep as is? 
@@ -389,6 +476,11 @@ static Stmt *useDecl(Parser *p) {
       // The original code was: `strcat(path, "/");`
       // Let's change it to just append the separator found? 
       // Actually `stdlib_core.c` uses dots. So let's normalize to dots.
+=======
+    while (match(p, 1, TOKEN_SLASH)) {
+      part = consume(p, TOKEN_IDENTIFIER, "Expect module part after '/'.");
+      strcat(path, "/");
+>>>>>>> fix-ci-build
       partStr = tokenToString(part);
       strcat(path, partStr);
       free(partStr);
@@ -402,6 +494,7 @@ static Stmt *useDecl(Parser *p) {
   return createUseDeclStmt(modules, previous(p).line, 0);
 }
 
+<<<<<<< HEAD
 static Stmt *externDecl(Parser *p) {
     Token libToken = consume(p, TOKEN_STRING, "Expect library path string.");
     char *libPath = tokenToString(libToken);
@@ -435,6 +528,8 @@ static Stmt *externDecl(Parser *p) {
     return stmt;
 }
 
+=======
+>>>>>>> fix-ci-build
 // === Statements ===
 
 static Stmt *statement(Parser *p) {
@@ -752,11 +847,14 @@ static Expr *factor(Parser *p) {
 }
 
 static Expr *unary(Parser *p) {
+<<<<<<< HEAD
   if (match(p, 1, TOKEN_AWAIT)) {
       Token op = previous(p);
       Expr *right = unary(p);
       return createAwaitExpr(right, op.line, 0);
   }
+=======
+>>>>>>> fix-ci-build
   if (match(p, 2, TOKEN_BANG, TOKEN_MINUS)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
@@ -783,6 +881,7 @@ static Expr *call(Parser *p) {
       consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
       expr = createCallExpr(expr, arguments, previous(p).line, 0);
     } else if (match(p, 1, TOKEN_DOT)) {
+<<<<<<< HEAD
       // Allow keywords as property names (e.g. std.io.print)
       Token name;
       if (check(p, TOKEN_IDENTIFIER)) {
@@ -810,6 +909,9 @@ static Expr *call(Parser *p) {
           name = peek(p); // Recover
       }
       
+=======
+      Token name = consume(p, TOKEN_IDENTIFIER, "Expect property name.");
+>>>>>>> fix-ci-build
       char *nameStr = tokenToString(name);
       expr = createGetExpr(expr, nameStr, name.line, 0);
       free(nameStr);
@@ -857,6 +959,7 @@ static Expr *primary(Parser *p) {
     return expr;
   }
 
+<<<<<<< HEAD
 
 
   if (match(p, 1, TOKEN_THIS)) {
@@ -897,6 +1000,8 @@ static Expr *primary(Parser *p) {
       return createNewExpr(clazz, args, keyword.line, 0);
   }
 
+=======
+>>>>>>> fix-ci-build
   if (match(p, 1, TOKEN_IDENTIFIER)) {
     Token token = previous(p);
     char *name = tokenToString(token);
