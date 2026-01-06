@@ -48,48 +48,6 @@ jobs:
 
       - name: Install LLVM (Windows)
         if: matrix.os == 'windows-latest'
-<<<<<<< HEAD
-        shell: pwsh
-        run: |
-          choco install llvm --version 17.0.6 -y --force
-          $llvmRoot = "C:\Program Files\LLVM"
-          if (-not (Test-Path $llvmRoot)) { $llvmRoot = "C:\Program Files (x86)\LLVM" }
-          
-          $llvmDir = ""
-          $candidates = @("$llvmRoot\lib\cmake\llvm", "$llvmRoot\share\llvm\cmake", "$llvmRoot\lib\llvm\cmake", "$llvmRoot\cmake")
-          foreach ($c in $candidates) {
-            if (Test-Path "$c\LLVMConfig.cmake") { $llvmDir = $c; break }
-          }
-          
-          if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
-             $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
-          }
-          
-          if ($llvmDir) {
-            $llvmDir = $llvmDir -replace "\\", "/"
-            $llvmRoot = $llvmRoot -replace "\\", "/"
-            Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
-            Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
-            Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
-          } else {
-            exit 1
-          }
-
-      - name: Configure (Unix)
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Configure (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          cmake -S . -B build `
-             -DCMAKE_BUILD_TYPE=Release `
-             -DLLVM_DIR="$env:LLVM_DIR" `
-             -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
-=======
         run: |
           choco install llvm -y
           echo "C:/Program Files/LLVM/bin" >> $GITHUB_PATH
@@ -102,7 +60,6 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="C:/Program Files/LLVM" \
             -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
->>>>>>> fix-ci-build
 
       - name: Build
         shell: bash
@@ -120,47 +77,16 @@ jobs:
             exit 1
           fi
 
-<<<<<<< HEAD
-      - name: Build Installer (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          choco install innosetup -y
-          New-Item -ItemType Directory -Force -Path bin
-          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
-          Copy-Item "build/Release/prm.exe" -Destination "bin/"
-          if (Test-Path "build/Release/proxpl_lib.dll") {
-            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
-          }
-          ISCC setup.iss
-          Get-ChildItem -Path build
-
-      - name: Rename Binary
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-             cp "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
-          else
-             mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
-          fi
-=======
       - name: Rename Binary
         shell: bash
         run: |
           mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
->>>>>>> fix-ci-build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-<<<<<<< HEAD
-          path: |
-            ${{ matrix.asset_name }}
-            build/ProXPL_Installer_*.exe
-=======
           path: ${{ matrix.asset_name }}
->>>>>>> fix-ci-build
 
   release:
     name: Create Release
@@ -171,17 +97,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: proxpl-windows.exe
-<<<<<<< HEAD
-      
-      - name: Download Windows Installer
-        uses: actions/download-artifact@v4
-        with:
-          name: proxpl-windows.exe
-          path: .
-          pattern: ProXPL_Installer_*.exe
-          merge-multiple: true
-=======
->>>>>>> fix-ci-build
           
       - name: Download Linux Artifact
         uses: actions/download-artifact@v4
@@ -198,10 +113,6 @@ jobs:
         with:
           files: |
             proxpl-windows.exe
-<<<<<<< HEAD
-            ProXPL_Installer_*.exe
-=======
->>>>>>> fix-ci-build
             proxpl-linux
             proxpl-macos
           generate_release_notes: true

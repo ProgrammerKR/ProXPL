@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-<<<<<<< HEAD
-permissions:
-  contents: read
-
-=======
->>>>>>> fix-ci-build
 env:
   BUILD_TYPE: Release
 
@@ -24,22 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-<<<<<<< HEAD
-        include:
-          - os: ubuntu-latest
-            bin_path: |
-              build/proxpl
-              build/prm
-          - os: macos-latest
-            bin_path: |
-              build/proxpl
-              build/prm
-          - os: windows-latest
-            bin_path: build/ProXPL_Installer_*.exe
-            
-=======
 
->>>>>>> fix-ci-build
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -60,20 +39,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-<<<<<<< HEAD
-          choco install llvm --version 17.0.6 -y --force
-          $llvmRoot = "C:\Program Files\LLVM"
-          if (-not (Test-Path $llvmRoot)) { $llvmRoot = "C:\Program Files (x86)\LLVM" }
-          
-          $llvmDir = ""
-          $candidates = @("$llvmRoot\lib\cmake\llvm", "$llvmRoot\share\llvm\cmake", "$llvmRoot\lib\llvm\cmake", "$llvmRoot\cmake")
-          foreach ($c in $candidates) {
-            if (Test-Path "$c\LLVMConfig.cmake") { $llvmDir = $c; break }
-          }
-          
-          if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
-             $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
-=======
           # 1. Install LLVM via Chocolatey (Pinned to stable version)
           choco install llvm --version 17.0.6 -y --force
           
@@ -123,7 +88,6 @@ jobs:
           if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
              $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
              Write-Host "Forcing LLVM_DIR to known path: $llvmDir"
->>>>>>> fix-ci-build
           }
           
           if ($llvmDir) {
@@ -132,9 +96,6 @@ jobs:
             Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
-<<<<<<< HEAD
-          } else {
-=======
             Write-Host "SUCCESS: LLVM_DIR=$llvmDir"
             Write-Host "SUCCESS: LLVM_ROOT=$llvmRoot"
           } else {
@@ -147,7 +108,6 @@ jobs:
                 Write-Host "Listing C:\Program Files recursively (Depth 2) to find where LLVM is:"
                 Get-ChildItem -Path "C:\Program Files" -Recurse -Depth 2 | Select-Object FullName
              }
->>>>>>> fix-ci-build
             exit 1
           }
 
@@ -172,46 +132,6 @@ jobs:
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
 
       - name: Build
-<<<<<<< HEAD
-        shell: bash
-        run: cmake --build build --config Release --verbose
-
-      - name: Run Benchmarks
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            EXE_PATH="build/Release/proxpl.exe"
-          else
-            EXE_PATH="build/proxpl"
-          fi
-          
-          echo "Running benchmarks with $EXE_PATH"
-          python benchmarks/run_benchmarks.py --executable "$EXE_PATH"
-
-      - name: Build Installer (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          choco install innosetup -y
-          New-Item -ItemType Directory -Force -Path bin
-          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
-          Copy-Item "build/Release/prm.exe" -Destination "bin/"
-          if (Test-Path "build/Release/proxpl_lib.dll") {
-            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
-          }
-          iscc setup.iss
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ProXPL-${{ matrix.os }}
-          # UPDATED: This will now upload the .exe and the .dll for Windows
-          # For Linux/Mac, it still uploads the single binary.
-          path: |
-            ${{ matrix.bin_path }}
-            benchmarks/
-=======
 
         shell: bash
         run: cmake --build build --verbose
->>>>>>> fix-ci-build
