@@ -622,6 +622,7 @@ static InterpretResult run(VM* vm) {
       struct ObjClass* subclass = AS_CLASS(peek(vm, 0));
       tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
       pop(vm); // Subclass
+      pop(vm); // Superclass
       DISPATCH();
   }
   DO_OP_METHOD: {
@@ -1053,6 +1054,7 @@ static InterpretResult run(VM* vm) {
         ObjClass* subclass = AS_CLASS(peek(vm, 0));
         tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
         pop(vm); // Subclass
+        pop(vm); // Superclass
         break;
     }
     case OP_METHOD: {
