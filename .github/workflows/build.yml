@@ -21,7 +21,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
+        include:
+          - os: ubuntu-latest
+            bin_path: |
+              build/proxpl
+              build/prm
+          - os: macos-latest
+            bin_path: |
+              build/proxpl
+              build/prm
+          - os: windows-latest
+            bin_path: build/ProXPL_Installer_*.exe
+            
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -42,55 +53,18 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # 1. Install LLVM via Chocolatey (Pinned to stable version)
           choco install llvm --version 17.0.6 -y --force
-          
-          # 2. Define standard paths
           $llvmRoot = "C:\Program Files\LLVM"
-          if (-not (Test-Path $llvmRoot)) {
-            $llvmRoot = "C:\Program Files (x86)\LLVM"
-          }
+          if (-not (Test-Path $llvmRoot)) { $llvmRoot = "C:\Program Files (x86)\LLVM" }
           
-          # 3. Find LLVMConfig.cmake
           $llvmDir = ""
-          $candidates = @(
-            "$llvmRoot\lib\cmake\llvm",
-            "$llvmRoot\share\llvm\cmake",
-            "$llvmRoot\lib\llvm\cmake",
-            "$llvmRoot\cmake"
-          )
-          
+          $candidates = @("$llvmRoot\lib\cmake\llvm", "$llvmRoot\share\llvm\cmake", "$llvmRoot\lib\llvm\cmake", "$llvmRoot\cmake")
           foreach ($c in $candidates) {
-            if (Test-Path "$c") {
-                # If the directory exists, check for config file OR accept the dir if it looks like a cmake dir
-                if ((Test-Path "$c\LLVMConfig.cmake") -or (Test-Path "$c\LLVMConfigExtensions.cmake")) {
-                    $llvmDir = $c
-                    break
-                }
-            }
+            if (Test-Path "$c\LLVMConfig.cmake") { $llvmDir = $c; break }
           }
           
-          # 4. Fallback search (more depth)
-          if (-not $llvmDir -and (Test-Path $llvmRoot)) {
-            Write-Host "Performing deep search in $llvmRoot..."
-            # Try to find the directory containing LLVMConfig.cmake
-            $found = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfig.cmake" -Recurse -Depth 8 -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) {
-              $llvmDir = $found.Directory.FullName
-            } else {
-                 # Fallback: look for LLVMConfigExtensions.cmake which we saw exists
-                $foundExt = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfigExtensions.cmake" -Recurse -Depth 8 -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($foundExt) {
-                    $llvmDir = $foundExt.Directory.FullName
-                    Write-Host "Found likely LLVM CMake dir via Extensions: $llvmDir"
-                }
-            }
-          }
-          
-          # 5. HARDCODED FALLBACK: We know it exists here on the runner!
           if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
              $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
-             Write-Host "Forcing LLVM_DIR to known path: $llvmDir"
           }
           
           if ($llvmDir) {
@@ -99,18 +73,7 @@ jobs:
             Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
-            Write-Host "SUCCESS: LLVM_DIR=$llvmDir"
-            Write-Host "SUCCESS: LLVM_ROOT=$llvmRoot"
           } else {
-            Write-Warning "LLVM not found on Windows after installation. Debug info follows:"
-            if (Test-Path $llvmRoot) {
-                Write-Host "Listing $llvmRoot recursively (depth 5) for debugging:"
-                Get-ChildItem -Path $llvmRoot -Recurse -Depth 5 | Select-Object FullName
-             } else {
-                Write-Host "PATH $llvmRoot DOES NOT EXIST"
-                Write-Host "Listing C:\Program Files recursively (Depth 2) to find where LLVM is:"
-                Get-ChildItem -Path "C:\Program Files" -Recurse -Depth 2 | Select-Object FullName
-             }
             exit 1
           }
 
@@ -135,6 +98,40 @@ jobs:
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
 
       - name: Build
-
         shell: bash
-        run: cmake --build build --verbose
+        run: cmake --build build --config Release --verbose
+
+      - name: Run Benchmarks
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            EXE_PATH="build/Release/proxpl.exe"
+          else
+            EXE_PATH="build/proxpl"
+          fi
+          
+          echo "Running benchmarks with $EXE_PATH"
+          python benchmarks/run_benchmarks.py --executable "$EXE_PATH"
+
+      - name: Build Installer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+          New-Item -ItemType Directory -Force -Path bin
+          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
+          Copy-Item "build/Release/prm.exe" -Destination "bin/"
+          if (Test-Path "build/Release/proxpl_lib.dll") {
+            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
+          }
+          iscc setup.iss
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProXPL-${{ matrix.os }}
+          # UPDATED: This will now upload the .exe and the .dll for Windows
+          # For Linux/Mac, it still uploads the single binary.
+          path: |
+            ${{ matrix.bin_path }}
+            benchmarks/
