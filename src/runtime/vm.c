@@ -1194,14 +1194,16 @@ static InterpretResult run(VM* vm) {
         break;
     }
     case OP_RETURN: {
-      vm->frameCount--;
-      if (vm->frameCount == 0) {
-        pop(vm);
-        return INTERPRET_OK;
-      }
-      vm->stackTop = frame->slots;
-      frame = &vm->frames[vm->frameCount - 1];
-      break;
+        Value result = pop(vm);
+        vm->frameCount--;
+        if (vm->frameCount == 0) {
+            pop(vm);
+            return INTERPRET_OK;
+        }
+        vm->stackTop = frame->slots;
+        push(vm, result);
+        frame = &vm->frames[vm->frameCount - 1];
+        break;
     }
     default: return INTERPRET_COMPILE_ERROR;
     }
