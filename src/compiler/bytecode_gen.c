@@ -479,6 +479,13 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     funcCompiler.function->isStatic = stmt->as.func_decl.isStatic;
     funcCompiler.function->isAbstract = stmt->as.func_decl.isAbstract;
     
+    if (stmt->as.func_decl.name != NULL) {
+        funcCompiler.function->name = copyString(stmt->as.func_decl.name, strlen(stmt->as.func_decl.name));
+    }
+    
+    bool isInitDebug = (stmt->as.func_decl.name != NULL && strcmp(stmt->as.func_decl.name, "init") == 0);
+    fprintf(stderr, "Compiling function '%s' (isInit: %d)\n", stmt->as.func_decl.name ? stmt->as.func_decl.name : "NULL", isInitDebug);
+    
     beginScope(gen);
     
     StringList* params = (StringList*)stmt->as.func_decl.params; 
