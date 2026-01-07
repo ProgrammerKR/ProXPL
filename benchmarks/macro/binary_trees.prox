@@ -6,13 +6,13 @@ class Node {
     }
     
     check() {
-        if (this.left == nil) return 1;
+        if (this.left == null) return 1;
         return 1 + this.left.check() + this.right.check();
     }
 }
 
 func make_tree(depth) {
-    if (depth == 0) return Node(nil, nil);
+    if (depth == 0) return Node(null, null);
     return Node(make_tree(depth - 1), make_tree(depth - 1));
 }
 
