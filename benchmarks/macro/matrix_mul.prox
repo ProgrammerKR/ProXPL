@@ -25,15 +25,12 @@ func main() {
             let sum = 0;
             for (let k = 0; k < size; k = k + 1) {
                 sum = sum + a[i][k] * b[k][j];
-            }
-            push(row_c, sum);
-        }
-        push(c, row_c);
-    }
-    
-    print("Matrix[0][0]: " + to_string(c[0][0]));
-     let elapsed = time() - start;
+    let start = clock();
+    let c = multiply(a, b);
+    let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
+    print("C[0][0]: " + to_string(c[0][0]));
 }
 
 main();
+```

@@ -8,7 +8,12 @@ func main() {
     
     let sum = 0;
     for (let i = 0; i < 10000; i = i + 1) {
-        sum = sum + dict["key" + to_string(i)];
+        let val = dict["key" + to_string(i)];
+        if (val != nil) {
+            sum = sum + val;
+        } else {
+            print("Missing key: key" + to_string(i));
+        }
     }
     
     print("Dict Sum: " + to_string(sum));

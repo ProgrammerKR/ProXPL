@@ -17,7 +17,7 @@ func make_tree(depth) {
 }
 
 func main() {
-    let start = time();
+    let start = clock();
     let min_depth = 4;
     let max_depth = 10;
     
@@ -37,7 +37,7 @@ func main() {
     }
     
     print("long lived tree of depth " + to_string(max_depth) + " check: " + to_string(long_lived_tree.check()));
-     let elapsed = time() - start;
+     let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
 }
 

@@ -13,12 +13,12 @@ class Router {
         this.routes = {};
     }
     
-    func add(method, path, handler) {
+    add(method, path, handler) {
         let key = method + ":" + path;
         this.routes[key] = handler;
     }
     
-    func dispatch(req) {
+    dispatch(req) {
         let key = req.method + ":" + req.path;
         // In a real router, we'd check regex or prefix.
         // Here we just use exact match for benchmark.
@@ -39,7 +39,7 @@ func main() {
     router.add("GET", "/users", users);
     router.add("GET", "/about", about);
     
-    let start = time();
+    let start = clock();
     for (let i = 0; i < 50000; i = i + 1) {
         let r1 = Request("GET", "/");
         router.dispatch(r1);
@@ -51,7 +51,7 @@ func main() {
         router.dispatch(r3);
     }
     
-    let elapsed = time() - start;
+    let elapsed = clock() - start;
     print("HTTP Sim Time: " + to_string(elapsed));
 }
 

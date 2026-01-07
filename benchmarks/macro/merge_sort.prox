@@ -40,18 +40,17 @@ func merge_sort(arr) {
 }
 
 func main() {
-    let start = time();
-    let arr = [];
-    // Generate simple pseudo-random sequence
-    let seed = 12345;
-    for (let i = 0; i < 2000; i = i + 1) {
-        seed = (seed * 1103515245 + 12345) % 2147483648;
-        push(arr, seed % 10000);
+    let list = [];
+    for (let i = 0; i < 5000; i = i + 1) {
+        list_push(list, 5000 - i);
     }
     
-    let sorted = merge_sort(arr);
-    print("Sorted first 5: " + to_string(sorted[0]) + ", " + to_string(sorted[1]) + " ...");
-     let elapsed = time() - start;
+    let start = clock();
+    let sorted = merge_sort(list);
+    let elapsed = clock() - start;
+    
+    print("First: " + to_string(sorted[0]));
+    print("Last: " + to_string(sorted[4999]));
     print("Time: " + to_string(elapsed));
 }
 

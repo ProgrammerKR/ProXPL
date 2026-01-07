@@ -45,20 +45,14 @@ func advance(bodies, dt) {
 }
 
 func main() {
-    let start = time();
-    let bodies = [
-        Body(0, 0, 0, 100),
-        Body(10, 0, 0, 10),
-        Body(0, 10, 0, 10),
-        Body(0, 0, 10, 10)
-    ];
-    
-    for (let i = 0; i < 1000; i = i + 1) {
-        advance(bodies, 0.01);
+    let start = clock();
+    let system = NBodySystem();
+    for (let i = 0; i < 10000; i = i + 1) {
+        system.advance(0.01);
     }
+    let elapsed = clock() - start;
     
-    print("N-Body complete");
-     let elapsed = time() - start;
+    print("Energy: " + to_string(system.energy()));
     print("Time: " + to_string(elapsed));
 }
 
