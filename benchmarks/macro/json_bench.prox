@@ -106,7 +106,7 @@ func main() {
     
     print("JSON Length: " + to_string(len(json_str)));
     
-    let start = time();
+    let start = clock();
     
     let parser = JsonParser(json_str);
     let res = parser.parse();
