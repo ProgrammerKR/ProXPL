@@ -20,7 +20,7 @@ func main() {
         if (steps > max_steps) max_steps = steps;
     }
     print("Max Collatz steps: " + to_string(max_steps));
-     let elapsed = time() - start;
+     let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
 }
 
