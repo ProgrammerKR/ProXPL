@@ -17,7 +17,7 @@ HEADER_FMT = "{:<20} | {:<10} | {:<10} | {:<10} | {:<10} | {:<10} | {:<10}"
 ROW_FMT =    "{:<20} | {:<10} | {:<10} | {:<10} | {:<10} | {:<10} | {:<10}"
 DIVIDER = "-" * 100
 
-def run_cmd(cmd, timeout=60, cwd=None):
+def run_cmd(cmd, timeout=300, cwd=None):
     start = time.time()
     try:
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, cwd=cwd)
@@ -100,6 +100,11 @@ def main():
         dur_prox, out_prox = run_cmd([executable, bench_file])
         parsed_prox = parse_time_from_output(out_prox) if isinstance(dur_prox, float) else dur_prox
         
+        if parsed_prox is None:
+             print(f"\n[ERROR] ProXPL failed for {name}:")
+             print(out_prox)
+             print("-" * 20)
+
         # 2. Run Python
         py_file = os.path.join(ref_dir, name + ".py")
         parsed_py = "N/A"
