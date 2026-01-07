@@ -1,0 +1,17 @@
+
+func main() {
+    print("Test Validating List Push");
+    let l = [];
+    print("Initial len: " + to_string(len(l)));
+    let sub = [];
+    print("Sub list created");
+    list_push(sub, 1);
+    print("Sub len: " + to_string(len(sub)));
+    let res = list_push(l, sub);
+    print("Push result: " + to_string(res));
+    print("Final len: " + to_string(len(l)));
+    if (len(l) > 0) {
+        print("Nested item len: " + to_string(len(l[0])));
+    }
+}
+main();
