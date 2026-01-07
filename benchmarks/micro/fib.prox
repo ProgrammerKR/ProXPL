@@ -5,9 +5,9 @@ func fib(n) {
 }
 
 func main() {
-    let start = time();
+    let start = clock();
     print("Fibonacci(30): " + to_string(fib(30)));
-    let elapsed = time() - start;
+    let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
 }
 
