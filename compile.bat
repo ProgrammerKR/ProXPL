@@ -22,6 +22,7 @@ clang -o proxpl.exe -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS ^
  src/runtime/value.c ^
  src/runtime/vm.c ^
  src/runtime/vm_helpers.c ^
+ src/utils/error_report.c ^
  src/stdlib/collections_native.c ^
  src/stdlib/convert_native.c ^
  src/stdlib/core_native.c ^

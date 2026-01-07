@@ -34,8 +34,7 @@ class JsonParser {
     func skipWhitespace() {
         while (this.pos < this.len) {
             let c = this.peek();
-            // Simplified for debugging
-            if (c == " ") {
+            if (c == " " || c == "\n" || c == "\t") {
                 this.consume();
             } else {
                 return;
