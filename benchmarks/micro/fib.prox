@@ -1,5 +1,6 @@
 
 func fib(n) {
+    if (n < 4) print("fib of " + to_string(n));
     if (n < 2) return n;
     return fib(n - 1) + fib(n - 2);
 }
