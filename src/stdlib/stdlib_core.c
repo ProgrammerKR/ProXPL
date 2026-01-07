@@ -26,6 +26,16 @@ void register_string_natives(VM* vm);
 void register_convert_natives(VM* vm);
 void register_system_natives(VM* vm);
 
+// Exposed natives
+extern Value native_clock(int argCount, Value* args);
+
+static Value native_len(int argCount, Value* args) {
+    if (argCount < 1) return NUMBER_VAL(0);
+    if (IS_STRING(args[0])) return NUMBER_VAL((double)AS_STRING(args[0])->length);
+    // TODO: List/Map support
+    return NUMBER_VAL(0);
+}
+
 static void registerModule(VM* vm, const char* name, ObjModule* module) {
     ObjString* nameObj = copyString(name, (int)strlen(name));
     push(vm, OBJ_VAL(nameObj));
@@ -177,4 +187,8 @@ void registerStdLib(VM* vm) {
     tableSet(&vm->globals, stdName, OBJ_VAL(stdMod));
     pop(vm); // stdMod
     pop(vm); // stdName
+
+    // Register simple globals for convenience
+    defineNative(vm, "clock", native_clock);
+    defineNative(vm, "len", native_len);
 }

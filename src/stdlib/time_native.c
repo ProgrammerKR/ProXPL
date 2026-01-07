@@ -40,7 +40,7 @@ static Value native_now(int argCount, Value* args) {
 }
 
 // clock() -> Number (CPU time in seconds)
-static Value native_clock(int argCount, Value* args) {
+Value native_clock(int argCount, Value* args) {
     (void)argCount; (void)args;
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
 }
