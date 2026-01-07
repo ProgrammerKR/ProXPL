@@ -1073,7 +1073,7 @@ static InterpretResult run(VM* vm) {
             uint8_t isLocal = READ_BYTE();
             uint8_t index = READ_BYTE();
             if (isLocal) {
-                closure->upvalues[i] = captureUpvalue(vm, frame->slots + index);
+                closure->upvalues[i] = captureUpvalue(frame->slots + index, vm);
             } else {
                 closure->upvalues[i] = frame->closure->upvalues[index];
             }
