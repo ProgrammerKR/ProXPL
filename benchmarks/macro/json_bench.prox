@@ -108,7 +108,6 @@ func main() {
     
     let start = clock();
     
-    print("JsonParser is: " + to_string(JsonParser));
     let parser = JsonParser(json_str);
     let res = parser.parse();
     

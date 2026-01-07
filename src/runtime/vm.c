@@ -1041,6 +1041,24 @@ static InterpretResult run(VM* vm) {
             vm->stackTop -= argCount + 1;
             push(vm, result);
             break;
+        } else if (IS_CLASS(callee)) {
+            if (!callValue(callee, argCount, vm)) {
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            frame = &vm->frames[vm->frameCount - 1];
+            break;
+        } else if (IS_BOUND_METHOD(callee)) {
+            ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
+            vm->stackTop[-argCount - 1] = bound->receiver;
+            if (vm->frameCount == FRAMES_MAX) {
+                runtimeError(vm, "Stack overflow.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            frame = &vm->frames[vm->frameCount++];
+            frame->closure = bound->method;
+            frame->ip = bound->method->function->chunk.code;
+            frame->slots = vm->stackTop - argCount - 1;
+            break;
         } else {
             runtimeError(vm, "Can only call functions, classes, and foreign functions.");
             return INTERPRET_RUNTIME_ERROR;
