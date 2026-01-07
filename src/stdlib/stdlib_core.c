@@ -13,6 +13,7 @@
 #include "../include/common.h"
 #include "../include/vm.h"
 #include "../include/object.h"
+#include "../include/memory.h"
 
 // Forward declarations for module creators
 ObjModule* create_std_io_module();
