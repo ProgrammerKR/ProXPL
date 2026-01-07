@@ -1,33 +1,55 @@
 
-func main() {
-    let start = time();
-    let size = 50;
-    let a = [];
-    let b = [];
-    
-    // Init matrices
-    for (let i = 0; i < size; i = i + 1) {
-        let row_a = [];
-        let row_b = [];
-        for (let j = 0; j < size; j = j + 1) {
-            push(row_a, i + j);
-            push(row_b, i - j);
+func create_matrix(rows, cols) {
+    let m = [];
+    for (let i = 0; i < rows; i = i + 1) {
+        let row = [];
+        for (let j = 0; j < cols; j = j + 1) {
+            list_push(row, 0);
         }
-        push(a, row_a);
-        push(b, row_b);
+        list_push(m, row);
     }
-    
-    // Multiply
-    let c = [];
-    for (let i = 0; i < size; i = i + 1) {
-        let row_c = [];
-        for (let j = 0; j < size; j = j + 1) {
+    return m;
+}
+
+func multiply(a, b) {
+    let rowsA = len(a);
+    let colsA = len(a[0]);
+    let rowsB = len(b);
+    let colsB = len(b[0]);
+
+    if (colsA != rowsB) return null;
+
+    let result = create_matrix(rowsA, colsB);
+
+    for (let i = 0; i < rowsA; i = i + 1) {
+        for (let j = 0; j < colsB; j = j + 1) {
             let sum = 0;
-            for (let k = 0; k < size; k = k + 1) {
+            for (let k = 0; k < colsA; k = k + 1) {
                 sum = sum + a[i][k] * b[k][j];
+            }
+            result[i][j] = sum; 
+        }
+    }
+    return result;
+}
+
+func main() {
+    let size = 30; 
+    let a = create_matrix(size, size);
+    let b = create_matrix(size, size);
+
+    // Init values
+    for (let i = 0; i < size; i = i + 1) {
+        for (let j = 0; j < size; j = j + 1) {
+            a[i][j] = i + j;
+            b[i][j] = i - j;
+        }
+    }
+
     let start = clock();
     let c = multiply(a, b);
     let elapsed = clock() - start;
+    
     print("Time: " + to_string(elapsed));
     print("C[0][0]: " + to_string(c[0][0]));
 }
