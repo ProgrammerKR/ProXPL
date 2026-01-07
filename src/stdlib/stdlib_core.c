@@ -213,6 +213,7 @@ void registerStdLib(VM* vm) {
     // Register simple globals for convenience
     defineNative(vm, "clock", native_clock);
     defineNative(vm, "len", native_len);
-    defineNative(vm, "push", native_push);
-    defineNative(vm, "pop", native_pop);
+    defineNative(vm, "list_push", native_push);
+    defineNative(vm, "limit_pop", native_pop); // wait, list_pop
+    defineNative(vm, "list_pop", native_pop);
 }

@@ -1,9 +1,10 @@
 
 func main() {
+    print(push);
     let start = clock();
     let arr = [];
     for (let i = 0; i < 50000; i = i + 1) {
-        push(arr, i);
+        list_push(arr, i);
     }
     
     let sum = 0;
@@ -13,7 +14,7 @@ func main() {
     
     // Pop half
     for (let i = 0; i < 25000; i = i + 1) {
-        pop(arr);
+        list_pop(arr);
     }
     
     print("Array Sum: " + to_string(sum));

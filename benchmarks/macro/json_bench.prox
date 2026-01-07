@@ -3,6 +3,7 @@
 
 class JsonParser {
     init(inp) {
+        print("Inside init");
         this.input = inp;
         this.pos = 0;
         this.len = len(inp);
