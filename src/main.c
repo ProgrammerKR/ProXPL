@@ -210,11 +210,11 @@ static void runFile(const char *path) {
     exit(65);
   }
 
-  printf("Successfully parsed %d statements from %s\n", statements->count,
-         path);
+  // printf("Successfully parsed %d statements from %s\n", statements->count,
+  //        path);
 
   // --- Pipeline Step 2: Type Checking ---
-  printf("Running Type Checker...\n");
+  // printf("Running Type Checker...\n");
   TypeChecker checker;
   initTypeChecker(&checker);
   
@@ -226,16 +226,16 @@ static void runFile(const char *path) {
       exit(65);
   }
   freeTypeChecker(&checker);
-  printf("Type Check Passed.\n");
+  // printf("Type Check Passed.\n");
 
     // --- Pipeline Step 3: Bytecode Gen & Execution ---
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
     printf("Executing...\n");
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
-    printf("Executing...\n");
-    printf("DEBUG: Calling interpretAST from main...\n");
+    // printf("Executing...\n");
+    // printf("DEBUG: Calling interpretAST from main...\n");
     InterpretResult result = interpretAST(&vm, statements);
-    printf("DEBUG: Returned from interpretAST.\n");
+    // printf("DEBUG: Returned from interpretAST.\n");
     
     if (result != INTERPRET_OK) {
         fprintf(stderr, "Execution Failed.\n");
