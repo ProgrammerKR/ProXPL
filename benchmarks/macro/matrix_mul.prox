@@ -1,6 +1,5 @@
 
 func create_matrix(rows, cols) {
-    print("Creating matrix " + to_string(rows) + "x" + to_string(cols));
     let m = [];
     for (let i = 0; i < rows; i = i + 1) {
         let row = [];
@@ -9,7 +8,6 @@ func create_matrix(rows, cols) {
         }
         list_push(m, row);
     }
-    print("Matrix created with " + to_string(len(m)) + " rows");
     return m;
 }
 
@@ -53,13 +51,7 @@ func main() {
     let elapsed = clock() - start;
     
     print("Time: " + to_string(elapsed));
-    if (c == null) {
-        print("C is null");
-    } else {
-        print("Rows: " + to_string(len(c)));
-        if (len(c) > 0) print("Cols: " + to_string(len(c[0])));
-        print("C[0][0]: " + to_string(c[0][0]));
-    }
+    print("C[0][0]: " + to_string(c[0][0]));
 }
 
 main();
