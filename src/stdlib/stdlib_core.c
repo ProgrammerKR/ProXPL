@@ -33,8 +33,12 @@ extern Value native_clock(int argCount, Value* args);
 static Value native_len(int argCount, Value* args) {
     if (argCount < 1) return NUMBER_VAL(0);
     if (IS_STRING(args[0])) return NUMBER_VAL((double)AS_STRING(args[0])->length);
-    SYNTAX_ERROR_HERE;
-    if (IS_LIST(args[0])) return NUMBER_VAL((double)AS_LIST(args[0])->count);
+    printf("native_len: Type=%d, IS_LIST=%d, IS_STRING=%d\n", AS_OBJ(args[0])->type, IS_LIST(args[0]), IS_STRING(args[0]));
+    if (IS_STRING(args[0])) return NUMBER_VAL((double)AS_STRING(args[0])->length);
+    if (IS_LIST(args[0])) {
+         printf("It is a list! Count: %d\n", AS_LIST(args[0])->count);
+         return NUMBER_VAL((double)AS_LIST(args[0])->count);
+    }
     if (IS_DICTIONARY(args[0])) return NUMBER_VAL((double)AS_DICTIONARY(args[0])->items.count);
     return NUMBER_VAL(0);
 }
