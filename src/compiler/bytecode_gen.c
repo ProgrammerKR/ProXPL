@@ -488,7 +488,7 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     pop(&vm);
     
     // bool isInitDebug = (stmt->as.func_decl.name != NULL && strcmp(stmt->as.func_decl.name, "init") == 0);
-    // fprintf(stderr, "Compiling function '%s' (isInit: %d)\n", stmt->as.func_decl.name ? stmt->as.func_decl.name : "NULL", isInitDebug);
+     // fprintf(stderr, "Compiling function '%s' (isInit: %d)\n", stmt->as.func_decl.name ? stmt->as.func_decl.name : "NULL", isInitDebug);
     
     beginScope(gen);
     
