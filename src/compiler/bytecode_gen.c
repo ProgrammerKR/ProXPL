@@ -7,6 +7,7 @@
 #include "../../include/common.h"
 #include "../../include/value.h"
 #include "../../include/object.h"
+#include "../../include/vm.h"
 #include <stddef.h> 
 
 // --- Compiler & Scope Types ---
@@ -479,12 +480,15 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     funcCompiler.function->isStatic = stmt->as.func_decl.isStatic;
     funcCompiler.function->isAbstract = stmt->as.func_decl.isAbstract;
     
+    // Protect function from GC during copyString
+    push(&vm, OBJ_VAL(funcCompiler.function));
     if (stmt->as.func_decl.name != NULL) {
         funcCompiler.function->name = copyString(stmt->as.func_decl.name, strlen(stmt->as.func_decl.name));
     }
+    pop(&vm);
     
-    bool isInitDebug = (stmt->as.func_decl.name != NULL && strcmp(stmt->as.func_decl.name, "init") == 0);
-    fprintf(stderr, "Compiling function '%s' (isInit: %d)\n", stmt->as.func_decl.name ? stmt->as.func_decl.name : "NULL", isInitDebug);
+    // bool isInitDebug = (stmt->as.func_decl.name != NULL && strcmp(stmt->as.func_decl.name, "init") == 0);
+    // fprintf(stderr, "Compiling function '%s' (isInit: %d)\n", stmt->as.func_decl.name ? stmt->as.func_decl.name : "NULL", isInitDebug);
     
     beginScope(gen);
     
