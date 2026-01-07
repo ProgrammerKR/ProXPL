@@ -1,13 +1,13 @@
 
 func main() {
-    let start = time();
+    let start = clock();
     let arr = [];
     for (let i = 0; i < 50000; i = i + 1) {
         push(arr, i);
     }
     
     let sum = 0;
-    for (let i = 0; i < length(arr); i = i + 1) {
+    for (let i = 0; i < len(arr); i = i + 1) {
         sum = sum + arr[i];
     }
     
@@ -17,8 +17,8 @@ func main() {
     }
     
     print("Array Sum: " + to_string(sum));
-    print("Array Length: " + to_string(length(arr)));
-     let elapsed = time() - start;
+    print("Array Length: " + to_string(len(arr)));
+     let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
 }
 

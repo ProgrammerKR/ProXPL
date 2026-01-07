@@ -8,7 +8,7 @@ func is_prime(n) {
 }
 
 func main() {
-    let start = time();
+    let start = clock();
     let count = 0;
     for (let i = 0; i < 5000; i = i + 1) {
         if (is_prime(i)) {
@@ -16,7 +16,7 @@ func main() {
         }
     }
     print("Primes up to 5000: " + to_string(count));
-    let elapsed = time() - start;
+    let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
 }
 

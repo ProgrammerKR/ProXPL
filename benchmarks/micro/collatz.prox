@@ -13,7 +13,7 @@ func collatz(n) {
 }
 
 func main() {
-    let start = time();
+    let start = clock();
     let max_steps = 0;
     for (let i = 1; i <= 20000; i = i + 1) {
         let steps = collatz(i);

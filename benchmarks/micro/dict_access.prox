@@ -1,6 +1,6 @@
 
 func main() {
-    let start = time();
+    let start = clock();
     let dict = {};
     for (let i = 0; i < 10000; i = i + 1) {
         dict["key" + to_string(i)] = i;
@@ -12,7 +12,7 @@ func main() {
     }
     
     print("Dict Sum: " + to_string(sum));
-     let elapsed = time() - start;
+     let elapsed = clock() - start;
     print("Time: " + to_string(elapsed));
 }
 
