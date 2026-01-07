@@ -708,42 +708,7 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   
-  DO_OP_MODULO: {
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
-      push(vm, NUMBER_VAL(fmod(a, b)));
-      DISPATCH();
-  }
-  DO_OP_BIT_AND: {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      push(vm, NUMBER_VAL((double)(a & b)));
-      DISPATCH();
-  }
-  DO_OP_BIT_OR: {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      push(vm, NUMBER_VAL((double)(a | b)));
-      DISPATCH();
-  }
-  DO_OP_BIT_XOR: {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      push(vm, NUMBER_VAL((double)(a ^ b)));
-      DISPATCH();
-  }
-  DO_OP_LEFT_SHIFT: {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      push(vm, NUMBER_VAL((double)(a << b)));
-      DISPATCH();
-  }
-  DO_OP_RIGHT_SHIFT: {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      push(vm, NUMBER_VAL((double)(a >> b)));
-      DISPATCH();
-  }
+
   
   DO_OP_UNKNOWN: {
       runtimeError(vm, "Unknown opcode %d.", frame->ip[-1]);
