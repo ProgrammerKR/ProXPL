@@ -155,15 +155,7 @@ static Value native_char_at(int argCount, Value* args) {
 }
 
 // len(value) - Get length of string or collection
-static Value native_len(int argCount, Value* args) {
-    if (argCount < 1) return NUMBER_VAL(0);
-    
-    if (IS_STRING(args[0])) {
-        return NUMBER_VAL((double)AS_STRING(args[0])->length);
-    }
-    
-    return NUMBER_VAL(0);
-}
+// len(value) moved to stdlib_core.c
 
 // Register all conversion functions with the VM
 void register_convert_natives(VM* vm) {
@@ -174,6 +166,6 @@ void register_convert_natives(VM* vm) {
     defineNative(vm, "to_hex", native_to_hex);
     defineNative(vm, "to_bin", native_to_bin);
     defineNative(vm, "char_at", native_char_at);
-    defineNative(vm, "len", native_len);
+    // defineNative(vm, "len", native_len); // Moved to stdlib_core.c
 }
 
