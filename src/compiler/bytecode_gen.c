@@ -72,9 +72,14 @@ static void initCompiler(BytecodeGen* gen, Compiler* compiler, CompFunctionType 
     local->name = ""; // Internal usage
 }
 
-static ObjFunction* endCompiler(BytecodeGen* gen) {
+static ObjFunction* endCompiler(BytecodeGen* gen, bool isInit) {
     // Emit return
-    writeChunk(gen->chunk, OP_NIL, 0); 
+    if (isInit) {
+        writeChunk(gen->chunk, OP_GET_LOCAL, 0); 
+        writeChunk(gen->chunk, 0, 0);
+    } else {
+        writeChunk(gen->chunk, OP_NIL, 0); 
+    }
     writeChunk(gen->chunk, OP_RETURN, 0);
     
     ObjFunction* function = gen->compiler->function;
@@ -376,7 +381,7 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
                     genStmt(gen, expr->as.lambda.body->items[i]);
                 }
             }
-            ObjFunction* function = endCompiler(gen);
+            ObjFunction* function = endCompiler(gen, false);
             Value funcVal = OBJ_VAL(function);
             int funcConst = addConstant(gen->chunk, funcVal);
             writeChunk(gen->chunk, OP_CLOSURE, expr->line);
@@ -494,7 +499,8 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
         }
     }
     
-    ObjFunction* function = endCompiler(gen);
+    bool isInit = (stmt->as.func_decl.name != NULL && strcmp(stmt->as.func_decl.name, "init") == 0);
+    ObjFunction* function = endCompiler(gen, isInit);
     
     // Emit Closure
     Value funcVal = OBJ_VAL(function);
@@ -565,7 +571,13 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             if (stmt->as.return_stmt.value) {
                 genExpr(gen, stmt->as.return_stmt.value);
             } else {
-                 writeChunk(gen->chunk, OP_NIL, stmt->line);
+                 // Check if we are in init
+                 if (gen->compiler->function->name != NULL && strcmp(gen->compiler->function->name->chars, "init") == 0) {
+                     writeChunk(gen->chunk, OP_GET_LOCAL, stmt->line);
+                     writeChunk(gen->chunk, 0, stmt->line);
+                 } else {
+                     writeChunk(gen->chunk, OP_NIL, stmt->line);
+                 }
             }
             writeChunk(gen->chunk, OP_RETURN, stmt->line);
             break;
