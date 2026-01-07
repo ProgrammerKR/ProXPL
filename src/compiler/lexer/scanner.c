@@ -115,7 +115,19 @@ static Token errorToken(Scanner *scanner, const char *message) {
 }
 
 static Token string(Scanner *scanner) {
-  while (peek(scanner) != '"' && !isAtEnd(scanner)) {
+  while (!isAtEnd(scanner)) {
+    if (peek(scanner) == '"') break;
+    
+    if (peek(scanner) == '\\') {
+        advance(scanner); // Consume backslash
+        if (isAtEnd(scanner)) break;
+        // Consume escaped character immediately so it's not checked as a quote
+        // Also handle newlines in escaped chars if necessary (e.g. escaped literal newline?)
+        if (peek(scanner) == '\n') scanner->line++;
+        advance(scanner);
+        continue; 
+    }
+
     if (peek(scanner) == '\n')
       scanner->line++;
     advance(scanner);
