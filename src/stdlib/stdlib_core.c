@@ -68,6 +68,23 @@ static Value native_pop(int argCount, Value* args) {
     return list->items[--list->count];
 }
 
+static Value native_substr(int argCount, Value* args) {
+    if (argCount < 3) return NIL_VAL;
+    if (!IS_STRING(args[0]) || !IS_NUMBER(args[1]) || !IS_NUMBER(args[2])) return NIL_VAL;
+    
+    ObjString* source = AS_STRING(args[0]);
+    int start = (int)AS_NUMBER(args[1]);
+    int length = (int)AS_NUMBER(args[2]);
+    
+    if (start < 0 || start >= source->length) {
+        return OBJ_VAL(copyString("", 0));
+    }
+    if (length < 0) length = 0;
+    if (start + length > source->length) length = source->length - start;
+    
+    return OBJ_VAL(copyString(source->chars + start, length));
+}
+
 /*
  * Register all standard library modules
  * Called during VM initialization
@@ -217,4 +234,5 @@ void registerStdLib(VM* vm) {
     defineNative(vm, "list_push", native_push);
     defineNative(vm, "limit_pop", native_pop); // wait, list_pop
     defineNative(vm, "list_pop", native_pop);
+    defineNative(vm, "substr", native_substr);
 }
