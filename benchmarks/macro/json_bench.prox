@@ -2,10 +2,10 @@
 // Simulated JSON Parsing Benchmark
 
 class JsonParser {
-    init(input) {
-        this.input = input;
+    init(inp) {
+        this.input = inp;
         this.pos = 0;
-        this.len = len(input);
+        this.len = len(inp);
     }
     
     peek() {

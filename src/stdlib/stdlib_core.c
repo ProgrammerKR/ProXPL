@@ -45,6 +45,28 @@ static void registerModule(VM* vm, const char* name, ObjModule* module) {
     pop(vm);
 }
 
+static Value native_push(int argCount, Value* args) {
+    if (argCount < 2) return NIL_VAL;
+    if (!IS_LIST(args[0])) return NIL_VAL;
+    ObjList* list = AS_LIST(args[0]);
+    Value item = args[1];
+    if (list->capacity < list->count + 1) {
+        int oldCapacity = list->capacity;
+        list->capacity = GROW_CAPACITY(oldCapacity);
+        list->items = GROW_ARRAY(Value, list->items, oldCapacity, list->capacity);
+    }
+    list->items[list->count++] = item;
+    return item; // Return pushed item or nil? JS returns new length
+}
+
+static Value native_pop(int argCount, Value* args) {
+    if (argCount < 1) return NIL_VAL;
+    if (!IS_LIST(args[0])) return NIL_VAL;
+    ObjList* list = AS_LIST(args[0]);
+    if (list->count == 0) return NIL_VAL;
+    return list->items[--list->count];
+}
+
 /*
  * Register all standard library modules
  * Called during VM initialization
@@ -191,4 +213,6 @@ void registerStdLib(VM* vm) {
     // Register simple globals for convenience
     defineNative(vm, "clock", native_clock);
     defineNative(vm, "len", native_len);
+    defineNative(vm, "push", native_push);
+    defineNative(vm, "pop", native_pop);
 }
