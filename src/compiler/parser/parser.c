@@ -650,7 +650,13 @@ static Expr *assignment(Parser *p) {
 
     if (expr->type == EXPR_VARIABLE) {
       return createAssignExpr(expr->as.variable.name, value, equals.line, 0);
+    } else if (expr->type == EXPR_GET) {
+      return createSetExpr(expr->as.get.object, expr->as.get.name, value, equals.line, 0);
+    } else if (expr->type == EXPR_INDEX) {
+      return createSetIndexExpr(expr->as.index.target, expr->as.index.index, value, equals.line, 0);
     }
+    
+    parserError(p, "Invalid assignment target.");
   }
 
   return expr;

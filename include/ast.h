@@ -35,7 +35,7 @@ struct TypeInfo {
 typedef enum {
   EXPR_BINARY, EXPR_UNARY, EXPR_LITERAL, EXPR_GROUPING,
   EXPR_VARIABLE, EXPR_ASSIGN, EXPR_LOGICAL, EXPR_CALL,
-  EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_LIST,
+  EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_SET_INDEX, EXPR_LIST,
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
   EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW
 } ExprType;
@@ -100,6 +100,7 @@ typedef struct { Expr *callee; ExprList *arguments; } CallExpr;
 typedef struct { Expr *object; char *name; } GetExpr;
 typedef struct { Expr *object; char *name; Expr *value; } SetExpr;
 typedef struct { Expr *target; Expr *index; } IndexExpr;
+typedef struct { Expr *target; Expr *index; Expr *value; } SetIndexExpr;
 typedef struct { ExprList *elements; } ListExpr;
 typedef struct { DictPairList *pairs; } DictionaryExpr;
 typedef struct { Expr *condition; Expr *true_branch; Expr *false_branch; } TernaryExpr;
@@ -118,7 +119,7 @@ struct Expr {
     BinaryExpr binary; UnaryExpr unary; LiteralExpr literal;
     GroupingExpr grouping; VariableExpr variable; AssignExpr assign;
     LogicalExpr logical; CallExpr call; GetExpr get; SetExpr set;
-    IndexExpr index; ListExpr list; DictionaryExpr dictionary;
+    IndexExpr index; SetIndexExpr set_index; ListExpr list; DictionaryExpr dictionary;
     TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
     ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
   } as;
@@ -169,6 +170,7 @@ Expr *createCallExpr(Expr *callee, ExprList *arguments, int line, int column);
 Expr *createGetExpr(Expr *object, const char *name, int line, int column);
 Expr *createSetExpr(Expr *object, const char *name, Expr *value, int line, int column);
 Expr *createIndexExpr(Expr *target, Expr *index, int line, int column);
+Expr *createSetIndexExpr(Expr *target, Expr *index, Expr *value, int line, int column);
 Expr *createListExpr(ExprList *elements, int line, int column);
 Expr *createDictionaryExpr(DictPairList *pairs, int line, int column);
 Expr *createTernaryExpr(Expr *cond, Expr *true_br, Expr *false_br, int line, int column);

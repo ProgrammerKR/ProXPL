@@ -305,6 +305,13 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
              writeChunk(gen->chunk, OP_GET_INDEX, expr->line);
              break;
         }
+        case EXPR_SET_INDEX: {
+            genExpr(gen, expr->as.set_index.target);
+            genExpr(gen, expr->as.set_index.index);
+            genExpr(gen, expr->as.set_index.value);
+            writeChunk(gen->chunk, OP_SET_INDEX, expr->line);
+            break;
+        }
         case EXPR_LIST: {
              int count = 0;
              if (expr->as.list.elements) {

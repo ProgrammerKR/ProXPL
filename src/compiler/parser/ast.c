@@ -262,6 +262,17 @@ Expr *createIndexExpr(Expr *target, Expr *index, int line, int column) {
   return expr;
 }
 
+Expr *createSetIndexExpr(Expr *target, Expr *index, Expr *value, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_SET_INDEX;
+  expr->line = line;
+  expr->column = column;
+  expr->as.set_index.target = target;
+  expr->as.set_index.index = index;
+  expr->as.set_index.value = value;
+  return expr;
+}
+
 Expr *createListExpr(ExprList *elements, int line, int column) {
   Expr *expr = ALLOCATE(Expr, 1);
   expr->type = EXPR_LIST;
@@ -581,6 +592,11 @@ void freeExpr(Expr *expr) {
   case EXPR_INDEX:
     freeExpr(expr->as.index.target);
     freeExpr(expr->as.index.index);
+    break;
+  case EXPR_SET_INDEX:
+    freeExpr(expr->as.set_index.target);
+    freeExpr(expr->as.set_index.index);
+    freeExpr(expr->as.set_index.value);
     break;
   case EXPR_LIST:
     freeExprList(expr->as.list.elements);
