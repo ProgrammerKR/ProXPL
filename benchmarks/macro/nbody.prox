@@ -1,58 +1,111 @@
 
-// Simplified N-Body
 class Body {
-    init(x, y, z, mass) {
+    init(x, y, z, vx, vy, vz, mass) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.vx = vx;
+        this.vy = vy;
+        this.vz = vz;
         this.mass = mass;
-        this.vx = 0;
-        this.vy = 0;
-        this.vz = 0;
     }
 }
 
-func advance(bodies, dt) {
-    let n = length(bodies);
-    for (let i = 0; i < n; i = i + 1) {
-        for (let j = i + 1; j < n; j = j + 1) {
-            let b1 = bodies[i];
-            let b2 = bodies[j];
-            
-            let dx = b1.x - b2.x;
-            let dy = b1.y - b2.y;
-            let dz = b1.z - b2.z;
-            
-            let dist_sq = dx*dx + dy*dy + dz*dz;
-            let mag = dt / (dist_sq * sqrt(dist_sq));
-            
-            b1.vx = b1.vx - dx * b2.mass * mag;
-            b1.vy = b1.vy - dy * b2.mass * mag;
-            b1.vz = b1.vz - dz * b2.mass * mag;
-            
-            b2.vx = b2.vx + dx * b1.mass * mag;
-            b2.vy = b2.vy + dy * b1.mass * mag;
-            b2.vz = b2.vz + dz * b1.mass * mag;
-        }
+class NBodySystem {
+    init() {
+        this.bodies = [];
+        // Sun
+        list_push(this.bodies, Body(0, 0, 0, 0, 0, 0, 1.98892e30)); 
+        // Jupiter
+        list_push(this.bodies, Body(4.84143144246472090e+00, -1.16032004402742839e+00, -1.03622044471123109e-01,
+                                    1.66007664274403694e-03 * 365.24, 7.69901118419740425e-03 * 365.24, -6.90460016972063023e-05 * 365.24,
+                                    9.54791938424326609e-04 * 1.98892e30));
+        // Additional bodies can be added...
     }
-    
-    for (let i = 0; i < n; i = i + 1) {
-        let b = bodies[i];
-        b.x = b.x + b.vx * dt;
-        b.y = b.y + b.vy * dt;
-        b.z = b.z + b.vz * dt;
+
+    offset_momentum() {
+        let px = 0;
+        let py = 0;
+        let pz = 0;
+        let n = len(this.bodies);
+        for (let i = 0; i < n; i = i + 1) {
+             let b = this.bodies[i];
+             px = px + b.vx * b.mass;
+             py = py + b.vy * b.mass;
+             pz = pz + b.vz * b.mass;
+        }
+        let sol = this.bodies[0];
+        sol.vx = -px / sol.mass;
+        sol.vy = -py / sol.mass;
+        sol.vz = -pz / sol.mass;
+    }
+
+    energy() {
+        let e = 0.0;
+        let n = len(this.bodies);
+        for (let i = 0; i < n; i = i + 1) {
+            let bi = this.bodies[i];
+            e = e + 0.5 * bi.mass * (bi.vx * bi.vx + bi.vy * bi.vy + bi.vz * bi.vz);
+            for (let j = i + 1; j < n; j = j + 1) {
+                 let bj = this.bodies[j];
+                 let dx = bi.x - bj.x;
+                 let dy = bi.y - bj.y;
+                 let dz = bi.z - bj.z;
+                 let dist = sqrt(dx*dx + dy*dy + dz*dz);
+                 e = e - (bi.mass * bj.mass) / dist;
+            }
+        }
+        return e;
+    }
+
+    advance(dt) {
+        let n = len(this.bodies);
+        for (let i = 0; i < n; i = i + 1) {
+            let bi = this.bodies[i];
+            for (let j = i + 1; j < n; j = j + 1) {
+                let bj = this.bodies[j];
+                let dx = bi.x - bj.x;
+                let dy = bi.y - bj.y;
+                let dz = bi.z - bj.z;
+                
+                let dist_sq = dx*dx + dy*dy + dz*dz;
+                let mag = dt / (dist_sq * sqrt(dist_sq));
+                
+                let bim = bi.mass * mag;
+                let bjm = bj.mass * mag;
+
+                bi.vx = bi.vx - dx * bjm;
+                bi.vy = bi.vy - dy * bjm;
+                bi.vz = bi.vz - dz * bjm;
+                
+                bj.vx = bj.vx + dx * bim;
+                bj.vy = bj.vy + dy * bim;
+                bj.vz = bj.vz + dz * bim;
+            }
+        }
+        
+        for (let i = 0; i < n; i = i + 1) {
+            let b = this.bodies[i];
+            b.x = b.x + b.vx * dt;
+            b.y = b.y + b.vy * dt;
+            b.z = b.z + b.vz * dt;
+        }
     }
 }
 
 func main() {
     let start = clock();
     let system = NBodySystem();
-    for (let i = 0; i < 10000; i = i + 1) {
+    system.offset_momentum();
+    print("Initial Energy: " + to_string(system.energy()));
+    
+    for (let i = 0; i < 1000; i = i + 1) {
         system.advance(0.01);
     }
+    
     let elapsed = clock() - start;
     
-    print("Energy: " + to_string(system.energy()));
+    print("Final Energy: " + to_string(system.energy()));
     print("Time: " + to_string(elapsed));
 }
 

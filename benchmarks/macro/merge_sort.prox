@@ -4,22 +4,22 @@ func merge(left, right) {
     let i = 0;
     let j = 0;
     
-    while (i < length(left) && j < length(right)) {
+    while (i < len(left) && j < len(right)) {
         if (left[i] <= right[j]) {
-            push(result, left[i]);
+            list_push(result, left[i]);
             i = i + 1;
         } else {
-            push(result, right[j]);
+            list_push(result, right[j]);
             j = j + 1;
         }
     }
     
-    while (i < length(left)) {
-        push(result, left[i]);
+    while (i < len(left)) {
+        list_push(result, left[i]);
         i = i + 1;
     }
-    while (j < length(right)) {
-        push(result, right[j]);
+    while (j < len(right)) {
+        list_push(result, right[j]);
         j = j + 1;
     }
     
@@ -27,14 +27,14 @@ func merge(left, right) {
 }
 
 func merge_sort(arr) {
-    if (length(arr) <= 1) return arr;
+    if (len(arr) <= 1) return arr;
     
-    let mid = length(arr) / 2;
+    let mid = len(arr) / 2;
     let left = [];
     let right = [];
     
-    for (let i = 0; i < mid; i = i + 1) push(left, arr[i]);
-    for (let i = mid; i < length(arr); i = i + 1) push(right, arr[i]);
+    for (let i = 0; i < mid; i = i + 1) list_push(left, arr[i]);
+    for (let i = mid; i < len(arr); i = i + 1) list_push(right, arr[i]);
     
     return merge(merge_sort(left), merge_sort(right));
 }
