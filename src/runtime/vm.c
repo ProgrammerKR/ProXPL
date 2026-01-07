@@ -9,6 +9,8 @@
 #include <time.h>
 #include <stdarg.h>
 #include <stdlib.h> // Required for exit()
+#include <math.h>
+
 
 
 #include "../include/common.h"
@@ -187,7 +189,13 @@ static InterpretResult run(VM* vm) {
       [OP_TRY] = &&DO_OP_TRY,
       [OP_CATCH] = &&DO_OP_CATCH,
       [OP_END_TRY] = &&DO_OP_END_TRY,
-      [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN
+      [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN,
+      [OP_MODULO] = &&DO_OP_MODULO,
+      [OP_BIT_AND] = &&DO_OP_BIT_AND,
+      [OP_BIT_OR] = &&DO_OP_BIT_OR,
+      [OP_BIT_XOR] = &&DO_OP_BIT_XOR,
+      [OP_LEFT_SHIFT] = &&DO_OP_LEFT_SHIFT,
+      [OP_RIGHT_SHIFT] = &&DO_OP_RIGHT_SHIFT
   };
   #pragma GCC diagnostic pop
 
@@ -491,6 +499,7 @@ static InterpretResult run(VM* vm) {
   DO_OP_PRINT: {
     printValue(pop(vm));
     printf("\n");
+    fflush(stdout);
     DISPATCH();
   }
   DO_OP_JUMP: {
@@ -659,6 +668,80 @@ static InterpretResult run(VM* vm) {
           return INTERPRET_RUNTIME_ERROR;
       }
       push(vm, OBJ_VAL(foreign));
+      DISPATCH();
+  }
+  
+  DO_OP_MODULO: {
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL(fmod(a, b)));
+      DISPATCH();
+  }
+  DO_OP_BIT_AND: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a & b)));
+      DISPATCH();
+  }
+  DO_OP_BIT_OR: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a | b)));
+      DISPATCH();
+  }
+  DO_OP_BIT_XOR: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a ^ b)));
+      DISPATCH();
+  }
+  DO_OP_LEFT_SHIFT: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a << b)));
+      DISPATCH();
+  }
+  DO_OP_RIGHT_SHIFT: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a >> b)));
+      DISPATCH();
+  }
+  
+  DO_OP_MODULO: {
+      double b = AS_NUMBER(pop(vm));
+      double a = AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL(fmod(a, b)));
+      DISPATCH();
+  }
+  DO_OP_BIT_AND: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a & b)));
+      DISPATCH();
+  }
+  DO_OP_BIT_OR: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a | b)));
+      DISPATCH();
+  }
+  DO_OP_BIT_XOR: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a ^ b)));
+      DISPATCH();
+  }
+  DO_OP_LEFT_SHIFT: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a << b)));
+      DISPATCH();
+  }
+  DO_OP_RIGHT_SHIFT: {
+      int b = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(a >> b)));
       DISPATCH();
   }
   
@@ -1107,6 +1190,42 @@ static InterpretResult run(VM* vm) {
            return INTERPRET_RUNTIME_ERROR;
         }
         push(vm, OBJ_VAL(foreign));
+        break;
+    }
+    case OP_MODULO: {
+        double b = AS_NUMBER(pop(vm));
+        double a = AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL(fmod(a, b)));
+        break;
+    }
+    case OP_BIT_AND: {
+        int b = (int)AS_NUMBER(pop(vm));
+        int a = (int)AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL((double)(a & b)));
+        break;
+    }
+    case OP_BIT_OR: {
+        int b = (int)AS_NUMBER(pop(vm));
+        int a = (int)AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL((double)(a | b)));
+        break;
+    }
+    case OP_BIT_XOR: {
+        int b = (int)AS_NUMBER(pop(vm));
+        int a = (int)AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL((double)(a ^ b)));
+        break;
+    }
+    case OP_LEFT_SHIFT: {
+        int b = (int)AS_NUMBER(pop(vm));
+        int a = (int)AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL((double)(a << b)));
+        break;
+    }
+    case OP_RIGHT_SHIFT: {
+        int b = (int)AS_NUMBER(pop(vm));
+        int a = (int)AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL((double)(a >> b)));
         break;
     }
     case OP_RETURN: {

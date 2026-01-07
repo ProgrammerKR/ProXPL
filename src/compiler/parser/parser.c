@@ -37,8 +37,12 @@ static Expr *assignment(Parser *p);
 static Expr *ternary(Parser *p);
 static Expr *orExpr(Parser *p);
 static Expr *andExpr(Parser *p);
+static Expr *bitwiseOr(Parser *p);
+static Expr *bitwiseXor(Parser *p);
+static Expr *bitwiseAnd(Parser *p);
 static Expr *equality(Parser *p);
 static Expr *comparison(Parser *p);
+static Expr *bitwiseShift(Parser *p);
 static Expr *term(Parser *p);
 static Expr *factor(Parser *p);
 static Expr *unary(Parser *p);
@@ -681,16 +685,52 @@ static Expr *orExpr(Parser *p) {
 }
 
 static Expr *andExpr(Parser *p) {
-  Expr *expr = equality(p);
+  Expr *expr = bitwiseOr(p);
 
   while (match(p, 1, TOKEN_AMPERSAND_AMPERSAND)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
-    Expr *right = equality(p);
+    Expr *right = bitwiseOr(p);
     expr = createLogicalExpr(expr, opStr, right, op.line, 0);
     free(opStr);
   }
 
+  return expr;
+}
+
+static Expr *bitwiseOr(Parser *p) {
+  Expr *expr = bitwiseXor(p);
+  while (match(p, 1, TOKEN_PIPE)) {
+    Token op = previous(p);
+    char *opStr = tokenToString(op);
+    Expr *right = bitwiseXor(p);
+    expr = createBinaryExpr(expr, opStr, right, op.line, 0);
+    free(opStr);
+  }
+  return expr;
+}
+
+static Expr *bitwiseXor(Parser *p) {
+  Expr *expr = bitwiseAnd(p);
+  while (match(p, 1, TOKEN_CARET)) {
+    Token op = previous(p);
+    char *opStr = tokenToString(op);
+    Expr *right = bitwiseAnd(p);
+    expr = createBinaryExpr(expr, opStr, right, op.line, 0);
+    free(opStr);
+  }
+  return expr;
+}
+
+static Expr *bitwiseAnd(Parser *p) {
+  Expr *expr = equality(p);
+  while (match(p, 1, TOKEN_AMPERSAND)) {
+    Token op = previous(p);
+    char *opStr = tokenToString(op);
+    Expr *right = equality(p);
+    expr = createBinaryExpr(expr, opStr, right, op.line, 0);
+    free(opStr);
+  }
   return expr;
 }
 
@@ -709,17 +749,29 @@ static Expr *equality(Parser *p) {
 }
 
 static Expr *comparison(Parser *p) {
-  Expr *expr = term(p);
+  Expr *expr = bitwiseShift(p);
 
   while (match(p, 4, TOKEN_GREATER, TOKEN_GREATER_EQUAL, TOKEN_LESS,
                TOKEN_LESS_EQUAL)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
-    Expr *right = term(p);
+    Expr *right = bitwiseShift(p);
     expr = createBinaryExpr(expr, opStr, right, op.line, 0);
     free(opStr);
   }
 
+  return expr;
+}
+
+static Expr *bitwiseShift(Parser *p) {
+  Expr *expr = term(p);
+  while (match(p, 2, TOKEN_LESS_LESS, TOKEN_GREATER_GREATER)) {
+     Token op = previous(p);
+     char *opStr = tokenToString(op);
+     Expr *right = term(p);
+     expr = createBinaryExpr(expr, opStr, right, op.line, 0);
+     free(opStr);
+  }
   return expr;
 }
 
