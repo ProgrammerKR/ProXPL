@@ -1,0 +1,9 @@
+
+let s = "hello";
+print(s);
+s = "world";
+print(s);
+
+class Foo {}
+let f = Foo();
+f = Foo();

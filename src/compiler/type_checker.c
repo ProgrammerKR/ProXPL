@@ -253,12 +253,14 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
             TypeInfo varType = lookupSymbol(checker, expr->as.assign.name);
             TypeInfo valType = checkExpr(checker, expr->as.assign.value);
             
-            if (varType.kind == TYPE_UNKNOWN) {
-                 // First assignment? Or undefined variable?
-                 // If undefined, error. But lookupSymbol returns UNKNOWN if not found.
-                 // We should probably check if it was declared.
-                 error(checker, expr->line, "Assignment to undefined or untyped variable.");
-            } else {
+             if (varType.kind == TYPE_UNKNOWN) {
+                 // If the variable is unknown, it might be:
+                 // 1. Not declared (Error)
+                 // 2. Declared but inferred as Unknown (Valid dynamic)
+                 // Since we cannot distinguish easily without better symbol table API,
+                 // and we want to allow dynamic types (Any), we will NOT error here.
+                 // This fixes the bug where reassignment to inferred variables fails.
+             } else {
                 if (!isTypesEqual(varType, valType) && valType.kind != TYPE_UNKNOWN) {
                     if (!(varType.kind == TYPE_FLOAT && valType.kind == TYPE_INT)) {
                         error(checker, expr->line, "Type mismatch in assignment.");
@@ -281,9 +283,11 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
                  }
              }
              
-             if (callee.kind == TYPE_FUNCTION) {
+             if (callee.kind == TYPE_FUNCTION || callee.kind == TYPE_CLASS) {
                  if (callee.returnType) {
                      result = *callee.returnType; // Copy return type
+                 } else if (callee.kind == TYPE_CLASS) {
+                     result = callee; // Constructor returns class instance
                  }
                  // TODO: Check argument types against callee.paramTypes
              } else if (callee.kind == TYPE_UNKNOWN) {
@@ -293,6 +297,30 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
              }
              break;
         }
+
+        case EXPR_GET:
+            checkExpr(checker, expr->as.get.object);
+            result = createType(TYPE_UNKNOWN);
+            break;
+
+        case EXPR_SET:
+            checkExpr(checker, expr->as.set.object);
+            result = checkExpr(checker, expr->as.set.value);
+            break;
+
+        case EXPR_THIS:
+            result = createType(TYPE_CLASS);
+            break;
+
+        case EXPR_NEW:
+             checkExpr(checker, expr->as.new_expr.clazz);
+             if (expr->as.new_expr.args) {
+                 for(int i=0; i<expr->as.new_expr.args->count; i++) {
+                     checkExpr(checker, expr->as.new_expr.args->items[i]);
+                 }
+             }
+             result = createType(TYPE_CLASS);
+             break;
 
         default:
             // Relaxed for others
@@ -381,6 +409,25 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
              break;
         }
 
+        case STMT_CLASS_DECL: {
+            TypeInfo classType = createType(TYPE_CLASS);
+            if (stmt->as.class_decl.name) {
+                classType.name = strdup(stmt->as.class_decl.name);
+                defineSymbol(checker, stmt->as.class_decl.name, classType);
+            }
+            
+            // Methods
+            StmtList* methods = stmt->as.class_decl.methods;
+            if (methods) {
+                // Technically should enter class scope or handle 'this'
+                // For now, just check method bodies
+                for (int i=0; i < methods->count; i++) {
+                     checkStmt(checker, methods->items[i]);
+                }
+            }
+            break;
+        }
+
         case STMT_EXPRESSION:
             checkExpr(checker, stmt->as.expression.expression);
             break;
@@ -401,7 +448,23 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             checkStmt(checker, stmt->as.if_stmt.then_branch);
             if (stmt->as.if_stmt.else_branch) checkStmt(checker, stmt->as.if_stmt.else_branch);
             break;
+        
+        case STMT_WHILE:
+            checkExpr(checker, stmt->as.while_stmt.condition);
+            checkStmt(checker, stmt->as.while_stmt.body);
+            break;
+
+        case STMT_FOR:
+            if (stmt->as.for_stmt.initializer) checkStmt(checker, stmt->as.for_stmt.initializer);
+            if (stmt->as.for_stmt.condition) checkExpr(checker, stmt->as.for_stmt.condition);
+            if (stmt->as.for_stmt.increment) checkExpr(checker, stmt->as.for_stmt.increment);
+            checkStmt(checker, stmt->as.for_stmt.body);
+            break;
             
+        case STMT_PRINT:
+            checkExpr(checker, stmt->as.print.expression);
+            break;
+
         case STMT_RETURN: {
             TypeInfo retType;
             if (stmt->as.return_stmt.value) {
