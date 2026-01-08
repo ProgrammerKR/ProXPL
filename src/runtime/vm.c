@@ -448,7 +448,13 @@ static InterpretResult run(VM* vm) {
   DO_OP_EQUAL: {
       Value b = pop(vm);
       Value a = pop(vm);
-      push(vm, BOOL_VAL(a == b)); 
+      if (IS_STRING(a) && IS_STRING(b)) {
+          ObjString* s1 = AS_STRING(a);
+          ObjString* s2 = AS_STRING(b);
+          push(vm, BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
+      } else {
+          push(vm, BOOL_VAL(a == b));
+      }
       DISPATCH();
   }
   DO_OP_GREATER: {

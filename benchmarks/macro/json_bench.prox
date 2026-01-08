@@ -3,10 +3,11 @@
 
 class JsonParser {
     init(inp) {
-        print("Inside init");
         this.src = inp;
         this.pos = 0;
         this.len = len(inp);
+        // Workaround for broken string escaping: extract quote from "string"
+        this.quote = substr("\"", 1, 1);
     }
     
     peek() {
@@ -27,7 +28,7 @@ class JsonParser {
         
         if (c == "{") return this.parseObject();
         if (c == "[") return this.parseArray();
-        if (c == "\"") return this.parseString();
+        if (c == this.quote) return this.parseString();
         // Fallback for number or other types
         return this.parseString(); 
     }
@@ -49,6 +50,7 @@ class JsonParser {
         this.skipWhitespace();
         
         while (this.peek() != "}") {
+            if (this.peek() == "") break; // EOF check
             this.skipWhitespace();
             let key = this.parseString();
             this.skipWhitespace();
@@ -73,6 +75,7 @@ class JsonParser {
         this.skipWhitespace();
         
         while (this.peek() != "]") {
+            if (this.peek() == "") break; // EOF check
             let val = this.parse();
             push(arr, val);
             
@@ -88,28 +91,40 @@ class JsonParser {
     parseString() {
         this.consume(); // "
         let res = "";
-        while (this.peek() != "\"") {
-            res = res + this.consume();
+        while (true) {
+            let p = this.peek();
+            if (p == this.quote) break;
+            if (p == "") break;
+            
+            this.consume();
+            res = res + p;
         }
         this.consume(); // "
         return res;
     }
 }
 
+let QUOTE = substr("\"", 1, 1);
+let json_str_global = "";
+
 func main() {
-    // Generate a large JSON-like string
-    let json_str = "{\"users\":[";
-    for (let i = 0; i < 500; i = i + 1) {
-        json_str = json_str + "{\"id\":\"" + to_string(i) + "\",\"name\":\"User" + to_string(i) + "\"}";
-        if (i < 499) json_str = json_str + ",";
-    }
-    json_str = json_str + "]}";
+    let q = QUOTE;
     
-    print("JSON Length: " + to_string(len(json_str)));
+    // Generate a large JSON-like string
+    json_str_global = "{" + q + "users" + q + ":[";
+    for (let i = 0; i < 500; i = i + 1) {
+        json_str_global = json_str_global + "{" + q + "id" + q + ":" + q + to_string(i) + q + "," + q + "name" + q + ":" + q + "User" + to_string(i) + q + "}";
+        json_str_global = json_str_global + ",";
+    }
+    // Remove trailing comma
+    json_str_global = substr(json_str_global, 0, len(json_str_global) - 1);
+    json_str_global = json_str_global + "]}";
+    
+    print("JSON Length: " + to_string(len(json_str_global)));
     
     let start = clock();
     
-    let parser = JsonParser(json_str);
+    let parser = JsonParser(json_str_global);
     let res = parser.parse();
     
     let elapsed = clock() - start;
