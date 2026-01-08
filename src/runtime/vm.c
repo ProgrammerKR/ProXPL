@@ -29,6 +29,11 @@ VM vm;
 static void resetStack(VM *pvm) {
   pvm->stackTop = pvm->stack;
   pvm->frameCount = 0;
+  // CRITICAL FIX: Initialize stack to prevent reading uninitialized memory
+  // Without this, NaN-boxed Values can have corrupted type tags from random bits
+  for (int i = 0; i < STACK_MAX; i++) {
+    pvm->stack[i] = NIL_VAL;
+  }
 }
 
 void initVM(VM *pvm) { 

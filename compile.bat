@@ -1,5 +1,5 @@
 @echo off
-clang -o proxpl.exe -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC -DDEBUG_SUBSTR -DDEBUG_PROPERTY_ACCESS ^
+clang -o proxpl.exe -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  src/main.c ^
  src/compiler/lexer/scanner.c ^
  src/compiler/parser/ast.c ^
