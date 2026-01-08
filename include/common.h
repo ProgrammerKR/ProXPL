@@ -17,6 +17,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+
+#ifdef _WIN32
+#define strdup _strdup
+#endif
 
 // Type definitions
 typedef uint8_t  u8;
