@@ -20,7 +20,7 @@ class Router {
     
     dispatch(req) {
         let key = req.method + ":" + req.path;
-        print("Dispatching key: " + key);
+        // print("Dispatching key: " + key);
         // In a real router, we'd check regex or prefix.
         // Here we just use exact match for benchmark.
         if (this.routes[key]) {
@@ -41,8 +41,7 @@ func main() {
     router.add("GET", "/about", about);
     
     let start = clock();
-    print("Starting loop...");
-    for (let i = 0; i < 1000; i = i + 1) {
+    for (let i = 0; i < 50000; i = i + 1) {
         let r1 = Request("GET", "/");
         router.dispatch(r1);
         
