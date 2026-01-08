@@ -1,0 +1,141 @@
+// benchmarks/macro/json_bench.prox
+// Simulated JSON Parsing Benchmark - WORKAROUND using closure
+
+let GLOBAL_SRC = "";
+let GLOBAL_POS = 0;
+let GLOBAL_LEN = 0;
+let GLOBAL_QUOTE = "";
+
+class JsonParser {
+    init(inp) {
+        GLOBAL_SRC = inp;
+        GLOBAL_POS = 0;
+        GLOBAL_LEN = len(inp);
+        GLOBAL_QUOTE = substr("\"", 1, 1);
+    }
+    
+    peek() {
+        if (GLOBAL_POS >= GLOBAL_LEN) return "";
+        return substr(GLOBAL_SRC, GLOBAL_POS, 1);
+    }
+    
+    consume() {
+        if (GLOBAL_POS >= GLOBAL_LEN) return "";
+        let c = substr(GLOBAL_SRC, GLOBAL_POS, 1);
+        GLOBAL_POS = GLOBAL_POS + 1;
+        return c;
+    }
+    
+    parse() {
+        this.skipWhitespace();
+        let c = this.peek();
+        
+        if (c == "{") return this.parseObject();
+        if (c == "[") return this.parseArray();
+        if (c == GLOBAL_QUOTE) return this.parseString();
+        return this.parseString(); 
+    }
+    
+    skipWhitespace() {
+        while (GLOBAL_POS < GLOBAL_LEN) {
+            let c = this.peek();
+            if (c == " " || c == "\n" || c == "\t") {
+                this.consume();
+            } else {
+                return;
+            }
+        }
+    }
+    
+    parseObject() {
+        this.consume(); // {
+        let obj = {};
+        this.skipWhitespace();
+        
+        while (this.peek() != "}") {
+            if (this.peek() == "") break;
+            this.skipWhitespace();
+            let key = this.parseString();
+            this.skipWhitespace();
+            this.consume(); // :
+            this.skipWhitespace();
+            let val = this.parse();
+            
+            obj[key] = val;
+            
+            this.skipWhitespace();
+            if (this.peek() == ",") {
+                this.consume();
+            }
+        }
+        this.consume(); // }
+        return obj;
+    }
+    
+    parseArray() {
+        this.consume(); // [
+        let arr = [];
+        this.skipWhitespace();
+        
+        while (this.peek() != "]") {
+            if (this.peek() == "") break;
+            let val = this.parse();
+            push(arr, val);
+            
+            this.skipWhitespace();
+            if (this.peek() == ",") {
+                this.consume();
+            }
+        }
+        this.consume(); // ]
+        return arr;
+    }
+    
+    parseString() {
+        this.consume(); // "
+        let res = "";
+        while (true) {
+            let p = this.peek();
+            if (p == GLOBAL_QUOTE) break;
+            if (p == "") break;
+            
+            this.consume();
+            res = res + p;
+        }
+        this.consume(); // "
+        return res;
+    }
+}
+
+let QUOTE = substr("\"", 1, 1);
+let json_str_global = "";
+
+func main() {
+    let q = QUOTE;
+    
+    // Generate a large JSON-like string
+    json_str_global = "{" + q + "users" + q + ":[";
+    for (let i = 0; i < 500; i = i + 1) {
+        json_str_global = json_str_global + "{" + q + "id" + q + ":" + q + to_string(i) + q + "," + q + "name" + q + ":" + q + "User" + to_string(i) + q + "}";
+        json_str_global = json_str_global + ",";
+    }
+    // Remove trailing comma
+    json_str_global = substr(json_str_global, 0, len(json_str_global) - 1);
+    json_str_global = json_str_global + "]}";
+    
+    print("JSON Length: " + to_string(len(json_str_global)));
+    
+    let start = clock();
+    
+    let parser = JsonParser(json_str_global);
+    let res = parser.parse();
+    
+    let elapsed = clock() - start;
+    
+    // Check result
+    let users = res["users"];
+    print("Parsed " + to_string(len(users)) + " users");
+    print("Time: " + to_string(elapsed));
+}
+
+main();
