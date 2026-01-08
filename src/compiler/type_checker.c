@@ -127,7 +127,7 @@ static TypeInfo checkBinary(TypeChecker* checker, Expr* expr) {
     // Let's be safe: if unknown, we can't guarantee safety, but usually in static analysis we warn.
     // Here we will allow it to proceed as Unknown to avoid cascading errors.
     // DEBUG:
-    printf("Binary '%s' L:%d R:%d at line %d\n", op, l.kind, r.kind, expr->line);
+    // printf("Binary '%s' L:%d R:%d at line %d\n", op, l.kind, r.kind, expr->line);
     
     if (l.kind == TYPE_UNKNOWN || r.kind == TYPE_UNKNOWN) {
         return createType(TYPE_UNKNOWN);

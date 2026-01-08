@@ -112,7 +112,7 @@ func main() {
     let parser = JsonParser(json_str);
     let res = parser.parse();
     
-    let elapsed = time() - start;
+    let elapsed = clock() - start;
     
     // Check result
     let users = res["users"];

@@ -467,18 +467,30 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   DO_OP_SUBTRACT: {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       push(vm, NUMBER_VAL(a - b));
       DISPATCH();
   }
   DO_OP_MULTIPLY: {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       push(vm, NUMBER_VAL(a * b));
       DISPATCH();
   }
   DO_OP_DIVIDE: {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       push(vm, NUMBER_VAL(a / b));
