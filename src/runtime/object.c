@@ -69,7 +69,9 @@ static ObjString *allocateString(char *chars, int length, uint32_t hash) {
   string->chars[length] = '\0';
   
   // Intern the string
+  push(&vm, OBJ_VAL(string)); // Protect from GC during tableSet
   tableSet(&vm.strings, string, NIL_VAL);
+  pop(&vm);
   
   return string;
 }

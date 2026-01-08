@@ -231,30 +231,50 @@ static InterpretResult run(VM* vm) {
   DO_OP_BUILD_LIST: {
       int count = READ_BYTE();
       struct ObjList* list = newList();
+      push(vm, OBJ_VAL(list)); // Protect list from GC
       if (count > 0) {
           list->items = ALLOCATE(Value, count);
           list->capacity = count;
           list->count = count;
           for (int i = count - 1; i >= 0; i--) {
-              list->items[i] = pop(vm);
+              // Items are on stack. pop() is safe here because list->items is ALREADY allocated and list is rooted.
+              // Wait, if we pop, we store into list. list->items[i] = pop(vm);
+              // Allocation happened above. Logic is fine.
+              // Stack: [item1, item2, ..., itemN, list]
+              // We need to pop items BELOW list.
+              // pop(vm) returns top (list).
+              // We need to fill list items from stack below list.
+              // Correct logic using peek/copy then clean stack:
+              list->items[i] = peek(vm, 1 + (count - 1 - i));
           }
+          // Now clear the stack items
+          // Stack top is list. Below are count items.
+          // vm->stackTop points to list+1
+          // We want to keep list, remove count items.
+          *(vm->stackTop - 1 - count) = *(vm->stackTop - 1); // Move list down
+          vm->stackTop -= count;
       }
-      push(vm, OBJ_VAL(list));
+      // list is on top
       DISPATCH();
   }
   DO_OP_BUILD_MAP: {
       int count = READ_BYTE();
       struct ObjDictionary* dict = newDictionary();
+      push(vm, OBJ_VAL(dict)); // Protect dict from GC
       for (int i = 0; i < count; i++) {
-          Value val = pop(vm);
-          Value key = pop(vm);
+          Value val = peek(vm, 1);
+          Value key = peek(vm, 2);
           if (!IS_STRING(key)) {
                runtimeError(vm, "Dictionary key must be a string.");
                return INTERPRET_RUNTIME_ERROR;
           }
           tableSet(&dict->items, AS_STRING(key), val);
+          pop(vm); // dict
+          pop(vm); // val
+          pop(vm); // key
+          push(vm, OBJ_VAL(dict)); // Repush dict
       }
-      push(vm, OBJ_VAL(dict));
+      // dict is already on stack top
       DISPATCH();
   }
   DO_OP_GET_INDEX: {
@@ -291,9 +311,9 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   DO_OP_SET_INDEX: {
-      Value value = pop(vm);
-      Value indexVal = pop(vm);
-      Value targetVal = pop(vm);
+      Value value = peek(vm, 0); // Keep on stack to protect from GC
+      Value indexVal = peek(vm, 1);
+      Value targetVal = peek(vm, 2);
       if (IS_LIST(targetVal)) {
           if (!IS_NUMBER(indexVal)) {
               runtimeError(vm, "List index must be a number.");
@@ -306,6 +326,10 @@ static InterpretResult run(VM* vm) {
               return INTERPRET_RUNTIME_ERROR;
           }
           list->items[index] = value;
+          // Clean stack: [target, index, value] -> [value]
+          pop(vm); // value
+          pop(vm); // index
+          pop(vm); // target
           push(vm, value);
       } else if (IS_DICTIONARY(targetVal)) {
           if (!IS_STRING(indexVal)) {
@@ -314,6 +338,10 @@ static InterpretResult run(VM* vm) {
           }
           struct ObjDictionary* dict = AS_DICTIONARY(targetVal);
           tableSet(&dict->items, AS_STRING(indexVal), value);
+          // Clean stack
+          pop(vm);
+          pop(vm);
+          pop(vm);
           push(vm, value);
       } else {
           runtimeError(vm, "Can only index lists and dictionaries.");
@@ -461,7 +489,12 @@ static InterpretResult run(VM* vm) {
           push(vm, strVal);
           concatenate(vm);
       } else {
-          runtimeError(vm, "Operands must be two numbers or two strings.");
+          // Enhanced Error Logging
+          Value v1 = peek(vm, 0);
+          Value v2 = peek(vm, 1);
+          runtimeError(vm, "Operands must be two numbers or two strings. Got types %d and %d", 
+                      IS_OBJ(v1) ? OBJ_TYPE(v1) : -1, 
+                      IS_OBJ(v2) ? OBJ_TYPE(v2) : -1);
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
