@@ -73,12 +73,41 @@ static Value native_pop(int argCount, Value* args) {
 }
 
 static Value native_substr(int argCount, Value* args) {
+    // DEBUG: Track substr calls
+    #ifdef DEBUG_SUBSTR
+    printf("[DEBUG_SUBSTR] Called with %d args\n", argCount);
+    if (argCount >= 1) {
+        printf("[DEBUG_SUBSTR] arg[0]: IS_OBJ=%d IS_STRING=%d\n", 
+               IS_OBJ(args[0]), IS_STRING(args[0]));
+        if (IS_OBJ(args[0])) {
+            Obj* obj = AS_OBJ(args[0]);
+            printf("[DEBUG_SUBSTR] arg[0] obj type=%d ptr=%p\n", obj->type, (void*)obj);
+            if (IS_STRING(args[0])) {
+                ObjString* str = AS_STRING(args[0]);
+                printf("[DEBUG_SUBSTR] arg[0] string: len=%d ptr=%p hash=%u\n", 
+                       str->length, (void*)str, str->hash);
+            }
+        }
+    }
+    #endif
+    
     if (argCount < 3) return NIL_VAL;
-    if (!IS_STRING(args[0]) || !IS_NUMBER(args[1]) || !IS_NUMBER(args[2])) return NIL_VAL;
+    if (!IS_STRING(args[0]) || !IS_NUMBER(args[1]) || !IS_NUMBER(args[2])) {
+        #ifdef DEBUG_SUBSTR
+        printf("[DEBUG_SUBSTR] Type check failed: IS_STRING=%d IS_NUM[1]=%d IS_NUM[2]=%d\n",
+               IS_STRING(args[0]), IS_NUMBER(args[1]), IS_NUMBER(args[2]));
+        #endif
+        return NIL_VAL;
+    }
     
     ObjString* source = AS_STRING(args[0]);
     int start = (int)AS_NUMBER(args[1]);
     int length = (int)AS_NUMBER(args[2]);
+    
+    #ifdef DEBUG_SUBSTR
+    printf("[DEBUG_SUBSTR] source string: len=%d start=%d length=%d\n", 
+           source->length, start, length);
+    #endif
     
     if (start < 0 || start >= source->length) {
         return OBJ_VAL(copyString("", 0));
@@ -86,7 +115,12 @@ static Value native_substr(int argCount, Value* args) {
     if (length < 0) length = 0;
     if (start + length > source->length) length = source->length - start;
     
-    return OBJ_VAL(copyString(source->chars + start, length));
+    ObjString* result = copyString(source->chars + start, length);
+    #ifdef DEBUG_SUBSTR
+    printf("[DEBUG_SUBSTR] result string: len=%d ptr=%p\n", result->length, (void*)result);
+    #endif
+    
+    return OBJ_VAL(result);
 }
 
 /*

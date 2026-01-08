@@ -398,10 +398,29 @@ static InterpretResult run(VM* vm) {
       Value target = peek(vm, 0);
       ObjString* name = READ_STRING();
 
+      #ifdef DEBUG_PROPERTY_ACCESS
+      printf("[DEBUG_PROP] OP_GET_PROPERTY: property=%s\n", name->chars);
+      printf("[DEBUG_PROP] target: IS_INST=%d IS_MOD=%d\n", 
+             IS_INSTANCE(target), IS_MODULE(target));
+      #endif
+
       if (IS_INSTANCE(target)) {
           struct ObjInstance* instance = AS_INSTANCE(target);
           Value value;
           if (tableGet(&instance->fields, name, &value)) {
+              #ifdef DEBUG_PROPERTY_ACCESS
+              printf("[DEBUG_PROP] Found field '%s': IS_OBJ=%d IS_STRING=%d\n", 
+                     name->chars, IS_OBJ(value), IS_STRING(value));
+              if (IS_OBJ(value)) {
+                  Obj* obj = AS_OBJ(value);
+                  printf("[DEBUG_PROP] Field obj: type=%d ptr=%p\n", obj->type, (void*)obj);
+                  if (IS_STRING(value)) {
+                      ObjString* str = AS_STRING(value);
+                      printf("[DEBUG_PROP] Field string: len=%d ptr=%p hash=%u\n",
+                             str->length, (void*)str, str->hash);
+                  }
+              }
+              #endif
               pop(vm); // Instance
               push(vm, value);
               DISPATCH();
