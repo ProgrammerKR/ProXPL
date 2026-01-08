@@ -34,7 +34,6 @@ extern Value native_clock(int argCount, Value* args);
 static Value native_len(int argCount, Value* args) {
     if (argCount < 1) return NUMBER_VAL(0);
     if (IS_STRING(args[0])) return NUMBER_VAL((double)AS_STRING(args[0])->length);
-    if (IS_STRING(args[0])) return NUMBER_VAL((double)AS_STRING(args[0])->length);
     if (IS_LIST(args[0])) {
          return NUMBER_VAL((double)AS_LIST(args[0])->count);
     }

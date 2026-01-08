@@ -230,7 +230,7 @@ static void runFile(const char *path) {
 
     // --- Pipeline Step 3: Bytecode Gen & Execution ---
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
-    printf("Executing...\n");
+    // printf("Executing...\n");
     // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
     // printf("Executing...\n");
     // printf("DEBUG: Calling interpretAST from main...\n");
@@ -238,7 +238,8 @@ static void runFile(const char *path) {
     // printf("DEBUG: Returned from interpretAST.\n");
     
     if (result != INTERPRET_OK) {
-        fprintf(stderr, "Execution Failed.\n");
+        // fprintf(stderr, "Execution Failed.\n");
+        exit(70);
     }
 
     // --- Pipeline Step 4: LLVM CodeGen (Optional/Future) ---
