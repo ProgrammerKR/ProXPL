@@ -241,3 +241,26 @@ ObjModule* create_std_math_module() {
     pop(&vm); // name
     return module;
 }
+
+// Register math functions as globals (for benchmarks/ease of use)
+void register_math_globals(VM* vm) {
+    defineNative(vm, "abs", native_abs);
+    defineNative(vm, "ceil", native_ceil);
+    defineNative(vm, "floor", native_floor);
+    defineNative(vm, "round", native_round);
+    defineNative(vm, "max", native_max);
+    defineNative(vm, "min", native_min);
+    defineNative(vm, "pow", native_pow);
+    defineNative(vm, "sqrt", native_sqrt);
+    defineNative(vm, "sin", native_sin);
+    defineNative(vm, "cos", native_cos);
+    defineNative(vm, "tan", native_tan);
+    defineNative(vm, "asin", native_asin);
+    defineNative(vm, "acos", native_acos);
+    defineNative(vm, "atan", native_atan);
+    defineNative(vm, "log", native_log);
+    defineNative(vm, "exp", native_exp);
+    defineNative(vm, "random", native_random);
+    defineNative(vm, "randint", native_randint);
+    defineNative(vm, "seed", native_seed);
+}

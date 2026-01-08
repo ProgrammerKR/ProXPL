@@ -23,6 +23,7 @@ ObjModule* create_std_core_module();
 
 // Legacy
 void register_math_natives(VM* vm);
+void register_math_globals(VM* vm);
 void register_string_natives(VM* vm);
 void register_convert_natives(VM* vm);
 void register_system_natives(VM* vm);
@@ -236,7 +237,12 @@ void registerStdLib(VM* vm) {
     defineNative(vm, "clock", native_clock);
     defineNative(vm, "len", native_len);
     defineNative(vm, "list_push", native_push);
-    defineNative(vm, "limit_pop", native_pop); // wait, list_pop
+    defineNative(vm, "push", native_push); // Alias for benchmarks
+    defineNative(vm, "limit_pop", native_pop); 
     defineNative(vm, "list_pop", native_pop);
+    defineNative(vm, "pop", native_pop);   // Alias for benchmarks
     defineNative(vm, "substr", native_substr);
+
+    // Register math globals
+    register_math_globals(vm);
 }
