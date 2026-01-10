@@ -1107,7 +1107,7 @@ static InterpretResult run(VM* vm) {
                 runtimeError(vm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
                 return INTERPRET_RUNTIME_ERROR;
             }
-            if (vm->frameCount == 64) {
+            if (vm->frameCount == FRAMES_MAX) {
                 runtimeError(vm, "Stack overflow.");
                 return INTERPRET_RUNTIME_ERROR;
             }

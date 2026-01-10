@@ -14,7 +14,7 @@
 // Value moved to common.h
 
 #define SIGN_BIT ((uint64_t)0x8000000000000000)
-#define QNAN     ((uint64_t)0x7ffc000000000000)
+#define QNAN     ((uint64_t)0x7ff8000000000000)
 
 #define TAG_NULL  1
 #define TAG_FALSE 2
