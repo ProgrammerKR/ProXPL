@@ -29,7 +29,7 @@ func merge(left, right) {
 func merge_sort(arr) {
     if (len(arr) <= 1) return arr;
     
-    let mid = len(arr) / 2;
+    let mid = floor(len(arr) / 2);
     let left = [];
     let right = [];
     

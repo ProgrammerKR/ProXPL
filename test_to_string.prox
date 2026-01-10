@@ -1,0 +1,6 @@
+func main() {
+    for (let i = 0; i < 200; i = i + 1) {
+        print(to_string(i));
+    }
+}
+main();

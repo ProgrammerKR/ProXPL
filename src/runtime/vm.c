@@ -805,30 +805,43 @@ static InterpretResult run(VM* vm) {
     case OP_BUILD_LIST: {
         int count = READ_BYTE();
         struct ObjList* list = newList();
+        push(vm, OBJ_VAL(list)); // Root it!
         if (count > 0) {
             list->items = ALLOCATE(Value, count);
             list->capacity = count;
             list->count = count;
             for (int i = count - 1; i >= 0; i--) {
-                list->items[i] = pop(vm);
+                // Peek from below the rooted list
+                list->items[i] = peek(vm, 1 + (count - 1 - i));
             }
+            // Clean stack: [item1, ..., itemN, list] -> [list]
+            Value listVal = peek(vm, 0);
+            vm->stackTop -= (count + 1);
+            push(vm, listVal);
         }
-        push(vm, OBJ_VAL(list));
         break;
     }
     case OP_BUILD_MAP: {
         int count = READ_BYTE();
         struct ObjDictionary* dict = newDictionary();
+        push(vm, OBJ_VAL(dict)); // Root it!
         for (int i = 0; i < count; i++) {
-            Value val = pop(vm);
-            Value key = pop(vm);
+            // Peek below the rooted dict
+            Value val = peek(vm, 1);
+            Value key = peek(vm, 2);
             if (!IS_STRING(key)) {
                 runtimeError(vm, "Dictionary key must be a string.");
                 return INTERPRET_RUNTIME_ERROR;
             }
             tableSet(&dict->items, AS_STRING(key), val);
+            
+            // Clean up key/val from stack, keep dict
+            // Stack: [..., key, val, dict]
+            pop(vm); // dict
+            pop(vm); // val
+            pop(vm); // key
+            push(vm, OBJ_VAL(dict));
         }
-        push(vm, OBJ_VAL(dict));
         break;
     }
     case OP_GET_INDEX: {
