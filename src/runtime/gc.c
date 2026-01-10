@@ -61,8 +61,10 @@ void markObject(Obj* object) {
     if (vm.grayCapacity < vm.grayCount + 1) {
         vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
         vm.grayStack = (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
-        // If allocation fails here, we are in trouble. For a toy GC, exit(1) is "fine".
-        if (vm.grayStack == NULL) exit(1);
+        if (vm.grayStack == NULL) {
+            fprintf(stderr, "Fatal: Out of memory for gray stack.\n");
+            exit(1); 
+        }
     }
     
     vm.grayStack[vm.grayCount++] = object;
@@ -200,7 +202,7 @@ static void markRoots() {
 static void traceReferences() {
     while (vm.grayCount > 0) {
         Obj* object = vm.grayStack[--vm.grayCount];
-        blackenObject(object);
+        if (object != NULL) blackenObject(object);
     }
 }
 

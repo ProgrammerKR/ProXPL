@@ -74,7 +74,7 @@ bool call(ObjClosure *closure, int argCount, VM *vm) {
     return false;
   }
 
-  if (vm->frameCount == 64) {
+  if (vm->frameCount == FRAMES_MAX) {
     runtimeError(vm, "Stack overflow.");
     return false;
   }
