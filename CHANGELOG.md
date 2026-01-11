@@ -8,8 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [1.1.0] - 2026-01-11
 
+### Added
+- **Access Control**: Implemented `pub`/`priv` visibility enforcement for class members and modules.
+- **Constructors**: Added `init` constructor method support for object initialization.
+- **Exception Handling**: Introduced `try`/`catch` blocks for robust error management and runtime safety.
+
 ### Changed
-- **Versioning**: Updated project version to 1.1.0 across the entire codebase.
+- **Versioning**: Synchronized project version to 1.1.0 across the core VM, CLI, VS Code extension, and installer scripts.
+- **Roadmap**: Marked v1.1.0 features as completed and released in the main documentation.
 
 ## [1.0.0] - 2026-01-06
 
