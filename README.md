@@ -552,11 +552,11 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - ✅ **Inheritance**: Single inheritance model with superclass method lookup.
 - ✅ **Verification**: Verified via `tests/oop_v1.0.0.prox`.
 
-### v1.1.0 (Upcoming)
-**Status**: Planned
-- 📋 **Access Control**: `pub`/`priv` visibility enforcement.
-- 📋 **Constructors**: `init` constructor method.
-- 📋 **Exception Handling**: `try`/`catch` blocks.
+### v1.1.0 (Current)
+**Status**: Released
+- ✅ **Access Control**: `pub`/`priv` visibility enforcement.
+- ✅ **Constructors**: `init` constructor method.
+- ✅ **Exception Handling**: `try`/`catch` blocks.
 
 ### Future Roadmap (2026+)
 - 📋 **v1.2.0**: FFI Stability & ProX Studio Alpha.
