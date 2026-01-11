@@ -122,10 +122,12 @@ static void concatenate(VM* pvm) {
   memcpy(chars + a->length, b->chars, b->length);
   chars[length] = '\0';
 
+  // a and b are still on stack, so they are rooted
   ObjString* result = takeString(chars, length);
-  pop(pvm);
-  pop(pvm);
-  push(pvm, OBJ_VAL(result));
+  
+  // Now we can safely replace a and b with the result
+  pvm->stackTop[-2] = OBJ_VAL(result);
+  pvm->stackTop--;
 }
 
 // Helper functions moved to vm_helpers.c to avoid duplication
@@ -502,21 +504,34 @@ static InterpretResult run(VM* vm) {
           push(vm, NUMBER_VAL(a + b));
       } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
           // String + Number
-          Value numVal = pop(vm); // b
-          Value strVal = pop(vm); // a
+          Value numVal = peek(vm, 0); // b
+          Value strVal = peek(vm, 1); // a
           char buffer[32];
           snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
-          push(vm, strVal);
           push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          // Stack: [a (str), b (num), new_b (str)]
+          // We need to move new_b to b position and pop b, then concatenate.
+          // Or just call concatenate differently.
+          // concatenate expects [a, b] on top.
+          // Current stack: [..., a, b, new_str]
+          // Swap b with new_str then pop b.
+          vm->stackTop[-2] = vm->stackTop[-1];
+          pop(vm);
           concatenate(vm);
       } else if (IS_STRING(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
           // Number + String
-          Value strVal = pop(vm); // b
-          Value numVal = pop(vm); // a
+          Value strVal = peek(vm, 0); // b
+          Value numVal = peek(vm, 1); // a
           char buffer[32];
           snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
-          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
-          push(vm, strVal);
+          Value newStr = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+          push(vm, newStr);
+          // Stack: [..., a (num), b (str), new_a (str)]
+          // We want [new_a, b] on top.
+          // Current: top-2=a, top-1=b, top=new_a
+          vm->stackTop[-3] = vm->stackTop[-1];
+          // Stack: [new_a, b, new_a]
+          pop(vm);
           concatenate(vm);
       } else {
           // Enhanced Error Logging
@@ -1036,20 +1051,22 @@ static InterpretResult run(VM* vm) {
           double a = AS_NUMBER(pop(vm));
           push(vm, NUMBER_VAL(a + b));
         } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
-          Value numVal = pop(vm);
-          Value strVal = pop(vm);
+          Value numVal = peek(vm, 0);
           char buffer[32];
           snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
-          push(vm, strVal);
-          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          Value newB = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+          push(vm, newB);
+          vm->stackTop[-2] = vm->stackTop[-1];
+          pop(vm);
           concatenate(vm);
         } else if (IS_STRING(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          Value strVal = pop(vm);
-          Value numVal = pop(vm);
+          Value numVal = peek(vm, 1);
           char buffer[32];
           snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
-          push(vm, OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
-          push(vm, strVal);
+          Value newA = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+          push(vm, newA);
+          vm->stackTop[-3] = vm->stackTop[-1];
+          pop(vm);
           concatenate(vm);
         } else {
           Value v1 = peek(vm, 1); // a

@@ -23,7 +23,8 @@ extern VM vm;
 static Obj *allocateObject(size_t size, ObjType type) {
   Obj *object = (Obj *)reallocate(NULL, 0, size);
   object->type = type;
-  object->next = vm.objects; // Now works because 'vm' is declared extern above
+  object->isMarked = false; // Initialize to prevent garbage values
+  object->next = vm.objects;
   vm.objects = object;
   return object;
 }
