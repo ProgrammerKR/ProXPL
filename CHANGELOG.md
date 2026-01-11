@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.0] - 2026-01-11
+
+### Changed
+- **Versioning**: Updated project version to 1.1.0 across the entire codebase.
+
 ## [1.0.0] - 2026-01-06
 
 ### Added
@@ -353,6 +358,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 1.0.0
-**Last Updated**: January 06, 2026
-**Next Release**: 1.1.0 (Q1 2026)
+**Current Version**: 1.1.0
+**Last Updated**: January 11, 2026
+**Next Release**: 1.2.0 (Q1 2026)

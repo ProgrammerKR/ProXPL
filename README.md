@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -349,7 +349,7 @@ prm remove old-package
 ```toml
 [package]
 name = "my-web-server"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Your Name <you@example.com>"]
 edition = "2025"
 description = "A fast web server built with ProXPL"
@@ -535,10 +535,10 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - **v0.8.0**: Advanced memory management, closures, upvalues. ✅
 - **v0.9.0**: Standard Library (fs, time, gc), IO improvements. ✅
 - **v1.0.0 (Current)**:
-  - **Object-Oriented Programming**: Classes, Methods, Inheritance, Properties.
-  - **Keywords**: `class`, `new`, `this`, `extends`, `interface`.
-  - **Runtime**: Optimized VM with Object Support.
-- **v1.1.0** (Planned): 
+  - **Object-Oriented Programming**: Classes, Methods, Inheritance, Properties. ✅
+  - **Keywords**: `class`, `new`, `this`, `extends`, `interface`. ✅
+  - **Runtime**: Optimized VM with Object Support. ✅
+- **v1.1.0** (Current): 
   - Advanced Strings/Lists.
   - Exception Handling (`try`/`catch`).
   - Module System refinements.
