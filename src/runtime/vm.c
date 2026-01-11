@@ -520,11 +520,11 @@ static InterpretResult run(VM* vm) {
           concatenate(vm);
       } else {
           // Enhanced Error Logging
-          Value v1 = peek(vm, 0);
-          Value v2 = peek(vm, 1);
+          Value v1 = peek(vm, 1); // a
+          Value v2 = peek(vm, 0); // b
           runtimeError(vm, "Operands must be two numbers or two strings. Got types %d and %d", 
-                      IS_OBJ(v1) ? OBJ_TYPE(v1) : -1, 
-                      IS_OBJ(v2) ? OBJ_TYPE(v2) : -1);
+                      IS_OBJ(v1) ? OBJ_TYPE(v1) : (IS_NUMBER(v1) ? -2 : -1), 
+                      IS_OBJ(v2) ? OBJ_TYPE(v2) : (IS_NUMBER(v2) ? -2 : -1));
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -1007,7 +1007,13 @@ static InterpretResult run(VM* vm) {
     case OP_EQUAL: {
         Value b = pop(vm);
         Value a = pop(vm);
-        push(vm, BOOL_VAL(a == b));
+        if (IS_STRING(a) && IS_STRING(b)) {
+            ObjString* s1 = AS_STRING(a);
+            ObjString* s2 = AS_STRING(b);
+            push(vm, BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
+        } else {
+            push(vm, BOOL_VAL(a == b));
+        }
         break;
     }
     case OP_GREATER: {
@@ -1046,7 +1052,11 @@ static InterpretResult run(VM* vm) {
           push(vm, strVal);
           concatenate(vm);
         } else {
-          runtimeError(vm, "Operands must be two numbers or two strings.");
+          Value v1 = peek(vm, 1); // a
+          Value v2 = peek(vm, 0); // b
+          runtimeError(vm, "Operands must be two numbers or two strings. Got types %d and %d", 
+                      IS_OBJ(v1) ? OBJ_TYPE(v1) : (IS_NUMBER(v1) ? -2 : -1), 
+                      IS_OBJ(v2) ? OBJ_TYPE(v2) : (IS_NUMBER(v2) ? -2 : -1));
           return INTERPRET_RUNTIME_ERROR;
         }
         break;
