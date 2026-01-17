@@ -21,7 +21,7 @@ static Stmt *interfaceDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
 static Stmt *intentDecl(Parser *p);
 static Stmt *resolverDecl(Parser *p);
-static Stmt *resilientStmt(Parser *p);
+
 static Stmt *policyDecl(Parser *p);
 static Stmt *nodeDecl(Parser *p); // Forward
 static Stmt *distributedDecl(Parser *p); // Forward
@@ -1153,7 +1153,7 @@ static Expr *primary(Parser *p) {
 }
 
 static Stmt *policyDecl(Parser *p) {
-    Token keyword = p->previous;
+    Token keyword = previous(p);
     Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect policy name.");
     char *name = tokenToString(nameTok);
     
@@ -1190,7 +1190,7 @@ static Stmt *nodeDecl(Parser *p) {
 
 static Stmt *distributedDecl(Parser *p) {
     // distributed type Ledger { ... }
-    consume(p, TOKEN_TYPE, "Expect 'type' after distributed.");
+    consume(p, TOKEN_TYPEOF, "Expect 'type' after distributed.");
     Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect type name.");
     char *name = tokenToString(nameTok);
     
@@ -1217,14 +1217,14 @@ static Stmt *modelDecl(Parser *p) {
 }
 
 static Stmt *quantumStmt(Parser *p) {
-    Token keyword = p->previous;
+    Token keyword = previous(p);
     consume(p, TOKEN_LEFT_BRACE, "Expect '{' after quantum.");
     StmtList *body = block(p);
     return createQuantumBlockStmt(body, keyword.line, 0);
 }
 
 static Stmt *gpuStmt(Parser *p) {
-    Token keyword = p->previous;
+    Token keyword = previous(p);
     char *kernelName = NULL;
     
     if (match(p, 1, TOKEN_KERNEL)) {
