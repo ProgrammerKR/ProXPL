@@ -594,6 +594,26 @@ Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList 
   return stmt;
 }
 
+Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_NODE_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.node_decl.name = strdup(name);
+  stmt->as.node_decl.capabilities = capabilities;
+  return stmt;
+}
+
+Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_DISTRIBUTED_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.distributed_decl.name = strdup(name);
+  stmt->as.distributed_decl.fields = fields;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -787,6 +807,14 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.policy_decl.policyName);
     free(stmt->as.policy_decl.target);
     freeStmtList(stmt->as.policy_decl.rules);
+    break;
+  case STMT_NODE_DECL:
+    free(stmt->as.node_decl.name);
+    if(stmt->as.node_decl.capabilities) freeStringList(stmt->as.node_decl.capabilities);
+    break;
+  case STMT_DISTRIBUTED_DECL:
+    free(stmt->as.distributed_decl.name);
+    freeStmtList(stmt->as.distributed_decl.fields);
     break;
   }
 

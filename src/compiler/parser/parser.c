@@ -22,7 +22,9 @@ static Stmt *varDecl(Parser *p);
 static Stmt *intentDecl(Parser *p);
 static Stmt *resolverDecl(Parser *p);
 static Stmt *resilientStmt(Parser *p);
-static Stmt *policyDecl(Parser *p); // Forward decl
+static Stmt *policyDecl(Parser *p);
+static Stmt *nodeDecl(Parser *p); // Forward
+static Stmt *distributedDecl(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -261,6 +263,11 @@ static Stmt *declaration(Parser *p) {
     return resolverDecl(p);
   if (match(p, 1, TOKEN_POLICY))
     return policyDecl(p);
+  if (match(p, 1, TOKEN_NODE))
+    return nodeDecl(p);
+  if (match(p, 1, TOKEN_DISTRIBUTED))
+    return distributedDecl(p);
+
   return statement(p);
 }
 
@@ -1132,5 +1139,37 @@ static Stmt *policyDecl(Parser *p) {
     Stmt *stmt = createPolicyDeclStmt(name, target, rules, keyword.line, 0);
     free(name);
     free(target);
+    return stmt;
+}
+
+static Stmt *nodeDecl(Parser *p) {
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect node name.");
+    char *name = tokenToString(nameTok);
+    
+    StringList *caps = NULL;
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    // Simplified: Parse body or capabilities...
+    while(!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+        advance(p); // Skip content for stub
+    }
+    consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
+
+    Stmt *stmt = createNodeDeclStmt(name, caps, nameTok.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *distributedDecl(Parser *p) {
+    // distributed type Ledger { ... }
+    consume(p, TOKEN_TYPE, "Expect 'type' after distributed.");
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect type name.");
+    char *name = tokenToString(nameTok);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    StmtList *fields = block(p); // Reusing block parsing for fields/methods
+    
+    Stmt *stmt = createDistributedDeclStmt(name, fields, nameTok.line, 0);
+    free(name);
     return stmt;
 }

@@ -231,10 +231,12 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'e':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
-          case 'c':
-            return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY); // decay
-          case 'f':
-            if (scanner->current - scanner->start > 3) {
+            case 'c':
+              return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY); // decay
+            case 'i': // distributed
+              return checkKeyword(scanner, 2, 9, "stributed", TOKEN_DISTRIBUTED);
+            case 'f':
+              if (scanner->current - scanner->start > 3) {
               switch (scanner->start[3]) {
               case 'a':
                 return checkKeyword(scanner, 4, 3, "ult", TOKEN_DEFAULT);
@@ -344,6 +346,8 @@ static PxTokenType identifierType(Scanner *scanner) {
         return checkKeyword(scanner, 2, 1, "w", TOKEN_NEW);
       case 'u':
         return checkKeyword(scanner, 2, 2, "ll", TOKEN_NULL);
+      case 'o': // node
+        return checkKeyword(scanner, 2, 2, "de", TOKEN_NODE);
       }
     }
     break;

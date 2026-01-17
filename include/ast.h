@@ -52,8 +52,11 @@ typedef enum {
   STMT_TRY_CATCH, STMT_PRINT, STMT_EXTERN_DECL,
   STMT_INTENT_DECL, STMT_RESOLVER_DECL,
   STMT_INTENT_DECL, STMT_RESOLVER_DECL,
+  STMT_INTENT_DECL, STMT_RESOLVER_DECL,
   STMT_RESILIENT,
-  STMT_POLICY_DECL
+  STMT_POLICY_DECL,
+  STMT_NODE_DECL,
+  STMT_DISTRIBUTED_DECL // For type definitions like: distributed type Ledger { ... }
 } StmtType;
 
 // --- List Structures ---
@@ -163,6 +166,8 @@ typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDe
 typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
 typedef struct { StmtList *body; char *strategy; int retryCount; StmtList *recoveryBody; } ResilientStmt;
 typedef struct { char *policyName; char *target; StmtList *rules; } PolicyDeclStmt;
+typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
+typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; // Simplification
 
 struct Stmt {
   StmtType type;
@@ -177,8 +182,11 @@ struct Stmt {
     ExternDeclStmt extern_decl;
     IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
     IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
+    IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
     ResilientStmt resilient;
     PolicyDeclStmt policy_decl;
+    NodeDeclStmt node_decl;
+    DistributedDeclStmt distributed_decl;
   } as;
 };
 
@@ -225,6 +233,8 @@ Stmt *createIntentDeclStmt(const char *name, StringList *params, TypeInfo return
 Stmt *createResolverDeclStmt(const char *name, const char *targetIntent, StmtList *body, int line, int column);
 Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, StmtList *recoveryBody, int line, int column);
 Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList *rules, int line, int column);
+Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column);
+Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

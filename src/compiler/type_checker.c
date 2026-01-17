@@ -542,8 +542,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
                 for(int i=0; i<recBody->count; i++) {
                      checkStmt(checker, recBody->items[i]);
                 }
-                endScope(checker);
-            }
+            endScope(checker);
             break;
         }
 
@@ -558,6 +557,31 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
              }
              endScope(checker);
              break;
+        }
+
+        case STMT_NODE_DECL: {
+            TypeInfo nodeType = createType(TYPE_CLASS); // Treat as class
+            nodeType.name = strdup(stmt->as.node_decl.name);
+            defineSymbol(checker, stmt->as.node_decl.name, nodeType);
+            break;
+        }
+
+        case STMT_DISTRIBUTED_DECL: {
+            TypeInfo distType = createType(TYPE_CLASS); // Treat as struct/class
+            distType.name = strdup(stmt->as.distributed_decl.name);
+            
+            defineSymbol(checker, stmt->as.distributed_decl.name, distType);
+            
+            // Check fields
+            beginScope(checker);
+            StmtList* fields = stmt->as.distributed_decl.fields;
+            if (fields) {
+                for(int i=0; i<fields->count; i++) {
+                    checkStmt(checker, fields->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
         }
 
         default:
