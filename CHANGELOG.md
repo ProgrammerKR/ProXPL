@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.2.0] - 2026-01-17
+
+### Added
+- **The 10 Operational Pillars**: Implemented the full frontend stack (Lexer, Parser, AST, Type Checker) for all 10 revolutionary language pillars.
+    1.  **Intent-Oriented Programming**: `intent`, `resolver` keywords.
+    2.  **Context-Aware Polymorphism**: `@context` decorators and context-conditional functions.
+    3.  **Autonomic Self-Healing (ASR)**: `resilient`, `recovery`, `restart`, `rollback` blocks.
+    4.  **Intrinsic Security**: `tainted`, `pure` types, `sanitize()` expression, `policy` blocks.
+    5.  **Chrono-Native Logic**: `temporal` variables with `decay after` clauses.
+    6.  **Event-Driven Concurrency**: (Integrated with ASR/Distributed logic).
+    7.  **AI-Native Integration**: `model`, `train`, `predict`, `dataset` keywords.
+    8.  **Quantum-Ready Syntax**: `quantum`, `qubit`, `superpose`, `entangle` blocks.
+    9.  **Hardware-Accelerated Math**: `gpu`, `kernel`, `tensor`, `matrix` types.
+    10. **Zero-Trust Security**: `verify`, `identity`, `encrypt`, `decrypt` primitives.
+
+### Changed
+- **Compiler Frontend**: Significantly expanded Lexer, AST, Parser, and Type Checker to support complex new syntax.
+- **Version**: Bumped codebase version to 1.2.0.
+
 ## [1.1.0] - 2026-01-11
 
 ### Added
