@@ -21,6 +21,8 @@ static Stmt *interfaceDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
 static Stmt *intentDecl(Parser *p);
 static Stmt *resolverDecl(Parser *p);
+static Stmt *resilientStmt(Parser *p);
+static Stmt *policyDecl(Parser *p); // Forward decl
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -257,6 +259,8 @@ static Stmt *declaration(Parser *p) {
     return intentDecl(p);
   if (match(p, 1, TOKEN_RESOLVER))
     return resolverDecl(p);
+  if (match(p, 1, TOKEN_POLICY))
+    return policyDecl(p);
   return statement(p);
 }
 
@@ -975,14 +979,16 @@ static Expr *call(Parser *p) {
 }
 
 static Expr *primary(Parser *p) {
-  if (match(p, 1, TOKEN_FALSE)) {
-    return createLiteralExpr(BOOL_VAL(false), previous(p).line, 0);
+  if (match(p, 1, TOKEN_SANITIZE)) {
+      consume(p, TOKEN_LEFT_PAREN, "Expect '(' after sanitize.");
+      Expr *val = expression(p);
+      consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
+      return createSanitizeExpr(val, p->previous.line, 0);
   }
-  if (match(p, 1, TOKEN_TRUE)) {
-    return createLiteralExpr(BOOL_VAL(true), previous(p).line, 0);
-  }
+  if (match(p, 1, TOKEN_FALSE)) return createLiteralExpr((Value){VAL_BOOL, {.boolean = false}}, p->previous.line, 0);
+  if (match(p, 1, TOKEN_TRUE)) return createLiteralExpr((Value){VAL_BOOL, {.boolean = true}}, p->previous.line, 0);
   if (match(p, 1, TOKEN_NULL)) {
-    return createLiteralExpr(NULL_VAL, previous(p).line, 0);
+    return createLiteralExpr(NULL_VAL, p->previous.line, 0);
   }
 
   if (match(p, 1, TOKEN_NUMBER)) {
@@ -1087,4 +1093,22 @@ static Expr *primary(Parser *p) {
 
   parserError(p, "Expect expression.");
   return NULL;
+}
+
+static Stmt *policyDecl(Parser *p) {
+    Token keyword = p->previous;
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect policy name.");
+    char *name = tokenToString(nameTok);
+    
+    consume(p, TOKEN_FOR, "Expect 'for' after policy name.");
+    Token targetTok = consume(p, TOKEN_IDENTIFIER, "Expect target construct (e.g., User, DB).");
+    char *target = tokenToString(targetTok);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    StmtList *rules = block(p); 
+    
+    Stmt *stmt = createPolicyDeclStmt(name, target, rules, keyword.line, 0);
+    free(name);
+    free(target);
+    return stmt;
 }

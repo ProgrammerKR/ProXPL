@@ -351,42 +351,33 @@ static PxTokenType identifierType(Scanner *scanner) {
     break;
   case 'p':
     if (scanner->current - scanner->start > 1) {
-      switch (scanner->start[1]) {
-      case 'r':
-        if (scanner->current - scanner->start > 2) {
-          switch (scanner->start[2]) {
-          case 'i':
-            if (scanner->current - scanner->start > 3) {
-              switch (scanner->start[3]) {
-              case 'n':
-                return checkKeyword(scanner, 4, 1, "t", TOKEN_PRINT);
-              case 'v':
-                if (scanner->current - scanner->start > 4) {
-                     return checkKeyword(scanner, 4, 3, "ate", TOKEN_PRIVATE);
-                }
-                return checkKeyword(scanner, 4, 0, "", TOKEN_PRIVATE);
+        switch (scanner->start[1]) {
+            case 'a': return checkKeyword(scanner, 2, 5, "ckage", TOKEN_PACKAGE);
+            case 'o': return checkKeyword(scanner, 2, 4, "licy", TOKEN_POLICY); // policy
+            case 'u':
+              if (scanner->current - scanner->start > 2) {
+                  switch (scanner->start[2]) {
+                      case 'b': return checkKeyword(scanner, 3, 3, "lic", TOKEN_PUBLIC);
+                      case 'r': return checkKeyword(scanner, 3, 1, "e", TOKEN_PURE); // pure
+                  }
               }
-            }
-            break;
-          case 'o':
-            return checkKeyword(scanner, 3, 6, "tected", TOKEN_PROTECTED);
-          }
+              break;
+            case 'r':
+              if (scanner->current - scanner->start > 2) { 
+                  switch(scanner->start[2]) {
+                      case 'i': 
+                        if (scanner->current - scanner->start > 3) {
+                            switch(scanner->start[3]) {
+                                case 'n': return checkKeyword(scanner, 4, 1, "t", TOKEN_PRINT);
+                                case 'v': return checkKeyword(scanner, 4, 3, "ate", TOKEN_PRIVATE);
+                            }
+                        }
+                        break;
+                      case 'o': return checkKeyword(scanner, 3, 6, "tected", TOKEN_PROTECTED);
+                  }
+              }
+              break;
         }
-        break;
-      case 'u':
-        if (scanner->current - scanner->start > 2) {
-             switch (scanner->start[2]) {
-                 case 'b':
-                     if (scanner->current - scanner->start > 3) {
-                         // publ...
-                         return checkKeyword(scanner, 4, 2, "ic", TOKEN_PUBLIC);
-                     }
-                     // pub
-                     return checkKeyword(scanner, 2, 1, "b", TOKEN_PUBLIC);
-             }
-        }
-        return checkKeyword(scanner, 2, 4, "blic", TOKEN_PUBLIC);
-      }
     }
     break;
   case 'r':
@@ -426,6 +417,7 @@ static PxTokenType identifierType(Scanner *scanner) {
   case 's':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
+      case 'a': return checkKeyword(scanner, 2, 6, "nitize", TOKEN_SANITIZE); // sanitize
       case 't':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {

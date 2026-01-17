@@ -266,6 +266,10 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
                         error(checker, expr->line, "Type mismatch in assignment.");
                     }
                 }
+                // IFC Check: Tainted -> Pure Illegal
+                if (valType.isTainted && !varType.isTainted) {
+                    error(checker, expr->line, "Security Violation: Cannot assign tainted value to pure variable without sanitization.");
+                }
             }
             result = valType;
             break;
@@ -321,6 +325,13 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
              }
              result = createType(TYPE_CLASS);
              break;
+
+        case EXPR_SANITIZE: {
+            TypeInfo val = checkExpr(checker, expr->as.sanitize.value);
+            result = val;
+            result.isTainted = false; // Mark as pure
+            break;
+        }
 
         default:
             // Relaxed for others
@@ -505,6 +516,40 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             }
             endScope(checker);
             break;
+        }
+
+        case STMT_RESILIENT: {
+            beginScope(checker);
+            StmtList* body = stmt->as.resilient.body;
+            if (body) {
+                for(int i=0; i<body->count; i++) {
+                     checkStmt(checker, body->items[i]);
+                }
+            }
+            endScope(checker);
+
+            if (stmt->as.resilient.recoveryBody) {
+                beginScope(checker);
+                StmtList* recBody = stmt->as.resilient.recoveryBody;
+                for(int i=0; i<recBody->count; i++) {
+                     checkStmt(checker, recBody->items[i]);
+                }
+                endScope(checker);
+            }
+            break;
+        }
+
+        case STMT_POLICY_DECL: {
+             // Just verify body for now
+             beginScope(checker);
+             StmtList* rules = stmt->as.policy_decl.rules;
+             if (rules) {
+                 for(int i=0; i<rules->count; i++) {
+                     checkStmt(checker, rules->items[i]);
+                 }
+             }
+             endScope(checker);
+             break;
         }
 
         default:

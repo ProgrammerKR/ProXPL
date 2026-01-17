@@ -28,7 +28,10 @@ struct TypeInfo {
     char* name;
     struct TypeInfo* returnType;
     struct TypeInfo* paramTypes; 
+    struct TypeInfo* returnType;
+    struct TypeInfo* paramTypes; 
     int paramCount;
+    bool isTainted; 
 };
 
 // --- Node Types ---
@@ -37,7 +40,9 @@ typedef enum {
   EXPR_VARIABLE, EXPR_ASSIGN, EXPR_LOGICAL, EXPR_CALL,
   EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_SET_INDEX, EXPR_LIST,
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
-  EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW
+  EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
+  EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW,
+  EXPR_SANITIZE
 } ExprType;
 
 typedef enum {
@@ -46,7 +51,9 @@ typedef enum {
   STMT_BLOCK, STMT_BREAK, STMT_CONTINUE, STMT_SWITCH,
   STMT_TRY_CATCH, STMT_PRINT, STMT_EXTERN_DECL,
   STMT_INTENT_DECL, STMT_RESOLVER_DECL,
-  STMT_RESILIENT
+  STMT_INTENT_DECL, STMT_RESOLVER_DECL,
+  STMT_RESILIENT,
+  STMT_POLICY_DECL
 } StmtType;
 
 // --- List Structures ---
@@ -98,6 +105,7 @@ typedef struct { Expr *expression; } GroupingExpr;
 typedef struct { char *name; } VariableExpr;
 typedef struct { char *name; Expr *value; } AssignExpr;
 typedef struct { Expr *left; char *operator; Expr *right; } LogicalExpr;
+typedef struct { Expr *value; } SanitizeExpr;
 typedef struct { Expr *callee; ExprList *arguments; } CallExpr;
 typedef struct { Expr *object; char *name; } GetExpr;
 typedef struct { Expr *object; char *name; Expr *value; } SetExpr;
@@ -114,13 +122,17 @@ typedef struct { Expr *clazz; ExprList *args; } NewExpr;
 
 struct Expr {
   ExprType type;
-  TypeInfo inferredType; 
   int line;
   int column;
+  TypeInfo inferredType;
   union {
-    BinaryExpr binary; UnaryExpr unary; LiteralExpr literal;
-    GroupingExpr grouping; VariableExpr variable; AssignExpr assign;
-    LogicalExpr logical; CallExpr call; GetExpr get; SetExpr set;
+    BinaryExpr binary; UnaryExpr unary; LiteralExpr literal; GroupingExpr grouping;
+    VariableExpr variable; AssignExpr assign; LogicalExpr logical;
+    SanitizeExpr sanitize;
+    // ... struct pointers for others due to C union size limit usually
+    struct { Expr *callee; ExprList *arguments; } call;
+    struct { Expr *object; char *name; } get;
+    SetExpr set; // SetExpr is not changed to anonymous struct in the instruction
     IndexExpr index; SetIndexExpr set_index; ListExpr list; DictionaryExpr dictionary;
     TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
     ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
@@ -147,7 +159,10 @@ typedef struct { Expr *expression; } PrintStmt;
 typedef struct { char *libraryPath; char *symbolName; char *name; StringList *params; } ExternDeclStmt;
 typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
 typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
+typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
+typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
 typedef struct { StmtList *body; char *strategy; int retryCount; StmtList *recoveryBody; } ResilientStmt;
+typedef struct { char *policyName; char *target; StmtList *rules; } PolicyDeclStmt;
 
 struct Stmt {
   StmtType type;
@@ -161,7 +176,9 @@ struct Stmt {
     SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
     ExternDeclStmt extern_decl;
     IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
+    IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
     ResilientStmt resilient;
+    PolicyDeclStmt policy_decl;
   } as;
 };
 
@@ -207,8 +224,13 @@ Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char 
 Stmt *createIntentDeclStmt(const char *name, StringList *params, TypeInfo returnType, int line, int column);
 Stmt *createResolverDeclStmt(const char *name, const char *targetIntent, StmtList *body, int line, int column);
 Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, StmtList *recoveryBody, int line, int column);
+Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList *rules, int line, int column);
 
 ExprList *createExprList();
+void appendExpr(ExprList *list, Expr *expr);
+Expr *createBinaryExpr(Expr *left, const char *op, Expr *right, int line, int column);
+// ...
+Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
 void appendExpr(ExprList *list, Expr *expr);
 void freeExprList(ExprList *list);
 StmtList *createStmtList();

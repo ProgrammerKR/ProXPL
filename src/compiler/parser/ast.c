@@ -350,6 +350,15 @@ Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column) {
   return expr;
 }
 
+Expr *createSanitizeExpr(Expr *value, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_SANITIZE;
+  expr->line = line;
+  expr->column = column;
+  expr->as.sanitize.value = value;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -577,6 +586,17 @@ Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, 
   return stmt;
 }
 
+Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList *rules, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_POLICY_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.policy_decl.policyName = strdup(policyName);
+  stmt->as.policy_decl.target = strdup(target);
+  stmt->as.policy_decl.rules = rules;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -659,7 +679,10 @@ void freeExpr(Expr *expr) {
     break;
   case EXPR_NEW:
     freeExpr(expr->as.new_expr.clazz);
-    freeExprList(expr->as.new_expr.args);
+    if(expr->as.new_expr.args) freeExprList(expr->as.new_expr.args);
+    break;
+  case EXPR_SANITIZE:
+    freeExpr(expr->as.sanitize.value);
     break;
   }
 
@@ -762,6 +785,11 @@ void freeStmt(Stmt *stmt) {
     freeStmtList(stmt->as.resilient.body);
     if(stmt->as.resilient.strategy) free(stmt->as.resilient.strategy);
     if(stmt->as.resilient.recoveryBody) freeStmtList(stmt->as.resilient.recoveryBody);
+    break;
+  case STMT_POLICY_DECL:
+    free(stmt->as.policy_decl.policyName);
+    free(stmt->as.policy_decl.target);
+    freeStmtList(stmt->as.policy_decl.rules);
     break;
   }
 
