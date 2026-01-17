@@ -1,0 +1,15 @@
+// Test Intent-Oriented Programming (IOP) Syntax
+
+intent verify_identity(user) -> bool;
+
+resolver OIDC matches verify_identity {
+    print("Resolving verification for: " + user);
+    return true;
+}
+
+func main() {
+    print("Testing IOP Syntax...");
+    // In this phase, we only test parsing. Runtime resolution is not yet implemented.
+}
+
+main();

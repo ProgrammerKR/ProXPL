@@ -19,6 +19,8 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
 static Stmt *classDecl(Parser *p);
 static Stmt *interfaceDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
+static Stmt *intentDecl(Parser *p);
+static Stmt *resolverDecl(Parser *p);
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -231,6 +233,10 @@ static Stmt *declaration(Parser *p) {
     return useDecl(p);
   if (match(p, 2, TOKEN_LET, TOKEN_CONST))
     return varDecl(p);
+  if (match(p, 1, TOKEN_INTENT))
+    return intentDecl(p);
+  if (match(p, 1, TOKEN_RESOLVER))
+    return resolverDecl(p);
   return statement(p);
 }
 
@@ -436,6 +442,59 @@ static Stmt *externDecl(Parser *p) {
     free(libPath);
     free(symName);
     free(name);
+    return stmt;
+}
+
+static Stmt *intentDecl(Parser *p) {
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect intent name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_PAREN, "Expect '('.");
+    StringList *params = createStringList();
+    if (!check(p, TOKEN_RIGHT_PAREN)) {
+        do {
+            Token param = consume(p, TOKEN_IDENTIFIER, "Expect parameter name.");
+            char *paramStr = tokenToString(param);
+            appendString(params, paramStr);
+            free(paramStr);
+        } while (match(p, 1, TOKEN_COMMA));
+    }
+    consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
+
+    TypeInfo returnType = {TYPE_UNKNOWN, NULL, NULL, NULL, 0};
+    if (match(p, 1, TOKEN_ARROW)) {
+         Token typeTok = consume(p, TOKEN_IDENTIFIER, "Expect return type.");
+         returnType.name = tokenToString(typeTok);
+         returnType.kind = TYPE_UNKNOWN; 
+    }
+
+    consume(p, TOKEN_SEMICOLON, "Expect ';'.");
+    Stmt *stmt = createIntentDeclStmt(name, params, returnType, nameToken.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *resolverDecl(Parser *p) {
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect resolver name.");
+    char *name = tokenToString(nameToken);
+    
+    // Check "matches"
+    Token matchesTok = consume(p, TOKEN_IDENTIFIER, "Expect 'matches' keyword.");
+    char *matchesStr = tokenToString(matchesTok);
+    if (strcmp(matchesStr, "matches") != 0) {
+        parserError(p, "Expect 'matches' after resolver name.");
+    }
+    free(matchesStr);
+    
+    Token intentTok = consume(p, TOKEN_IDENTIFIER, "Expect target intent name.");
+    char *intentName = tokenToString(intentTok);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    StmtList *body = block(p); 
+    
+    Stmt *stmt = createResolverDeclStmt(name, intentName, body, nameToken.line, 0);
+    free(name);
+    free(intentName);
     return stmt;
 }
 
