@@ -1016,12 +1016,15 @@ static Expr *call(Parser *p) {
     }
   }
 
+  return expr;
+}
+
 static Expr *primary(Parser *p) {
   if (match(p, 1, TOKEN_SANITIZE)) {
     consume(p, TOKEN_LEFT_PAREN, "Expect '(' after sanitize.");
     Expr *val = expression(p);
     consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after sanitize expression.");
-    return createSanitizeExpr(val, p->previous.line, 0); 
+    return createSanitizeExpr(val, previous(p).line, 0); 
   }
   
   if (match(p, 1, TOKEN_ENCRYPT)) {
@@ -1029,20 +1032,20 @@ static Expr *primary(Parser *p) {
       Expr *val = expression(p);
       consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after encrypt expression.");
       // Optional 'using <key>' parsing could be added here
-      return createCryptoExpr(val, true, p->previous.line, 0);
+      return createCryptoExpr(val, true, previous(p).line, 0);
   }
   
   if (match(p, 1, TOKEN_DECRYPT)) {
       consume(p, TOKEN_LEFT_PAREN, "Expect '(' after decrypt.");
       Expr *val = expression(p);
       consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after decrypt expression.");
-      return createCryptoExpr(val, false, p->previous.line, 0);
+      return createCryptoExpr(val, false, previous(p).line, 0);
   }
 
-  if (match(p, 1, TOKEN_FALSE)) return createLiteralExpr(LITERAL_BOOL, "false", p->previous.line, 0);
-  if (match(p, 1, TOKEN_TRUE)) return createLiteralExpr((Value){VAL_BOOL, {.boolean = true}}, p->previous.line, 0);
+  if (match(p, 1, TOKEN_FALSE)) return createLiteralExpr(BOOL_VAL(false), previous(p).line, 0);
+  if (match(p, 1, TOKEN_TRUE)) return createLiteralExpr(BOOL_VAL(true), previous(p).line, 0);
   if (match(p, 1, TOKEN_NULL)) {
-    return createLiteralExpr(NULL_VAL, p->previous.line, 0);
+    return createLiteralExpr(NULL_VAL, previous(p).line, 0);
   }
 
   if (match(p, 1, TOKEN_NUMBER)) {
@@ -1236,3 +1239,17 @@ static Stmt *gpuStmt(Parser *p) {
     if(kernelName) free(kernelName);
     return stmt;
 }
+
+static Stmt *verifyStmt(Parser *p) {
+    Token keyword = previous(p);
+    Token identityTok = consume(p, TOKEN_IDENTIFIER, "Expect identity name after 'verify'.");
+    char *identityName = tokenToString(identityTok);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' after verify identity.");
+    StmtList *body = block(p);
+    
+    Stmt *stmt = createVerifyStmt(identityName, body, keyword.line, 0);
+    free(identityName);
+    return stmt;
+}
+

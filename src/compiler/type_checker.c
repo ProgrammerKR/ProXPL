@@ -542,7 +542,8 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
                 for(int i=0; i<recBody->count; i++) {
                      checkStmt(checker, recBody->items[i]);
                 }
-            endScope(checker);
+                endScope(checker);
+            }
             break;
         }
 
