@@ -480,7 +480,15 @@ static PxTokenType identifierType(Scanner *scanner) {
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
       case 'a': return checkKeyword(scanner, 2, 6, "nitize", TOKEN_SANITIZE); // sanitize
-      case 'u': 
+      case 't':
+          if (scanner->current - scanner->start > 2) {
+              switch (scanner->start[2]) {
+                  case 'a': return checkKeyword(scanner, 3, 3, "tic", TOKEN_STATIC);
+                  case 'r': return checkKeyword(scanner, 3, 3, "uct", TOKEN_STRUCT);
+              }
+          }
+          break;
+      case 'u':
           if (scanner->current - scanner->start > 2) {
               if (scanner->start[2] == 'p') {
                    // super... superpose or super
@@ -489,18 +497,7 @@ static PxTokenType identifierType(Scanner *scanner) {
                    return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
               }
           }
-          break;
-        if (scanner->current - scanner->start > 2) {
-          switch (scanner->start[2]) {
-          case 'a':
-            return checkKeyword(scanner, 3, 3, "tic", TOKEN_STATIC);
-          case 'r':
-            return checkKeyword(scanner, 3, 3, "uct", TOKEN_STRUCT);
-          }
-        }
-        break;
-      case 'u':
-        return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
+          return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
       case 'w':
         return checkKeyword(scanner, 2, 4, "itch", TOKEN_SWITCH);
       }
