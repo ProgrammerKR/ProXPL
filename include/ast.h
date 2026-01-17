@@ -141,7 +141,7 @@ struct Expr {
 
 // --- Statement Data Structures ---
 typedef struct { Expr *expression; } ExpressionStmt;
-typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; } VarDeclStmt;
+typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; bool isTemporal; int ttl; } VarDeclStmt;
 typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; bool isAsync; AccessLevel access; bool isStatic; bool isAbstract; Expr *contextCondition; } FuncDeclStmt;
 typedef struct { char *name; VariableExpr *superclass; StringList *interfaces; StmtList *methods; } ClassDeclStmt;
 typedef struct { char *name; StmtList *methods; } InterfaceDeclStmt;
@@ -205,7 +205,7 @@ Expr *createSuperExpr(const char *method, int line, int column);
 Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
-Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line, int column);
+Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemporal, int ttl, int line, int column);
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition, int line, int column);
 Stmt *createClassDeclStmt(const char *name, VariableExpr *super, StringList *interfaces, StmtList *methods, int line, int column);
 Stmt *createInterfaceDeclStmt(const char *name, StmtList *methods, int line, int column);

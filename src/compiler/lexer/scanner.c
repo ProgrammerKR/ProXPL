@@ -170,16 +170,16 @@ static PxTokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'b':
         return checkKeyword(scanner, 2, 6, "stract", TOKEN_ABSTRACT);
-
       case 's':
         // "as" or "async"
         if (scanner->current - scanner->start == 2) {
           return TOKEN_AS;
         }
         return checkKeyword(scanner, 2, 3, "ync", TOKEN_ASYNC);
-
       case 'w':
         return checkKeyword(scanner, 2, 3, "ait", TOKEN_AWAIT);
+      case 'f': // New case for 'after'
+        return checkKeyword(scanner, 2, 3, "ter", TOKEN_AFTER);
       }
     }
     break;
@@ -231,6 +231,8 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'e':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
+          case 'c':
+            return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY); // decay
           case 'f':
             if (scanner->current - scanner->start > 3) {
               switch (scanner->start[3]) {
@@ -244,15 +246,11 @@ static PxTokenType identifierType(Scanner *scanner) {
           }
         }
         break;
+      case 'o':
+        return checkKeyword(scanner, 2, 0, "", TOKEN_DO);
       }
     }
     break;
-      case 'x':
-        if (scanner->current - scanner->start > 2) {
-          switch (scanner->start[2]) {
-          case 'c': // escalate? no, ex... no es...
-          // escalate starts with e.
-             break;
   case 'e':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {

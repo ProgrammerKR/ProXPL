@@ -373,6 +373,14 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
                 }
             }
             
+            
+            // Temporal Check
+            if (stmt->as.var_decl.isTemporal) {
+                if (stmt->as.var_decl.ttl <= 0) {
+                     error(checker, stmt->line, "Temporal variables must have a positive decay duration (TTL > 0).");
+                }
+            }
+
             defineSymbol(checker, stmt->as.var_decl.name, declaredType);
             break;
         }

@@ -391,6 +391,15 @@ static Stmt *interfaceDecl(Parser *p) {
 
 static Stmt *varDecl(Parser *p) {
   bool is_const = (previous(p).type == TOKEN_CONST);
+  
+  bool isTemporal = false;
+  if (match(p, 1, TOKEN_TEMPORAL)) {
+      isTemporal = true;
+      if (is_const) {
+          parserError(p, "CONST variables cannot be temporal (they don't decay).");
+      }
+  }
+
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect variable name.");
   char *name = tokenToString(nameToken);
 
@@ -399,10 +408,23 @@ static Stmt *varDecl(Parser *p) {
     initializer = expression(p);
   }
 
-  consume(p, TOKEN_SEMICOLON, "Expect ';'.");
+  int ttl = 0;
+  if (isTemporal) {
+      // Look for decay clause: decay after 5s
+      if (match(p, 1, TOKEN_DECAY)) {
+          consume(p, TOKEN_AFTER, "Expect 'after' following 'decay'.");
+          Token timeVal = consume(p, TOKEN_NUMBER, "Expect time value (seconds).");
+          double val = strtod(timeVal.start, NULL);
+          ttl = (int)val;
+          // output warning if unit missing?
+          if (match(p, 1, TOKEN_IDENTIFIER)) {
+             // consume unit (s, ms, etc)
+          }
+      }
+  }
 
-  Stmt *stmt =
-      createVarDeclStmt(name, initializer, is_const, nameToken.line, 0);
+  consume(p, TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+  Stmt *stmt = createVarDeclStmt(name, initializer, is_const, isTemporal, ttl, nameToken.line, 0);
   free(name);
   return stmt;
 }

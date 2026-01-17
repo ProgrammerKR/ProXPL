@@ -370,8 +370,7 @@ Stmt *createExpressionStmt(Expr *expression, int line, int column) {
   return stmt;
 }
 
-Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
-                        int column) {
+Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemporal, int ttl, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_VAR_DECL;
   stmt->line = line;
@@ -379,11 +378,9 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
   stmt->as.var_decl.name = strdup(name);
   stmt->as.var_decl.initializer = init;
   stmt->as.var_decl.is_const = is_const;
-  stmt->as.var_decl.type.kind = TYPE_UNKNOWN;
-  stmt->as.var_decl.type.name = NULL;
-  stmt->as.var_decl.type.returnType = NULL;
-  stmt->as.var_decl.type.paramTypes = NULL;
-  stmt->as.var_decl.type.paramCount = 0;
+  stmt->as.var_decl.type = createType(TYPE_UNKNOWN);
+  stmt->as.var_decl.isTemporal = isTemporal;
+  stmt->as.var_decl.ttl = ttl;
   return stmt;
 }
 
