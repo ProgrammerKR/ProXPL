@@ -300,7 +300,16 @@ static PxTokenType identifierType(Scanner *scanner) {
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
           case 't':
-            return checkKeyword(scanner, 3, 6, "erface", TOKEN_INTERFACE);
+            // "int" ... "inte"
+            if (scanner->current - scanner->start > 3 && scanner->start[3] == 'e') {
+                 if (scanner->current - scanner->start > 4) {
+                     switch (scanner->start[4]) {
+                         case 'r': return checkKeyword(scanner, 5, 4, "face", TOKEN_INTERFACE);
+                         case 'n': return checkKeyword(scanner, 5, 1, "t", TOKEN_INTENT);
+                     }
+                 }
+            }
+            break; // Fall through
           default:
             return checkKeyword(scanner, 2, 0, "", TOKEN_IN);
           }
@@ -366,7 +375,16 @@ static PxTokenType identifierType(Scanner *scanner) {
     }
     break;
   case 'r':
-    return checkKeyword(scanner, 1, 5, "eturn", TOKEN_RETURN);
+    if (scanner->current - scanner->start > 1) {
+        switch (scanner->start[1]) {
+            case 'e':
+                if (scanner->current - scanner->start > 2 && scanner->start[2] == 's') {
+                     return checkKeyword(scanner, 3, 5, "olver", TOKEN_RESOLVER);
+                }
+                return checkKeyword(scanner, 2, 4, "turn", TOKEN_RETURN);
+        }
+    } 
+    return TOKEN_IDENTIFIER;
   case 's':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {

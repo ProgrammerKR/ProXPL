@@ -542,6 +542,28 @@ Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char 
   return stmt;
 }
 
+Stmt *createIntentDeclStmt(const char *name, StringList *params, TypeInfo returnType, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_INTENT_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.intent_decl.name = strdup(name);
+  stmt->as.intent_decl.params = params;
+  stmt->as.intent_decl.returnType = returnType;
+  return stmt;
+}
+
+Stmt *createResolverDeclStmt(const char *name, const char *targetIntent, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_RESOLVER_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.resolver_decl.name = strdup(name);
+  stmt->as.resolver_decl.targetIntent = strdup(targetIntent);
+  stmt->as.resolver_decl.body = body;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -709,7 +731,19 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.extern_decl.libraryPath);
     free(stmt->as.extern_decl.symbolName);
     free(stmt->as.extern_decl.name);
+    free(stmt->as.extern_decl.name);
     freeStringList(stmt->as.extern_decl.params);
+    break;
+  case STMT_INTENT_DECL:
+    free(stmt->as.intent_decl.name);
+    freeStringList(stmt->as.intent_decl.params);
+    // free returnType if it has allocated name? TypeInfo struct has char* name.
+    if (stmt->as.intent_decl.returnType.name) free(stmt->as.intent_decl.returnType.name);
+    break;
+  case STMT_RESOLVER_DECL:
+    free(stmt->as.resolver_decl.name);
+    free(stmt->as.resolver_decl.targetIntent);
+    freeStmtList(stmt->as.resolver_decl.body);
     break;
   }
 

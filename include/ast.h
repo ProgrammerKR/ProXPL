@@ -44,7 +44,8 @@ typedef enum {
   STMT_EXPRESSION, STMT_VAR_DECL, STMT_FUNC_DECL, STMT_CLASS_DECL, STMT_INTERFACE_DECL,
   STMT_USE_DECL, STMT_IF, STMT_WHILE, STMT_FOR, STMT_RETURN,
   STMT_BLOCK, STMT_BREAK, STMT_CONTINUE, STMT_SWITCH,
-  STMT_TRY_CATCH, STMT_PRINT, STMT_EXTERN_DECL
+  STMT_TRY_CATCH, STMT_PRINT, STMT_EXTERN_DECL,
+  STMT_INTENT_DECL, STMT_RESOLVER_DECL
 } StmtType;
 
 // --- List Structures ---
@@ -143,6 +144,8 @@ typedef struct { Expr *value; SwitchCaseList *cases; StmtList *default_case; } S
 typedef struct { StmtList *try_block; char *catch_var; StmtList *catch_block; StmtList *finally_block; } TryCatchStmt;
 typedef struct { Expr *expression; } PrintStmt;
 typedef struct { char *libraryPath; char *symbolName; char *name; StringList *params; } ExternDeclStmt;
+typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
+typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
 
 struct Stmt {
   StmtType type;
@@ -154,7 +157,9 @@ struct Stmt {
     WhileStmt while_stmt; ForStmt for_stmt; ReturnStmt return_stmt;
     BlockStmt block; BreakStmt break_stmt; ContinueStmt continue_stmt;
     SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
+    SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
     ExternDeclStmt extern_decl;
+    IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
   } as;
 };
 
@@ -197,6 +202,8 @@ Stmt *createSwitchStmt(Expr *value, SwitchCaseList *cases, StmtList *def, int li
 Stmt *createTryCatchStmt(StmtList *try_blk, const char *catch_var, StmtList *catch_blk, StmtList *finally_blk, int line, int column);
 Stmt *createPrintStmt(Expr *expression, int line, int column);
 Stmt *createExternDeclStmt(const char *libPath, const char *symName, const char *name, StringList *params, int line, int column);
+Stmt *createIntentDeclStmt(const char *name, StringList *params, TypeInfo returnType, int line, int column);
+Stmt *createResolverDeclStmt(const char *name, const char *targetIntent, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);
