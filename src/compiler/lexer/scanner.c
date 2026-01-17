@@ -272,7 +272,13 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'l':
         return checkKeyword(scanner, 2, 2, "se", TOKEN_ELSE);
       case 'n':
-        return checkKeyword(scanner, 2, 2, "um", TOKEN_ENUM);
+        if (scanner->current - scanner->start > 2) {
+            switch (scanner->start[2]) {
+                case 'u': return checkKeyword(scanner, 3, 1, "m", TOKEN_ENUM);
+                case 't': return checkKeyword(scanner, 3, 4, "angle", TOKEN_ENTANGLE); // entangle
+            }
+        }
+        return checkKeyword(scanner, 2, 2, "um", TOKEN_ENUM); // Fallback for 'en' if not 'entangle'
       case 'x':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
@@ -355,7 +361,14 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'o':
           return checkKeyword(scanner, 2, 3, "del", TOKEN_MODEL); // model
       case 'u':
-          return checkKeyword(scanner, 2, 4, "table", TOKEN_MUTABLE);
+          if (scanner->current - scanner->start > 2) {
+              switch (scanner->start[2]) {
+                  case 't': return checkKeyword(scanner, 3, 4, "able", TOKEN_MUTABLE);
+              }
+          }
+          break;
+      case 'e': // measure
+          return checkKeyword(scanner, 2, 5, "asure", TOKEN_MEASURE);
       }
     }
     break;
@@ -444,7 +457,16 @@ static PxTokenType identifierType(Scanner *scanner) {
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
       case 'a': return checkKeyword(scanner, 2, 6, "nitize", TOKEN_SANITIZE); // sanitize
-      case 't':
+      case 'u': 
+          if (scanner->current - scanner->start > 2) {
+              if (scanner->start[2] == 'p') {
+                   // super... superpose or super
+                   if (scanner->current - scanner->start > 5 && scanner->start[5] == 'p')
+                       return checkKeyword(scanner, 6, 3, "ose", TOKEN_SUPERPOSE); // superpose
+                   return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
+              }
+          }
+          break;
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
           case 'a':

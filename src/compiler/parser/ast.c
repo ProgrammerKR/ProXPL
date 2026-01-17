@@ -626,6 +626,15 @@ Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *
   return stmt;
 }
 
+Stmt *createQuantumBlockStmt(StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_QUANTUM_BLOCK;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.quantum_block.body = body;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -832,6 +841,9 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.model_decl.name);
     if(stmt->as.model_decl.architecture) free(stmt->as.model_decl.architecture);
     if(stmt->as.model_decl.body) freeStmtList(stmt->as.model_decl.body);
+    break;
+  case STMT_QUANTUM_BLOCK:
+    if(stmt->as.quantum_block.body) freeStmtList(stmt->as.quantum_block.body);
     break;
   }
 

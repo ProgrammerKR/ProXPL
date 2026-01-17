@@ -58,7 +58,9 @@ typedef enum {
   STMT_NODE_DECL,
   STMT_NODE_DECL,
   STMT_DISTRIBUTED_DECL,
-  STMT_MODEL_DECL
+  STMT_DISTRIBUTED_DECL,
+  STMT_MODEL_DECL,
+  STMT_QUANTUM_BLOCK
 } StmtType;
 
 // --- List Structures ---
@@ -171,6 +173,7 @@ typedef struct { char *policyName; char *target; StmtList *rules; } PolicyDeclSt
 typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
 typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
 typedef struct { char *name; char *architecture; StmtList *body; } ModelDeclStmt;
+typedef struct { StmtList *body; } QuantumBlockStmt;
 
 struct Stmt {
   StmtType type;
@@ -190,7 +193,10 @@ struct Stmt {
     PolicyDeclStmt policy_decl;
     NodeDeclStmt node_decl;
     DistributedDeclStmt distributed_decl;
+    NodeDeclStmt node_decl;
+    DistributedDeclStmt distributed_decl;
     ModelDeclStmt model_decl;
+    QuantumBlockStmt quantum_block;
   } as;
 };
 
@@ -239,7 +245,10 @@ Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, 
 Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList *rules, int line, int column);
 Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column);
 Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
+Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column);
+Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
 Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *body, int line, int column);
+Stmt *createQuantumBlockStmt(StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

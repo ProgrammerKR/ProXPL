@@ -26,6 +26,7 @@ static Stmt *policyDecl(Parser *p);
 static Stmt *nodeDecl(Parser *p); // Forward
 static Stmt *distributedDecl(Parser *p); // Forward
 static Stmt *modelDecl(Parser *p); // Forward
+static Stmt *quantumStmt(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -270,6 +271,8 @@ static Stmt *declaration(Parser *p) {
     return distributedDecl(p);
   if (match(p, 1, TOKEN_MODEL))
     return modelDecl(p);
+  if (match(p, 1, TOKEN_QUANTUM))
+    return quantumStmt(p);
 
   return statement(p);
 }
