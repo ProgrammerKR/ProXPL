@@ -565,6 +565,18 @@ Stmt *createResolverDeclStmt(const char *name, const char *targetIntent, StmtLis
   return stmt;
 }
 
+Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, StmtList *recoveryBody, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_RESILIENT;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.resilient.body = body;
+  stmt->as.resilient.strategy = strategy ? strdup(strategy) : NULL;
+  stmt->as.resilient.retryCount = retryCount;
+  stmt->as.resilient.recoveryBody = recoveryBody;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -745,6 +757,11 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.resolver_decl.name);
     free(stmt->as.resolver_decl.targetIntent);
     freeStmtList(stmt->as.resolver_decl.body);
+    break;
+  case STMT_RESILIENT:
+    freeStmtList(stmt->as.resilient.body);
+    if(stmt->as.resilient.strategy) free(stmt->as.resilient.strategy);
+    if(stmt->as.resilient.recoveryBody) freeStmtList(stmt->as.resilient.recoveryBody);
     break;
   }
 
