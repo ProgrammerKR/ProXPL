@@ -359,6 +359,16 @@ Expr *createSanitizeExpr(Expr *value, int line, int column) {
   return expr;
 }
 
+Expr *createCryptoExpr(Expr *val, bool isEncrypt, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_CRYPTO;
+  expr->line = line;
+  expr->column = column;
+  expr->as.crypto.value = val;
+  expr->as.crypto.isEncrypt = isEncrypt;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -645,6 +655,16 @@ Stmt *createGPUBlockStmt(const char *kernelName, StmtList *body, int line, int c
   return stmt;
 }
 
+Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_VERIFY;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.verify_stmt.identityName = strdup(identityName);
+  stmt->as.verify_stmt.body = body;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -731,6 +751,9 @@ void freeExpr(Expr *expr) {
     break;
   case EXPR_SANITIZE:
     freeExpr(expr->as.sanitize.value);
+    break;
+  case EXPR_CRYPTO:
+    freeExpr(expr->as.crypto.value);
     break;
   }
 
@@ -858,6 +881,10 @@ void freeStmt(Stmt *stmt) {
   case STMT_GPU_BLOCK:
     if(stmt->as.gpu_block.kernelName) free(stmt->as.gpu_block.kernelName);
     if(stmt->as.gpu_block.body) freeStmtList(stmt->as.gpu_block.body);
+    break;
+  case STMT_VERIFY:
+    free(stmt->as.verify_stmt.identityName);
+    if(stmt->as.verify_stmt.body) freeStmtList(stmt->as.verify_stmt.body);
     break;
   }
 

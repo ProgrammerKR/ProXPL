@@ -28,6 +28,7 @@ static Stmt *distributedDecl(Parser *p); // Forward
 static Stmt *modelDecl(Parser *p); // Forward
 static Stmt *quantumStmt(Parser *p); // Forward
 static Stmt *gpuStmt(Parser *p); // Forward
+static Stmt *verifyStmt(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -276,6 +277,8 @@ static Stmt *declaration(Parser *p) {
     return quantumStmt(p);
   if (match(p, 1, TOKEN_GPU))
     return gpuStmt(p);
+  if (match(p, 1, TOKEN_VERIFY))
+    return verifyStmt(p);
 
   return statement(p);
 }
@@ -1013,17 +1016,30 @@ static Expr *call(Parser *p) {
     }
   }
 
-  return expr;
-}
-
 static Expr *primary(Parser *p) {
   if (match(p, 1, TOKEN_SANITIZE)) {
-      consume(p, TOKEN_LEFT_PAREN, "Expect '(' after sanitize.");
-      Expr *val = expression(p);
-      consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
-      return createSanitizeExpr(val, p->previous.line, 0);
+    consume(p, TOKEN_LEFT_PAREN, "Expect '(' after sanitize.");
+    Expr *val = expression(p);
+    consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after sanitize expression.");
+    return createSanitizeExpr(val, p->previous.line, 0); 
   }
-  if (match(p, 1, TOKEN_FALSE)) return createLiteralExpr((Value){VAL_BOOL, {.boolean = false}}, p->previous.line, 0);
+  
+  if (match(p, 1, TOKEN_ENCRYPT)) {
+      consume(p, TOKEN_LEFT_PAREN, "Expect '(' after encrypt.");
+      Expr *val = expression(p);
+      consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after encrypt expression.");
+      // Optional 'using <key>' parsing could be added here
+      return createCryptoExpr(val, true, p->previous.line, 0);
+  }
+  
+  if (match(p, 1, TOKEN_DECRYPT)) {
+      consume(p, TOKEN_LEFT_PAREN, "Expect '(' after decrypt.");
+      Expr *val = expression(p);
+      consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after decrypt expression.");
+      return createCryptoExpr(val, false, p->previous.line, 0);
+  }
+
+  if (match(p, 1, TOKEN_FALSE)) return createLiteralExpr(LITERAL_BOOL, "false", p->previous.line, 0);
   if (match(p, 1, TOKEN_TRUE)) return createLiteralExpr((Value){VAL_BOOL, {.boolean = true}}, p->previous.line, 0);
   if (match(p, 1, TOKEN_NULL)) {
     return createLiteralExpr(NULL_VAL, p->previous.line, 0);

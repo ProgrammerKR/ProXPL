@@ -624,6 +624,18 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
         }
 
+        case STMT_VERIFY: {
+            beginScope(checker);
+            StmtList* body = stmt->as.verify_stmt.body;
+            if (body) {
+                for(int i=0; i<body->count; i++) {
+                     checkStmt(checker, body->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
+        }
+
         default:
             break;
     }
