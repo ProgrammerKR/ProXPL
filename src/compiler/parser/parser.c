@@ -25,6 +25,7 @@ static Stmt *resilientStmt(Parser *p);
 static Stmt *policyDecl(Parser *p);
 static Stmt *nodeDecl(Parser *p); // Forward
 static Stmt *distributedDecl(Parser *p); // Forward
+static Stmt *modelDecl(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -267,6 +268,8 @@ static Stmt *declaration(Parser *p) {
     return nodeDecl(p);
   if (match(p, 1, TOKEN_DISTRIBUTED))
     return distributedDecl(p);
+  if (match(p, 1, TOKEN_MODEL))
+    return modelDecl(p);
 
   return statement(p);
 }

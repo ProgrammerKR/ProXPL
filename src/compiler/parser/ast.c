@@ -614,6 +614,18 @@ Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, in
   return stmt;
 }
 
+Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_MODEL_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.model_decl.name = strdup(name);
+  if(architecture) stmt->as.model_decl.architecture = strdup(architecture);
+  else stmt->as.model_decl.architecture = NULL;
+  stmt->as.model_decl.body = body;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -815,6 +827,11 @@ void freeStmt(Stmt *stmt) {
   case STMT_DISTRIBUTED_DECL:
     free(stmt->as.distributed_decl.name);
     freeStmtList(stmt->as.distributed_decl.fields);
+    break;
+  case STMT_MODEL_DECL:
+    free(stmt->as.model_decl.name);
+    if(stmt->as.model_decl.architecture) free(stmt->as.model_decl.architecture);
+    if(stmt->as.model_decl.body) freeStmtList(stmt->as.model_decl.body);
     break;
   }
 

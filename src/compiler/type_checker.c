@@ -584,6 +584,22 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
         }
 
+        case STMT_MODEL_DECL: {
+            TypeInfo modelType = createType(TYPE_CLASS); // Treat as class
+            modelType.name = strdup(stmt->as.model_decl.name);
+            defineSymbol(checker, stmt->as.model_decl.name, modelType);
+            
+            beginScope(checker);
+            StmtList* body = stmt->as.model_decl.body;
+            if (body) {
+                for(int i=0; i<body->count; i++) {
+                     checkStmt(checker, body->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
+        }
+
         default:
             break;
     }

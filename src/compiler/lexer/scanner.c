@@ -235,6 +235,16 @@ static PxTokenType identifierType(Scanner *scanner) {
               return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY); // decay
             case 'i': // distributed
               return checkKeyword(scanner, 2, 9, "stributed", TOKEN_DISTRIBUTED);
+            case 'a': // dataset
+              if (scanner->current - scanner->start > 6) { // dataset 7 chars
+                   return checkKeyword(scanner, 2, 5, "taset", TOKEN_DATASET);
+              }
+              // decay check:
+              return checkKeyword(scanner, 2, 3, "cay", TOKEN_DECAY); // Re-adjust precedence
+              // Wait, 'd' -> 'e' -> 'c' vs 'd' -> 'a'
+              // The original logic was inside 'd' -> 'e'. 
+              // 'dataset' starts with 'd' -> 'a'.
+              break;
             case 'f':
               if (scanner->current - scanner->start > 3) {
               switch (scanner->start[3]) {
@@ -337,6 +347,18 @@ static PxTokenType identifierType(Scanner *scanner) {
     break;
   case 'l':
     return checkKeyword(scanner, 1, 2, "et", TOKEN_LET);
+  case 'm': // Added for 'match' and 'model'
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'a':
+          return checkKeyword(scanner, 2, 3, "tch", TOKEN_MATCH);
+      case 'o':
+          return checkKeyword(scanner, 2, 3, "del", TOKEN_MODEL); // model
+      case 'u':
+          return checkKeyword(scanner, 2, 4, "table", TOKEN_MUTABLE);
+      }
+    }
+    break;
   case 'n':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
@@ -367,6 +389,8 @@ static PxTokenType identifierType(Scanner *scanner) {
             case 'r':
               if (scanner->current - scanner->start > 2) { 
                   switch(scanner->start[2]) {
+                      case 'e': // predict
+                         return checkKeyword(scanner, 3, 4, "dict", TOKEN_PREDICT);
                       case 'i': 
                         if (scanner->current - scanner->start > 3) {
                             switch(scanner->start[3]) {
@@ -455,6 +479,8 @@ static PxTokenType identifierType(Scanner *scanner) {
           switch (scanner->start[2]) {
           case 'u':
             return checkKeyword(scanner, 3, 1, "e", TOKEN_TRUE);
+          case 'a': // train
+            return checkKeyword(scanner, 3, 2, "in", TOKEN_TRAIN);
           case 'y':
             return checkKeyword(scanner, 3, 0, "", TOKEN_TRY);
           }

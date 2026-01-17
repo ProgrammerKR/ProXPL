@@ -56,7 +56,9 @@ typedef enum {
   STMT_RESILIENT,
   STMT_POLICY_DECL,
   STMT_NODE_DECL,
-  STMT_DISTRIBUTED_DECL // For type definitions like: distributed type Ledger { ... }
+  STMT_NODE_DECL,
+  STMT_DISTRIBUTED_DECL,
+  STMT_MODEL_DECL
 } StmtType;
 
 // --- List Structures ---
@@ -167,7 +169,8 @@ typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclS
 typedef struct { StmtList *body; char *strategy; int retryCount; StmtList *recoveryBody; } ResilientStmt;
 typedef struct { char *policyName; char *target; StmtList *rules; } PolicyDeclStmt;
 typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
-typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; // Simplification
+typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
+typedef struct { char *name; char *architecture; StmtList *body; } ModelDeclStmt;
 
 struct Stmt {
   StmtType type;
@@ -187,6 +190,7 @@ struct Stmt {
     PolicyDeclStmt policy_decl;
     NodeDeclStmt node_decl;
     DistributedDeclStmt distributed_decl;
+    ModelDeclStmt model_decl;
   } as;
 };
 
@@ -235,6 +239,7 @@ Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, 
 Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList *rules, int line, int column);
 Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column);
 Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
+Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);
