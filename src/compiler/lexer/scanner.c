@@ -232,6 +232,9 @@ static PxTokenType identifierType(Scanner *scanner) {
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
             case 'c':
+              // decay vs decrypt (dec...)
+              if (scanner->current - scanner->start > 3 && scanner->start[3] == 'r')
+                  return checkKeyword(scanner, 4, 3, "ypt", TOKEN_DECRYPT);
               return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY); // decay
             case 'i': // distributed
               return checkKeyword(scanner, 2, 9, "stributed", TOKEN_DISTRIBUTED);
@@ -274,6 +277,7 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'n':
         if (scanner->current - scanner->start > 2) {
             switch (scanner->start[2]) {
+                case 'c': return checkKeyword(scanner, 3, 4, "rypt", TOKEN_ENCRYPT); // encrypt
                 case 'u': return checkKeyword(scanner, 3, 1, "m", TOKEN_ENUM);
                 case 't': return checkKeyword(scanner, 3, 4, "angle", TOKEN_ENTANGLE); // entangle
             }
@@ -541,7 +545,16 @@ static PxTokenType identifierType(Scanner *scanner) {
   case 'u':
     return checkKeyword(scanner, 1, 2, "se", TOKEN_USE);
   case 'v':
-    return checkKeyword(scanner, 1, 3, "oid", TOKEN_VOID);
+    if (scanner->current - scanner->start > 1) {
+         switch(scanner->start[1]) {
+             case 'a': return checkKeyword(scanner, 2, 1, "r", TOKEN_VAR);
+             case 'e': return checkKeyword(scanner, 2, 4, "rify", TOKEN_VERIFY); // verify
+             case 'o': return checkKeyword(scanner, 2, 2, "id", TOKEN_VOID);
+         }
+    }
+    // Fallback? Original 'void' used to be handled directly under 'v' -> check 1, 3 "oid"
+    // But now we branch.
+    return TOKEN_IDENTIFIER;
   case 'w':
     return checkKeyword(scanner, 1, 4, "hile", TOKEN_WHILE);
   }

@@ -42,7 +42,8 @@ typedef enum {
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
   EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW,
-  EXPR_SANITIZE
+  EXPR_SANITIZE,
+  EXPR_CRYPTO // Encrypt/Decrypt
 } ExprType;
 
 typedef enum {
@@ -62,7 +63,8 @@ typedef enum {
   STMT_MODEL_DECL,
   STMT_MODEL_DECL,
   STMT_QUANTUM_BLOCK,
-  STMT_GPU_BLOCK
+  STMT_GPU_BLOCK,
+  STMT_VERIFY
 } StmtType;
 
 // --- List Structures ---
@@ -115,6 +117,7 @@ typedef struct { char *name; } VariableExpr;
 typedef struct { char *name; Expr *value; } AssignExpr;
 typedef struct { Expr *left; char *operator; Expr *right; } LogicalExpr;
 typedef struct { Expr *value; } SanitizeExpr;
+typedef struct { Expr *value; bool isEncrypt; } CryptoExpr; // isEncrypt=true (encrypt), false (decrypt)
 typedef struct { Expr *callee; ExprList *arguments; } CallExpr;
 typedef struct { Expr *object; char *name; } GetExpr;
 typedef struct { Expr *object; char *name; Expr *value; } SetExpr;
@@ -138,6 +141,7 @@ struct Expr {
     BinaryExpr binary; UnaryExpr unary; LiteralExpr literal; GroupingExpr grouping;
     VariableExpr variable; AssignExpr assign; LogicalExpr logical;
     SanitizeExpr sanitize;
+    CryptoExpr crypto;
     // ... struct pointers for others due to C union size limit usually
     struct { Expr *callee; ExprList *arguments; } call;
     struct { Expr *object; char *name; } get;
@@ -170,13 +174,19 @@ typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDe
 typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
 typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
 typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
+typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
+typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
 typedef struct { StmtList *body; char *strategy; int retryCount; StmtList *recoveryBody; } ResilientStmt;
 typedef struct { char *policyName; char *target; StmtList *rules; } PolicyDeclStmt;
+typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
+typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
+typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
 typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
 typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
 typedef struct { char *name; char *architecture; StmtList *body; } ModelDeclStmt;
 typedef struct { StmtList *body; } QuantumBlockStmt;
 typedef struct { char *kernelName; StmtList *body; } GPUBlockStmt;
+typedef struct { char *identityName; StmtList *body; } VerifyStmt; // verify identity <name> { ... }
 
 struct Stmt {
   StmtType type;
@@ -201,6 +211,7 @@ struct Stmt {
     ModelDeclStmt model_decl;
     QuantumBlockStmt quantum_block;
     GPUBlockStmt gpu_block;
+    VerifyStmt verify_stmt;
   } as;
 };
 
@@ -225,6 +236,8 @@ Expr *createAwaitExpr(Expr *expression, int line, int column);
 Expr *createThisExpr(int line, int column);
 Expr *createSuperExpr(const char *method, int line, int column);
 Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column);
+Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
+Expr *createCryptoExpr(Expr *val, bool isEncrypt, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemporal, int ttl, int line, int column);
@@ -254,6 +267,7 @@ Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, in
 Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *body, int line, int column);
 Stmt *createQuantumBlockStmt(StmtList *body, int line, int column);
 Stmt *createGPUBlockStmt(const char *kernelName, StmtList *body, int line, int column);
+Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);
