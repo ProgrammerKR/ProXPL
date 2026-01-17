@@ -379,7 +379,7 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, int line,
 }
 
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
-                         bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, int line, int column) {
+                         bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_FUNC_DECL;
   stmt->line = line;
@@ -391,6 +391,7 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   stmt->as.func_decl.access = access;
   stmt->as.func_decl.isStatic = isStatic;
   stmt->as.func_decl.isAbstract = isAbstract;
+  stmt->as.func_decl.contextCondition = contextCondition;
   return stmt;
 }
 

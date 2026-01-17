@@ -15,7 +15,7 @@
 // Forward declarations of parsing functions
 static Stmt *declaration(Parser *p);
 static Stmt *statement(Parser *p);
-static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract);
+static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition);
 static Stmt *classDecl(Parser *p);
 static Stmt *interfaceDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
@@ -214,15 +214,35 @@ StmtList *parse(Parser *parser) {
 static Stmt *externDecl(Parser *p);
 
 static Stmt *declaration(Parser *p) {
+  Expr *contextCondition = NULL;
+  
+  // Check for Decorators
+  if (match(p, 1, TOKEN_AT)) {
+      if (match(p, 1, TOKEN_CONTEXT)) {
+          consume(p, TOKEN_LEFT_PAREN, "Expect '('.");
+          contextCondition = expression(p);
+          consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
+      } else {
+          parserError(p, "Unknown decorator.");
+      }
+  }
+
   if (match(p, 1, TOKEN_ASYNC)) {
       if (match(p, 1, TOKEN_FUNC))
-          return funcDecl(p, "function", true, ACCESS_PUBLIC, false, false);
+          return funcDecl(p, "function", true, ACCESS_PUBLIC, false, false, contextCondition);
       // TODO: Handle async arrow functions if supported later
       parserError(p, "Expect 'func' after 'async'.");
+      if (contextCondition) freeExpr(contextCondition);
       return NULL;
   }
   if (match(p, 1, TOKEN_FUNC))
-    return funcDecl(p, "function", false, ACCESS_PUBLIC, false, false);
+    return funcDecl(p, "function", false, ACCESS_PUBLIC, false, false, contextCondition);
+    
+  if (contextCondition) {
+      parserError(p, "Decorator must precede function declaration.");
+      freeExpr(contextCondition);
+  }
+
   if (match(p, 1, TOKEN_CLASS))
     return classDecl(p);
   if (match(p, 1, TOKEN_EXTERN))
@@ -240,7 +260,7 @@ static Stmt *declaration(Parser *p) {
   return statement(p);
 }
 
-static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract) {
+static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition) {
   (void)kind;
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
   char *name = tokenToString(nameToken);
@@ -268,7 +288,7 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
       body = block(p);
   }
 
-  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, access, isStatic, isAbstract, nameToken.line, 0);
+  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, access, isStatic, isAbstract, contextCondition, nameToken.line, 0);
   free(name);
   return stmt;
 }
@@ -301,6 +321,18 @@ static Stmt *classDecl(Parser *p) {
 
   StmtList *methods = createStmtList();
   while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+    // Check for @context decorator on methods
+    Expr *contextCondition = NULL;
+    if (match(p, 1, TOKEN_AT)) {
+         if (match(p, 1, TOKEN_CONTEXT)) {
+            consume(p, TOKEN_LEFT_PAREN, "Expect '('.");
+            contextCondition = expression(p);
+            consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
+         } else {
+             parserError(p, "Unknown decorator on method.");
+         }
+    }
+
     AccessLevel access = ACCESS_PUBLIC;
     if (match(p, 1, TOKEN_PUBLIC)) access = ACCESS_PUBLIC;
     else if (match(p, 1, TOKEN_PRIVATE)) access = ACCESS_PRIVATE;
@@ -317,7 +349,7 @@ static Stmt *classDecl(Parser *p) {
         isAsync = true;
     }
     
-    Stmt *method = funcDecl(p, "method", isAsync, access, isStatic, isAbstract);
+    Stmt *method = funcDecl(p, "method", isAsync, access, isStatic, isAbstract, contextCondition);
     appendStmt(methods, method);
   }
 
@@ -342,7 +374,7 @@ static Stmt *interfaceDecl(Parser *p) {
         if (match(p, 1, TOKEN_ASYNC)) isAsync = true;
         
         // Pass isAbstract = true to allow semicolon body
-        Stmt *method = funcDecl(p, "method", isAsync, ACCESS_PUBLIC, false, true);
+        Stmt *method = funcDecl(p, "method", isAsync, ACCESS_PUBLIC, false, true, NULL);
         appendStmt(methods, method);
     }
     

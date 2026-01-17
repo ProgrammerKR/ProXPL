@@ -477,6 +477,36 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
         }
 
+        case STMT_INTENT_DECL: {
+            TypeInfo intentType = createType(TYPE_FUNCTION);
+            if (stmt->as.intent_decl.returnType.kind != TYPE_UNKNOWN) {
+                intentType.returnType = (TypeInfo*)malloc(sizeof(TypeInfo));
+                *intentType.returnType = stmt->as.intent_decl.returnType;
+            }
+            // Define intent as a function-like symbol so calls work
+            defineSymbol(checker, stmt->as.intent_decl.name, intentType);
+            break;
+        }
+
+        case STMT_RESOLVER_DECL: {
+            // Check if intent exists
+            TypeInfo target = lookupSymbol(checker, stmt->as.resolver_decl.targetIntent);
+            if (target.kind == TYPE_UNKNOWN) {
+                 error(checker, stmt->line, "Resolver matches unknown intent.");
+            }
+            
+            // Check body
+            beginScope(checker);
+            StmtList* body = stmt->as.resolver_decl.body;
+            if (body) {
+                for(int i=0; i<body->count; i++) {
+                    checkStmt(checker, body->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
+        }
+
         default:
             break;
     }

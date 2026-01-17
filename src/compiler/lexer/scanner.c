@@ -209,6 +209,12 @@ static PxTokenType identifierType(Scanner *scanner) {
               case 's':
                 return checkKeyword(scanner, 4, 1, "t", TOKEN_CONST);
               case 't':
+                if (scanner->current - scanner->start > 4) {
+                    // conte...
+                    if (scanner->current - scanner->start > 6 && scanner->start[4] == 'e' && scanner->start[5] == 'x' && scanner->start[6] == 't') {
+                         return checkKeyword(scanner, 7, 0, "", TOKEN_CONTEXT);
+                    }
+                }
                 return checkKeyword(scanner, 4, 4, "inue", TOKEN_CONTINUE);
               }
             }
@@ -241,9 +247,18 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
+      case 'x':
+        if (scanner->current - scanner->start > 2) {
+          switch (scanner->start[2]) {
+          case 'c': // escalate? no, ex... no es...
+          // escalate starts with e.
+             break;
   case 'e':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
+      case 's':
+        // es...
+        return checkKeyword(scanner, 2, 6, "calate", TOKEN_ESCALATE);
       case 'l':
         return checkKeyword(scanner, 2, 2, "se", TOKEN_ELSE);
       case 'n':
@@ -378,10 +393,33 @@ static PxTokenType identifierType(Scanner *scanner) {
     if (scanner->current - scanner->start > 1) {
         switch (scanner->start[1]) {
             case 'e':
-                if (scanner->current - scanner->start > 2 && scanner->start[2] == 's') {
-                     return checkKeyword(scanner, 3, 5, "olver", TOKEN_RESOLVER);
-                }
-                return checkKeyword(scanner, 2, 4, "turn", TOKEN_RETURN);
+                 // ... handled above? No conflict with return/resolver?
+                 // return, resolver, recovery, resilient, restart
+                 // All start with 're'
+                 // resolver -> res...
+                 // resilient -> res...
+                 // restart -> res...
+                 // return -> ret...
+                 // recovery -> rec...
+                 // Let's rewrite the 'r' case fully.
+                 if (scanner->current - scanner->start > 2) {
+                     switch (scanner->start[2]) {
+                         case 'c': return checkKeyword(scanner, 3, 5, "overy", TOKEN_RECOVERY);
+                         case 's':
+                             if (scanner->current - scanner->start > 3) {
+                                 switch (scanner->start[3]) {
+                                     case 'i': return checkKeyword(scanner, 4, 5, "lient", TOKEN_RESILIENT);
+                                     case 'o': return checkKeyword(scanner, 4, 4, "lver", TOKEN_RESOLVER);
+                                     case 't': return checkKeyword(scanner, 4, 3, "art", TOKEN_RESTART);
+                                 }
+                             }
+                             break;
+                         case 't': return checkKeyword(scanner, 3, 3, "urn", TOKEN_RETURN);
+                     }
+                 }
+                 break;
+            case 'o':
+                 return checkKeyword(scanner, 2, 6, "llback", TOKEN_ROLLBACK);
         }
     } 
     return TOKEN_IDENTIFIER;
@@ -558,6 +596,8 @@ Token scanToken(Scanner *scanner) {
                                : makeToken(scanner, TOKEN_CARET);
   case '"':
     return string(scanner);
+  case '@':
+    return makeToken(scanner, TOKEN_AT);
   }
 
   return errorToken(scanner, "Unexpected character.");
