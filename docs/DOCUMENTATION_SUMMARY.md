@@ -25,6 +25,7 @@ All ProXPL markdown documentation files have been comprehensively updated to pro
 | **docs/language-spec.md** | ~30KB | ✅ Complete | Complete language specification with grammar, syntax, examples |
 | **src/README.md** | ~12KB | ✅ Complete | Developer guide to codebase with architecture, testing, debugging |
 | **DOCUMENTATION_INDEX.md** | ~15KB | ✅ Updated | Navigation hub updated with new file references |
+| **docs/pillars/** | ~15KB | ✅ New | Complete documentation for the 10 Operational Pillars (v1.2.0) |
 | **DOCUMENTATION_SUMMARY.md** | ~8KB | ✅ Complete | Complete update summary and statistics |
 
 ### Already Comprehensive (Reviewed)

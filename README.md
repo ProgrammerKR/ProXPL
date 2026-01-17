@@ -58,6 +58,21 @@ ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, maki
 | 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
 | 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
 
+## 🏛️ The 10 Operational Pillars (v1.2.0)
+
+ProXPL introduces 10 revolutionary concepts that redefine modern systems programming:
+
+1.  **[Intent-Oriented Programming](docs/pillars/01_intent_oriented.md)**: Define *what* you want (`intent`), not just *how* to do it (`resolver`).
+2.  **[Context-Aware Polymorphism](docs/pillars/02_context_aware.md)**: Adapt function behavior dynamically based on execution context (`@context`).
+3.  **[Autonomic Self-Healing (ASR)](docs/pillars/03_asr.md)**: Built-in failure recovery with `resilient` and `recovery` blocks.
+4.  **[Intrinsic Security](docs/pillars/04_intrinsic_security.md)**: Taint analysis and `sanitize()` primitives baked into the type system.
+5.  **[Chrono-Native Logic](docs/pillars/05_chrono_native.md)**: Data with expiration dates (`temporal`, `decay after`).
+6.  **[Event-Driven Concurrency](docs/pillars/06_distributed_primitives.md)**: Distributed nodes and types (`distributed`, `node`) as first-class citizens.
+7.  **[AI-Native Integration](docs/pillars/07_ai_native.md)**: Define, train, and run ML models (`model`, `train`, `predict`) natively.
+8.  **[Quantum-Ready Syntax](docs/pillars/08_quantum_ready.md)**: Future-proof syntax for quantum operations (`quantum`, `superpose`, `entangle`).
+9.  **[Hardware-Accelerated Math](docs/pillars/09_hardware_math.md)**: GPU kernel offloading (`gpu`, `kernel`) and tensor math.
+10. **[Zero-Trust Security](docs/pillars/10_zero_trust.md)**: Mandatory identity verification blocks (`verify identity`) and crypto primitives.
+
 ---
 
 ## ⚡ Quick Start

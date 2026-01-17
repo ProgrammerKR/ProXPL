@@ -69,6 +69,21 @@
 | **[03-classes.md](docs/tutorials/03-classes.md)** | OOP, inheritance, methods | Intermediate | 45m |
 | **[04-modules.md](docs/tutorials/04-modules.md)** | Module system, imports | Advanced | 30m |
 
+### The 10 Operational Pillars (docs/pillars/)
+
+| File | Pillar | Concept |
+|------|--------|---------|
+| **[01_intent_oriented.md](docs/pillars/01_intent_oriented.md)** | Intent-Oriented | Intent/Resolver pattern |
+| **[02_context_aware.md](docs/pillars/02_context_aware.md)** | Context-Aware | `@context` polymorphism |
+| **[03_asr.md](docs/pillars/03_asr.md)** | Self-Healing | Resilient blocks |
+| **[04_intrinsic_security.md](docs/pillars/04_intrinsic_security.md)** | Intrinsic Security | Taint analysis |
+| **[05_chrono_native.md](docs/pillars/05_chrono_native.md)** | Chrono-Native | Temporal variables |
+| **[06_distributed_primitives.md](docs/pillars/06_distributed_primitives.md)** | Distributed | Node/Distributed types |
+| **[07_ai_native.md](docs/pillars/07_ai_native.md)** | AI-Native | Model/Train/Predict |
+| **[08_quantum_ready.md](docs/pillars/08_quantum_ready.md)** | Quantum-Ready | Qubit/Superpose |
+| **[09_hardware_math.md](docs/pillars/09_hardware_math.md)** | Hardware Math | GPU Kernels |
+| **[10_zero_trust.md](docs/pillars/10_zero_trust.md)** | Zero-Trust | Identity Verification |
+
 ---
 
 ## 🗂️ Documentation by Purpose
