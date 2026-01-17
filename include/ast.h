@@ -60,7 +60,9 @@ typedef enum {
   STMT_DISTRIBUTED_DECL,
   STMT_DISTRIBUTED_DECL,
   STMT_MODEL_DECL,
-  STMT_QUANTUM_BLOCK
+  STMT_MODEL_DECL,
+  STMT_QUANTUM_BLOCK,
+  STMT_GPU_BLOCK
 } StmtType;
 
 // --- List Structures ---
@@ -174,6 +176,7 @@ typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
 typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
 typedef struct { char *name; char *architecture; StmtList *body; } ModelDeclStmt;
 typedef struct { StmtList *body; } QuantumBlockStmt;
+typedef struct { char *kernelName; StmtList *body; } GPUBlockStmt;
 
 struct Stmt {
   StmtType type;
@@ -197,6 +200,7 @@ struct Stmt {
     DistributedDeclStmt distributed_decl;
     ModelDeclStmt model_decl;
     QuantumBlockStmt quantum_block;
+    GPUBlockStmt gpu_block;
   } as;
 };
 
@@ -249,6 +253,7 @@ Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, i
 Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
 Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *body, int line, int column);
 Stmt *createQuantumBlockStmt(StmtList *body, int line, int column);
+Stmt *createGPUBlockStmt(const char *kernelName, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

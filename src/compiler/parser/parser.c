@@ -27,6 +27,7 @@ static Stmt *nodeDecl(Parser *p); // Forward
 static Stmt *distributedDecl(Parser *p); // Forward
 static Stmt *modelDecl(Parser *p); // Forward
 static Stmt *quantumStmt(Parser *p); // Forward
+static Stmt *gpuStmt(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -273,6 +274,8 @@ static Stmt *declaration(Parser *p) {
     return modelDecl(p);
   if (match(p, 1, TOKEN_QUANTUM))
     return quantumStmt(p);
+  if (match(p, 1, TOKEN_GPU))
+    return gpuStmt(p);
 
   return statement(p);
 }
@@ -1177,5 +1180,43 @@ static Stmt *distributedDecl(Parser *p) {
     
     Stmt *stmt = createDistributedDeclStmt(name, fields, nameTok.line, 0);
     free(name);
+    return stmt;
+}
+
+static Stmt *modelDecl(Parser *p) {
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect model name.");
+    char *name = tokenToString(nameTok);
+    
+    char *arch = NULL;
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    StmtList *body = block(p);
+    
+    Stmt *stmt = createModelDeclStmt(name, arch, body, nameTok.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *quantumStmt(Parser *p) {
+    Token keyword = p->previous;
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' after quantum.");
+    StmtList *body = block(p);
+    return createQuantumBlockStmt(body, keyword.line, 0);
+}
+
+static Stmt *gpuStmt(Parser *p) {
+    Token keyword = p->previous;
+    char *kernelName = NULL;
+    
+    if (match(p, 1, TOKEN_KERNEL)) {
+        Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect kernel name.");
+        kernelName = tokenToString(nameTok);
+    }
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' after gpu (kernel ...).");
+    StmtList *body = block(p);
+    
+    Stmt *stmt = createGPUBlockStmt(kernelName, body, keyword.line, 0);
+    if(kernelName) free(kernelName);
     return stmt;
 }

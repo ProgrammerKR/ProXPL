@@ -612,6 +612,18 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
         }
 
+        case STMT_GPU_BLOCK: {
+            beginScope(checker);
+            StmtList* body = stmt->as.gpu_block.body;
+            if (body) {
+                for(int i=0; i<body->count; i++) {
+                     checkStmt(checker, body->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
+        }
+
         default:
             break;
     }

@@ -298,6 +298,13 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
+  case 'g':
+      if (scanner->current - scanner->start > 1) {
+           switch(scanner->start[1]) {
+               case 'p': return checkKeyword(scanner, 2, 1, "u", TOKEN_GPU); // gpu
+           }
+      }
+      break;
   case 'f':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
@@ -350,14 +357,26 @@ static PxTokenType identifierType(Scanner *scanner) {
         return checkKeyword(scanner, 2, 0, "", TOKEN_IS);
       }
     }
-    break;
+  case 'k':
+      if (scanner->current - scanner->start > 1) {
+           switch(scanner->start[1]) {
+               case 'e': return checkKeyword(scanner, 2, 4, "rnel", TOKEN_KERNEL); // kernel
+           }
+      }
+      break;
   case 'l':
     return checkKeyword(scanner, 1, 2, "et", TOKEN_LET);
   case 'm': // Added for 'match' and 'model'
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
       case 'a':
-          return checkKeyword(scanner, 2, 3, "tch", TOKEN_MATCH);
+          if (scanner->current - scanner->start > 2) {
+             if (scanner->start[2] == 't' && scanner->current - scanner->start > 3 && scanner->start[3] == 'r') {
+                 return checkKeyword(scanner, 4, 2, "ix", TOKEN_MATRIX); // matrix
+             }
+             return checkKeyword(scanner, 2, 3, "tch", TOKEN_MATCH);
+          }
+          break;
       case 'o':
           return checkKeyword(scanner, 2, 3, "del", TOKEN_MODEL); // model
       case 'u':
@@ -400,7 +419,7 @@ static PxTokenType identifierType(Scanner *scanner) {
               }
               break;
             case 'r':
-              if (scanner->current - scanner->start > 2) { 
+              if (scanner->current - scanner->start > 2) {
                   switch(scanner->start[2]) {
                       case 'e': // predict
                          return checkKeyword(scanner, 3, 4, "dict", TOKEN_PREDICT);
@@ -486,7 +505,13 @@ static PxTokenType identifierType(Scanner *scanner) {
   case 't':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 'h':
+      case 'e':
+          if (scanner->current - scanner->start > 2) {
+              if (scanner->start[2] == 'm') return checkKeyword(scanner, 3, 5, "poral", TOKEN_TEMPORAL);
+              if (scanner->start[2] == 'n') return checkKeyword(scanner, 3, 3, "sor", TOKEN_TENSOR);
+          }
+          break;
+    case 'h':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
           case 'i':

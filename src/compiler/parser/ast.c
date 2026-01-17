@@ -635,6 +635,16 @@ Stmt *createQuantumBlockStmt(StmtList *body, int line, int column) {
   return stmt;
 }
 
+Stmt *createGPUBlockStmt(const char *kernelName, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_GPU_BLOCK;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.gpu_block.kernelName = kernelName ? strdup(kernelName) : NULL;
+  stmt->as.gpu_block.body = body;
+  return stmt;
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -844,6 +854,10 @@ void freeStmt(Stmt *stmt) {
     break;
   case STMT_QUANTUM_BLOCK:
     if(stmt->as.quantum_block.body) freeStmtList(stmt->as.quantum_block.body);
+    break;
+  case STMT_GPU_BLOCK:
+    if(stmt->as.gpu_block.kernelName) free(stmt->as.gpu_block.kernelName);
+    if(stmt->as.gpu_block.body) freeStmtList(stmt->as.gpu_block.body);
     break;
   }
 
