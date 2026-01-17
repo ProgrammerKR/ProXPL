@@ -28,8 +28,7 @@ struct TypeInfo {
     char* name;
     struct TypeInfo* returnType;
     struct TypeInfo* paramTypes; 
-    struct TypeInfo* returnType;
-    struct TypeInfo* paramTypes; 
+
     int paramCount;
     bool isTainted; 
 };
@@ -40,7 +39,7 @@ typedef enum {
   EXPR_VARIABLE, EXPR_ASSIGN, EXPR_LOGICAL, EXPR_CALL,
   EXPR_GET, EXPR_SET, EXPR_INDEX, EXPR_SET_INDEX, EXPR_LIST,
   EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
-  EXPR_DICTIONARY, EXPR_TERNARY, EXPR_LAMBDA,
+
   EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW,
   EXPR_SANITIZE,
   EXPR_CRYPTO // Encrypt/Decrypt
@@ -52,16 +51,15 @@ typedef enum {
   STMT_BLOCK, STMT_BREAK, STMT_CONTINUE, STMT_SWITCH,
   STMT_TRY_CATCH, STMT_PRINT, STMT_EXTERN_DECL,
   STMT_INTENT_DECL, STMT_RESOLVER_DECL,
-  STMT_INTENT_DECL, STMT_RESOLVER_DECL,
-  STMT_INTENT_DECL, STMT_RESOLVER_DECL,
+
   STMT_RESILIENT,
   STMT_POLICY_DECL,
   STMT_NODE_DECL,
-  STMT_NODE_DECL,
+
   STMT_DISTRIBUTED_DECL,
-  STMT_DISTRIBUTED_DECL,
+
   STMT_MODEL_DECL,
-  STMT_MODEL_DECL,
+
   STMT_QUANTUM_BLOCK,
   STMT_GPU_BLOCK,
   STMT_VERIFY
@@ -172,17 +170,13 @@ typedef struct { Expr *expression; } PrintStmt;
 typedef struct { char *libraryPath; char *symbolName; char *name; StringList *params; } ExternDeclStmt;
 typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
 typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
-typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
-typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
-typedef struct { char *name; StringList *params; TypeInfo returnType; } IntentDeclStmt;
-typedef struct { char *name; char *targetIntent; StmtList *body; } ResolverDeclStmt;
+
 typedef struct { StmtList *body; char *strategy; int retryCount; StmtList *recoveryBody; } ResilientStmt;
 typedef struct { char *policyName; char *target; StmtList *rules; } PolicyDeclStmt;
 typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
 typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
-typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
-typedef struct { char *name; StringList *capabilities; } NodeDeclStmt;
-typedef struct { char *name; StmtList *fields; } DistributedDeclStmt; 
+
+
 typedef struct { char *name; char *architecture; StmtList *body; } ModelDeclStmt;
 typedef struct { StmtList *body; } QuantumBlockStmt;
 typedef struct { char *kernelName; StmtList *body; } GPUBlockStmt;
@@ -200,14 +194,12 @@ struct Stmt {
     SwitchStmt switch_stmt; TryCatchStmt try_catch; PrintStmt print;
     ExternDeclStmt extern_decl;
     IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
-    IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
-    IntentDeclStmt intent_decl; ResolverDeclStmt resolver_decl;
+
     ResilientStmt resilient;
     PolicyDeclStmt policy_decl;
     NodeDeclStmt node_decl;
     DistributedDeclStmt distributed_decl;
-    NodeDeclStmt node_decl;
-    DistributedDeclStmt distributed_decl;
+
     ModelDeclStmt model_decl;
     QuantumBlockStmt quantum_block;
     GPUBlockStmt gpu_block;
@@ -262,8 +254,7 @@ Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, 
 Stmt *createPolicyDeclStmt(const char *policyName, const char *target, StmtList *rules, int line, int column);
 Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column);
 Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
-Stmt *createNodeDeclStmt(const char *name, StringList *capabilities, int line, int column);
-Stmt *createDistributedDeclStmt(const char *name, StmtList *fields, int line, int column);
+
 Stmt *createModelDeclStmt(const char *name, const char *architecture, StmtList *body, int line, int column);
 Stmt *createQuantumBlockStmt(StmtList *body, int line, int column);
 Stmt *createGPUBlockStmt(const char *kernelName, StmtList *body, int line, int column);
@@ -271,10 +262,10 @@ Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int c
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);
-Expr *createBinaryExpr(Expr *left, const char *op, Expr *right, int line, int column);
+
 // ...
 Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
-void appendExpr(ExprList *list, Expr *expr);
+
 void freeExprList(ExprList *list);
 StmtList *createStmtList();
 void appendStmt(StmtList *list, Stmt *stmt);
