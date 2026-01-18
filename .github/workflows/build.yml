@@ -129,7 +129,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ProXPL-${{ matrix.os }}
+          name: ProXPL-v1.2.0-${{ matrix.os }}
           # UPDATED: This will now upload the .exe and the .dll for Windows
           # For Linux/Mac, it still uploads the single binary.
           path: |

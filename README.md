@@ -564,20 +564,16 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - ✅ **Security**: `policy`, `tainted`, `encrypt`, `verify` support.
 - ✅ **Distributed**: `distributed type`, `node` declarations.
 
-### v1.1.0 (Legacy)
-**Status**: Released
+### v1.1.0
 **Status**: Released
 - ✅ **Class-based OOP**: First-class support for Classes, Objects, Inheritance, and Interfaces.
 - ✅ **Runtime Architecture**: Enhanced VM with Class, Instance, and BoundMethod support.
 - ✅ **New Keywords**: `class`, `new`, `this`, `extends`, `interface`, `static`.
 - ✅ **Inheritance**: Single inheritance model with superclass method lookup.
-- ✅ **Verification**: Verified via `tests/oop_v1.0.0.prox`.
-
-### v1.1.0 (Current)
-**Status**: Released
 - ✅ **Access Control**: `pub`/`priv` visibility enforcement.
 - ✅ **Constructors**: `init` constructor method.
 - ✅ **Exception Handling**: `try`/`catch` blocks.
+- ✅ **Verification**: Verified via `tests/oop_v1.0.0.prox`.
 
 ### Future Roadmap (2026+)
 - 📋 **v1.2.0**: FFI Stability & ProX Studio Alpha.

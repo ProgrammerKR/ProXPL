@@ -383,6 +383,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 1.1.0
-**Last Updated**: January 11, 2026
-**Next Release**: 1.2.0 (Q1 2026)
+**Current Version**: 1.2.0
+**Last Updated**: January 18, 2026
+**Next Release**: 1.3.0 (Q1 2026)
