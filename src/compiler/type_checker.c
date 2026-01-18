@@ -86,6 +86,26 @@ static void defineSymbol(TypeChecker* checker, const char* name, TypeInfo type) 
     scope->table[idx] = sym;
 }
 
+static void updateSymbol(TypeChecker* checker, const char* name, TypeInfo type) {
+    Scope* scope = checker->currentScope;
+    unsigned int idx = hash(name);
+    
+   // Search through all scopes to find and update the symbol
+    while (scope) {
+        Symbol* sym = scope->table[idx];
+        while (sym) {
+            if (strcmp(sym->name, name) == 0) {
+                // Update the type (including taint status)
+                sym->type = type;
+                return;
+            }
+            sym = sym->next;
+        }
+        scope = scope->parent;
+    }
+}
+
+
 static TypeInfo lookupSymbol(TypeChecker* checker, const char* name) {
     Scope* scope = checker->currentScope;
     unsigned int idx = hash(name);
@@ -127,34 +147,48 @@ static TypeInfo checkBinary(TypeChecker* checker, Expr* expr) {
     // Let's be safe: if unknown, we can't guarantee safety, but usually in static analysis we warn.
     // Here we will allow it to proceed as Unknown to avoid cascading errors.
     // DEBUG:
-    // printf("Binary '%s' L:%d R:%d at line %d\n", op, l.kind, r.kind, expr->line);
+    // printf("Binary '%s' L:%d R:%d at line %d\\n", op, l.kind, r.kind, expr->line);
     
     if (l.kind == TYPE_UNKNOWN || r.kind == TYPE_UNKNOWN) {
-        return createType(TYPE_UNKNOWN);
+        TypeInfo result = createType(TYPE_UNKNOWN);
+        // Propagate taint: if either operand is tainted, result is tainted
+        result.isTainted = l.isTainted || r.isTainted;
+        return result;
     }
 
     // Arithmetic: +, -, *, /, %
     if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || 
         strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
         
-        if (l.kind == TYPE_INT && r.kind == TYPE_INT) return l; // Int + Int = Int
-        if (l.kind == TYPE_FLOAT && r.kind == TYPE_FLOAT) return l; // Float + Float = Float
+        TypeInfo result;
         
-        // Promotion
-        if ((l.kind == TYPE_INT && r.kind == TYPE_FLOAT) || 
-            (l.kind == TYPE_FLOAT && r.kind == TYPE_INT)) {
-            return createType(TYPE_FLOAT);
-        }
-
-        // String Concatenation
-        if (strcmp(op, "+") == 0) {
-            if (l.kind == TYPE_STRING && r.kind == TYPE_STRING) return l;
-            // Maybe allow String + Int -> String?
-            if (l.kind == TYPE_STRING || r.kind == TYPE_STRING) return createType(TYPE_STRING);
+        if (l.kind == TYPE_INT && r.kind == TYPE_INT) {
+            result = l; // Int + Int = Int
+        } else if (l.kind == TYPE_FLOAT && r.kind == TYPE_FLOAT) {
+            result = l; // Float + Float = Float
+        } else if ((l.kind == TYPE_INT && r.kind == TYPE_FLOAT) || 
+                   (l.kind == TYPE_FLOAT && r.kind == TYPE_INT)) {
+            // Promotion
+            result = createType(TYPE_FLOAT);
+        } else if (strcmp(op, "+") == 0) {
+            // String Concatenation
+            if (l.kind == TYPE_STRING && r.kind == TYPE_STRING) {
+                result = l;
+            } else if (l.kind == TYPE_STRING || r.kind == TYPE_STRING) {
+                // Maybe allow String + Int -> String?
+                result = createType(TYPE_STRING);
+            } else {
+                error(checker, expr->line, "Type mismatch in binary operation.");
+                result = createType(TYPE_UNKNOWN);
+            }
+        } else {
+            error(checker, expr->line, "Type mismatch in binary operation.");
+            result = createType(TYPE_UNKNOWN);
         }
         
-        error(checker, expr->line, "Type mismatch in binary operation.");
-        return createType(TYPE_UNKNOWN);
+        // Propagate taint: if either operand is tainted, result is tainted
+        result.isTainted = l.isTainted || r.isTainted;
+        return result;
     }
     
     // Comparisons: <, >, <=, >=
@@ -163,11 +197,16 @@ static TypeInfo checkBinary(TypeChecker* checker, Expr* expr) {
         
         if (l.kind == TYPE_INT || l.kind == TYPE_FLOAT) {
             if (r.kind == TYPE_INT || r.kind == TYPE_FLOAT) {
-                return createType(TYPE_BOOL);
+                TypeInfo result = createType(TYPE_BOOL);
+                // Comparisons on tainted data produce tainted bool
+                result.isTainted = l.isTainted || r.isTainted;
+                return result;
             }
         }
         error(checker, expr->line, " Comparison operands must be numbers.");
-        return createType(TYPE_BOOL); // Return bool to recover
+        TypeInfo result = createType(TYPE_BOOL); // Return bool to recover
+        result.isTainted = l.isTainted || r.isTainted;
+        return result;
     }
 
     // Equality: ==, !=
@@ -178,10 +217,15 @@ static TypeInfo checkBinary(TypeChecker* checker, Expr* expr) {
              // Actually, equality between different types is usually just 'false', not an error.
              // But strict typing often forbids it.
         }
-        return createType(TYPE_BOOL);
+        TypeInfo result = createType(TYPE_BOOL);
+        // Equality checks on tainted data produce tainted bool
+        result.isTainted = l.isTainted || r.isTainted;
+        return result;
     }
 
-    return createType(TYPE_UNKNOWN);
+    TypeInfo result = createType(TYPE_UNKNOWN);
+    result.isTainted = l.isTainted || r.isTainted;
+    return result;
 }
 
 static TypeInfo checkUnary(TypeChecker* checker, Expr* expr) {
@@ -266,9 +310,13 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
                         error(checker, expr->line, "Type mismatch in assignment.");
                     }
                 }
-                // IFC Check: Tainted -> Pure Illegal
+                // IFC Check: Flow-sensitive taint tracking
+                // If assigning a tainted value to a pure variable, update the variable to become tainted
                 if (valType.isTainted && !varType.isTainted) {
-                    error(checker, expr->line, "Security Violation: Cannot assign tainted value to pure variable without sanitization.");
+                    // Update the symbol table to reflect that this variable is now tainted
+                    TypeInfo newType = varType;
+                    newType.isTainted = true;
+                    updateSymbol(checker, expr->as.assign.name, newType);
                 }
             }
             result = valType;
@@ -326,12 +374,31 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
              result = createType(TYPE_CLASS);
              break;
 
+
+        case EXPR_INDEX: {
+            // Array/Matrix indexing returns tainted values (IFC)
+            TypeInfo target = checkExpr(checker, expr->as.index.target);
+            TypeInfo index = checkExpr(checker, expr->as.index.index);
+            
+            // Index should be numeric
+            if (index.kind != TYPE_INT && index.kind != TYPE_FLOAT && index.kind != TYPE_UNKNOWN) {
+                error(checker, expr->line, "Array index must be a number.");
+            }
+            
+            // For arrays/lists, we don't have element type info, so return UNKNOWN
+            // The key point is marking it as TAINTED
+            result = createType(TYPE_UNKNOWN);
+            result.isTainted = true; // Array access is tainted by default (IFC)
+            break;
+        }
+
         case EXPR_SANITIZE: {
             TypeInfo val = checkExpr(checker, expr->as.sanitize.value);
             result = val;
             result.isTainted = false; // Mark as pure
             break;
         }
+
 
         default:
             // Relaxed for others
