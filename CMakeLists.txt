@@ -18,7 +18,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # --- LLVM Configuration ---
-find_package(LLVM CONFIG)
+find_package(LLVM CONFIG REQUIRED)
 
 # --- LibFFI Configuration ---
 # specialized find_package might be needed if not in standard path, but let's try standard first
@@ -44,18 +44,13 @@ else()
     message(WARNING "LibFFI not found. FFI features will be disabled.")
 endif()
 
-if (LLVM_FOUND)
-    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-    include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
-    add_definitions(${LLVM_DEFINITIONS})
-    link_directories(${LLVM_LIBRARY_DIRS})
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+link_directories(${LLVM_LIBRARY_DIRS})
 
-    # Map generic components to specific libs
-    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
-else()
-    message(WARNING "LLVM not found. Building without LLVM backend.")
-    set(llvm_libs "")
-endif()
+# Map generic components to specific libs
+llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
 
 # Export symbols for Windows DLL
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
