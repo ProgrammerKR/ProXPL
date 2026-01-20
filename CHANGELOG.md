@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [1.2.0] - 2026-01-17
+## [1.2.0] - 2026-01-20
 
 ### Added
 - **The 10 Operational Pillars**: Implemented the full frontend stack (Lexer, Parser, AST, Type Checker) for all 10 revolutionary language pillars.
@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     8.  **Quantum-Ready Syntax**: `quantum`, `qubit`, `superpose`, `entangle` blocks.
     9.  **Hardware-Accelerated Math**: `gpu`, `kernel`, `tensor`, `matrix` types.
     10. **Zero-Trust Security**: `verify`, `identity`, `encrypt`, `decrypt` primitives.
+
+### Fixed
+- **Security**: Fixed "Security Violation" errors in benchmarks by ensuring tainted values are correctly tracked and sanitized (`type_checker.c`).
+- **CI/CD**: Fixed dependency synchronization issues between `package.json` and `package-lock.json` causing build failures.
+- **Build**: Resolved multiple build errors including path resolution, `esbuild` configuration, and parser compilation issues.
 
 ### Changed
 - **Compiler Frontend**: Significantly expanded Lexer, AST, Parser, and Type Checker to support complex new syntax.
