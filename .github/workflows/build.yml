@@ -77,6 +77,10 @@ jobs:
             exit 1
           }
 
+      - name: Install Ninja (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install ninja -y
+
       - name: Configure (Unix)
         if: matrix.os != 'windows-latest'
         shell: bash
@@ -91,9 +95,12 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build `
+             -G "Ninja" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
              -DBUILD_TESTS=OFF `
              -DBUILD_BENCH=OFF `
+             -DCMAKE_C_COMPILER="$env:LLVM_ROOT/bin/clang.exe" `
+             -DCMAKE_CXX_COMPILER="$env:LLVM_ROOT/bin/clang++.exe" `
              -DLLVM_DIR="$env:LLVM_DIR" `
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
 

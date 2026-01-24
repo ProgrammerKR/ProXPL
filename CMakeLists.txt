@@ -20,6 +20,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 # --- LLVM Configuration ---
 find_package(LLVM CONFIG REQUIRED)
 
+if(NOT LLVM_FOUND)
+    message(FATAL_ERROR "LLVM not found! Please install LLVM and set LLVM_DIR.")
+endif()
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "LLVM Include Dirs: ${LLVM_INCLUDE_DIRS}")
+message(STATUS "LLVM Library Dirs: ${LLVM_LIBRARY_DIRS}")
+message(STATUS "LLVM Definitions: ${LLVM_DEFINITIONS}")
+
 # --- LibFFI Configuration ---
 # specialized find_package might be needed if not in standard path, but let's try standard first
 find_package(PkgConfig QUIET)
@@ -44,10 +53,16 @@ else()
     message(WARNING "LibFFI not found. FFI features will be disabled.")
 endif()
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
+
+# Explicitly add LLVM library directories
 link_directories(${LLVM_LIBRARY_DIRS})
+
+if(WIN32)
+    # Additional linking configuration for Windows
+    link_directories(${LLVM_LIBRARY_DIRS})
+endif()
 
 # Map generic components to specific libs
 llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
