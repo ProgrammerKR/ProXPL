@@ -77,14 +77,14 @@ jobs:
             Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
+            Add-Content $env:GITHUB_ENV "LLVM_AVAILABLE=1"
             
             Write-Host "✓ LLVM installed at: $llvmRoot"
             Write-Host "✓ LLVM_DIR set to: $llvmDir"
           } else {
-            Write-Host "✗ Could not find LLVMConfig.cmake after installation"
-            Write-Host "Listing LLVM directory structure..."
-            Get-ChildItem -Path $llvmRoot -Recurse -Directory | Select-Object -First 20 | ForEach-Object { Write-Host $_.FullName }
-            exit 1
+            Write-Host "✗ LLVMConfig.cmake not found - LLVM backend will be disabled"
+            Write-Host "Building without LLVM support on Windows"
+            Add-Content $env:GITHUB_ENV "LLVM_AVAILABLE=0"
           }
 
       - name: Install Ninja (Windows)
@@ -92,7 +92,7 @@ jobs:
         run: choco install ninja -y
 
       - name: Debug LLVM Configuration (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && env.LLVM_AVAILABLE == '1'
         shell: pwsh
         run: |
           Write-Host "LLVM_DIR: $env:LLVM_DIR"

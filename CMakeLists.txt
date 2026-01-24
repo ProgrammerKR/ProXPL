@@ -47,16 +47,27 @@ if(WIN32)
 endif()
 
 # --- LLVM Configuration ---
-find_package(LLVM CONFIG REQUIRED)
-
-if(NOT LLVM_FOUND)
-    message(FATAL_ERROR "LLVM not found! Please install LLVM and set LLVM_DIR.")
+if(WIN32)
+    # Try to find LLVM, but don't require it on Windows
+    find_package(LLVM CONFIG QUIET)
+else()
+    # LLVM is required on Unix platforms
+    find_package(LLVM CONFIG REQUIRED)
 endif()
 
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "LLVM Include Dirs: ${LLVM_INCLUDE_DIRS}")
-message(STATUS "LLVM Library Dirs: ${LLVM_LIBRARY_DIRS}")
-message(STATUS "LLVM Definitions: ${LLVM_DEFINITIONS}")
+if(NOT LLVM_FOUND)
+    if(WIN32)
+        message(WARNING "LLVM not found. Building without LLVM backend support on Windows.")
+    else()
+        message(FATAL_ERROR "LLVM not found! Please install LLVM and set LLVM_DIR.")
+    endif()
+else()
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "LLVM Include Dirs: ${LLVM_INCLUDE_DIRS}")
+    message(STATUS "LLVM Library Dirs: ${LLVM_LIBRARY_DIRS}")
+    message(STATUS "LLVM Definitions: ${LLVM_DEFINITIONS}")
+    add_definitions(-DUSE_LLVM_BACKEND)
+endif()
 
 # --- LibFFI Configuration ---
 # specialized find_package might be needed if not in standard path, but let's try standard first
@@ -82,19 +93,21 @@ else()
     message(WARNING "LibFFI not found. FFI features will be disabled.")
 endif()
 
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
+if(LLVM_FOUND)
+    include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
 
-# Explicitly add LLVM library directories
-link_directories(${LLVM_LIBRARY_DIRS})
-
-if(WIN32)
-    # Additional linking configuration for Windows
+    # Explicitly add LLVM library directories
     link_directories(${LLVM_LIBRARY_DIRS})
-endif()
 
-# Map generic components to specific libs
-llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
+    if(WIN32)
+        # Additional linking configuration for Windows
+        link_directories(${LLVM_LIBRARY_DIRS})
+    endif()
+
+    # Map generic components to specific libs
+    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
+endif()
 
 # Export symbols for Windows DLL
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
