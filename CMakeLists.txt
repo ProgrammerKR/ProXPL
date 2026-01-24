@@ -18,23 +18,32 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # Add explicit hints for LLVM on Windows
-if(WIN32 AND NOT LLVM_DIR)
-    message(STATUS "Searching for LLVM on Windows...")
-    # Common LLVM installation paths on Windows
-    set(LLVM_SEARCH_PATHS
-        "C:/Program Files/LLVM/lib/cmake/llvm"
-        "C:/Program Files/LLVM/share/llvm/cmake"
-        "C:/Program Files (x86)/LLVM/lib/cmake/llvm"
-        "C:/Program Files (x86)/LLVM/share/llvm/cmake"
-    )
+if(WIN32)
+    # First, verify if LLVM_DIR is set and valid
+    if(LLVM_DIR AND NOT EXISTS "${LLVM_DIR}/LLVMConfig.cmake")
+        message(WARNING "LLVM_DIR is set to '${LLVM_DIR}' but LLVMConfig.cmake not found there. Searching for LLVM...")
+        unset(LLVM_DIR CACHE)
+    endif()
     
-    foreach(search_path ${LLVM_SEARCH_PATHS})
-        if(EXISTS "${search_path}/LLVMConfig.cmake")
-            set(LLVM_DIR "${search_path}" CACHE PATH "LLVM CMake directory")
-            message(STATUS "Found LLVM CMake files at: ${search_path}")
-            break()
-        endif()
-    endforeach()
+    # If LLVM_DIR is not set or invalid, search common paths
+    if(NOT LLVM_DIR)
+        message(STATUS "Searching for LLVM on Windows...")
+        set(LLVM_SEARCH_PATHS
+            "C:/Program Files/LLVM/lib/cmake/llvm"
+            "C:/Program Files/LLVM/share/llvm/cmake"
+            "C:/Program Files/LLVM/cmake"
+            "C:/Program Files (x86)/LLVM/lib/cmake/llvm"
+            "C:/Program Files (x86)/LLVM/share/llvm/cmake"
+        )
+        
+        foreach(search_path ${LLVM_SEARCH_PATHS})
+            if(EXISTS "${search_path}/LLVMConfig.cmake")
+                set(LLVM_DIR "${search_path}" CACHE PATH "LLVM CMake directory")
+                message(STATUS "Found LLVM CMake files at: ${search_path}")
+                break()
+            endif()
+        endforeach()
+    endif()
 endif()
 
 # --- LLVM Configuration ---

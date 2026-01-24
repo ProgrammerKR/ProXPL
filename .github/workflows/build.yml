@@ -85,15 +85,30 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          Write-Host "LLVM_DIR: $env:LLVM_DIR"
+          Write-Host "Initial LLVM_DIR: $env:LLVM_DIR"
           Write-Host "LLVM_ROOT: $env:LLVM_ROOT"
-          Write-Host "Checking if LLVMConfig.cmake exists..."
-          if (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake") {
+          
+          # Check if LLVMConfig.cmake exists at the set LLVM_DIR
+          if ($env:LLVM_DIR -and (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake")) {
             Write-Host "✓ Found LLVMConfig.cmake at $env:LLVM_DIR/LLVMConfig.cmake"
           } else {
             Write-Host "✗ LLVMConfig.cmake not found at $env:LLVM_DIR"
             Write-Host "Searching for LLVMConfig.cmake..."
-            Get-ChildItem -Path "$env:LLVM_ROOT" -Filter "LLVMConfig.cmake" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object { Write-Host $_.FullName }
+            
+            # Search for LLVMConfig.cmake in LLVM installation
+            $found = Get-ChildItem -Path "$env:LLVM_ROOT" -Filter "LLVMConfig.cmake" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            
+            if ($found) {
+              $correctLLVMDir = Split-Path -Parent $found.FullName
+              $correctLLVMDir = $correctLLVMDir -replace "\\\\", "/"
+              Write-Host "✓ Found LLVMConfig.cmake at: $($found.FullName)"
+              Write-Host "Updating LLVM_DIR to: $correctLLVMDir"
+              Add-Content $env:GITHUB_ENV "LLVM_DIR=$correctLLVMDir"
+              $env:LLVM_DIR = $correctLLVMDir
+            } else {
+              Write-Host "✗ Could not find LLVMConfig.cmake in $env:LLVM_ROOT"
+              exit 1
+            }
           }
 
       - name: Configure (Unix)
