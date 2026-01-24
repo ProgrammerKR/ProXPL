@@ -53,27 +53,37 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          choco install llvm --version 17.0.6 -y --force
+          $llvmVersion = "17.0.6"
+          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${llvmVersion}/LLVM-${llvmVersion}-win64.exe"
+          $installerPath = "$env:TEMP\LLVM-installer.exe"
+          
+          Write-Host "Downloading LLVM ${llvmVersion} from GitHub releases..."
+          Invoke-WebRequest -Uri $llvmUrl -OutFile $installerPath
+          
+          Write-Host "Installing LLVM..."
+          Start-Process -FilePath $installerPath -ArgumentList "/S" -Wait
+          
           $llvmRoot = "C:\Program Files\LLVM"
           if (-not (Test-Path $llvmRoot)) { $llvmRoot = "C:\Program Files (x86)\LLVM" }
           
-          $llvmDir = ""
-          $candidates = @("$llvmRoot\lib\cmake\llvm", "$llvmRoot\share\llvm\cmake", "$llvmRoot\lib\llvm\cmake", "$llvmRoot\cmake")
-          foreach ($c in $candidates) {
-            if (Test-Path "$c\LLVMConfig.cmake") { $llvmDir = $c; break }
-          }
+          Write-Host "Searching for LLVMConfig.cmake..."
+          $found = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfig.cmake" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           
-          if (-not $llvmDir -and (Test-Path "C:\Program Files\LLVM\lib\cmake\llvm")) {
-             $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
-          }
-          
-          if ($llvmDir) {
-            $llvmDir = $llvmDir -replace "\\", "/"
-            $llvmRoot = $llvmRoot -replace "\\", "/"
+          if ($found) {
+            $llvmDir = Split-Path -Parent $found.FullName
+            $llvmDir = $llvmDir -replace "\\\\", "/"
+            $llvmRoot = $llvmRoot -replace "\\\\", "/"
+            
             Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
             Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
             Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
+            
+            Write-Host "✓ LLVM installed at: $llvmRoot"
+            Write-Host "✓ LLVM_DIR set to: $llvmDir"
           } else {
+            Write-Host "✗ Could not find LLVMConfig.cmake after installation"
+            Write-Host "Listing LLVM directory structure..."
+            Get-ChildItem -Path $llvmRoot -Recurse -Directory | Select-Object -First 20 | ForEach-Object { Write-Host $_.FullName }
             exit 1
           }
 
@@ -85,30 +95,15 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          Write-Host "Initial LLVM_DIR: $env:LLVM_DIR"
+          Write-Host "LLVM_DIR: $env:LLVM_DIR"
           Write-Host "LLVM_ROOT: $env:LLVM_ROOT"
           
-          # Check if LLVMConfig.cmake exists at the set LLVM_DIR
-          if ($env:LLVM_DIR -and (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake")) {
-            Write-Host "✓ Found LLVMConfig.cmake at $env:LLVM_DIR/LLVMConfig.cmake"
+          # Verify LLVMConfig.cmake exists
+          if (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake") {
+            Write-Host "✓ Confirmed: LLVMConfig.cmake exists at $env:LLVM_DIR/LLVMConfig.cmake"
           } else {
-            Write-Host "✗ LLVMConfig.cmake not found at $env:LLVM_DIR"
-            Write-Host "Searching for LLVMConfig.cmake..."
-            
-            # Search for LLVMConfig.cmake in LLVM installation
-            $found = Get-ChildItem -Path "$env:LLVM_ROOT" -Filter "LLVMConfig.cmake" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            
-            if ($found) {
-              $correctLLVMDir = Split-Path -Parent $found.FullName
-              $correctLLVMDir = $correctLLVMDir -replace "\\\\", "/"
-              Write-Host "✓ Found LLVMConfig.cmake at: $($found.FullName)"
-              Write-Host "Updating LLVM_DIR to: $correctLLVMDir"
-              Add-Content $env:GITHUB_ENV "LLVM_DIR=$correctLLVMDir"
-              $env:LLVM_DIR = $correctLLVMDir
-            } else {
-              Write-Host "✗ Could not find LLVMConfig.cmake in $env:LLVM_ROOT"
-              exit 1
-            }
+            Write-Host "✗ ERROR: LLVMConfig.cmake not found at $env:LLVM_DIR"
+            exit 1
           }
 
       - name: Configure (Unix)
