@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            EXE_PATH="build/Release/proxpl.exe"
+            EXE_PATH="build/proxpl.exe"
           else
             EXE_PATH="build/proxpl"
           fi
@@ -95,10 +95,10 @@ jobs:
         run: |
           choco install innosetup -y
           New-Item -ItemType Directory -Force -Path bin
-          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
-          Copy-Item "build/Release/prm.exe" -Destination "bin/"
-          if (Test-Path "build/Release/proxpl_lib.dll") {
-            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
+          Copy-Item "build/proxpl.exe" -Destination "bin/"
+          Copy-Item "build/prm.exe" -Destination "bin/"
+          if (Test-Path "build/proxpl_lib.dll") {
+            Copy-Item "build/proxpl_lib.dll" -Destination "bin/"
           }
           iscc setup.iss
 
