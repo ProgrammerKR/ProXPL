@@ -49,62 +49,10 @@ jobs:
           brew install llvm
           echo "CMAKE_PREFIX_PATH=$(brew --prefix llvm)" >> $GITHUB_ENV
 
-      - name: Setup LLVM (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $llvmVersion = "17.0.6"
-          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${llvmVersion}/LLVM-${llvmVersion}-win64.exe"
-          $installerPath = "$env:TEMP\LLVM-installer.exe"
-          
-          Write-Host "Downloading LLVM ${llvmVersion} from GitHub releases..."
-          Invoke-WebRequest -Uri $llvmUrl -OutFile $installerPath
-          
-          Write-Host "Installing LLVM..."
-          Start-Process -FilePath $installerPath -ArgumentList "/S" -Wait
-          
-          $llvmRoot = "C:\Program Files\LLVM"
-          if (-not (Test-Path $llvmRoot)) { $llvmRoot = "C:\Program Files (x86)\LLVM" }
-          
-          Write-Host "Searching for LLVMConfig.cmake..."
-          $found = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfig.cmake" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          
-          if ($found) {
-            $llvmDir = Split-Path -Parent $found.FullName
-            $llvmDir = $llvmDir -replace "\\\\", "/"
-            $llvmRoot = $llvmRoot -replace "\\\\", "/"
-            
-            Add-Content $env:GITHUB_PATH "$llvmRoot/bin"
-            Add-Content $env:GITHUB_ENV "LLVM_DIR=$llvmDir"
-            Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
-            Add-Content $env:GITHUB_ENV "LLVM_AVAILABLE=1"
-            
-            Write-Host "✓ LLVM installed at: $llvmRoot"
-            Write-Host "✓ LLVM_DIR set to: $llvmDir"
-          } else {
-            Write-Host "✗ LLVMConfig.cmake not found - LLVM backend will be disabled"
-            Write-Host "Building without LLVM support on Windows"
-            Add-Content $env:GITHUB_ENV "LLVM_AVAILABLE=0"
-          }
-
       - name: Install Ninja (Windows)
         if: matrix.os == 'windows-latest'
         run: choco install ninja -y
 
-      - name: Debug LLVM Configuration (Windows)
-        if: matrix.os == 'windows-latest' && env.LLVM_AVAILABLE == '1'
-        shell: pwsh
-        run: |
-          Write-Host "LLVM_DIR: $env:LLVM_DIR"
-          Write-Host "LLVM_ROOT: $env:LLVM_ROOT"
-          
-          # Verify LLVMConfig.cmake exists
-          if (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake") {
-            Write-Host "✓ Confirmed: LLVMConfig.cmake exists at $env:LLVM_DIR/LLVMConfig.cmake"
-          } else {
-            Write-Host "✗ ERROR: LLVMConfig.cmake not found at $env:LLVM_DIR"
-            exit 1
-          }
 
       - name: Configure (Unix)
         if: matrix.os != 'windows-latest'
@@ -119,18 +67,11 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $llvmDir = $env:LLVM_DIR
-          Write-Host "Using LLVM_DIR: $llvmDir"
-          
           cmake -S . -B build `
              -G "Ninja" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
              -DBUILD_TESTS=OFF `
-             -DBUILD_BENCH=OFF `
-             -DCMAKE_C_COMPILER="$env:LLVM_ROOT/bin/clang.exe" `
-             -DCMAKE_CXX_COMPILER="$env:LLVM_ROOT/bin/clang++.exe" `
-             -DLLVM_DIR="$llvmDir" `
-             -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
+             -DBUILD_BENCH=OFF
 
       - name: Build
         shell: bash
