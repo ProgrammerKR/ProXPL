@@ -81,6 +81,21 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: choco install ninja -y
 
+      - name: Debug LLVM Configuration (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "LLVM_DIR: $env:LLVM_DIR"
+          Write-Host "LLVM_ROOT: $env:LLVM_ROOT"
+          Write-Host "Checking if LLVMConfig.cmake exists..."
+          if (Test-Path "$env:LLVM_DIR/LLVMConfig.cmake") {
+            Write-Host "✓ Found LLVMConfig.cmake at $env:LLVM_DIR/LLVMConfig.cmake"
+          } else {
+            Write-Host "✗ LLVMConfig.cmake not found at $env:LLVM_DIR"
+            Write-Host "Searching for LLVMConfig.cmake..."
+            Get-ChildItem -Path "$env:LLVM_ROOT" -Filter "LLVMConfig.cmake" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object { Write-Host $_.FullName }
+          }
+
       - name: Configure (Unix)
         if: matrix.os != 'windows-latest'
         shell: bash
@@ -94,6 +109,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
+          $llvmDir = $env:LLVM_DIR
+          Write-Host "Using LLVM_DIR: $llvmDir"
+          
           cmake -S . -B build `
              -G "Ninja" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
@@ -101,7 +119,7 @@ jobs:
              -DBUILD_BENCH=OFF `
              -DCMAKE_C_COMPILER="$env:LLVM_ROOT/bin/clang.exe" `
              -DCMAKE_CXX_COMPILER="$env:LLVM_ROOT/bin/clang++.exe" `
-             -DLLVM_DIR="$env:LLVM_DIR" `
+             -DLLVM_DIR="$llvmDir" `
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
 
       - name: Build
