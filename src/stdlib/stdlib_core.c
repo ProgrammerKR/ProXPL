@@ -27,6 +27,7 @@ void register_math_globals(VM* vm);
 void register_string_natives(VM* vm);
 void register_convert_natives(VM* vm);
 void register_system_natives(VM* vm);
+void register_io_globals(VM* vm);
 
 // Exposed natives
 extern Value native_clock(int argCount, Value* args);
@@ -278,4 +279,7 @@ void registerStdLib(VM* vm) {
 
     // Register math globals
     register_math_globals(vm);
+    
+    // Register I/O globals
+    register_io_globals(vm);
 }

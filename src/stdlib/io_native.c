@@ -78,9 +78,31 @@ static Value native_println(int argCount, Value* args) {
 static Value native_input_raw(int argCount, Value* args) {
     char buffer[1024];
     if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-        // Remove newline
+        // Remove newline(s)
         size_t len = strlen(buffer);
-        if (len > 0 && buffer[len-1] == '\n') {
+        while (len > 0 && (buffer[len-1] == '\n' || buffer[len-1] == '\r')) {
+            buffer[len-1] = '\0';
+            len--;
+        }
+        return OBJ_VAL(copyString(buffer, (int)len));
+    }
+    return NIL_VAL;
+}
+
+// input(prompt) - Display prompt and read line from stdin
+static Value native_input(int argCount, Value* args) {
+    // Print optional prompt
+    if (argCount > 0 && IS_STRING(args[0])) {
+        printf("%s", AS_CSTRING(args[0]));
+        fflush(stdout);
+    }
+    
+    // Read input
+    char buffer[1024];
+    if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+        // Remove newline(s)
+        size_t len = strlen(buffer);
+        while (len > 0 && (buffer[len-1] == '\n' || buffer[len-1] == '\r')) {
             buffer[len-1] = '\0';
             len--;
         }
@@ -117,10 +139,18 @@ ObjModule* create_std_io_module() {
     defineModuleFn(module, "println", native_println);
     defineModuleFn(module, "eprint_raw", native_eprint_raw);
     defineModuleFn(module, "input_raw", native_input_raw);
+    defineModuleFn(module, "input", native_input);
     defineModuleFn(module, "flush_raw", native_flush_raw);
     defineModuleFn(module, "set_color_raw", native_set_color_raw);
 
     pop(&vm); // module
     pop(&vm); // name
     return module;
+}
+
+// Register I/O functions as globals (for convenience)
+void register_io_globals(VM* vm) {
+    defineNative(vm, "print", native_print_raw);
+    defineNative(vm, "println", native_println);
+    defineNative(vm, "input", native_input);
 }

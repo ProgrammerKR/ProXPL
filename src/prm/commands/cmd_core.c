@@ -6,7 +6,7 @@
 // --- Core ---
 
 void prm_version() {
-    printf("prm v0.2.0 (ProXPL v0.2.0)\n");
+    printf("prm v1.2.0 (ProXPL v1.2.0)\n");
 }
 
 void prm_doctor() {
