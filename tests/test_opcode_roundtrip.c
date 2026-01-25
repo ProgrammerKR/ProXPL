@@ -15,15 +15,25 @@
 #include <assert.h>
 #include "bytecode.h"
 
+#include "../include/value.h"
+#include "../include/object.h"
+
+// Stub for native functions? No, linked with object.c which needs vm
+// So we need vm stub or link with vm_stub.o
+
 int main(void) {
     const char *tmp = "tests/tmp_opcode_rt.proxbc";
 
     Chunk c;
-    chunk_init(&c);
+    initChunk(&c);
 
     /* Add a couple constants */
-    Value v1; v1.type = VAL_NUMBER; v1.as.number = 3.14; consttable_add(&c.constants, v1);
-    Value v2; v2.type = VAL_STRING; v2.as.string.length = 5; v2.as.string.chars = strdup("hello"); consttable_add(&c.constants, v2);
+    /* Note: copyString requires VM to be zero-initialized (vm global) which is done by BSS or explicit init if linked */
+    Value v1 = NUMBER_VAL(3.14);
+    addConstant(&c, v1);
+    
+    Value v2 = OBJ_VAL(copyString("hello", 5));
+    addConstant(&c, v2);
 
     /* Emit instructions */
     emit_opcode(&c, OP_PUSH_CONST);
@@ -35,39 +45,44 @@ int main(void) {
 
     if (write_chunk_to_file(tmp, &c) != 0) {
         fprintf(stderr, "Failed to write chunk to %s\n", tmp);
-        chunk_free(&c);
+        freeChunk(&c);
         return 2;
     }
 
     Chunk out;
     if (read_chunk_from_file(tmp, &out) != 0) {
         fprintf(stderr, "Failed to read chunk back\n");
-        chunk_free(&c);
+        freeChunk(&c);
         return 3;
     }
 
     /* Compare code bytes */
-    if (out.code_len != c.code_len) {
-        fprintf(stderr, "Code length mismatch: %zu vs %zu\n", out.code_len, c.code_len);
-        chunk_free(&c); chunk_free(&out); return 4;
+    if (out.count != c.count) {
+        fprintf(stderr, "Code length mismatch: %d vs %d\n", out.count, c.count);
+        freeChunk(&c); freeChunk(&out); return 4;
     }
-    if (memcmp(out.code, c.code, c.code_len) != 0) {
+    if (memcmp(out.code, c.code, c.count) != 0) {
         fprintf(stderr, "Code bytes differ\n");
-        chunk_free(&c); chunk_free(&out); return 5;
+        freeChunk(&c); freeChunk(&out); return 5;
     }
 
     /* Compare constants count and first values */
     if (out.constants.count != c.constants.count) {
-        fprintf(stderr, "Const count mismatch: %zu vs %zu\n", out.constants.count, c.constants.count);
-        chunk_free(&c); chunk_free(&out); return 6;
+        fprintf(stderr, "Const count mismatch: %d vs %d\n", out.constants.count, c.constants.count);
+        freeChunk(&c); freeChunk(&out); return 6;
     }
-    if (out.constants.items[0].type != VAL_NUMBER) {
-        fprintf(stderr, "Const type mismatch for idx 0\n"); chunk_free(&c); chunk_free(&out); return 7;
+    // Check first constant is number
+    Value out_v1 = out.constants.values[0];
+    if (!IS_NUMBER(out_v1)) {
+        fprintf(stderr, "Const type mismatch for idx 0\n"); freeChunk(&c); freeChunk(&out); return 7;
+    }
+    if (AS_NUMBER(out_v1) != 3.14) {
+         fprintf(stderr, "Const value mismatch for idx 0\n"); freeChunk(&c); freeChunk(&out); return 8;
     }
 
     /* Clean up */
-    chunk_free(&c);
-    chunk_free(&out);
+    freeChunk(&c);
+    freeChunk(&out);
 
     /* Remove temporary file */
     remove(tmp);

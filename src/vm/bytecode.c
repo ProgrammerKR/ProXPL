@@ -351,6 +351,8 @@ int example_write_hello(const char *path) {
     /* CALL: addressing mode const (AM_CONST), const idx = 1, argc = 1 */
     emit_opcode(&c, OP_CALL);
     emit_u8(&c, AM_CONST);
+    emit_uleb128(&c, 1);
+    emit_u8(&c, 1);
     emit_opcode(&c, OP_HALT);
 
     int rc = write_chunk_to_file(path, &c);

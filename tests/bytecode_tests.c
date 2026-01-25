@@ -55,7 +55,7 @@ int main(void) {
     }
 
     /* Cleanup */
-    chunk_free(&c);
+    freeChunk(&c);
 
     /* Create blob in-memory and disasm */
     uint8_t *buf = NULL; size_t buflen = 0;
@@ -72,7 +72,7 @@ int main(void) {
             disasm_chunk(&c2);
             printf("Running blob chunk:\n");
             vm_run_chunk_simple(&c2);
-            chunk_free(&c2);
+            freeChunk(&c2);
         }
     }
     printf("ProXPL bytecode tests finished\n");
