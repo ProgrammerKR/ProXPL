@@ -261,6 +261,18 @@ void registerStdLib(VM* vm) {
         pop(vm); // field
     }
     pop(vm); // gcKey
+    
+    // std.core (bind to main std object)
+    Value coreVal;
+    ObjString* coreKey = copyString("std.core", 8);
+    push(vm, OBJ_VAL(coreKey));
+    if (tableGet(&vm->importer.modules, coreKey, &coreVal)) {
+        ObjString* field = copyString("core", 4);
+        push(vm, OBJ_VAL(field));
+        tableSet(&stdMod->exports, field, coreVal);
+        pop(vm); // field
+    }
+    pop(vm); // coreKey
 
     // Register 'std' as global
     tableSet(&vm->globals, stdName, OBJ_VAL(stdMod));

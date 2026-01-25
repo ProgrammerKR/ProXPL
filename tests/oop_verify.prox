@@ -10,6 +10,9 @@ class Animal {
     }
 }
 
+print "Checking Animal...";
+print Animal;
+
 class Dog extends Animal {
     init(name) {
         // Manually setting property since super.init() support is pending/limited

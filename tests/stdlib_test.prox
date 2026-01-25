@@ -17,12 +17,12 @@ std.io.print("Hello from std.io.print!");
 
 // Test std.fs
 print("Testing std.fs...");
-var testFile = "test_output.txt";
+let testFile = "test_output.txt";
 std.fs.writeFile(testFile, "Hello File System!");
 
 if (std.fs.exists(testFile)) {
     print("File created successfully.");
-    var content = std.fs.readFile(testFile);
+    let content = std.fs.readFile(testFile);
     print("File content: " + content);
     std.core.assert(content == "Hello File System!", "File content mismatch");
 } else {
@@ -34,7 +34,7 @@ print("Testing std.sys...");
 print("OS: " + std.sys.OS_NAME);
 print("Arch: " + std.sys.ARCH);
 
-var path = std.sys.env("PATH");
+let path = std.sys.env("PATH");
 if (path) {
     print("PATH env var found (length " + std.core.typeOf(path) + ")");
 } else {

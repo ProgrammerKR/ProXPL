@@ -411,7 +411,7 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   return stmt;
 }
 
-Stmt *createClassDeclStmt(const char *name, VariableExpr *super,
+Stmt *createClassDeclStmt(const char *name, Expr *super,
                           StringList *interfaces, StmtList *methods, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_CLASS_DECL;

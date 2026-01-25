@@ -893,7 +893,7 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             
             // Inheritance (Placeholder: emit push null superclass if none?)
             if (stmt->as.class_decl.superclass) {
-                genExpr(gen, (Expr*)stmt->as.class_decl.superclass);
+                genExpr(gen, stmt->as.class_decl.superclass);
                 if (gen->compiler->scopeDepth > 0) {
                      writeChunk(gen->chunk, OP_GET_LOCAL, stmt->line);
                      writeChunk(gen->chunk, (uint8_t)(gen->compiler->localCount - 1), stmt->line);

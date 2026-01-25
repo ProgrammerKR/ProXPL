@@ -320,12 +320,11 @@ static Stmt *classDecl(Parser *p) {
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect class name.");
   char *name = tokenToString(nameToken);
 
-  VariableExpr *superclass = NULL;
+  Expr *superclass = NULL;
   if (match(p, 1, TOKEN_EXTENDS)) {
     Token superToken = consume(p, TOKEN_IDENTIFIER, "Expect superclass name.");
     char *superName = tokenToString(superToken);
-    Expr *superExpr = createVariableExpr(superName, superToken.line, 0);
-    superclass = &superExpr->as.variable;
+    superclass = createVariableExpr(superName, superToken.line, 0);
     free(superName);
   }
   

@@ -4,13 +4,13 @@
 print("--- Testing Class Declarations ---");
 
 class Animal {
-  func speak() {
+  speak() {
     print("Animal makes a sound.");
   }
 }
 
 class Dog extends Animal {
-  func speak() {
+  speak() {
     print("Dog barks!");
   }
 }
@@ -41,10 +41,10 @@ print("Dog renamed: " + d.name);
 print("--- Testing 'this' Binding ---");
 
 class Person {
-  func setAge(age) {
+  setAge(age) {
     this.age = age;
   }
-  func greet() {
+  greet() {
     print("Hello, I am " + this.age + " years old.");
   }
 }

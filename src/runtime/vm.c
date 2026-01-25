@@ -1225,8 +1225,8 @@ static InterpretResult run(VM* vm) {
     case OP_INHERIT: {
         Value superclass = peek(vm, 1);
         if (!IS_CLASS(superclass)) {
-          runtimeError(vm, "Superclass must be a class.");
-          return INTERPRET_RUNTIME_ERROR;
+             runtimeError(vm, "Superclass must be a class.");
+             return INTERPRET_RUNTIME_ERROR;
         }
         ObjClass* subclass = AS_CLASS(peek(vm, 0));
         tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
