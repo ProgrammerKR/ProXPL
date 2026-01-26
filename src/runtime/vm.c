@@ -201,6 +201,7 @@ static InterpretResult run(VM* vm) {
       [OP_BIT_AND] = &&DO_OP_BIT_AND,
       [OP_BIT_OR] = &&DO_OP_BIT_OR,
       [OP_BIT_XOR] = &&DO_OP_BIT_XOR,
+      [OP_BIT_NOT] = &&DO_OP_BIT_NOT,
       [OP_LEFT_SHIFT] = &&DO_OP_LEFT_SHIFT,
       [OP_RIGHT_SHIFT] = &&DO_OP_RIGHT_SHIFT
   };
@@ -785,6 +786,15 @@ static InterpretResult run(VM* vm) {
       push(vm, NUMBER_VAL((double)(a ^ b)));
       DISPATCH();
   }
+  DO_OP_BIT_NOT: {
+      if (!IS_NUMBER(peek(vm, 0))) {
+          runtimeError(vm, "Operand must be a number.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int a = (int)AS_NUMBER(pop(vm));
+      push(vm, NUMBER_VAL((double)(~a)));
+      DISPATCH();
+  }
   DO_OP_LEFT_SHIFT: {
       int b = (int)AS_NUMBER(pop(vm));
       int a = (int)AS_NUMBER(pop(vm));
@@ -1312,6 +1322,15 @@ static InterpretResult run(VM* vm) {
         int b = (int)AS_NUMBER(pop(vm));
         int a = (int)AS_NUMBER(pop(vm));
         push(vm, NUMBER_VAL((double)(a ^ b)));
+        break;
+    }
+    case OP_BIT_NOT: {
+        if (!IS_NUMBER(peek(vm, 0))) {
+            runtimeError(vm, "Operand must be a number.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        int a = (int)AS_NUMBER(pop(vm));
+        push(vm, NUMBER_VAL((double)(~a)));
         break;
     }
     case OP_LEFT_SHIFT: {

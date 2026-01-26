@@ -165,6 +165,8 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
                  writeChunk(gen->chunk, OP_NEGATE, expr->line);
             } else if (strcmp(expr->as.unary.operator, "!") == 0) {
                  writeChunk(gen->chunk, OP_NOT, expr->line);
+            } else if (strcmp(expr->as.unary.operator, "~") == 0) {
+                 writeChunk(gen->chunk, OP_BIT_NOT, expr->line);
             }
             break;
         }
@@ -244,7 +246,8 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
         }
         case EXPR_LOGICAL: {
             genExpr(gen, expr->as.logical.left);
-            writeChunk(gen->chunk, OP_DUP, expr->line); // Keep left for short-circuit check? 
+            // writeChunk(gen->chunk, OP_DUP, expr->line); // REMOVED: OP_JUMP_IF_FALSE peeks, so we don't need DUP.
+            
             // Correct Logic: 
             // AND: if left false, jump to end (result is left). else pop and gen right.
             // OR: if left true, jump to end (result is left). else pop and gen right.

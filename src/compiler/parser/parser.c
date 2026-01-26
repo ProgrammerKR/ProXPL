@@ -950,7 +950,7 @@ static Expr *unary(Parser *p) {
       Expr *right = unary(p);
       return createAwaitExpr(right, op.line, 0);
   }
-  if (match(p, 2, TOKEN_BANG, TOKEN_MINUS)) {
+  if (match(p, 3, TOKEN_BANG, TOKEN_MINUS, TOKEN_TILDE)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
     Expr *right = unary(p);

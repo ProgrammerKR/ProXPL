@@ -306,6 +306,10 @@ void registerStdLib(VM* vm) {
     // Register math globals
     register_math_globals(vm);
     
+    // Register String globals
+    extern void register_string_globals(VM* vm);
+    register_string_globals(vm);
+    
     // Register I/O globals
     register_io_globals(vm);
 }

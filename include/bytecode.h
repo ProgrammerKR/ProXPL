@@ -69,6 +69,7 @@ typedef enum {
   OP_BIT_AND,
   OP_BIT_OR,
   OP_BIT_XOR,
+  OP_BIT_NOT,
   OP_LEFT_SHIFT,
   OP_RIGHT_SHIFT,
   OP_HALT = 0xFF

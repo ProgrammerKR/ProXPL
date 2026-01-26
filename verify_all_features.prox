@@ -1,0 +1,132 @@
+
+// verify_all_features.prox
+// Comprehensive test suite for ProXPL Language Specification
+
+func main() {
+    print("=== Starting ProXPL Language Feature Verification ===");
+    
+    // ---------------------------------------------------------
+    // 1. Data Types
+    // ---------------------------------------------------------
+    print("\n--- Testing Data Types ---");
+    
+    let v_int = 42;
+    let v_float = 3.14;
+    let v_bool = true;
+    let v_str = "hello";
+    let v_list = [1, 2, 3];
+    let v_dict = {"a": 1};
+    let v_null = null;
+    
+    // Set, Bytes, Function defined later if constructors exist
+    // let v_set = Set([1]); // Check if Set constructor exists
+    // let v_bytes = bytes([0]); // Check if bytes constructor exists
+
+    print("Int: " + to_string(v_int));
+    print("Float: " + to_string(v_float));
+    print("Bool: " + to_string(v_bool));
+    print("String: " + v_str);
+    print("List: " + to_string(v_list));
+    // print("Dict: " + to_string(v_dict)); // Dict to_string might not be automatic?
+
+    // ---------------------------------------------------------
+    // 2. Operators
+    // ---------------------------------------------------------
+    print("\n--- Testing Operators ---");
+    
+    // Arithmetic
+    print("Add: " + to_string(5 + 3));
+    print("Sub: " + to_string(5 - 3));
+    print("Mul: " + to_string(5 * 3));
+    print("Div: " + to_string(15 / 3));
+    print("Mod: " + to_string(17 % 5));
+    // print("Pow: " + to_string(2 ** 8)); // Check if ** operator exists or needing pow()
+
+    // Comparison
+    print("Eq: " + to_string(5 == 5));
+    print("Neq: " + to_string(5 != 3));
+    print("Lt: " + to_string(3 < 5));
+    print("Gt: " + to_string(5 > 3));
+    print("Lte: " + to_string(5 <= 5));
+    print("Gte: " + to_string(5 >= 3));
+
+    // Logical
+    print("And: " + to_string(true && false));
+    print("Or: " + to_string(true || false));
+    print("Not: " + to_string(!true));
+
+    // Bitwise
+    print("BitAnd: " + to_string(5 & 3));
+    print("BitOr: " + to_string(5 | 3));
+    print("BitXor: " + to_string(5 ^ 3));
+    print("BitLShift: " + to_string(5 << 1));
+    print("BitRShift: " + to_string(10 >> 1));
+    print("BitNot: " + to_string(~5)); // Verify if implemented
+
+    // ---------------------------------------------------------
+    // 4. Built-in Functions (Math)
+    // ---------------------------------------------------------
+    print("\n--- Testing Math Functions ---");
+    print("abs(-5): " + to_string(abs(-5)));
+    print("ceil(3.2): " + to_string(ceil(3.2)));
+    print("floor(3.8): " + to_string(floor(3.8)));
+    print("round(3.5): " + to_string(round(3.5)));
+    print("sqrt(16): " + to_string(sqrt(16)));
+    print("pow(2, 3): " + to_string(pow(2, 3)));
+    print("log(2.718): " + to_string(log(2.718))); // ~1
+    print("exp(1): " + to_string(exp(1)));
+    
+    print("max(1, 2): " + to_string(max(1, 2))); 
+    print("min(1, 2): " + to_string(min(1, 2)));
+    
+    print("random(): " + to_string(random()));
+    print("randint(1, 10): " + to_string(randint(1, 10)));
+    print("random(1, 10): " + to_string(random(1, 10)));
+    
+    // Trigonometry
+    print("sin(0): " + to_string(sin(0)));
+    print("cos(0): " + to_string(cos(0)));
+    print("tan(0): " + to_string(tan(0)));
+    print("asin(0): " + to_string(asin(0)));
+    print("acos(1): " + to_string(acos(1)));
+    print("atan(0): " + to_string(atan(0)));
+
+    // ---------------------------------------------------------
+    // 5. Built-in Functions (String)
+    // ---------------------------------------------------------
+    print("\n--- Testing String Functions ---");
+    let s = " Hello ";
+    print("len: " + to_string(len(s)));
+    print("upper: " + upper(s)); 
+    print("lower: " + lower(s));
+    print("trim: '" + trim(s) + "'");
+    print("replace: " + replace("hello", "l", "L"));
+    print("contains: " + to_string(contains("hello", "ell")));
+    print("startswith: " + to_string(startswith("hello", "he")));
+    print("endswith: " + to_string(endswith("hello", "lo")));
+    print("substr: " + substr("hello", 1, 3));
+    
+    // ---------------------------------------------------------
+    // 6. Built-in Functions (Collections)
+    // ---------------------------------------------------------
+    print("\n--- Testing Collection Functions ---");
+    let lst = [1, 2];
+    push(lst, 3);
+    print("push: " + to_string(lst));
+    let p = pop(lst);
+    print("pop: " + to_string(p) + ", list: " + to_string(lst));
+    
+    // ---------------------------------------------------------
+    // 7. Built-in Functions (System/Runtime)
+    // ---------------------------------------------------------
+    print("\n--- Testing System/Runtime ---");
+    print("clock: " + to_string(clock()));
+    // sleep(100); 
+    // print("Slept 100ms");
+    // typeof
+    // print("typeof(1): " + typeof(1)); // operator or function?
+
+    print("\n=== Verification Complete ===");
+}
+
+main();
