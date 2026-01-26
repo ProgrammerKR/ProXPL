@@ -45,7 +45,7 @@ Source: "bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "bin\prm.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
 ; Libraries
-Source: "lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "std\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Documentation
 Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Assets
