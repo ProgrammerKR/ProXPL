@@ -170,6 +170,16 @@ static Value native_exp(int argCount, Value* args) {
 
 // random() - Random number [0, 1)
 static Value native_random(int argCount, Value* args) {
+    // If no arguments, return float [0.0, 1.0) - Standard behavior
+    if (argCount == 0) {
+        double random_part = (double)rand() / ((double)RAND_MAX + 1.0);
+        return NUMBER_VAL(random_part);
+    }
+
+    // If arguments are provided, behave like randint (User request: "no decimals")
+    // random(max) -> [0, max]
+    // random(min, max) -> [min, max]
+    
     double min = 0.0;
     double max = 1.0;
 
@@ -188,9 +198,15 @@ static Value native_random(int argCount, Value* args) {
         max = temp;
     }
 
-    double range = max - min;
-    double random_part = (double)rand() / (double)RAND_MAX;
-    return NUMBER_VAL(min + (random_part * range));
+    // Return integer
+    long long min_int = (long long)min;
+    long long max_int = (long long)max;
+    long long range = max_int - min_int + 1;
+    
+    // Safety check for range 0 or negative (though swapped above)
+    if (range <= 0) return NUMBER_VAL(min_int);
+
+    return NUMBER_VAL((double)(min_int + (rand() % range)));
 }
 
 // randint(min, max) - Random integer in [min, max]
