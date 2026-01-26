@@ -1,0 +1,17 @@
+// Debug For Loop
+print("Starting For Loop Debug");
+let sum = 0;
+for (let j = 0; j < 5; j = j + 1) {
+    print("Loop j: ");
+    print(j);
+    sum = sum + j;
+    print("New Sum: ");
+    print(sum);
+}
+print("Final Sum: ");
+print(sum);
+if (sum == 10) {
+    print("SUCCESS: Sum is 10");
+} else {
+    print("FAILURE: Sum is not 10");
+}

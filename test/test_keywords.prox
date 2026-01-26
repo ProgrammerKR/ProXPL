@@ -1,0 +1,58 @@
+// Test Keywords and Control Flow
+print("--- Testing Keywords ---");
+
+func assert(condition, message) {
+    if (condition) {
+        print("PASS: " + message);
+    } else {
+        print("FAIL: " + message);
+    }
+}
+
+// var / let (scope test)
+let x = 10;
+if (true) {
+    let x = 20;
+    assert(x == 20, "Inner scope let shadows outer");
+}
+assert(x == 10, "Outer scope preserved");
+
+// if / else
+let checked = false;
+if (true) {
+    checked = true;
+} else {
+    checked = false;
+}
+assert(checked, "If statement executed");
+
+if (false) {
+    checked = false;
+} else {
+    checked = true;
+}
+assert(checked, "Else statement executed");
+
+// while loop
+let i = 0;
+while (i < 5) {
+    i = i + 1;
+}
+assert(i == 5, "While loop executed 5 times");
+
+// for loop (if supported, assuming standard C-style or similar)
+// Note: ProXPL syntax for 'for' loops might vary, checking scanner/parser might be needed if this fails.
+// Assuming for (init; condition; increment)
+let sum = 0;
+for (let j = 0; j < 5; j = j + 1) {
+    sum = sum + j;
+}
+assert(sum == 10, "For loop sum (0+1+2+3+4)");
+
+// func and return
+func add(a, b) {
+    return a + b;
+}
+assert(add(5, 7) == 12, "Function call and return");
+
+print("Keywords Tests Completed");

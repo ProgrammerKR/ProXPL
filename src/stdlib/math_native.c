@@ -170,7 +170,27 @@ static Value native_exp(int argCount, Value* args) {
 
 // random() - Random number [0, 1)
 static Value native_random(int argCount, Value* args) {
-    return NUMBER_VAL((double)rand() / RAND_MAX);
+    double min = 0.0;
+    double max = 1.0;
+
+    if (argCount == 1) {
+        if (!IS_NUMBER(args[0])) return NUMBER_VAL(0);
+        max = AS_NUMBER(args[0]);
+    } else if (argCount >= 2) {
+        if (!IS_NUMBER(args[0]) || !IS_NUMBER(args[1])) return NUMBER_VAL(0);
+        min = AS_NUMBER(args[0]);
+        max = AS_NUMBER(args[1]);
+    }
+
+    if (min > max) {
+        double temp = min;
+        min = max;
+        max = temp;
+    }
+
+    double range = max - min;
+    double random_part = (double)rand() / (double)RAND_MAX;
+    return NUMBER_VAL(min + (random_part * range));
 }
 
 // randint(min, max) - Random integer in [min, max]

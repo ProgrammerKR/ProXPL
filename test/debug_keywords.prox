@@ -1,0 +1,18 @@
+// Debug Scope and Loops
+print("--- Debug Scope ---");
+let x = 10;
+print("Outer x: " + x);
+// Shadowing might fail if not supported.
+// if (true) {
+//    let x = 20;
+//    print("Inner x: " + x);
+// }
+print("Outer x after: " + x);
+
+print("--- Debug For Loop ---");
+let sum = 0;
+for (let j = 0; j < 5; j = j + 1) {
+    print("j: " + j);
+    sum = sum + j;
+}
+print("Sum: " + sum);

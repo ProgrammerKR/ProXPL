@@ -1,0 +1,51 @@
+// Test Data Types
+use std.core;
+
+print("--- Testing Data Types ---");
+
+// Helper assert
+func assert(condition, message) {
+    if (condition) {
+        print("PASS: " + message);
+    } else {
+        print("FAIL: " + message);
+    }
+}
+
+// Integers / Numbers
+let a = 10;
+let b = 3.14;
+print("Number (int): " + a);
+print("Number (float): " + b);
+assert(std.core.typeOf(a) == "number", "10 is number");
+assert(std.core.typeOf(b) == "number", "3.14 is number");
+assert(a + b == 13.14, "Addition works");
+
+// Strings
+let s1 = "Hello";
+let s2 = "World";
+print("String: " + s1);
+assert(std.core.typeOf(s1) == "string", "String type check");
+assert(s1 + " " + s2 == "Hello World", "String concatenation");
+
+// Booleans
+let t = true;
+let f = false;
+print("Boolean true: ");
+print(t);
+print("Boolean false: ");
+print(f);
+assert(std.core.typeOf(t) == "bool", "True is boolean");
+assert(std.core.typeOf(f) == "bool", "False is boolean");
+let logic1 = t && !f;
+assert(logic1, "Boolean logic (and, not)");
+let logic2 = t || f;
+assert(logic2, "Boolean logic (or)");
+
+// Nil (null)
+let n = null;
+print("Nil: ");
+print(n);
+assert(std.core.typeOf(n) == "nil", "null is of type nil");
+
+print("Data Types Tests Completed");

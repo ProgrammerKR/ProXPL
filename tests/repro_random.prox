@@ -1,0 +1,11 @@
+
+print("Testing random(1, 100)...");
+let r = random(1, 100);
+print("Result: " + r);
+
+if (r < 1) {
+    print("FAILURE: random(1, 100) returned a value less than 1");
+    // We can't exit with code, so we rely on print
+} else {
+    print("SUCCESS: random(1, 100) returned a value >= 1");
+}

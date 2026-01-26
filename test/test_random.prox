@@ -1,0 +1,47 @@
+// Test random function
+use std.core;
+
+print("--- Testing Random Function ---");
+
+// Test 0 args: [0, 1)
+let r1 = random();
+print("random(): " + r1);
+if (r1 < 0 || r1 >= 1) {
+    print("FAILED: random() out of range");
+} else {
+    print("PASSED: random() in [0, 1)");
+}
+
+// Test 1 arg: [0, max)
+let max = 10;
+let r2 = random(max);
+print("random(" + max + "): " + r2);
+if (r2 < 0 || r2 >= max) {
+    print("FAILED: random(max) out of range");
+} else {
+    print("PASSED: random(max) in [0, " + max + ")");
+}
+
+// Test 2 args: [min, max)
+let min = 50;
+let max2 = 100;
+let r3 = random(min, max2);
+print("random(" + min + ", " + max2 + "): " + r3);
+if (r3 < min || r3 >= max2) {
+    print("FAILED: random(min, max) out of range");
+} else {
+    print("PASSED: random(min, max) in [" + min + ", " + max2 + ")");
+}
+
+// Test randint(min, max)
+let ri = randint(1, 10);
+print("randint(1, 10): " + ri);
+if (std.core.typeOf(ri) != "number") { // Assuming pure numbers are all doubles in C impl but randint returns integer value disguised as number
+    // Actually ProXPL numbers are doubles, but randint returns whole numbers
+    print("WARNING: randint check - verification of integer nature tricky directly");
+}
+if (ri < 1 || ri > 10) {
+    print("FAILED: randint out of range");
+} else {
+    print("PASSED: randint in [1, 10]");
+}
