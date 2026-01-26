@@ -261,6 +261,18 @@ void registerStdLib(VM* vm) {
         pop(vm); // field
     }
     pop(vm); // gcKey
+
+    // std.hash
+    Value hashVal;
+    ObjString* hashKey = copyString("std.native.hash", 15);
+    push(vm, OBJ_VAL(hashKey));
+    if (tableGet(&vm->importer.modules, hashKey, &hashVal)) {
+        ObjString* field = copyString("hash", 4);
+        push(vm, OBJ_VAL(field));
+        tableSet(&stdMod->exports, field, hashVal);
+        pop(vm); // field
+    }
+    pop(vm); // hashKey
     
     // std.core (bind to main std object)
     Value coreVal;

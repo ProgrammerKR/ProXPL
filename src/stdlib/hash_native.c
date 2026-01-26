@@ -13,6 +13,8 @@
 #include "../../include/vm.h"
 #include "../../include/value.h"
 #include "../../include/object.h"
+#include "../../include/md5.h"
+#include "../../include/sha256.h"
 
 extern VM vm;
 
@@ -26,30 +28,44 @@ static void defineModuleFn(ObjModule* module, const char* name, NativeFn functio
     pop(&vm);
 }
 
-// Simple hash (DJB2) for now unless we link OpenSSL/etc.
-static unsigned long djb2(const char *str) {
-    unsigned long hash = 5381;
-    int c;
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    return hash;
-}
-
-// md5(str) -> String (Stub/Simple Hash)
+// md5(str) -> String
 static Value native_md5(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
-    // Real MD5 requires implementation. Returning a placeholder hash for MVP.
-    unsigned long h = djb2(AS_CSTRING(args[0]));
-    char buffer[32];
-    sprintf(buffer, "%lx", h);
-    return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+    
+    const char *str = AS_CSTRING(args[0]);
+    unsigned char digest[16];
+    MD5_CTX ctx;
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, (const unsigned char*)str, strlen(str));
+    MD5_Final(digest, &ctx);
+
+    char buffer[33];
+    for(int i = 0; i < 16; i++) {
+        sprintf(&buffer[i*2], "%02x", digest[i]);
+    }
+    buffer[32] = '\0';
+    
+    return OBJ_VAL(copyString(buffer, 32));
 }
 
-// sha256(str) -> String (Stub)
+// sha256(str) -> String
 static Value native_sha256(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
-    // Real SHA256 requires implementation.
-    return native_md5(argCount, args);
+    
+    const char *str = AS_CSTRING(args[0]);
+    unsigned char digest[32];
+    SHA256_CTX ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, (const unsigned char*)str, strlen(str));
+    sha256_final(&ctx, digest);
+
+    char buffer[65];
+    for(int i = 0; i < 32; i++) {
+        sprintf(&buffer[i*2], "%02x", digest[i]);
+    }
+    buffer[64] = '\0';
+    
+    return OBJ_VAL(copyString(buffer, 64));
 }
 
 ObjModule* create_std_hash_module() {

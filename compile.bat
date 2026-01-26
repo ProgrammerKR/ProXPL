@@ -39,5 +39,7 @@ clang -o proxpl.exe -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  src/stdlib/string_native.c ^
  src/stdlib/sys_native.c ^
  src/stdlib/system_native.c ^
- src/stdlib/time_native.c
+ src/stdlib/time_native.c ^
+ src/utils/md5.c ^
+ src/utils/sha256.c
 echo Build complete.
