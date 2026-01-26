@@ -244,6 +244,8 @@ void registerStdLib(VM* vm) {
         tableSet(&stdMod->exports, field, sysVal);
         pop(vm);
     }
+    pop(vm); // sysKey
+
     // GC
     extern ObjModule* create_std_gc_module();
     ObjModule* gcMod = create_std_gc_module();
