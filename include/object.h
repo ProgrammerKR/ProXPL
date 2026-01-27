@@ -75,9 +75,10 @@ typedef enum {
   OBJ_FOREIGN,
 
   OBJ_TASK,
-  OBJ_TASK,
   OBJ_INTERFACE,
-  OBJ_TENSOR
+  OBJ_TENSOR,
+  OBJ_CONTEXT,
+  OBJ_LAYER
 } ObjType;
 
 struct Obj {
@@ -193,6 +194,24 @@ struct ObjTask {
   struct ObjTask* next; // For scheduler queue
 };
 
+#define IS_CONTEXT(value) isObjType(value, OBJ_CONTEXT)
+#define AS_CONTEXT(value) ((ObjContext *)AS_OBJ(value))
+
+#define IS_LAYER(value) isObjType(value, OBJ_LAYER)
+#define AS_LAYER(value) ((ObjLayer *)AS_OBJ(value))
+
+typedef struct ObjLayer {
+  Obj obj;
+  ObjString *name;
+  Table methods; // Map of name -> closure
+} ObjLayer;
+
+typedef struct ObjContext {
+  Obj obj;
+  ObjString *name;
+  Table layers; // Map of name -> ObjLayer
+} ObjContext;
+
 typedef struct ObjTensor {
   Obj obj;
   int dimCount;
@@ -225,6 +244,8 @@ struct ObjDictionary *newDictionary();
 ObjForeign *newForeign(ObjString* name, void* library, void* function);
 struct ObjTask *newTask(void* hdl, ResumeFn resume);
 ObjTensor *newTensor(int dimCount, int *dims, double *data);
+ObjContext *newContext(ObjString *name);
+ObjLayer *newLayer(ObjString *name);
 void printObject(Value value);
 void appendToList(struct ObjList* list, Value value);
 

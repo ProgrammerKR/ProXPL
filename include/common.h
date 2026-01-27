@@ -78,6 +78,8 @@ typedef struct ObjModule ObjModule;
 typedef struct ObjClass ObjClass;
 typedef struct ObjInstance ObjInstance;
 typedef struct ObjBoundMethod ObjBoundMethod;
+typedef struct ObjContext ObjContext;
+typedef struct ObjLayer ObjLayer;
 typedef struct TypeInfo TypeInfo;
 
 typedef Value (*NativeFn)(int argCount, Value *args);

@@ -60,6 +60,10 @@ typedef enum {
   OP_USE,
   OP_TRY,
   OP_CATCH,
+  OP_CONTEXT,
+  OP_LAYER,
+  OP_ACTIVATE,
+  OP_END_ACTIVATE,
 
   OP_END_TRY,
   OP_INTERFACE,

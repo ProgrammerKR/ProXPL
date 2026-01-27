@@ -664,9 +664,18 @@ Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int c
   stmt->as.verify_stmt.body = body;
   return stmt;
 }
-
-  stmt->as.tensor_decl.initializer = initializer; 
-  return stmt; 
+Stmt *createTensorDeclStmt(const char *name, const char *dataType, int *dims, int dimCount, Expr *initializer, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_TENSOR_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.tensor_decl.name = strdup(name);
+  stmt->as.tensor_decl.dataType = strdup(dataType);
+  stmt->as.tensor_decl.dimCount = dimCount;
+  stmt->as.tensor_decl.dims = ALLOCATE(int, dimCount);
+  memcpy(stmt->as.tensor_decl.dims, dims, sizeof(int) * dimCount);
+  stmt->as.tensor_decl.initializer = initializer;
+  return stmt;
 }
 
 Stmt *createContextDeclStmt(const char *name, StmtList *layers, int line, int column) {
@@ -689,12 +698,12 @@ Stmt *createLayerDeclStmt(const char *name, StmtList *methods, int line, int col
   return stmt;
 }
 
-Stmt *createActivateStmt(const char *contextName, StmtList *body, int line, int column) {
+Stmt *createActivateStmt(Expr *contextExpr, StmtList *body, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_ACTIVATE;
   stmt->line = line;
   stmt->column = column;
-  stmt->as.activate_stmt.contextName = strdup(contextName);
+  stmt->as.activate_stmt.contextExpr = contextExpr;
   stmt->as.activate_stmt.body = body;
   return stmt;
 }
@@ -935,7 +944,7 @@ void freeStmt(Stmt *stmt) {
     if(stmt->as.layer_decl.methods) freeStmtList(stmt->as.layer_decl.methods);
     break;
   case STMT_ACTIVATE:
-    free(stmt->as.activate_stmt.contextName);
+    freeExpr(stmt->as.activate_stmt.contextExpr);
     if(stmt->as.activate_stmt.body) freeStmtList(stmt->as.activate_stmt.body);
     break;
   }

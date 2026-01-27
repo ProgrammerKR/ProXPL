@@ -1,0 +1,40 @@
+// Verification of Context-Oriented Programming (COP)
+
+func render() {
+    print("Base View");
+}
+
+context MobileMode {
+    layer Display {
+        func render() {
+            print("Mobile View");
+        }
+    }
+}
+
+context DarkMode {
+    layer Theme {
+        func render() {
+            print("Dark View");
+        }
+    }
+}
+
+print("--- Default ---");
+render(); // Should be Base View
+
+print("--- Mobile Activated ---");
+activate(MobileMode) {
+    render(); // Should be Mobile View
+    
+    print("--- Nested Dark Mode ---");
+    activate(DarkMode) {
+        render(); // Should be Dark View (LIFO)
+    }
+    
+    print("--- Back to Mobile ---");
+    render(); // Should be Mobile View
+}
+
+print("--- Back to Base ---");
+render(); // Should be Base View

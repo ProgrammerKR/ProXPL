@@ -111,7 +111,27 @@ class Person {
 }
 ```
 
-## 5. Standard Library
+## 5. Context-Oriented Programming (COP)
+
+### Context & Layers
+```javascript
+context MobileMode {
+    layer Display {
+        func render() {
+            print("Mobile UI");
+        }
+    }
+}
+```
+
+### Dynamic Activation
+```javascript
+activate(MobileMode) {
+    render(); // Dispatches to MobileMode.Display.render
+}
+```
+
+## 6. Standard Library
 
 ### IO (`std.io`)
 ```javascript
@@ -139,12 +159,12 @@ Built-in global functions available without imports:
 - `clock()` - Returns current time
 - `random(min, max)` (If available in specific implementations)
 
-## 6. Operators
+## 7. Operators
 - **Arithmetic**: `+`, `-`, `*`, `/`, `%`
 - **Comparison**: `==`, `!=`, `<`, `>`, `<=`, `>=`
 - **Logical**: `&&`, `||`, `!`
 
-## 7. Example Program
+## 8. Example Program
 ```javascript
 // fib.prox
 func fib(n) {

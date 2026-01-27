@@ -64,7 +64,7 @@ ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, maki
 ProXPL introduces 10 revolutionary concepts that redefine modern systems programming:
 
 1.  **[Intent-Oriented Programming](docs/pillars/01_intent_oriented.md)**: Define *what* you want (`intent`), not just *how* to do it (`resolver`).
-2.  **[Context-Aware Polymorphism](docs/pillars/02_context_aware.md)**: Adapt function behavior dynamically based on execution context (`@context`).
+2.  **[Context-Aware Polymorphism](docs/pillars/02_context_aware.md)**: Adapt function behavior dynamically based on execution context (`context`, `layer`, `activate`).
 3.  **[Autonomic Self-Healing (ASR)](docs/pillars/03_asr.md)**: Built-in failure recovery with `resilient` and `recovery` blocks.
 4.  **[Intrinsic Security](docs/pillars/04_intrinsic_security.md)**: Taint analysis and `sanitize()` primitives baked into the type system.
 5.  **[Chrono-Native Logic](docs/pillars/05_chrono_native.md)**: Data with expiration dates (`temporal`, `decay after`).

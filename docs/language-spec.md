@@ -301,10 +301,13 @@ Time functions: `now`, `timestamp`, `sleep`, `format_date`.
 
 ```ebnf
 program        ::= declaration* EOF
-declaration    ::= funcDecl | varDecl | statement
+declaration    ::= funcDecl | varDecl | contextDecl | statement
 funcDecl       ::= "func" IDENTIFIER "(" parameters? ")" block
 varDecl        ::= ("let" | "const") IDENTIFIER (":" type)? "=" expression ";"
-statement      ::= exprStmt | ifStmt | whileStmt | forStmt | returnStmt | block ...
+contextDecl    ::= "context" IDENTIFIER "{" layerDecl* "}"
+layerDecl      ::= "layer" IDENTIFIER "{" funcDecl* "}"
+statement      ::= exprStmt | ifStmt | whileStmt | forStmt | returnStmt | activateStmt | block ...
+activateStmt   ::= "activate" "(" expression ")" block
 block          ::= "{" declaration* "}"
 expression     ::= assignment
 assignment     ::= IDENTIFIER "=" assignment | ternary

@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - Implemented `OP_MAT_MUL` and `OP_MAKE_TENSOR` opcodes for native execution.
     - Optimized 2D matrix multiplication using cache-friendly loop ordering.
     - Support for 1D vector dot products using the same `@` operator.
+- **Context-Oriented Programming (COP)**:
+    - Implemented `context` and `layer` declarations for behavioral grouping.
+    - Added `activate` blocks for dynamic behavioral shifts in the runtime.
+    - Developed a LIFO active context stack in the VM for hierarchical method dispatch.
+    - Implemented `resolveContextualMethod` for dynamic interception of global function calls.
+    - Added new opcodes: `OP_CONTEXT`, `OP_LAYER`, `OP_ACTIVATE`, and `OP_END_ACTIVATE`.
 
 ## [1.2.0] - 2026-01-20
 

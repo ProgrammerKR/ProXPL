@@ -1369,13 +1369,21 @@ static Stmt *layerDecl(Parser *p) {
 
 static Stmt *activateStmt(Parser *p) {
     Token keyword = previous(p);
+    bool hasParen = match(p, 1, TOKEN_LEFT_PAREN);
+    
     Token contextToken = consume(p, TOKEN_IDENTIFIER, "Expect context name to activate.");
     char *contextName = tokenToString(contextToken);
+    
+    if (hasParen) {
+        consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after context name.");
+    }
+    
+    Expr *contextExpr = createVariableExpr(contextName, contextToken.line, 0);
     
     consume(p, TOKEN_LEFT_BRACE, "Expect '{' before activation block.");
     StmtList *body = block(p);
     
-    Stmt *stmt = createActivateStmt(contextName, body, keyword.line, 0);
+    Stmt *stmt = createActivateStmt(contextExpr, body, keyword.line, 0);
     free(contextName);
     return stmt;
 }

@@ -158,6 +158,18 @@ static void blackenObject(Obj* object) {
         case OBJ_TENSOR:
             // Tensors only contain raw data (int* and double*), no Object pointers to mark
             break;
+        case OBJ_CONTEXT: {
+            ObjContext* context = (ObjContext*)object;
+            markObject((Obj*)context->name);
+            markTable(&context->layers);
+            break;
+        }
+        case OBJ_LAYER: {
+            ObjLayer* layer = (ObjLayer*)object;
+            markObject((Obj*)layer->name);
+            markTable(&layer->methods);
+            break;
+        }
         default:
             // Warn or ignore?
             break;
@@ -185,11 +197,15 @@ static void markRoots() {
     markObject((Obj*)vm.initString);
     markObject((Obj*)vm.cliArgs);
     
-    // 3. Mark Loaded Modules & Search Paths?
-    // Modules are strong refs in importer.modules
+    // 3. Mark Loaded Modules & Search Paths
     markTable(&vm.importer.modules);
 
-    // 4. Mark Compiler Roots
+    // 4. Mark COP active context stack
+    for (int i = 0; i < vm.activeContextCount; i++) {
+        markObject((Obj*)vm.activeContextStack[i]);
+    }
+
+    // 5. Mark Compiler Roots
     markCompilerRoots();
     
     // 4. Mark Interned Strings?
@@ -283,6 +299,18 @@ static void freeObject(Obj* object) {
             struct ObjDictionary* dict = (struct ObjDictionary*)object;
             freeTable(&dict->items);
             FREE(struct ObjDictionary, object);
+            break;
+        }
+        case OBJ_CONTEXT: {
+            ObjContext* context = (ObjContext*)object;
+            freeTable(&context->layers);
+            FREE(ObjContext, object);
+            break;
+        }
+        case OBJ_LAYER: {
+            ObjLayer* layer = (ObjLayer*)object;
+            freeTable(&layer->methods);
+            FREE(ObjLayer, object);
             break;
         }
         case OBJ_TENSOR: {

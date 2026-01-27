@@ -39,6 +39,10 @@ struct VM {
   Importer importer;
   struct ObjList* cliArgs;
   struct ObjString* initString;
+
+  // COP State
+  ObjContext* activeContextStack[64];
+  int activeContextCount;
 };
 
 typedef enum {

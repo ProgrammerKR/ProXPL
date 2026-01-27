@@ -190,7 +190,7 @@ typedef struct { char *name; char *dataType; int *dims; int dimCount; Expr *init
 
 typedef struct { char *name; StmtList *layers; } ContextDeclStmt;
 typedef struct { char *name; StmtList *methods; } LayerDeclStmt;
-typedef struct { char *contextName; StmtList *body; } ActivateStmt;
+typedef struct { Expr *contextExpr; StmtList *body; } ActivateStmt;
 
 struct Stmt {
   StmtType type;
@@ -276,7 +276,7 @@ Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int c
 Stmt *createTensorDeclStmt(const char *name, const char *dataType, int *dims, int dimCount, Expr *initializer, int line, int column);
 Stmt *createContextDeclStmt(const char *name, StmtList *layers, int line, int column);
 Stmt *createLayerDeclStmt(const char *name, StmtList *methods, int line, int column);
-Stmt *createActivateStmt(const char *contextName, StmtList *body, int line, int column);
+Stmt *createActivateStmt(Expr *contextExpr, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

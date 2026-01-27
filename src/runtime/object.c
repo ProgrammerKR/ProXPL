@@ -169,6 +169,12 @@ void printObject(Value value) {
       printf(">");
       break;
   }
+  case OBJ_CONTEXT:
+    printf("<context %s>", AS_CONTEXT(value)->name->chars);
+    break;
+  case OBJ_LAYER:
+    printf("<layer %s>", AS_LAYER(value)->name->chars);
+    break;
   }
 }
 
@@ -269,5 +275,19 @@ ObjTensor *newTensor(int dimCount, int *dims, double *data) {
     }
     
     return tensor;
+}
+
+ObjContext *newContext(ObjString *name) {
+  ObjContext *context = ALLOCATE_OBJ(ObjContext, OBJ_CONTEXT);
+  context->name = name;
+  initTable(&context->layers);
+  return context;
+}
+
+ObjLayer *newLayer(ObjString *name) {
+  ObjLayer *layer = ALLOCATE_OBJ(ObjLayer, OBJ_LAYER);
+  layer->name = name;
+  initTable(&layer->methods);
+  return layer;
 }
 

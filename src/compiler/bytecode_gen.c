@@ -976,42 +976,62 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             }
             break;
         }
-        case STMT_CONTEXT_DECL:
-            // Placeholder: Context-Oriented Programming (COP) runtime not yet fully implemented.
-            // Future: Define ObjContext in VM and emit OP_CONTEXT.
-            break;
-        case STMT_LAYER_DECL:
-            // Placeholder: Layer declarations are part of COP.
-            break;
-        case STMT_ACTIVATE:
-            // Placeholder: Activation blocks for COP layers.
-            break;
-        case STMT_TENSOR_DECL: {
-            // Already implemented in previous session
-            if (stmt->as.tensor_decl.initializer) {
-                genExpr(gen, stmt->as.tensor_decl.initializer);
-            } else {
-                writeChunk(gen->chunk, OP_NIL, stmt->line);
-            }
-            for (int i=0; i < stmt->as.tensor_decl.dimCount; i++) {
-                Value dimVal = NUMBER_VAL((double)stmt->as.tensor_decl.dims[i]);
-                int dimConst = addConstant(gen->chunk, dimVal);
-                writeChunk(gen->chunk, OP_CONSTANT, stmt->line);
-                writeChunk(gen->chunk, (uint8_t)dimConst, stmt->line);
-            }
-            writeChunk(gen->chunk, OP_MAKE_TENSOR, stmt->line);
-            writeChunk(gen->chunk, (uint8_t)stmt->as.tensor_decl.dimCount, stmt->line);
-            
-            Value nameVal = OBJ_VAL(copyString(stmt->as.tensor_decl.name, strlen(stmt->as.tensor_decl.name)));
+        case STMT_CONTEXT_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.context_decl.name, strlen(stmt->as.context_decl.name)));
             int nameConst = addConstant(gen->chunk, nameVal);
+            writeChunk(gen->chunk, OP_CONTEXT, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            
+            // Generate layers
+            StmtList* layers = stmt->as.context_decl.layers;
+            for (int i = 0; i < layers->count; i++) {
+                genStmt(gen, layers->items[i]);
+            }
+            
+            // Define context
             if (gen->compiler->scopeDepth > 0) {
-                addLocal(gen, stmt->as.tensor_decl.name);
+                addLocal(gen, stmt->as.context_decl.name);
             } else {
                 writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
                 writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
             }
             break;
         }
+        case STMT_LAYER_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.layer_decl.name, strlen(stmt->as.layer_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            writeChunk(gen->chunk, OP_LAYER, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            
+            // Generate methods
+            StmtList* methods = stmt->as.layer_decl.methods;
+            for (int i = 0; i < methods->count; i++) {
+                genFunction(gen, methods->items[i], false);
+                Stmt* methodStmt = methods->items[i];
+                Value mNameVal = OBJ_VAL(copyString(methodStmt->as.func_decl.name, strlen(methodStmt->as.func_decl.name)));
+                int mNameConst = addConstant(gen->chunk, mNameVal);
+                writeChunk(gen->chunk, OP_METHOD, methodStmt->line);
+                writeChunk(gen->chunk, (uint8_t)mNameConst, methodStmt->line);
+            }
+            
+            // Pop layer (Context already has it if OP_LAYER adds it)
+            writeChunk(gen->chunk, OP_POP, stmt->line);
+            break;
+        }
+        case STMT_ACTIVATE: {
+            genExpr(gen, stmt->as.activate_stmt.contextExpr);
+            writeChunk(gen->chunk, OP_ACTIVATE, stmt->line);
+            
+            if (stmt->as.activate_stmt.body) {
+                for (int i = 0; i < stmt->as.activate_stmt.body->count; i++) {
+                    genStmt(gen, stmt->as.activate_stmt.body->items[i]);
+                }
+            }
+            
+            writeChunk(gen->chunk, OP_END_ACTIVATE, stmt->line);
+            break;
+        }
+
         default: break;
     }
 }

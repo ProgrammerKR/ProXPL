@@ -72,9 +72,9 @@ The following tokens are reserved and cannot be used as identifiers:
 | | `switch` | `string` | `async` | |
 | | `case` | | `await` | |
 | | `default` | | | |
-| | `try` | | | |
-| | `catch` | | | |
-| | `throw` | | | |
+| | `try` | | `context` | |
+| | `catch` | | `layer` | |
+| | `throw` | | `activate` | |
 
 ### 3.4. Literals
 
@@ -99,7 +99,15 @@ A program consists of a sequence of declarations.
 
 ```ebnf
 program      ::= declaration* EOF
-declaration  ::= funcDecl | varDecl | classDecl | statement
+declaration  ::= funcDecl | varDecl | classDecl | contextDecl | statement
+```
+
+#### 4.1.3. Context Declaration
+Contexts group behavioral layers.
+
+```ebnf
+contextDecl ::= "context" IDENTIFIER "{" layerDecl* "}"
+layerDecl   ::= "layer" IDENTIFIER "{" funcDecl* "}"
 ```
 
 #### 4.1.1. Variable Declaration
@@ -129,7 +137,10 @@ statement ::= exprStmt
             | returnStmt
             | block
             | tryStmt
+            | activateStmt
 ```
+
+- **Activate**: `activate "(" IDENTIFIER ")" block` Enables a context for the duration of the block.
 
 - **Block**: `{ statement* }` introduces a new scope.
 - **If**: `if (expr) stmt (else stmt)?`

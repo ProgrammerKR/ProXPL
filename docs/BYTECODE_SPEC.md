@@ -142,6 +142,10 @@ Object/Memory ops
 - OP_INDEX_SET rObj, rIndex, rValue (0x72) ; rObj[rIndex] = rValue
 - OP_GET_FIELD rA, rObj, field_const_idx (0x73) ; field name is constant string in const_idx
 - OP_SET_FIELD rObj, field_const_idx, rValue (0x74)
+- OP_CONTEXT const_idx (0x75) ; create context from name at const_idx, push to stack
+- OP_LAYER const_idx (0x76)   ; create layer from name at const_idx, push to stack
+- OP_ACTIVATE (0x77)           ; pop context from stack and activate
+- OP_END_ACTIVATE (0x78)       ; deactivate top context
 
 Debug & Meta
 - OP_DBG_LINE uleb128 line (0x90)

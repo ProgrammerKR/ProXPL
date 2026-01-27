@@ -45,7 +45,8 @@ void initVM(VM *pvm) {
     pvm->source = NULL;
     initImporter(&pvm->importer);
     pvm->initString = copyString("init", 4);
-    pvm->cliArgs = newList(); // Initialize CLI args list
+    pvm->cliArgs = newList(); 
+    pvm->activeContextCount = 0;
 }
 
 void freeVM(VM *pvm) {
@@ -130,6 +131,24 @@ static void concatenate(VM* pvm) {
   pvm->stackTop--;
 }
 
+static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
+    for (int i = pvm->activeContextCount - 1; i >= 0; i--) {
+        ObjContext* context = pvm->activeContextStack[i];
+        
+        // Iterating Table manually as we don't have a tableIterator helper
+        for (int j = 0; j < context->layers.capacity; j++) {
+            Entry* entry = &context->layers.entries[j];
+            if (entry->key == NULL || IS_BOOL(entry->value)) continue; // Skip empty/tombstone
+            
+            ObjLayer* layer = AS_LAYER(entry->value);
+            if (tableGet(&layer->methods, name, result)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // Helper functions moved to vm_helpers.c to avoid duplication
 
 
@@ -205,7 +224,11 @@ static InterpretResult run(VM* vm) {
       [OP_LEFT_SHIFT] = &&DO_OP_LEFT_SHIFT,
       [OP_RIGHT_SHIFT] = &&DO_OP_RIGHT_SHIFT,
       [OP_MAT_MUL] = &&DO_OP_MAT_MUL,
-      [OP_MAKE_TENSOR] = &&DO_OP_MAKE_TENSOR
+      [OP_MAKE_TENSOR] = &&DO_OP_MAKE_TENSOR,
+      [OP_CONTEXT] = &&DO_OP_CONTEXT,
+      [OP_LAYER] = &&DO_OP_LAYER,
+      [OP_ACTIVATE] = &&DO_OP_ACTIVATE,
+      [OP_END_ACTIVATE] = &&DO_OP_END_ACTIVATE
   };
   #pragma GCC diagnostic pop
 
@@ -372,6 +395,15 @@ static InterpretResult run(VM* vm) {
   DO_OP_GET_GLOBAL: {
       ObjString* name = READ_STRING();
       Value value;
+
+      // COP Contextual Dispatch
+      if (vm->activeContextCount > 0) {
+          if (resolveContextualMethod(vm, name, &value)) {
+              push(vm, value);
+              DISPATCH();
+          }
+      }
+
       if (!tableGet(&vm->globals, name, &value)) {
         runtimeError(vm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
@@ -922,6 +954,45 @@ static InterpretResult run(VM* vm) {
   
 
   
+  DO_OP_CONTEXT: {
+      ObjString* name = READ_STRING();
+      push(vm, OBJ_VAL(newContext(name)));
+      DISPATCH();
+  }
+
+  DO_OP_LAYER: {
+      ObjString* name = READ_STRING();
+      ObjLayer* layer = newLayer(name);
+      push(vm, OBJ_VAL(layer));
+      
+      Value contextVal = peek(vm, 1);
+      if (IS_CONTEXT(contextVal)) {
+          tableSet(&AS_CONTEXT(contextVal)->layers, name, OBJ_VAL(layer));
+      }
+      DISPATCH();
+  }
+
+  DO_OP_ACTIVATE: {
+      Value contextVal = pop(vm);
+      if (!IS_CONTEXT(contextVal)) {
+          runtimeError(vm, "Can only activate context objects.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      if (vm->activeContextCount >= 64) {
+          runtimeError(vm, "Context stack overflow.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      vm->activeContextStack[vm->activeContextCount++] = AS_CONTEXT(contextVal);
+      DISPATCH();
+  }
+
+  DO_OP_END_ACTIVATE: {
+      if (vm->activeContextCount > 0) {
+          vm->activeContextCount--;
+      }
+      DISPATCH();
+  }
+
   DO_OP_UNKNOWN: {
       runtimeError(vm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
@@ -1058,6 +1129,15 @@ static InterpretResult run(VM* vm) {
     case OP_GET_GLOBAL: {
         ObjString* name = READ_STRING();
         Value value;
+
+        // COP Contextual Dispatch
+        if (vm->activeContextCount > 0) {
+            if (resolveContextualMethod(vm, name, &value)) {
+                push(vm, value);
+                break;
+            }
+        }
+
         if (!tableGet(&vm->globals, name, &value)) {
             runtimeError(vm, "Undefined variable '%s'.", name->chars);
             return INTERPRET_RUNTIME_ERROR;
@@ -1518,6 +1598,7 @@ static InterpretResult run(VM* vm) {
         break;
     }
     case OP_MAKE_TENSOR: {
+        // ... (preserving existing tensor case) ...
         int dimCount = READ_BYTE();
         int dims[16];
         int totalSize = 1;
@@ -1550,6 +1631,38 @@ static InterpretResult run(VM* vm) {
                 }
             }
         }
+        break;
+    }
+    case OP_CONTEXT: {
+        ObjString* name = READ_STRING();
+        push(vm, OBJ_VAL(newContext(name)));
+        break;
+    }
+    case OP_LAYER: {
+        ObjString* name = READ_STRING();
+        ObjLayer* layer = newLayer(name);
+        push(vm, OBJ_VAL(layer));
+        Value contextVal = peek(vm, 1);
+        if (IS_CONTEXT(contextVal)) {
+            tableSet(&AS_CONTEXT(contextVal)->layers, name, OBJ_VAL(layer));
+        }
+        break;
+    }
+    case OP_ACTIVATE: {
+        Value contextVal = pop(vm);
+        if (!IS_CONTEXT(contextVal)) {
+            runtimeError(vm, "Can only activate context objects.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        if (vm->activeContextCount >= 64) {
+            runtimeError(vm, "Context stack overflow.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        vm->activeContextStack[vm->activeContextCount++] = AS_CONTEXT(contextVal);
+        break;
+    }
+    case OP_END_ACTIVATE: {
+        if (vm->activeContextCount > 0) vm->activeContextCount--;
         break;
     }
     case OP_RETURN: {

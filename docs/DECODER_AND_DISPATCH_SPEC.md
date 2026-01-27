@@ -77,6 +77,14 @@ Error handling and unknown opcodes
 - Decoder should return an error for unknown opcode.
 - Optionally, an "unknown-op" compatibility mode could treat unknown opcodes as NOP, but that is unsafe for production.
 
+### Contextual Dispatch (COP)
+- The VM maintains a LIFO `activeContextStack`.
+- Global variable lookups (`OP_GET_GLOBAL`) are preceded by a contextual lookup:
+  - Iterate from top to bottom of `activeContextStack`.
+  - For each `ObjContext`, search its `layers` for a method matching the lookup name.
+  - If found, push the contextual method and immediately dispatch/return.
+- This provides O(1) override capability for strategic system behaviors without modifying original source code.
+
 Summary
 - Computed-goto provides best raw performance on supported compilers.
 - Switch is portable and easier to debug.
