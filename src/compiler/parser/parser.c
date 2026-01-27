@@ -28,7 +28,9 @@ static Stmt *distributedDecl(Parser *p); // Forward
 static Stmt *modelDecl(Parser *p); // Forward
 static Stmt *quantumStmt(Parser *p); // Forward
 static Stmt *gpuStmt(Parser *p); // Forward
+
 static Stmt *verifyStmt(Parser *p); // Forward
+static Stmt *tensorDecl(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -279,6 +281,8 @@ static Stmt *declaration(Parser *p) {
     return gpuStmt(p);
   if (match(p, 1, TOKEN_VERIFY))
     return verifyStmt(p);
+  if (match(p, 1, TOKEN_TENSOR))
+    return tensorDecl(p);
 
   return statement(p);
 }
@@ -933,7 +937,7 @@ static Expr *term(Parser *p) {
 static Expr *factor(Parser *p) {
   Expr *expr = unary(p);
 
-  while (match(p, 4, TOKEN_SLASH, TOKEN_STAR, TOKEN_PERCENT, TOKEN_STAR_STAR)) {
+  while (match(p, 5, TOKEN_SLASH, TOKEN_STAR, TOKEN_PERCENT, TOKEN_STAR_STAR, TOKEN_AT)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
     Expr *right = unary(p);
@@ -1249,6 +1253,59 @@ static Stmt *verifyStmt(Parser *p) {
     
     Stmt *stmt = createVerifyStmt(identityName, body, keyword.line, 0);
     free(identityName);
+    return stmt;
+}
+
+static Stmt *tensorDecl(Parser *p) {
+    int line = previous(p).line;
+    consume(p, TOKEN_LESS, "Expect '<' after tensor.");
+    
+    Token typeTok = consume(p, TOKEN_IDENTIFIER, "Expect tensor type.");
+    char *dataType = tokenToString(typeTok);
+    
+    consume(p, TOKEN_COMMA, "Expect ',' after type.");
+    
+    int *dims = NULL;
+    int dimCount = 0;
+    int dimCap = 0;
+    
+    do {
+        Token numTok = consume(p, TOKEN_NUMBER, "Expect dimension size.");
+        char *numStr = tokenToString(numTok);
+        int dim = atoi(numStr);
+        free(numStr);
+        
+        if (dimCount + 1 > dimCap) {
+            int oldCap = dimCap;
+            dimCap = GROW_CAPACITY(oldCap);
+            dims = GROW_ARRAY(int, dims, oldCap, dimCap);
+        }
+        dims[dimCount++] = dim;
+        
+        // Check for 'x' separator
+        if (check(p, TOKEN_IDENTIFIER) && peek(p).length == 1 && peek(p).start[0] == 'x') {
+            advance(p); // Consume 'x'
+            continue;
+        } else {
+            break;
+        }
+
+    } while (true);
+    
+    consume(p, TOKEN_GREATER, "Expect '>' after dimensions.");
+
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect tensor name.");
+    char *name = tokenToString(nameTok);
+    
+    consume(p, TOKEN_EQUAL, "Expect '='.");
+    
+    Expr *initializer = expression(p);
+    
+    consume(p, TOKEN_SEMICOLON, "Expect ';'.");
+    
+    Stmt *stmt = createTensorDeclStmt(name, dataType, dims, dimCount, initializer, line, 0);
+    free(dataType);
+    free(name);
     return stmt;
 }
 

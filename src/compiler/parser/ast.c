@@ -665,6 +665,19 @@ Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int c
   return stmt;
 }
 
+Stmt *createTensorDeclStmt(const char *name, const char *dataType, int *dims, int dimCount, Expr *initializer, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_TENSOR_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.tensor_decl.name = strdup(name);
+  stmt->as.tensor_decl.dataType = strdup(dataType);
+  stmt->as.tensor_decl.dims = dims;
+  stmt->as.tensor_decl.dimCount = dimCount;
+  stmt->as.tensor_decl.initializer = initializer; 
+  return stmt; 
+}
+
 // --- Free Functions ---
 
 void freeExpr(Expr *expr) {
@@ -885,6 +898,12 @@ void freeStmt(Stmt *stmt) {
   case STMT_VERIFY:
     free(stmt->as.verify_stmt.identityName);
     if(stmt->as.verify_stmt.body) freeStmtList(stmt->as.verify_stmt.body);
+    break;
+  case STMT_TENSOR_DECL:
+    free(stmt->as.tensor_decl.name);
+    free(stmt->as.tensor_decl.dataType);
+    if(stmt->as.tensor_decl.dims) free(stmt->as.tensor_decl.dims);
+    freeExpr(stmt->as.tensor_decl.initializer);
     break;
   }
 

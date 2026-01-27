@@ -72,6 +72,7 @@ typedef enum {
   OP_BIT_NOT,
   OP_LEFT_SHIFT,
   OP_RIGHT_SHIFT,
+  OP_MAT_MUL, // @ operator
   OP_HALT = 0xFF
 } OpCode;
 

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [Unreleased]
+
+### Added
+- **AI-Native Primitives**: 
+    - Introduced `tensor` primitive type with multidimensional support (e.g., `tensor<float, 2x2>`).
+    - Added AST and Parser support for Tensor declarations and literal parsing.
+    - Updated compiler frontend to handle tensor type specific syntax (`<type, dims>`).
+
 ## [1.2.0] - 2026-01-20
 
 ### Added
@@ -389,5 +397,5 @@ This project is licensed under the MIT License.
 ---
 
 **Current Version**: 1.2.0
-**Last Updated**: January 18, 2026
+**Last Updated**: January 27, 2026
 **Next Release**: 1.3.0 (Q1 2026)

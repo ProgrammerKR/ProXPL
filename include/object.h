@@ -75,7 +75,9 @@ typedef enum {
   OBJ_FOREIGN,
 
   OBJ_TASK,
-  OBJ_INTERFACE
+  OBJ_TASK,
+  OBJ_INTERFACE,
+  OBJ_TENSOR
 } ObjType;
 
 struct Obj {
@@ -191,6 +193,17 @@ struct ObjTask {
   struct ObjTask* next; // For scheduler queue
 };
 
+typedef struct ObjTensor {
+  Obj obj;
+  int dimCount;
+  int *dims;
+  int size; // Total number of elements
+  double *data; 
+} ObjTensor;
+
+#define IS_TENSOR(value) isObjType(value, OBJ_TENSOR)
+#define AS_TENSOR(value) ((ObjTensor *)AS_OBJ(value))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -211,6 +224,7 @@ struct ObjList *newList();
 struct ObjDictionary *newDictionary();
 ObjForeign *newForeign(ObjString* name, void* library, void* function);
 struct ObjTask *newTask(void* hdl, ResumeFn resume);
+ObjTensor *newTensor(int dimCount, int *dims, double *data);
 void printObject(Value value);
 void appendToList(struct ObjList* list, Value value);
 

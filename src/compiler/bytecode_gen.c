@@ -198,6 +198,7 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
              else if (strcmp(expr->as.binary.operator, "^") == 0) writeChunk(gen->chunk, OP_BIT_XOR, expr->line);
              else if (strcmp(expr->as.binary.operator, "<<") == 0) writeChunk(gen->chunk, OP_LEFT_SHIFT, expr->line);
              else if (strcmp(expr->as.binary.operator, ">>") == 0) writeChunk(gen->chunk, OP_RIGHT_SHIFT, expr->line);
+             else if (strcmp(expr->as.binary.operator, "@") == 0) writeChunk(gen->chunk, OP_MAT_MUL, expr->line);
             break;
         }
         case EXPR_GROUPING: {

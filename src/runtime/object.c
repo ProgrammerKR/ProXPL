@@ -162,6 +162,13 @@ void printObject(Value value) {
   case OBJ_TASK:
     printf("<task>");
     break;
+  case OBJ_TENSOR: {
+      ObjTensor *t = (ObjTensor*)AS_OBJ(value);
+      printf("<tensor %d", t->dims[0]);
+      for(int i=1; i<t->dimCount; i++) printf("x%d", t->dims[i]);
+      printf(">");
+      break;
+  }
   }
 }
 
@@ -238,5 +245,29 @@ struct ObjDictionary *newDictionary() {
   struct ObjDictionary *dict = ALLOCATE_OBJ(struct ObjDictionary, OBJ_DICTIONARY);
   initTable(&dict->items);
   return dict;
+}
+
+ObjTensor *newTensor(int dimCount, int *dims, double *data) {
+    ObjTensor *tensor = ALLOCATE_OBJ(ObjTensor, OBJ_TENSOR);
+    tensor->dimCount = dimCount;
+    
+    // Copy dimensions
+    tensor->dims = ALLOCATE(int, dimCount);
+    memcpy(tensor->dims, dims, sizeof(int) * dimCount);
+    
+    // Calculate size
+    int size = 1;
+    for(int i=0; i<dimCount; i++) size *= dims[i];
+    tensor->size = size;
+    
+    // Copy data if provided, else zero init
+    tensor->data = ALLOCATE(double, size);
+    if(data) {
+        memcpy(tensor->data, data, sizeof(double) * size);
+    } else {
+        memset(tensor->data, 0, sizeof(double) * size);
+    }
+    
+    return tensor;
 }
 

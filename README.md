@@ -557,7 +557,12 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
   - **The 10 Operational Pillars**: Full frontend implementation of Intent-Oriented, Context-Aware, ASR, Intrinsic Security, Chrono-Native, Event-Concurreny, AI-Native, Quantum-Ready, Hardware-Math, and Zero-Trust features. ✅
   - **Frontend Feature Complete**: Lexer, Parser, AST, and Type Checker support all 10 pillars. ✅
 
-### v1.2.0 (Current)
+### Unreleased (Development)
+**Status**: In Progress
+- ✅ **AI-Native Primitives**: Native `tensor` type support with multi-dimensional declaration (e.g., `tensor<float, 2x2>`).
+- ✅ **Syntax**: Enhanced parser for tensor literals and dimension syntax.
+
+### v1.2.0
 **Status**: Released (Frontend)
 - ✅ **10 Pillars Implementation**: Correctly parsing and semantically validating all revolutionary syntax constructs.
 - ✅ **AI & Quantum**: `model`, `train`, `quantum`, `qubit` primitives.
