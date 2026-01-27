@@ -72,7 +72,7 @@ Functions execute different logic branches not based on arguments, but on system
 ```ebnf
 context_decl ::= "context" identifier "{" layer_decl* "}"
 layer_decl   ::= "layer" identifier "{" func_decl* "}"
-activate_stmt ::= "activate" identifier block
+activate_stmt ::= "activate" [ "(" ] identifier [ ")" ] block
 decorator    ::= "@" "context" "(" expression ")"
 ```
 
@@ -86,7 +86,7 @@ context MobileMode {
     }
 }
 
-activate MobileMode {
+activate(MobileMode) {
     render(); // Prints mobile version
 }
 ```
