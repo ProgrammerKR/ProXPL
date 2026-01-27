@@ -73,7 +73,6 @@ Functions execute different logic branches not based on arguments, but on system
 context_decl ::= "context" identifier "{" layer_decl* "}"
 layer_decl   ::= "layer" identifier "{" func_decl* "}"
 activate_stmt ::= "activate" [ "(" ] identifier [ ")" ] block
-decorator    ::= "@" "context" "(" expression ")"
 ```
 
 **Example (Layered COP):**
@@ -88,21 +87,6 @@ context MobileMode {
 
 activate(MobileMode) {
     render(); // Prints mobile version
-}
-```
-
-**Example (Decorator COP):**
-```proxpl
-// Normal operation
-@context(System.Load < 0.8)
-func process_image(img) {
-    return high_quality_resize(img);
-}
-
-// Under load, degrade gracefully
-@context(System.Load >= 0.8)
-func process_image(img) {
-    return fast_bilinear_resize(img);
 }
 ```
 

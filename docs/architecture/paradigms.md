@@ -62,7 +62,7 @@ Context-Oriented Programming allows a program to adapt its behavior dynamically 
 ### Core Features:
 - **Context**: A top-level container for behavioral variations.
 - **Layer**: A collection of method overrides that are active only when the context is enabled.
-- **Activation**: The `activate` block or `@context` decorator to apply layers to a scope.
+- **Activation**: The `activate` block to apply layers to a scope.
 
 ```proxpl
 context PerformanceMode {
