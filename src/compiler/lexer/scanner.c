@@ -180,6 +180,8 @@ static PxTokenType identifierType(Scanner *scanner) {
         return checkKeyword(scanner, 2, 3, "ait", TOKEN_AWAIT);
       case 'f': // New case for 'after'
         return checkKeyword(scanner, 2, 3, "ter", TOKEN_AFTER);
+      case 'c':
+        return checkKeyword(scanner, 2, 6, "tivate", TOKEN_ACTIVATE);
       }
     }
     break;
@@ -375,7 +377,13 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
       break;
   case 'l':
-    return checkKeyword(scanner, 1, 2, "et", TOKEN_LET);
+    if (scanner->current - scanner->start > 1) {
+        switch (scanner->start[1]) {
+            case 'e': return checkKeyword(scanner, 2, 1, "t", TOKEN_LET);
+            case 'a': return checkKeyword(scanner, 2, 3, "yer", TOKEN_LAYER);
+        }
+    }
+    return TOKEN_IDENTIFIER;
   case 'm': // Added for 'match' and 'model'
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {

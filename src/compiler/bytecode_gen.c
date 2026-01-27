@@ -974,10 +974,42 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                  writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
                  writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
             }
-            // Interface methods (signatures) are stored in AST but for now we don't code gen them.
-            // (Unless we want to fill the ObjInterface with method names at runtime?)
-            // We can emit OP_GET_GLOBAL (interface), OP_METHOD (abstract) ???
-            // For now, minimal implementation: create interface object.
+            break;
+        }
+        case STMT_CONTEXT_DECL:
+            // Placeholder: Context-Oriented Programming (COP) runtime not yet fully implemented.
+            // Future: Define ObjContext in VM and emit OP_CONTEXT.
+            break;
+        case STMT_LAYER_DECL:
+            // Placeholder: Layer declarations are part of COP.
+            break;
+        case STMT_ACTIVATE:
+            // Placeholder: Activation blocks for COP layers.
+            break;
+        case STMT_TENSOR_DECL: {
+            // Already implemented in previous session
+            if (stmt->as.tensor_decl.initializer) {
+                genExpr(gen, stmt->as.tensor_decl.initializer);
+            } else {
+                writeChunk(gen->chunk, OP_NIL, stmt->line);
+            }
+            for (int i=0; i < stmt->as.tensor_decl.dimCount; i++) {
+                Value dimVal = NUMBER_VAL((double)stmt->as.tensor_decl.dims[i]);
+                int dimConst = addConstant(gen->chunk, dimVal);
+                writeChunk(gen->chunk, OP_CONSTANT, stmt->line);
+                writeChunk(gen->chunk, (uint8_t)dimConst, stmt->line);
+            }
+            writeChunk(gen->chunk, OP_MAKE_TENSOR, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)stmt->as.tensor_decl.dimCount, stmt->line);
+            
+            Value nameVal = OBJ_VAL(copyString(stmt->as.tensor_decl.name, strlen(stmt->as.tensor_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            if (gen->compiler->scopeDepth > 0) {
+                addLocal(gen, stmt->as.tensor_decl.name);
+            } else {
+                writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
             break;
         }
         default: break;

@@ -62,10 +62,11 @@ typedef enum {
 
   STMT_QUANTUM_BLOCK,
   STMT_GPU_BLOCK,
-  STMT_QUANTUM_BLOCK,
-  STMT_GPU_BLOCK,
   STMT_VERIFY,
-  STMT_TENSOR_DECL
+  STMT_TENSOR_DECL,
+  STMT_CONTEXT_DECL,
+  STMT_LAYER_DECL,
+  STMT_ACTIVATE
 } StmtType;
 
 // --- List Structures ---
@@ -187,6 +188,10 @@ typedef struct { char *identityName; StmtList *body; } VerifyStmt; // verify ide
 
 typedef struct { char *name; char *dataType; int *dims; int dimCount; Expr *initializer; } TensorDeclStmt;
 
+typedef struct { char *name; StmtList *layers; } ContextDeclStmt;
+typedef struct { char *name; StmtList *methods; } LayerDeclStmt;
+typedef struct { char *contextName; StmtList *body; } ActivateStmt;
+
 struct Stmt {
   StmtType type;
   int line;
@@ -210,6 +215,9 @@ struct Stmt {
     GPUBlockStmt gpu_block;
     VerifyStmt verify_stmt;
     TensorDeclStmt tensor_decl;
+    ContextDeclStmt context_decl;
+    LayerDeclStmt layer_decl;
+    ActivateStmt activate_stmt;
   } as;
 };
 
@@ -266,6 +274,9 @@ Stmt *createQuantumBlockStmt(StmtList *body, int line, int column);
 Stmt *createGPUBlockStmt(const char *kernelName, StmtList *body, int line, int column);
 Stmt *createVerifyStmt(const char *identityName, StmtList *body, int line, int column);
 Stmt *createTensorDeclStmt(const char *name, const char *dataType, int *dims, int dimCount, Expr *initializer, int line, int column);
+Stmt *createContextDeclStmt(const char *name, StmtList *layers, int line, int column);
+Stmt *createLayerDeclStmt(const char *name, StmtList *methods, int line, int column);
+Stmt *createActivateStmt(const char *contextName, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

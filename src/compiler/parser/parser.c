@@ -31,6 +31,9 @@ static Stmt *gpuStmt(Parser *p); // Forward
 
 static Stmt *verifyStmt(Parser *p); // Forward
 static Stmt *tensorDecl(Parser *p); // Forward
+static Stmt *contextDecl(Parser *p); // Forward
+static Stmt *layerDecl(Parser *p); // Forward
+static Stmt *activateStmt(Parser *p); // Forward
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -283,6 +286,10 @@ static Stmt *declaration(Parser *p) {
     return verifyStmt(p);
   if (match(p, 1, TOKEN_TENSOR))
     return tensorDecl(p);
+  if (match(p, 1, TOKEN_CONTEXT))
+    return contextDecl(p);
+  if (match(p, 1, TOKEN_LAYER))
+    return layerDecl(p);
 
   return statement(p);
 }
@@ -603,6 +610,8 @@ static Stmt *statement(Parser *p) {
     StmtList *stmts = block(p);
     return createBlockStmt(stmts, previous(p).line, 0);
   }
+  if (match(p, 1, TOKEN_ACTIVATE))
+    return activateStmt(p);
   return exprStmt(p);
 }
 
@@ -1306,6 +1315,68 @@ static Stmt *tensorDecl(Parser *p) {
     Stmt *stmt = createTensorDeclStmt(name, dataType, dims, dimCount, initializer, line, 0);
     free(dataType);
     free(name);
+    return stmt;
+}
+
+static Stmt *contextDecl(Parser *p) {
+    Token keyword = previous(p);
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect context name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before context body.");
+    
+    StmtList *layers = createStmtList();
+    while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+        if (match(p, 1, TOKEN_LAYER)) {
+            appendStmt(layers, layerDecl(p));
+        } else {
+            parserError(p, "Only layer declarations are allowed inside context.");
+            advance(p);
+        }
+    }
+    
+    consume(p, TOKEN_RIGHT_BRACE, "Expect '}' after context body.");
+    Stmt *stmt = createContextDeclStmt(name, layers, keyword.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *layerDecl(Parser *p) {
+    Token keyword = previous(p);
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect layer name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before layer body.");
+    
+    StmtList *methods = createStmtList();
+    while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+        if (match(p, 1, TOKEN_FUNC)) {
+            appendStmt(methods, funcDecl(p, "method", false, ACCESS_PUBLIC, false, false, NULL));
+        } else if (match(p, 1, TOKEN_ASYNC)) {
+            consume(p, TOKEN_FUNC, "Expect 'func' after 'async'.");
+            appendStmt(methods, funcDecl(p, "method", true, ACCESS_PUBLIC, false, false, NULL));
+        } else {
+            parserError(p, "Only function declarations are allowed inside layer.");
+            advance(p);
+        }
+    }
+    
+    consume(p, TOKEN_RIGHT_BRACE, "Expect '}' after layer body.");
+    Stmt *stmt = createLayerDeclStmt(name, methods, keyword.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *activateStmt(Parser *p) {
+    Token keyword = previous(p);
+    Token contextToken = consume(p, TOKEN_IDENTIFIER, "Expect context name to activate.");
+    char *contextName = tokenToString(contextToken);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before activation block.");
+    StmtList *body = block(p);
+    
+    Stmt *stmt = createActivateStmt(contextName, body, keyword.line, 0);
+    free(contextName);
     return stmt;
 }
 
