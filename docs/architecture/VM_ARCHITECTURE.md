@@ -32,7 +32,7 @@ ProXPL's Virtual Machine is a **high-performance, stack-based bytecode interpret
 - **Mark-and-sweep garbage collector** for automatic memory management
 - **Static type checking** at compile-time preventing entire classes of runtime errors
 - **Call frames** for efficient function calls and local variable management
-- **40+ bytecode instructions** covering arithmetic, control flow, functions, and OOP
+- **45+ bytecode instructions** covering arithmetic, control flow, functions, OOP, and COP
 
 The VM executes **optimized bytecode** generated from ProXPL source code, providing a balance between compilation speed and runtime performance.
 
@@ -257,6 +257,15 @@ ProXPL defines **40+ opcodes** organized by category:
 | `OP_SET_PROPERTY` | u8 name_idx | Set object property |
 | `OP_INVOKE` | u8 name_idx, u8 argc | Method invocation optimization |
 
+#### Context-Oriented Programming (COP)
+
+| Opcode | Operands | Description |
+|--------|----------|-------------|
+| `OP_CONTEXT` | u8 name_idx | Create and push context |
+| `OP_LAYER` | u8 name_idx | Create and push layer |
+| `OP_ACTIVATE` | - | Activate top context on stack |
+| `OP_END_ACTIVATE` | - | Deactivate top context |
+
 #### I/O
 
 | Opcode | Operands | Description |
@@ -309,6 +318,8 @@ ProXPL uses a **single, continuous stack** for all intermediate values and local
 struct VM {
   Value stack[STACK_MAX];     // 16,384 values (64 frames * 256)
   Value* stackTop;            // Points to next free slot
+  ObjContext* activeContextStack[STACK_MAX]; // Active COP contexts
+  int activeContextCount;
   // ... other fields ...
 };
 ```
@@ -416,6 +427,14 @@ Fallback for compilers without computed goto:
   }
 #endif
 ```
+
+### 3. Contextual Dispatch
+Before global variable resolution (`OP_GET_GLOBAL`), the VM performs a contextual lookup:
+
+1. **Stack Traversal**: The VM iterates through the `activeContextStack` from top (most recent) to bottom.
+2. **Layer Search**: For each `ObjContext`, it checks all associated `layers` for a function name matching the identifier.
+3. **Execution**: If a match is found, the contextual function is pushed onto the stack and executed instead of the base global version.
+4. **Fallback**: If no context override exists, the VM proceeds with a standard global lookup.
 
 ### Helper Macros
 

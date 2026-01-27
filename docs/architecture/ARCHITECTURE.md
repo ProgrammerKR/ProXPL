@@ -328,6 +328,12 @@ typedef enum {
     // Misc
     OP_PRINT,           // Print top of stack
     OP_POP,             // Pop top of stack
+
+    // COP (Context-Oriented Programming)
+    OP_CONTEXT,         // Define context
+    OP_LAYER,           // Define layer
+    OP_ACTIVATE,        // Activate context
+    OP_END_ACTIVATE,    // Deactivate context
 } OpCode;
 ```
 
@@ -594,6 +600,8 @@ typedef enum {
     OBJ_LIST,
     OBJ_DICT,
     OBJ_SET,
+    OBJ_CONTEXT,
+    OBJ_LAYER,
 } ObjType;
 
 typedef struct Obj {
