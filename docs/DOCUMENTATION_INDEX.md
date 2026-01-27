@@ -75,7 +75,7 @@
 | File | Pillar | Concept |
 |------|--------|---------|
 | **[01_intent_oriented.md](docs/pillars/01_intent_oriented.md)** | Intent-Oriented | Intent/Resolver pattern |
-| **[02_context_aware.md](docs/pillars/02_context_aware.md)** | Context-Aware | `@context` polymorphism |
+| **[02_context_aware.md](docs/pillars/02_context_aware.md)** | Context-Aware | `context`, `layer`, `activate` |
 | **[03_asr.md](docs/pillars/03_asr.md)** | Self-Healing | Resilient blocks |
 | **[04_intrinsic_security.md](docs/pillars/04_intrinsic_security.md)** | Intrinsic Security | Taint analysis |
 | **[05_chrono_native.md](docs/pillars/05_chrono_native.md)** | Chrono-Native | Temporal variables |
