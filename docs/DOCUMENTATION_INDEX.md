@@ -59,6 +59,7 @@
 | **[docs/BYTECODE_FORMAT.md](docs/BYTECODE_FORMAT.md)** | VM instruction specification | Compiler devs | 20m |
 | **[docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md)** | Detailed build instructions | Everyone | 10-20m |
 | **[docs/migration/PYTHON_TO_C.md](docs/migration/PYTHON_TO_C.md)** | Migration strategy & roadmap | Maintainers | 30-45m |
+| **[docs/architecture/paradigms.md](docs/architecture/paradigms.md)** | Multi-paradigm (OOP, IOP, COP) overview | Everyone | 10m |
 
 ### Tutorials (docs/tutorials/)
 
@@ -112,9 +113,10 @@ Learn to write ProXPL code:
 ```
 Deep technical knowledge:
 1. ARCHITECTURE.md - overview
-2. docs/BYTECODE_FORMAT.md - VM details
-3. ARCHITECTURE.md - memory/GC
-4. Review src/ code with guide
+2. docs/architecture/paradigms.md - multi-paradigm design
+3. docs/BYTECODE_FORMAT.md - VM details
+4. ARCHITECTURE.md - memory/GC
+5. Review src/ code with guide
 ```
 
 ### Contributing Code

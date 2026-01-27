@@ -49,6 +49,7 @@ ProXPL is designed around four fundamental principles:
 - ✅ Statically typed with type inference
 - ✅ High-performance via bytecode VM and LLVM AOT
 - ✅ Memory-safe with automatic GC
+- ✅ **Multi-Paradigm**: Seamless Integration of **OOP**, **IOP**, and **COP**
 - ✅ Suitable for systems programming, scripting, and applications
 
 **What ProXPL is NOT:**

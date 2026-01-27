@@ -28,6 +28,7 @@
 
 - Simple, clear syntax (C-style with Python influences)
 - Strong static type checking
+- Multi-Paradigm: **Object-Oriented**, **Intent-Oriented**, and **Context-Oriented**
 - Fast bytecode execution
 - Rich standard library
 - Educational and practical use
@@ -40,9 +41,9 @@
 | **Compilation** | Bytecode (JIT-ready) |
 | **Execution Model** | Stack-based virtual machine |
 | **Memory** | Automatic garbage collection |
-| **Keywords** | 45 reserved words |
-| **Operators** | 42 defined operators |
-| **Core Types** | 12 fundamental types |
+| **Keywords** | 60+ reserved words |
+| **Operators** | 45+ defined operators |
+| **Core Types** | 13 fundamental types (including Tensor) |
 | **Standard Library** | 75+ built-in functions |
 
 ---
@@ -109,9 +110,24 @@ this, super, static, public, private, protected, extends, implements
 async, await
 ```
 
-**Type & Runtime (2):**
+**IOP & COP (5):**
+```
+intent, resolver, context, layer, activate
+```
+
+**Type & Runtime (4):**
 ```
 typeof, native, in, is
+```
+
+**Declarations Plus (1):**
+```
+tensor
+```
+
+**AI & Security (7):**
+```
+model, train, predict, resilient, recovery, verify, identity
 ```
 
 ### Literals

@@ -7,15 +7,14 @@ IOP decouples the *definition* of a capability from its *implementation*. The de
 
 ### Syntax (EBNF)
 ```ebnf
-intent_decl ::= "intent" identifier "(" [param_list] ")" ["->" return_type] ";"
-resolver_def ::= "resolver" identifier "matches" intent_ref "{" statement_list "}"
-usage ::= "fulfill" intent_ref "(" [arg_list] ")" ";"
+intent_decl ::= "intent" identifier "(" [param_list] ")" [ "->" type ] ";"
+resolver_decl ::= "resolver" identifier "matches" identifier "{" block "}"
 ```
 
 **Example:**
-```xpl
+```proxpl
 // Definition
-intent secure_verify(user: User) -> bool;
+intent secure_verify(user) -> bool;
 
 // Implementation (Provider A)
 resolver Auth0Provider matches secure_verify {
@@ -28,7 +27,7 @@ resolver LocalHashProvider matches secure_verify {
 }
 
 // Usage
-bool is_valid = secure_verify(current_user); // Compiler picks best resolver
+let is_valid = secure_verify(current_user); // Compiler picks best resolver
 ```
 
 ### Compiler Logic (The Solver)
@@ -71,21 +70,38 @@ Functions execute different logic branches not based on arguments, but on system
 
 ### Syntax
 ```ebnf
-context_def ::= "@context" "(" condition_expr ")"
-func_def ::= [context_def] "fn" identifier "(" params ")" "{" body "}"
+context_decl ::= "context" identifier "{" layer_decl* "}"
+layer_decl   ::= "layer" identifier "{" func_decl* "}"
+activate_stmt ::= "activate" identifier block
+decorator    ::= "@" "context" "(" expression ")"
 ```
 
-**Example:**
-```xpl
+**Example (Layered COP):**
+```proxpl
+context MobileMode {
+    layer Display {
+       func render() {
+           print "Rendering for mobile...";
+       }
+    }
+}
+
+activate MobileMode {
+    render(); // Prints mobile version
+}
+```
+
+**Example (Decorator COP):**
+```proxpl
 // Normal operation
 @context(System.Load < 0.8)
-fn process_image(img: Image) {
+func process_image(img) {
     return high_quality_resize(img);
 }
 
 // Under load, degrade gracefully
 @context(System.Load >= 0.8)
-fn process_image(img: Image) {
+func process_image(img) {
     return fast_bilinear_resize(img);
 }
 ```

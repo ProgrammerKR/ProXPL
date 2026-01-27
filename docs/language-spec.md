@@ -6,22 +6,29 @@
 
 This document defines the complete specification of the ProXPL programming language.
 
+ProXPL is a high-performance **multi-paradigm** language that integrates:
+- **Object-Oriented Programming (OOP)**: Traditional class-based inheritance and encapsulation.
+- **Intent-Oriented Programming (IOP)**: Defining goals via `intent` and fulfilling them via `resolver`.
+- **Context-Oriented Programming (COP)**: Dynamic behavioral adaptation via `context`, `layer`, and `activate`.
+
 ---
 
 ## 1. Lexical Structure
 
 ### Keywords
-ProXPL reserves the following 45 keywords. They cannot be used as identifiers.
+ProXPL reserves the following keywords (60+). They cannot be used as identifiers.
 
 | Category | Keywords |
 |----------|----------|
-| **Declarations** | `let`, `const`, `func`, `class`, `enum`, `struct`, `interface`, `abstract` |
+| **Declarations** | `let`, `const`, `func`, `class`, `enum`, `struct`, `interface`, `abstract`, `tensor` |
 | **Control Flow** | `if`, `else`, `while`, `for`, `switch`, `case`, `default`, `break`, `continue`, `return`, `try`, `catch`, `finally`, `throw`, `defer` |
 | **Modules** | `import`, `from`, `export`, `as`, `use` |
 | **Values** | `true`, `false`, `null`, `void` |
 | **OOP/Access** | `this`, `super`, `static`, `public`, `private`, `protected`, `extends`, `implements` |
+| **IOP/COP** | `intent`, `resolver`, `context`, `layer`, `activate` |
 | **Async** | `async`, `await` |
 | **Runtime/Ops** | `in`, `is`, `typeof`, `native` |
+| **AI/Resilience**| `model`, `train`, `predict`, `resilient`, `recovery`, `verify`, `identity` |
 | **Misc** | `print` (statement) |
 
 ### Identifiers

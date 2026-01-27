@@ -26,7 +26,7 @@
 
 ## 📖 Introduction
 
-**ProXPL** (ProX Programming Language) is a modern, statically-typed **systems programming language** designed for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional **compiler architecture**, a custom **stack-based bytecode VM**, a robust **static type system**, and an integrated **package manager (PRM)**.
+**ProXPL** (ProX Programming Language) is a modern, statically-typed **multi-paradigm systems programming language** that seamlessly integrates **Object-Oriented**, **Intent-Oriented**, and **Context-Oriented** features for **clarity, performance, and reliability**. Born from a vision to combine Python's readability with C's execution speed, ProXPL features a professional **compiler architecture**, a custom **stack-based bytecode VM**, a robust **static type system**, and an integrated **package manager (PRM)**.
 
 ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, making it ideal for **high-performance systems**, **embedded applications**, **game development**, and **backend services**. It serves as an excellent reference for learning **compiler design** and **interpreter implementation**.
 
@@ -54,6 +54,7 @@ ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, maki
 | 🔧 **PRM Package Manager** | Integrated **ProX Repository Manager** for dependency management and project scaffolding |
 | 🏗️ **Multi-Phase Compiler** | Lexer → Parser (AST) → Type Checker → IR Optimizer → Bytecode/LLVM |
 | ⏩ **Async/Await** | Native asynchronous programming with LLVM Coroutines support |
+| 🔄 **Multi-Paradigm** | Native support for **Object-Oriented**, **Intent-Oriented**, and **Context-Oriented** programming |
 | 🔍 **Developer Tools** | CLI with watch mode, LSP for IDE integration, comprehensive error reporting |
 | 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
 | 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
