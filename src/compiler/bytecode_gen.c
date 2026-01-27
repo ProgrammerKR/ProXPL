@@ -624,6 +624,34 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             }
             break;
         }
+        case STMT_TENSOR_DECL: {
+            // Compile Initializer (Expects List/Expr on stack)
+            if (stmt->as.tensor_decl.initializer) {
+                genExpr(gen, stmt->as.tensor_decl.initializer);
+            } else {
+                writeChunk(gen->chunk, OP_NIL, stmt->line);
+            }
+            
+            // Emit Dimensions as Constants
+            for(int i=0; i<stmt->as.tensor_decl.dimCount; i++) {
+                emitConstant(gen, NUMBER_VAL(stmt->as.tensor_decl.dims[i]), stmt->line);
+            }
+            
+            // Emit Make Tensor
+            writeChunk(gen->chunk, OP_MAKE_TENSOR, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)stmt->as.tensor_decl.dimCount, stmt->line);
+            
+            // Define Variable
+            if (gen->compiler->scopeDepth > 0) {
+                addLocal(gen, stmt->as.tensor_decl.name);
+            } else {
+                Value nameVal = OBJ_VAL(copyString(stmt->as.tensor_decl.name, strlen(stmt->as.tensor_decl.name)));
+                int nameConst = addConstant(gen->chunk, nameVal);
+                writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            break;
+        }
         case STMT_IF: {
             genExpr(gen, stmt->as.if_stmt.condition);
             writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);

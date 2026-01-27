@@ -73,6 +73,7 @@ typedef enum {
   OP_LEFT_SHIFT,
   OP_RIGHT_SHIFT,
   OP_MAT_MUL, // @ operator
+  OP_MAKE_TENSOR,
   OP_HALT = 0xFF
 } OpCode;
 

@@ -11,8 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - **AI-Native Primitives**: 
     - Introduced `tensor` primitive type with multidimensional support (e.g., `tensor<float, 2x2>`).
-    - Added AST and Parser support for Tensor declarations and literal parsing.
-    - Updated compiler frontend to handle tensor type specific syntax (`<type, dims>`).
+    - Added AST and Parser support for Tensor declarations and `@` matrix multiplication operator.
+    - Implemented `OP_MAT_MUL` and `OP_MAKE_TENSOR` opcodes for native execution.
+    - Optimized 2D matrix multiplication using cache-friendly loop ordering.
+    - Support for 1D vector dot products using the same `@` operator.
 
 ## [1.2.0] - 2026-01-20
 

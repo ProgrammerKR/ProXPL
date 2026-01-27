@@ -203,7 +203,9 @@ static InterpretResult run(VM* vm) {
       [OP_BIT_XOR] = &&DO_OP_BIT_XOR,
       [OP_BIT_NOT] = &&DO_OP_BIT_NOT,
       [OP_LEFT_SHIFT] = &&DO_OP_LEFT_SHIFT,
-      [OP_RIGHT_SHIFT] = &&DO_OP_RIGHT_SHIFT
+      [OP_RIGHT_SHIFT] = &&DO_OP_RIGHT_SHIFT,
+      [OP_MAT_MUL] = &&DO_OP_MAT_MUL,
+      [OP_MAKE_TENSOR] = &&DO_OP_MAKE_TENSOR
   };
   #pragma GCC diagnostic pop
 
@@ -808,6 +810,116 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   
+  DO_OP_MAT_MUL: {
+      Value bVal = peek(vm, 0);
+      Value aVal = peek(vm, 1);
+      
+      if (!IS_TENSOR(aVal) || !IS_TENSOR(bVal)) {
+          runtimeError(vm, "Operands for '@' must be Tensors.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      
+      ObjTensor *a = AS_TENSOR(aVal);
+      ObjTensor *b = AS_TENSOR(bVal);
+
+      // Support 1D Dot Product
+      if (a->dimCount == 1 && b->dimCount == 1) {
+          if (a->dims[0] != b->dims[0]) {
+              runtimeError(vm, "Dot product requires vectors of same length: %d and %d.", a->dims[0], b->dims[0]);
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          double dot = 0;
+          for (int i = 0; i < a->dims[0]; i++) dot += a->data[i] * b->data[i];
+          pop(vm); // b
+          pop(vm); // a
+          push(vm, NUMBER_VAL(dot));
+          DISPATCH();
+      }
+      
+      // Basic 2D Matrix Multiplication logic
+      if (a->dimCount != 2 || b->dimCount != 2) {
+          runtimeError(vm, "Matrix multiplication currently supports 2D Tensors.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      
+      int rows_a = a->dims[0];
+      int cols_a = a->dims[1];
+      int rows_b = b->dims[0];
+      int cols_b = b->dims[1];
+      
+      if (cols_a != rows_b) {
+          runtimeError(vm, "Incompatible dimensions for matrix multiplication: %dx%d and %dx%d.", rows_a, cols_a, rows_b, cols_b);
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      
+      int outDims[] = {rows_a, cols_b};
+      ObjTensor *res = newTensor(2, outDims, NULL);
+      push(vm, OBJ_VAL(res)); // Root it
+      
+      // Multiplication logic (naive ijk for now, compiler can optimize)
+      for (int i = 0; i < rows_a; i++) {
+          for (int k = 0; k < cols_a; k++) {
+              double val_a = a->data[i * cols_a + k];
+              for (int j = 0; j < cols_b; j++) {
+                  res->data[i * cols_b + j] += val_a * b->data[k * cols_b + j];
+              }
+          }
+      }
+      
+      Value resVal = pop(vm); // result tensor
+      pop(vm); // b
+      pop(vm); // a
+      push(vm, resVal);
+      DISPATCH();
+  }
+  
+  DO_OP_MAKE_TENSOR: {
+      int dimCount = READ_BYTE();
+      int dims[16]; // Assume max dim 16
+      int totalSize = 1;
+      for (int i = dimCount - 1; i >= 0; i--) {
+          dims[i] = (int)AS_NUMBER(pop(vm));
+          totalSize *= dims[i];
+      }
+      
+      Value initializer = pop(vm);
+      ObjTensor *tensor = newTensor(dimCount, dims, NULL);
+      push(vm, OBJ_VAL(tensor)); // Root it
+      
+      // Simple flattening if it's a list. 
+      // Deep flatten helper would be better, but let's do shallow or handle lists.
+      if (IS_LIST(initializer)) {
+          ObjList *list = AS_LIST(initializer);
+          // Recursively fill? For now, we assume flattened list or nested lists.
+          // Nested list traversal is complex for generic N-dim.
+          // Let's implement a simple 2D list extractor as a start.
+          int idx = 0;
+          if (dimCount == 2) {
+               for (int i = 0; i < list->count && idx < totalSize; i++) {
+                   if (IS_LIST(list->items[i])) {
+                       ObjList *sub = AS_LIST(list->items[i]);
+                       for (int j = 0; j < sub->count && idx < totalSize; j++) {
+                           if (IS_NUMBER(sub->items[j])) {
+                               tensor->data[idx++] = AS_NUMBER(sub->items[j]);
+                           }
+                       }
+                   } else if (IS_NUMBER(list->items[i])) {
+                       tensor->data[idx++] = AS_NUMBER(list->items[i]);
+                   }
+               }
+          } else {
+              // Flatten 1D or others
+              for (int i = 0; i < list->count && idx < totalSize; i++) {
+                  if (IS_NUMBER(list->items[i])) {
+                      tensor->data[idx++] = AS_NUMBER(list->items[i]);
+                  }
+              }
+          }
+      }
+      
+      DISPATCH();
+  }
+  
 
   
   DO_OP_UNKNOWN: {
@@ -1343,6 +1455,101 @@ static InterpretResult run(VM* vm) {
         int b = (int)AS_NUMBER(pop(vm));
         int a = (int)AS_NUMBER(pop(vm));
         push(vm, NUMBER_VAL((double)(a >> b)));
+        break;
+    }
+    case OP_MAT_MUL: {
+        Value bVal = peek(vm, 0);
+        Value aVal = peek(vm, 1);
+        
+        if (!IS_TENSOR(aVal) || !IS_TENSOR(bVal)) {
+            runtimeError(vm, "Operands for '@' must be Tensors.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        
+        ObjTensor *a = AS_TENSOR(aVal);
+        ObjTensor *b = AS_TENSOR(bVal);
+        
+        // Support 1D Dot Product
+        if (a->dimCount == 1 && b->dimCount == 1) {
+            if (a->dims[0] != b->dims[0]) {
+                runtimeError(vm, "Dot product requires vectors of same length: %d and %d.", a->dims[0], b->dims[0]);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            double dot = 0;
+            for (int i = 0; i < a->dims[0]; i++) dot += a->data[i] * b->data[i];
+            pop(vm); // b
+            pop(vm); // a
+            push(vm, NUMBER_VAL(dot));
+            break;
+        }
+        
+        if (a->dimCount != 2 || b->dimCount != 2) {
+            runtimeError(vm, "Matrix multiplication currently supports 2D Tensors.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        
+        int rows_a = a->dims[0];
+        int cols_a = a->dims[1];
+        int rows_b = b->dims[0];
+        int cols_b = b->dims[1];
+        
+        if (cols_a != rows_b) {
+            runtimeError(vm, "Incompatible dimensions: %dx%d and %dx%d.", rows_a, cols_a, rows_b, cols_b);
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        
+        int outDims[] = {rows_a, cols_b};
+        ObjTensor *res = newTensor(2, outDims, NULL);
+        push(vm, OBJ_VAL(res));
+        
+        for (int i = 0; i < rows_a; i++) {
+            for (int k = 0; k < cols_a; k++) {
+                double val_a = a->data[i * cols_a + k];
+                for (int j = 0; j < cols_b; j++) {
+                    res->data[i * cols_b + j] += val_a * b->data[k * cols_b + j];
+                }
+            }
+        }
+        
+        Value resVal = pop(vm);
+        pop(vm);
+        pop(vm);
+        push(vm, resVal);
+        break;
+    }
+    case OP_MAKE_TENSOR: {
+        int dimCount = READ_BYTE();
+        int dims[16];
+        int totalSize = 1;
+        for (int i = dimCount - 1; i >= 0; i--) {
+            dims[i] = (int)AS_NUMBER(pop(vm));
+            totalSize *= dims[i];
+        }
+        
+        Value initializer = pop(vm);
+        ObjTensor *tensor = newTensor(dimCount, dims, NULL);
+        push(vm, OBJ_VAL(tensor));
+        
+        if (IS_LIST(initializer)) {
+            ObjList *list = AS_LIST(initializer);
+            int idx = 0;
+            if (dimCount == 2) {
+                for (int i = 0; i < list->count && idx < totalSize; i++) {
+                    if (IS_LIST(list->items[i])) {
+                        ObjList *sub = AS_LIST(list->items[i]);
+                        for (int j = 0; j < sub->count && idx < totalSize; j++) {
+                            if (IS_NUMBER(sub->items[j])) tensor->data[idx++] = AS_NUMBER(sub->items[j]);
+                        }
+                    } else if (IS_NUMBER(list->items[i])) {
+                        tensor->data[idx++] = AS_NUMBER(list->items[i]);
+                    }
+                }
+            } else {
+                for (int i = 0; i < list->count && idx < totalSize; i++) {
+                    if (IS_NUMBER(list->items[i])) tensor->data[idx++] = AS_NUMBER(list->items[i]);
+                }
+            }
+        }
         break;
     }
     case OP_RETURN: {

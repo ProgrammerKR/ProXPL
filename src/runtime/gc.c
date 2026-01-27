@@ -155,6 +155,9 @@ static void blackenObject(Obj* object) {
             markTable(&dict->items);
             break;
         }
+        case OBJ_TENSOR:
+            // Tensors only contain raw data (int* and double*), no Object pointers to mark
+            break;
         default:
             // Warn or ignore?
             break;
@@ -280,6 +283,13 @@ static void freeObject(Obj* object) {
             struct ObjDictionary* dict = (struct ObjDictionary*)object;
             freeTable(&dict->items);
             FREE(struct ObjDictionary, object);
+            break;
+        }
+        case OBJ_TENSOR: {
+            ObjTensor* tensor = (ObjTensor*)object;
+            FREE_ARRAY(int, tensor->dims, tensor->dimCount);
+            FREE_ARRAY(double, tensor->data, tensor->size);
+            FREE(ObjTensor, object);
             break;
         }
         case OBJ_TASK: {
