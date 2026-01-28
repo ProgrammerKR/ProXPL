@@ -52,6 +52,7 @@ typedef struct {
 
 static void genExpr(BytecodeGen* gen, Expr* expr);
 static void genStmt(BytecodeGen* gen, Stmt* stmt);
+static void emitTensorConstruction(BytecodeGen* gen, Expr* expr);
 
 // --- Helpers ---
 
@@ -142,6 +143,67 @@ static void emitConstant(BytecodeGen* gen, Value value, int line) {
     } else {
         writeChunk(gen->chunk, OP_CONSTANT, line);
         writeChunk(gen->chunk, (uint8_t)constant, line);
+    }
+}
+
+static void emitByte(BytecodeGen* gen, uint8_t byte, int line) {
+    writeChunk(gen->chunk, byte, line);
+}
+
+static void emitInt(BytecodeGen* gen, int value, int line) {
+    // Little endian 4 bytes
+    emitByte(gen, (uint8_t)((value >> 0) & 0xff), line);
+    emitByte(gen, (uint8_t)((value >> 8) & 0xff), line);
+    emitByte(gen, (uint8_t)((value >> 16) & 0xff), line);
+    emitByte(gen, (uint8_t)((value >> 24) & 0xff), line);
+}
+
+static void emitTensorElements(BytecodeGen* gen, Expr* expr) {
+    if (expr->type == EXPR_LIST) {
+        if (expr->as.list.elements) {
+            for (int i = 0; i < expr->as.list.elements->count; i++) {
+                emitTensorElements(gen, expr->as.list.elements->items[i]);
+            }
+        }
+    } else {
+        genExpr(gen, expr);
+    }
+}
+
+static void emitTensorConstruction(BytecodeGen* gen, Expr* expr) {
+    // 1. Infer Dimensions
+    int dims[16];
+    int dimCount = 0;
+    
+    Expr* current = expr;
+    // Inspect the tag first if available for rank?
+    // Or just traverse.
+    while (current && current->type == EXPR_LIST) {
+        if (dimCount >= 16) break;
+        int count = current->as.list.elements ? current->as.list.elements->count : 0;
+        dims[dimCount++] = count;
+        if (count > 0) {
+            current = current->as.list.elements->items[0];
+        } else {
+            break; 
+        }
+    }
+    
+    // Calculate total elements
+    int elementCount = 1;
+    for (int i=0; i<dimCount; i++) elementCount *= dims[i];
+    
+    // 2. Emit Elements (Flattened)
+    emitTensorElements(gen, expr);
+    
+    // 3. Emit Opcode
+    writeChunk(gen->chunk, OP_MAKE_TENSOR, expr->line);
+    
+    // 4. Emit Operands
+    emitByte(gen, (uint8_t)dimCount, expr->line);
+    emitInt(gen, elementCount, expr->line);
+    for (int i=0; i<dimCount; i++) {
+        emitInt(gen, dims[i], expr->line);
     }
 }
 
@@ -323,6 +385,12 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             break;
         }
         case EXPR_LIST: {
+             // Check for Tensor Literal tag
+             if (expr->inferredType.name && strncmp(expr->inferredType.name, "__TENSOR__", 10) == 0) {
+                 emitTensorConstruction(gen, expr);
+                 break;
+             }
+
              int count = 0;
              if (expr->as.list.elements) {
                  count = expr->as.list.elements->count;
@@ -625,21 +693,17 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             break;
         }
         case STMT_TENSOR_DECL: {
-            // Compile Initializer (Expects List/Expr on stack)
             if (stmt->as.tensor_decl.initializer) {
                 genExpr(gen, stmt->as.tensor_decl.initializer);
             } else {
-                writeChunk(gen->chunk, OP_NIL, stmt->line);
+                 // Zero-init tensor
+                 writeChunk(gen->chunk, OP_MAKE_TENSOR, stmt->line);
+                 emitByte(gen, (uint8_t)stmt->as.tensor_decl.dimCount, stmt->line);
+                 emitInt(gen, 0, stmt->line); // elementCount = 0 -> Zero Fill
+                 for (int i=0; i<stmt->as.tensor_decl.dimCount; i++) {
+                     emitInt(gen, stmt->as.tensor_decl.dims[i], stmt->line);
+                 }
             }
-            
-            // Emit Dimensions as Constants
-            for(int i=0; i<stmt->as.tensor_decl.dimCount; i++) {
-                emitConstant(gen, NUMBER_VAL(stmt->as.tensor_decl.dims[i]), stmt->line);
-            }
-            
-            // Emit Make Tensor
-            writeChunk(gen->chunk, OP_MAKE_TENSOR, stmt->line);
-            writeChunk(gen->chunk, (uint8_t)stmt->as.tensor_decl.dimCount, stmt->line);
             
             // Define Variable
             if (gen->compiler->scopeDepth > 0) {

@@ -907,46 +907,49 @@ static InterpretResult run(VM* vm) {
   
   DO_OP_MAKE_TENSOR: {
       int dimCount = READ_BYTE();
-      int dims[16]; // Assume max dim 16
-      int totalSize = 1;
-      for (int i = dimCount - 1; i >= 0; i--) {
-          dims[i] = (int)AS_NUMBER(pop(vm));
-          totalSize *= dims[i];
-      }
       
-      Value initializer = pop(vm);
+      // Read element count (4 bytes little endian)
+      uint32_t elementCount = 0;
+      elementCount |= (*frame->ip++);
+      elementCount |= (*frame->ip++ << 8);
+      elementCount |= (*frame->ip++ << 16);
+      elementCount |= (*frame->ip++ << 24);
+
+      int dims[16];
+      int totalSize = 1;
+      
+      // Read dimensions (4 bytes each)
+      for (int i = 0; i < dimCount; i++) {
+           uint32_t d = 0;
+           d |= (*frame->ip++);
+           d |= (*frame->ip++ << 8);
+           d |= (*frame->ip++ << 16);
+           d |= (*frame->ip++ << 24);
+           dims[i] = (int)d;
+           totalSize *= dims[i];
+      }
+
       ObjTensor *tensor = newTensor(dimCount, dims, NULL);
       push(vm, OBJ_VAL(tensor)); // Root it
-      
-      // Simple flattening if it's a list. 
-      // Deep flatten helper would be better, but let's do shallow or handle lists.
-      if (IS_LIST(initializer)) {
-          ObjList *list = AS_LIST(initializer);
-          // Recursively fill? For now, we assume flattened list or nested lists.
-          // Nested list traversal is complex for generic N-dim.
-          // Let's implement a simple 2D list extractor as a start.
-          int idx = 0;
-          if (dimCount == 2) {
-               for (int i = 0; i < list->count && idx < totalSize; i++) {
-                   if (IS_LIST(list->items[i])) {
-                       ObjList *sub = AS_LIST(list->items[i]);
-                       for (int j = 0; j < sub->count && idx < totalSize; j++) {
-                           if (IS_NUMBER(sub->items[j])) {
-                               tensor->data[idx++] = AS_NUMBER(sub->items[j]);
-                           }
-                       }
-                   } else if (IS_NUMBER(list->items[i])) {
-                       tensor->data[idx++] = AS_NUMBER(list->items[i]);
-                   }
-               }
-          } else {
-              // Flatten 1D or others
-              for (int i = 0; i < list->count && idx < totalSize; i++) {
-                  if (IS_NUMBER(list->items[i])) {
-                      tensor->data[idx++] = AS_NUMBER(list->items[i]);
-                  }
+
+      if (elementCount == 0 && totalSize > 0) {
+          // Zero Fill Mode
+          memset(tensor->data, 0, totalSize * sizeof(double));
+      } else if (elementCount == totalSize) {
+          // Pop elements (reverse order)
+          for (int i = totalSize - 1; i >= 0; i--) {
+              Value val = pop(vm);
+              if (IS_NUMBER(val)) {
+                  tensor->data[i] = AS_NUMBER(val);
+              } else {
+                  tensor->data[i] = 0; // Error handling?
               }
           }
+      } else {
+           // Mismatch or invalid
+           // runtimeError(vm, "Tensor size mismatch");
+           // For safety, zero fill?
+           memset(tensor->data, 0, totalSize * sizeof(double));
       }
       
       DISPATCH();
@@ -1593,43 +1596,47 @@ static InterpretResult run(VM* vm) {
         
         Value resVal = pop(vm);
         pop(vm);
-        pop(vm);
-        push(vm, resVal);
-        break;
-    }
     case OP_MAKE_TENSOR: {
-        // ... (preserving existing tensor case) ...
         int dimCount = READ_BYTE();
+        
+        // Read element count (4 bytes little endian)
+        uint32_t elementCount = 0;
+        elementCount |= (*frame->ip++);
+        elementCount |= (*frame->ip++ << 8);
+        elementCount |= (*frame->ip++ << 16);
+        elementCount |= (*frame->ip++ << 24);
+
         int dims[16];
         int totalSize = 1;
-        for (int i = dimCount - 1; i >= 0; i--) {
-            dims[i] = (int)AS_NUMBER(pop(vm));
-            totalSize *= dims[i];
+        
+        // Read dimensions (4 bytes each)
+        for (int i = 0; i < dimCount; i++) {
+             uint32_t d = 0;
+             d |= (*frame->ip++);
+             d |= (*frame->ip++ << 8);
+             d |= (*frame->ip++ << 16);
+             d |= (*frame->ip++ << 24);
+             dims[i] = (int)d;
+             totalSize *= dims[i];
         }
-        
-        Value initializer = pop(vm);
+
         ObjTensor *tensor = newTensor(dimCount, dims, NULL);
-        push(vm, OBJ_VAL(tensor));
-        
-        if (IS_LIST(initializer)) {
-            ObjList *list = AS_LIST(initializer);
-            int idx = 0;
-            if (dimCount == 2) {
-                for (int i = 0; i < list->count && idx < totalSize; i++) {
-                    if (IS_LIST(list->items[i])) {
-                        ObjList *sub = AS_LIST(list->items[i]);
-                        for (int j = 0; j < sub->count && idx < totalSize; j++) {
-                            if (IS_NUMBER(sub->items[j])) tensor->data[idx++] = AS_NUMBER(sub->items[j]);
-                        }
-                    } else if (IS_NUMBER(list->items[i])) {
-                        tensor->data[idx++] = AS_NUMBER(list->items[i]);
-                    }
-                }
-            } else {
-                for (int i = 0; i < list->count && idx < totalSize; i++) {
-                    if (IS_NUMBER(list->items[i])) tensor->data[idx++] = AS_NUMBER(list->items[i]);
+        push(vm, OBJ_VAL(tensor)); // Root it
+
+        if (elementCount == 0 && totalSize > 0) {
+             memset(tensor->data, 0, totalSize * sizeof(double));
+        } else if (elementCount == totalSize) {
+            // Pop elements (reverse order as they were pushed in order, stack top is last)
+            for (int i = totalSize - 1; i >= 0; i--) {
+                Value val = pop(vm);
+                if (IS_NUMBER(val)) {
+                    tensor->data[i] = AS_NUMBER(val);
+                } else {
+                    tensor->data[i] = 0;
                 }
             }
+        } else {
+             memset(tensor->data, 0, totalSize * sizeof(double));
         }
         break;
     }

@@ -279,6 +279,8 @@ Expr *createListExpr(ExprList *elements, int line, int column) {
   expr->line = line;
   expr->column = column;
   expr->as.list.elements = elements;
+  expr->inferredType.kind = TYPE_UNKNOWN;
+  expr->inferredType.name = NULL;
   return expr;
 }
 

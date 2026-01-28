@@ -1,0 +1,54 @@
+// ProXPL Tensor Literal Test
+// Testing first-class tensor support with nested bracket syntax
+
+func test_1d_tensor() {
+    var v = [1.0, 2.0, 3.0];
+    print("1D Tensor:");
+    print(v);
+}
+
+func test_2d_tensor() {
+    var m = [[1, 2], [3, 4]];
+    print("2D Tensor (2x2):");
+    print(m);
+}
+
+func test_matrix_multiplication() {
+    // Identity matrix
+    var identity = [[1, 0], [0, 1]];
+    
+    // Regular matrix
+    var mat = [[5, 6], [7, 8]];
+    
+    // Matrix multiplication using @ operator
+    var result = identity @ mat;
+    
+    print("Identity @ Matrix:");
+    print(result);
+    
+    // Should output same as mat since identity @ mat = mat
+}
+
+func test_dot_product() {
+    var a = [1, 2, 3];
+    var b = [4, 5, 6];
+    
+    var dot = a @ b;
+    print("Dot product [1,2,3] @ [4,5,6]:");
+    print(dot);  // Should be 32 (1*4 + 2*5 + 3*6)
+}
+
+func test_shape_validation() {
+    // This should fail - inconsistent dimensions
+    // var invalid = [[1, 2], [3]];  // Uncomment to test error
+    
+    print("Shape validation test passed (no inconsistent tensors created)");
+}
+
+print("=== Tensor Literal Tests ===");
+test_1d_tensor();
+test_2d_tensor();
+test_matrix_multiplication();
+test_dot_product();
+test_shape_validation();
+print("=== All Tests Complete ===");

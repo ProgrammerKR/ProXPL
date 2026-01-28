@@ -73,6 +73,11 @@ static bool check(Parser *p, PxTokenType type);
 static bool match(Parser *p, int count, ...);
 static Token consume(Parser *p, PxTokenType type, const char *message);
 
+// Tensor literal detection helpers
+static bool isTensorCandidate(ExprList *elements);
+static bool isValidTensorDimensions(ExprList *elements, int *outDims, int *outDimCount);
+static int getTensorElementCount(ExprList *elements);
+
 
 // === Initialization ===
 
@@ -204,6 +209,111 @@ static char *tokenToString(Token token) {
   return str;
 }
 
+// === Tensor Literal Detection Helpers ===
+
+// Check if all elements in list are numbers (1D tensor)
+// or all are lists (potential multi-dimensional tensor)
+static bool isTensorCandidate(ExprList *elements) {
+    if (!elements || elements->count == 0) return false;
+    
+    // Check if all elements are numbers (1D tensor)
+    bool allNumbers = true;
+    bool allLists = true;
+    
+    for (int i = 0; i < elements->count; i++) {
+        Expr *elem = elements->items[i];
+        if (elem->type == EXPR_LITERAL && IS_NUMBER(elem->as.literal.value)) {
+            allLists = false;
+        } else if (elem->type == EXPR_LIST) {
+            allNumbers = false;
+        } else {
+            // Neither number nor list - not a tensor
+            return false;
+        }
+    }
+    
+    return allNumbers || allLists;
+}
+
+// Recursively validate tensor dimensions and extract shape
+// Returns true if valid, false otherwise
+// Fills outDims with shape and outDimCount with number of dimensions
+static bool isValidTensorDimensions(ExprList *elements, int *outDims, int *outDimCount) {
+    if (!elements || elements->count == 0) return false;
+    
+    // Base case: All elements are numbers (1D tensor)
+    if (elements->items[0]->type == EXPR_LITERAL && 
+        IS_NUMBER(elements->items[0]->as.literal.value)) {
+        for (int i = 0; i < elements->count; i++) {
+            if (elements->items[i]->type != EXPR_LITERAL || 
+                !IS_NUMBER(elements->items[i]->as.literal.value)) {
+                return false;  // Mixed types
+            }
+        }
+        outDims[0] = elements->count;
+        *outDimCount = 1;
+        return true;
+    }
+    
+    // Recursive case: All elements are lists (multi-dimensional tensor)
+    if (elements->items[0]->type == EXPR_LIST) {
+        int firstSubDims[16];
+        int firstSubDimCount = 0;
+        
+        // Validate first sub-list
+        if (!isValidTensorDimensions(elements->items[0]->as.list.elements, 
+                                    firstSubDims, &firstSubDimCount)) {
+            return false;
+        }
+        
+        // Check all other sub-lists have the same shape
+        for (int i = 1; i < elements->count; i++) {
+            if (elements->items[i]->type != EXPR_LIST) {
+                return false;  // Mixed types
+            }
+            
+            int subDims[16];
+            int subDimCount = 0;
+            if (!isValidTensorDimensions(elements->items[i]->as.list.elements, 
+                                        subDims, &subDimCount)) {
+                return false;
+            }
+            
+            // Check dimensions match
+            if (subDimCount != firstSubDimCount) return false;
+            for (int j = 0; j < subDimCount; j++) {
+                if (subDims[j] != firstSubDims[j]) return false;
+            }
+        }
+        
+        // Build output dimensions: [current_count, sub_dims...]
+        outDims[0] = elements->count;
+        for (int i = 0; i < firstSubDimCount; i++) {
+            outDims[i + 1] = firstSubDims[i];
+        }
+        *outDimCount = firstSubDimCount + 1;
+        return true;
+    }
+    
+    return false;
+}
+
+// Count total number of numeric elements in a potentially nested list
+static int getTensorElementCount(ExprList *elements) {
+    if (!elements) return 0;
+    
+    int count = 0;
+    for (int i = 0; i < elements->count; i++) {
+        Expr *elem = elements->items[i];
+        if (elem->type == EXPR_LITERAL && IS_NUMBER(elem->as.literal.value)) {
+            count++;
+        } else if (elem->type == EXPR_LIST) {
+            count += getTensorElementCount(elem->as.list.elements);
+        }
+    }
+    return count;
+}
+
 // === Main Parse Function ===
 
 StmtList *parse(Parser *parser) {
@@ -264,7 +374,7 @@ static Stmt *declaration(Parser *p) {
     return interfaceDecl(p);
   if (match(p, 1, TOKEN_USE))
     return useDecl(p);
-  if (match(p, 2, TOKEN_LET, TOKEN_CONST))
+  if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR))
     return varDecl(p);
   if (match(p, 1, TOKEN_INTENT))
     return intentDecl(p);
@@ -1136,6 +1246,7 @@ static Expr *primary(Parser *p) {
   }
 
   if (match(p, 1, TOKEN_LEFT_BRACKET)) {
+    int startLine = previous(p).line;
     ExprList *elements = createExprList();
     if (!check(p, TOKEN_RIGHT_BRACKET)) {
       do {
@@ -1143,7 +1254,39 @@ static Expr *primary(Parser *p) {
       } while (match(p, 1, TOKEN_COMMA));
     }
     consume(p, TOKEN_RIGHT_BRACKET, "Expect ']'.");
-    return createListExpr(elements, previous(p).line, 0);
+    
+    // Check if this list is actually a tensor literal
+    fprintf(stderr, "DEBUG: Checking list for tensor candidacy at line %d\n", previous(p).line);
+    if (isTensorCandidate(elements)) {
+        fprintf(stderr, "DEBUG: Is candidate! Checking dims...\n");
+        int dims[16];
+        int dimCount = 0;
+        if (isValidTensorDimensions(elements, dims, &dimCount)) {
+            fprintf(stderr, "DEBUG: Valid Tensor! DimCount: %d\n", dimCount);
+            // This is a valid tensor literal!
+            // Create the list expression, but mark it with tensor metadata
+            Expr *listExpr = createListExpr(elements, startLine, 0);
+            
+            // Store tensor dimensions in the type info (using name field as a marker)
+            listExpr->inferredType.kind = TYPE_UNKNOWN;  // We don't have TYPE_TENSOR in TypeKind
+            char tensorMarker[256];
+            snprintf(tensorMarker, sizeof(tensorMarker), "__TENSOR__%d", dimCount);
+            listExpr->inferredType.name = strdup(tensorMarker);
+            listExpr->inferredType.paramCount = dimCount;
+            fprintf(stderr, "DEBUG: Parser ListExpr at %p. Name: %s (%p). Line: %d\n", (void*)listExpr, listExpr->inferredType.name, (void*)listExpr->inferredType.name, startLine);
+            
+            // Store dimensions temporarily (we'll use this in bytecode gen)
+            // NOTE: This is a bit of a hack, but works for now
+            // In a production system, we'd extend the AST to have proper tensor support
+            
+            return listExpr;
+        }
+    }
+    
+    // Regular list
+    Expr* rL = createListExpr(elements, previous(p).line, 0);
+    fprintf(stderr, "DEBUG: Parser Regular ListExpr at %p. Line: %d\n", (void*)rL, previous(p).line);
+    return rL;
   }
 
   if (match(p, 1, TOKEN_LEFT_BRACE)) {
