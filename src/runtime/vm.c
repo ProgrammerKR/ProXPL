@@ -113,6 +113,100 @@ bool isFalsey(Value value) {
   return IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+static bool performTensorArithmetic(VM* vm, char op) {
+    Value bVal = peek(vm, 0);
+    Value aVal = peek(vm, 1);
+    
+    // Case 1: Tensor op Tensor
+    if (IS_TENSOR(aVal) && IS_TENSOR(bVal)) {
+        ObjTensor* a = AS_TENSOR(aVal);
+        ObjTensor* b = AS_TENSOR(bVal);
+        
+        // Element-wise arithmetic requires matching size
+        if (a->size != b->size) {
+            runtimeError(vm, "Tensor size mismatch: %d vs %d.", a->size, b->size);
+            return true;
+        }
+        
+        if (a->dimCount != b->dimCount) {
+             runtimeError(vm, "Tensor rank mismatch.");
+             return true;
+        }
+        for (int i=0; i<a->dimCount; i++) {
+             if (a->dims[i] != b->dims[i]) {
+                 runtimeError(vm, "Tensor dimension mismatch at axis %d: %d vs %d.", i, a->dims[i], b->dims[i]);
+                 return true;
+             }
+        }
+        
+        ObjTensor* res = newTensor(a->dimCount, a->dims, NULL);
+        push(vm, OBJ_VAL(res)); 
+        
+        for (int i = 0; i < a->size; i++) {
+            double vA = a->data[i];
+            double vB = b->data[i];
+            switch (op) {
+                case '+': res->data[i] = vA + vB; break;
+                case '-': res->data[i] = vA - vB; break;
+                case '*': res->data[i] = vA * vB; break;
+                case '/': res->data[i] = vA / vB; break;
+            }
+        }
+        
+        Value resVal = pop(vm);
+        pop(vm); // b
+        pop(vm); // a
+        push(vm, resVal);
+        return true;
+    }
+    
+    // Case 2: Tensor op Scalar
+    if (IS_TENSOR(aVal) && IS_NUMBER(bVal)) {
+        ObjTensor* a = AS_TENSOR(aVal);
+        double b = AS_NUMBER(bVal);
+        
+        ObjTensor* res = newTensor(a->dimCount, a->dims, NULL);
+        push(vm, OBJ_VAL(res));
+        
+        for (int i = 0; i < a->size; i++) {
+            double vA = a->data[i];
+            switch (op) {
+                case '+': res->data[i] = vA + b; break;
+                case '-': res->data[i] = vA - b; break;
+                case '*': res->data[i] = vA * b; break;
+                case '/': res->data[i] = vA / b; break;
+            }
+        }
+        Value resVal = pop(vm);
+        pop(vm); pop(vm); push(vm, resVal);
+        return true;
+    }
+    
+    // Case 3: Scalar op Tensor
+    if (IS_NUMBER(aVal) && IS_TENSOR(bVal)) {
+        double a = AS_NUMBER(aVal);
+        ObjTensor* b = AS_TENSOR(bVal);
+        
+        ObjTensor* res = newTensor(b->dimCount, b->dims, NULL);
+        push(vm, OBJ_VAL(res));
+        
+        for (int i = 0; i < b->size; i++) {
+            double vB = b->data[i];
+            switch (op) {
+                case '+': res->data[i] = a + vB; break;
+                case '-': res->data[i] = a - vB; break;
+                case '*': res->data[i] = a * vB; break;
+                case '/': res->data[i] = a / vB; break;
+            }
+        }
+        Value resVal = pop(vm);
+        pop(vm); pop(vm); push(vm, resVal);
+        return true;
+    }
+
+    return false;
+}
+
 static void concatenate(VM* pvm) {
   ObjString* b = AS_STRING(peek(pvm, 0));
   ObjString* a = AS_STRING(peek(pvm, 1));
@@ -531,6 +625,7 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   DO_OP_ADD: {
+      if (performTensorArithmetic(vm, '+')) { DISPATCH(); }
       if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
           concatenate(vm);
       } else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
@@ -580,6 +675,7 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   DO_OP_SUBTRACT: {
+      if (performTensorArithmetic(vm, '-')) { DISPATCH(); }
       if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
           runtimeError(vm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
@@ -590,6 +686,7 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   DO_OP_MULTIPLY: {
+      if (performTensorArithmetic(vm, '*')) { DISPATCH(); }
       if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
           runtimeError(vm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
@@ -600,6 +697,7 @@ static InterpretResult run(VM* vm) {
       DISPATCH();
   }
   DO_OP_DIVIDE: {
+      if (performTensorArithmetic(vm, '/')) { DISPATCH(); }
       if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
           runtimeError(vm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
@@ -1249,6 +1347,7 @@ static InterpretResult run(VM* vm) {
         break;
     }
     case OP_ADD: {
+        if (performTensorArithmetic(vm, '+')) break;
         if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
           concatenate(vm);
         } else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
@@ -1284,18 +1383,21 @@ static InterpretResult run(VM* vm) {
         break;
     }
     case OP_SUBTRACT: {
+        if (performTensorArithmetic(vm, '-')) break;
         double b = AS_NUMBER(pop(vm));
         double a = AS_NUMBER(pop(vm));
         push(vm, NUMBER_VAL(a - b));
         break;
     }
     case OP_MULTIPLY: {
+        if (performTensorArithmetic(vm, '*')) break;
         double b = AS_NUMBER(pop(vm));
         double a = AS_NUMBER(pop(vm));
         push(vm, NUMBER_VAL(a * b));
         break;
     }
     case OP_DIVIDE: {
+        if (performTensorArithmetic(vm, '/')) break;
         double b = AS_NUMBER(pop(vm));
         double a = AS_NUMBER(pop(vm));
         push(vm, NUMBER_VAL(a / b));
