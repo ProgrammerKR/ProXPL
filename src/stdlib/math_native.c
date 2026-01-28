@@ -238,6 +238,107 @@ static Value native_seed(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+// --------------------------------------------------
+// Tensor Functions (Activation & Utilities)
+// --------------------------------------------------
+
+// sigmoid(tensor)
+static Value native_sigmoid(int argCount, Value* args) {
+    if (argCount < 1 || !IS_TENSOR(args[0])) {
+        // runtimeError not easily accessible here without passing vm explicitly?
+        // We use global vm extern
+        // Ideally we should raise error.
+        return NIL_VAL; 
+    }
+    
+    ObjTensor* t = AS_TENSOR(args[0]);
+    ObjTensor* res = newTensor(t->dimCount, t->dims, NULL);
+    push(&vm, OBJ_VAL(res));
+    
+    for(int i=0; i<t->size; i++) {
+        res->data[i] = 1.0 / (1.0 + exp(-t->data[i]));
+    }
+    
+    return pop(&vm);
+}
+
+// relu(tensor)
+static Value native_relu(int argCount, Value* args) {
+    if (argCount < 1 || !IS_TENSOR(args[0])) return NIL_VAL;
+    
+    ObjTensor* t = AS_TENSOR(args[0]);
+    ObjTensor* res = newTensor(t->dimCount, t->dims, NULL);
+    push(&vm, OBJ_VAL(res));
+    
+    for(int i=0; i<t->size; i++) {
+        double val = t->data[i];
+        res->data[i] = (val > 0) ? val : 0;
+    }
+    
+    return pop(&vm);
+}
+
+// tanh(tensor)
+static Value native_tanh(int argCount, Value* args) {
+    if (argCount < 1) return NIL_VAL;
+    
+    // Support Scalar tanh too
+    if (IS_NUMBER(args[0])) {
+        return NUMBER_VAL(tanh(AS_NUMBER(args[0])));
+    }
+    
+    if (!IS_TENSOR(args[0])) return NIL_VAL;
+    
+    ObjTensor* t = AS_TENSOR(args[0]);
+    ObjTensor* res = newTensor(t->dimCount, t->dims, NULL);
+    push(&vm, OBJ_VAL(res));
+    
+    for(int i=0; i<t->size; i++) {
+        res->data[i] = tanh(t->data[i]);
+    }
+    
+    return pop(&vm);
+}
+
+// transpose(tensor)
+static Value native_transpose(int argCount, Value* args) {
+     if (argCount < 1 || !IS_TENSOR(args[0])) return NIL_VAL;
+     
+     ObjTensor* t = AS_TENSOR(args[0]);
+     
+     if (t->dimCount != 2) {
+         // Fallback: Return copy if 1D? Or error?
+         // For now return copy to be safe.
+         ObjTensor* res = newTensor(t->dimCount, t->dims, NULL);
+         push(&vm, OBJ_VAL(res));
+         memcpy(res->data, t->data, t->size * sizeof(double));
+         return pop(&vm);
+     }
+     
+     // Swap dimensions
+     int dims[2];
+     dims[0] = t->dims[1];
+     dims[1] = t->dims[0];
+     
+     ObjTensor* res = newTensor(2, dims, NULL);
+     push(&vm, OBJ_VAL(res));
+     
+     int rows = t->dims[0];
+     int cols = t->dims[1];
+     
+     // Transpose data
+     for (int i = 0; i < rows; i++) {
+         for (int j = 0; j < cols; j++) {
+             // src[i, j] -> dst[j, i]
+             // src flat: i * cols + j
+             // dst flat: j * rows + i
+             res->data[j * rows + i] = t->data[i * cols + j];
+         }
+     }
+     
+     return pop(&vm);
+}
+
 // Create std.native.math module
 ObjModule* create_std_math_module() {
     // Initialize random seed once if needed, or rely on user seeding.
@@ -272,6 +373,10 @@ ObjModule* create_std_math_module() {
     defineModuleFn(module, "random", native_random);
     defineModuleFn(module, "randint", native_randint);
     defineModuleFn(module, "seed", native_seed);
+    defineModuleFn(module, "sigmoid", native_sigmoid);
+    defineModuleFn(module, "relu", native_relu);
+    defineModuleFn(module, "tanh", native_tanh);
+    defineModuleFn(module, "transpose", native_transpose);
 
     pop(&vm); // module
     pop(&vm); // name
@@ -299,4 +404,8 @@ void register_math_globals(VM* vm) {
     defineNative(vm, "random", native_random);
     defineNative(vm, "randint", native_randint);
     defineNative(vm, "seed", native_seed);
+    defineNative(vm, "sigmoid", native_sigmoid);
+    defineNative(vm, "relu", native_relu);
+    defineNative(vm, "tanh", native_tanh);
+    defineNative(vm, "transpose", native_transpose);
 }

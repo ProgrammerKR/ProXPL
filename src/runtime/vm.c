@@ -1798,6 +1798,8 @@ static InterpretResult run(VM* vm) {
 #undef DISPATCH
 }
 
+}
+
 InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   // Disable GC during compilation to prevent freeing unrooted function/constants
   size_t oldNextGC = pvm->nextGC;

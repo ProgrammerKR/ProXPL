@@ -1,0 +1,42 @@
+// ProXPL AI Demo
+// A simple 2-Layer Neural Network (Forward Pass only)
+
+func main() {
+    print("🚀 Initializing AI Model...");
+
+    // 1. Input Data (Batch: 2 samples, 3 features)
+    var X = [
+        [1.0, 2.0, 3.0],
+        [4.0, 5.0, 6.0]
+    ];
+
+    // 2. Layer 1 Weights (3 -> 4 neurons)
+    var W1 = [
+        [0.1, 0.2, 0.3, 0.4],
+        [0.1, 0.2, 0.3, 0.4],
+        [0.1, 0.2, 0.3, 0.4]
+    ];
+    
+    // 3. Layer 2 Weights (4 -> 1 output)
+    var W2 = [
+        [0.5], [0.6], [0.7], [0.8]
+    ];
+
+    // --- Forward Pass ---
+    
+    // Layer 1: Dot Product + ReLU
+    var h1 = X @ W1;
+    var a1 = relu(h1);
+    
+    print("Hidden Layer Output:");
+    print(a1);
+
+    // Layer 2: Dot Product + Sigmoid
+    var h2 = a1 @ W2;
+    var output = sigmoid(h2);
+
+    print("Final Prediction:");
+    print(output);
+}
+
+main();

@@ -386,20 +386,36 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
         }
         case EXPR_LIST: {
              // Check for Tensor Literal tag
+             // fprintf(stderr, "Gen LIST Line %d. Tag: %s\n", expr->line, expr->inferredType.name ? expr->inferredType.name : "NULL");
+             bool isTensor = false;
              if (expr->inferredType.name && strncmp(expr->inferredType.name, "__TENSOR__", 10) == 0) {
+                 isTensor = true;
+             } else if (expr->as.list.elements && expr->as.list.elements->count > 0) {
+                 // Heuristic: If elements are Tensors, promote outer list to Tensor
+                 // This fixes the case where Parser detects inner 1D tensors but fails to tag the outer 2D list.
+                 Expr* first = expr->as.list.elements->items[0];
+                 if (first->type == EXPR_LIST && first->inferredType.name && strncmp(first->inferredType.name, "__TENSOR__", 10) == 0) {
+                     isTensor = true;
+                 }
+             }
+
+             if (isTensor) {
                  emitTensorConstruction(gen, expr);
                  break;
              }
-
+             
+             // Emit code to build the list
              int count = 0;
              if (expr->as.list.elements) {
                  count = expr->as.list.elements->count;
-                 for (int i=0; i < count; i++) {
+                 for (int i = 0; i < count; i++) {
                      genExpr(gen, expr->as.list.elements->items[i]);
                  }
              }
+             
+             // Opcode to build list
              writeChunk(gen->chunk, OP_BUILD_LIST, expr->line);
-             writeChunk(gen->chunk, (uint8_t)count, expr->line);
+             emitByte(gen, (uint8_t)count, expr->line); // Arg: number of elements
              break;
         }
         case EXPR_DICTIONARY: {
