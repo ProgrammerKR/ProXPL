@@ -1256,13 +1256,10 @@ static Expr *primary(Parser *p) {
     consume(p, TOKEN_RIGHT_BRACKET, "Expect ']'.");
     
     // Check if this list is actually a tensor literal
-    fprintf(stderr, "DEBUG: Checking list for tensor candidacy at line %d\n", previous(p).line);
     if (isTensorCandidate(elements)) {
-        fprintf(stderr, "DEBUG: Is candidate! Checking dims...\n");
         int dims[16];
         int dimCount = 0;
         if (isValidTensorDimensions(elements, dims, &dimCount)) {
-            fprintf(stderr, "DEBUG: Valid Tensor! DimCount: %d\n", dimCount);
             // This is a valid tensor literal!
             // Create the list expression, but mark it with tensor metadata
             Expr *listExpr = createListExpr(elements, startLine, 0);
@@ -1273,7 +1270,7 @@ static Expr *primary(Parser *p) {
             snprintf(tensorMarker, sizeof(tensorMarker), "__TENSOR__%d", dimCount);
             listExpr->inferredType.name = strdup(tensorMarker);
             listExpr->inferredType.paramCount = dimCount;
-            fprintf(stderr, "DEBUG: Parser ListExpr at %p. Name: %s (%p). Line: %d\n", (void*)listExpr, listExpr->inferredType.name, (void*)listExpr->inferredType.name, startLine);
+            listExpr->inferredType.paramCount = dimCount;
             
             // Store dimensions temporarily (we'll use this in bytecode gen)
             // NOTE: This is a bit of a hack, but works for now
@@ -1284,9 +1281,7 @@ static Expr *primary(Parser *p) {
     }
     
     // Regular list
-    Expr* rL = createListExpr(elements, previous(p).line, 0);
-    fprintf(stderr, "DEBUG: Parser Regular ListExpr at %p. Line: %d\n", (void*)rL, previous(p).line);
-    return rL;
+    return createListExpr(elements, previous(p).line, 0);
   }
 
   if (match(p, 1, TOKEN_LEFT_BRACE)) {

@@ -945,6 +945,7 @@ static InterpretResult run(VM* vm) {
       Value aVal = peek(vm, 1);
       
       if (!IS_TENSOR(aVal) || !IS_TENSOR(bVal)) {
+          printf("DEBUG OP_MAT_MUL: aVal type %d, bVal type %d (Expected %d)\n", IS_OBJ(aVal) ? OBJ_TYPE(aVal) : -1, IS_OBJ(bVal) ? OBJ_TYPE(bVal) : -1, OBJ_TENSOR);
           runtimeError(vm, "Operands for '@' must be Tensors.");
           return INTERPRET_RUNTIME_ERROR;
       }
@@ -1697,7 +1698,10 @@ static InterpretResult run(VM* vm) {
         }
         
         Value resVal = pop(vm);
-        pop(vm);
+        pop(vm); // b
+        pop(vm); // a
+        push(vm, resVal);
+        break;
     case OP_MAKE_TENSOR: {
         int dimCount = READ_BYTE();
         
@@ -1723,8 +1727,6 @@ static InterpretResult run(VM* vm) {
         }
 
         ObjTensor *tensor = newTensor(dimCount, dims, NULL);
-        push(vm, OBJ_VAL(tensor)); // Root it
-
         if (elementCount == 0 && totalSize > 0) {
              memset(tensor->data, 0, totalSize * sizeof(double));
         } else if (elementCount == totalSize) {
@@ -1740,6 +1742,7 @@ static InterpretResult run(VM* vm) {
         } else {
              memset(tensor->data, 0, totalSize * sizeof(double));
         }
+        push(vm, OBJ_VAL(tensor));
         break;
     }
     case OP_CONTEXT: {

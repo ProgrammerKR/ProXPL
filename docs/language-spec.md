@@ -64,6 +64,7 @@ ProXPL supports the following literals:
 | **Dict** | Key-value hash map. | `{"key": "val"}` |
 | **Set** | Unique, unordered collection. | `Set([1, 2])` |
 | **Bytes** | Raw byte sequence. | `to_bytes("ABC")` |
+| **Tensor**| Multi-dimensional array for AI/Math. | `[[1,2], [3,4]]` |
 
 ### Callable & System Types
 | Type | Description |
@@ -88,6 +89,7 @@ ProXPL supports the following literals:
 | `/` | Division |
 | `%` | Modulus |
 | `**` | Exponentiation |
+| `@` | Matrix Multiplication (Tensors) |
 
 ### Comparison
 | Operator | Description |
@@ -352,4 +354,21 @@ func fib(n) {
     return fib(n-1) + fib(n-2);
 }
 print(fib(10));
+```
+
+### Tensor Operations (AI/Math)
+```javascript
+// Define tensors using nested bracket syntax
+let matrix = [[1, 2], [3, 4]];
+let vector = [5, 6];
+
+// Matrix multiplication
+let result = matrix @ [[0, 1], [1, 0]];  // 2D @ 2D
+let scaled = matrix @ [[2], [3]];        // 2D @ 2D column vector
+
+// Dot product (1D @ 1D)
+let dot = [1, 2, 3] @ [4, 5, 6];         // Result: 32
+
+print(result);  // <tensor 2x2>
+print(dot);     // 32
 ```

@@ -253,6 +253,28 @@ func demonstrate_collections() {
 }
 ```
 
+### Tensor Operations (AI/Math)
+
+ProXPL supports native tensor operations for AI and scientific computing:
+
+```javascript
+func tensor_demo() {
+    // Define tensors using nested bracket syntax
+    let matrix = [[1, 2], [3, 4]];
+    let identity = [[1, 0], [0, 1]];
+    
+    // Matrix multiplication using @ operator
+    let result = matrix @ identity;
+    print(result);  // <tensor 2x2>
+    
+    // Dot product for 1D tensors
+    let v1 = [1, 2, 3];
+    let v2 = [4, 5, 6];
+    let dot = v1 @ v2;
+    print(dot);     // 32
+}
+```
+
 ### Module System
 
 ProXPL uses the `use` keyword for modular programming:
