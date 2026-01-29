@@ -178,11 +178,11 @@ static TypeInfo checkBinary(TypeChecker* checker, Expr* expr) {
                 // Maybe allow String + Int -> String?
                 result = createType(TYPE_STRING);
             } else {
-                error(checker, expr->line, "Type mismatch in binary operation.");
+                // Allow arithmetic on unknown types (for dynamic typing)
                 result = createType(TYPE_UNKNOWN);
             }
         } else {
-            error(checker, expr->line, "Type mismatch in binary operation.");
+            // Allow arithmetic on unknown/mixed types (dynamic typing)
             result = createType(TYPE_UNKNOWN);
         }
         
