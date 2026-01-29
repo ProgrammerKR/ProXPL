@@ -386,7 +386,6 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
         }
         case EXPR_LIST: {
              // Check for Tensor Literal tag
-             // fprintf(stderr, "Gen LIST Line %d. Tag: %s\n", expr->line, expr->inferredType.name ? expr->inferredType.name : "NULL");
              bool isTensor = false;
              if (expr->inferredType.name && strncmp(expr->inferredType.name, "__TENSOR__", 10) == 0) {
                  isTensor = true;
