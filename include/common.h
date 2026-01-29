@@ -52,6 +52,7 @@ typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 typedef struct ObjFunction ObjFunction;
 typedef struct ObjNative ObjNative;
+typedef enum ObjType ObjType;
 typedef struct Table Table;
 typedef struct Entry Entry;
 typedef struct ValueArray ValueArray;
