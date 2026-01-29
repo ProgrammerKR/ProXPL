@@ -399,6 +399,22 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
             break;
         }
 
+        case EXPR_LIST: {
+             // Preserve existing type info if set (e.g. Tensor tag from Parser)
+             if (expr->inferredType.name && strncmp(expr->inferredType.name, "__TENSOR__", 10) == 0) {
+                 result.name = strdup(expr->inferredType.name); 
+             }
+             
+             // Check elements
+             if (expr->as.list.elements) {
+                 for(int i=0; i<expr->as.list.elements->count; i++) {
+                     TypeInfo elemType = checkExpr(checker, expr->as.list.elements->items[i]);
+                     result.isTainted = result.isTainted || elemType.isTainted;
+                 }
+             }
+             break;
+        }
+
 
         default:
             // Relaxed for others
