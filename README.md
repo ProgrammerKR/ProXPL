@@ -104,7 +104,7 @@ main();
 
 Using the ProXPL CLI:
 ```bash
-prox run hello.prox
+prm run hello.prox
 ```
 
 Or using the compiled executable:
