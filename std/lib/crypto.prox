@@ -1,0 +1,296 @@
+// Cryptography and Encoding Library for ProXPL
+// Provides hashing, encoding, and basic cryptographic utilities
+
+class Crypto {
+    // Simple hash function (DJB2)
+    static func hashDJB2(str) {
+        let hash = 5381;
+        let s = to_string(str);
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            // Simplified character code approximation
+            let c = Crypto._charCode(substr(s, i, 1));
+            hash = ((hash * 33) + c) % 2147483647;
+        }
+        
+        return hash;
+    }
+    
+    // Simple hash function (SDBM)
+    static func hashSDBM(str) {
+        let hash = 0;
+        let s = to_string(str);
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let c = Crypto._charCode(substr(s, i, 1));
+            hash = c + (hash * 65599) % 2147483647;
+        }
+        
+        return hash;
+    }
+    
+    // FNV-1a hash
+    static func hashFNV1a(str) {
+        let hash = 2166136261;
+        let s = to_string(str);
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let c = Crypto._charCode(substr(s, i, 1));
+            hash = hash ^ c;
+            hash = (hash * 16777619) % 4294967296;
+        }
+        
+        return hash;
+    }
+    
+    // Simple checksum
+    static func checksum(str) {
+        let sum = 0;
+        let s = to_string(str);
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            sum = sum + Crypto._charCode(substr(s, i, 1));
+        }
+        
+        return sum % 256;
+    }
+    
+    // CRC32-like checksum
+    static func crc32(str) {
+        let crc = 0xFFFFFFFF;
+        let s = to_string(str);
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let c = Crypto._charCode(substr(s, i, 1));
+            crc = crc ^ c;
+            
+            for (let j = 0; j < 8; j = j + 1) {
+                if (crc % 2 == 1) {
+                    crc = (crc / 2) ^ 0xEDB88320;
+                } else {
+                    crc = crc / 2;
+                }
+            }
+        }
+        
+        return crc ^ 0xFFFFFFFF;
+    }
+    
+    // Helper function to get approximate character code
+    static func _charCode(ch) {
+        // Simplified ASCII approximation
+        if (ch == " ") return 32;
+        if (ch == "!") return 33;
+        if (ch == "0") return 48;
+        if (ch == "9") return 57;
+        if (ch == "A") return 65;
+        if (ch == "Z") return 90;
+        if (ch == "a") return 97;
+        if (ch == "z") return 122;
+        
+        // Approximate for other characters
+        let code = 65;
+        if (contains("abcdefghijklmnopqrstuvwxyz", ch)) {
+            code = 97 + Crypto._indexOf("abcdefghijklmnopqrstuvwxyz", ch);
+        } else if (contains("ABCDEFGHIJKLMNOPQRSTUVWXYZ", ch)) {
+            code = 65 + Crypto._indexOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ", ch);
+        } else if (contains("0123456789", ch)) {
+            code = 48 + Crypto._indexOf("0123456789", ch);
+        }
+        
+        return code;
+    }
+    
+    static func _indexOf(str, ch) {
+        for (let i = 0; i < len(str); i = i + 1) {
+            if (substr(str, i, 1) == ch) return i;
+        }
+        return 0;
+    }
+}
+
+class Base64 {
+    static const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    
+    static func encode(str) {
+        let s = to_string(str);
+        let result = "";
+        let i = 0;
+        
+        while (i < len(s)) {
+            let c1 = Crypto._charCode(substr(s, i, 1));
+            i = i + 1;
+            
+            let c2 = 0;
+            if (i < len(s)) {
+                c2 = Crypto._charCode(substr(s, i, 1));
+                i = i + 1;
+            }
+            
+            let c3 = 0;
+            if (i < len(s)) {
+                c3 = Crypto._charCode(substr(s, i, 1));
+                i = i + 1;
+            }
+            
+            let b1 = c1 / 4;
+            let b2 = ((c1 % 4) * 16) + (c2 / 16);
+            let b3 = ((c2 % 16) * 4) + (c3 / 64);
+            let b4 = c3 % 64;
+            
+            result = result + substr(Base64.CHARS, floor(b1), 1);
+            result = result + substr(Base64.CHARS, floor(b2), 1);
+            
+            if (i - 2 < len(s)) {
+                result = result + substr(Base64.CHARS, floor(b3), 1);
+            } else {
+                result = result + "=";
+            }
+            
+            if (i - 1 < len(s)) {
+                result = result + substr(Base64.CHARS, floor(b4), 1);
+            } else {
+                result = result + "=";
+            }
+        }
+        
+        return result;
+    }
+    
+    static func decode(encoded) {
+        // Simplified decode - would need full implementation
+        return "[Base64 decode not fully implemented]";
+    }
+}
+
+class Hex {
+    static const CHARS = "0123456789abcdef";
+    
+    static func encode(str) {
+        let s = to_string(str);
+        let result = "";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let code = Crypto._charCode(substr(s, i, 1));
+            let high = floor(code / 16);
+            let low = code % 16;
+            result = result + substr(Hex.CHARS, high, 1) + substr(Hex.CHARS, low, 1);
+        }
+        
+        return result;
+    }
+    
+    static func decode(encoded) {
+        let result = "";
+        let i = 0;
+        
+        while (i < len(encoded)) {
+            let high = Hex._hexValue(substr(encoded, i, 1));
+            i = i + 1;
+            let low = Hex._hexValue(substr(encoded, i, 1));
+            i = i + 1;
+            
+            // Would need character from code function
+            result = result + "[char]";
+        }
+        
+        return result;
+    }
+    
+    static func _hexValue(ch) {
+        for (let i = 0; i < len(Hex.CHARS); i = i + 1) {
+            if (substr(Hex.CHARS, i, 1) == ch) return i;
+        }
+        return 0;
+    }
+}
+
+class UUID {
+    static func v4() {
+        // Generate a random UUID v4
+        let hex = "0123456789abcdef";
+        let uuid = "";
+        
+        for (let i = 0; i < 36; i = i + 1) {
+            if (i == 8 or i == 13 or i == 18 or i == 23) {
+                uuid = uuid + "-";
+            } else if (i == 14) {
+                uuid = uuid + "4"; // Version 4
+            } else if (i == 19) {
+                // Variant bits
+                let r = floor(random() * 4);
+                uuid = uuid + substr("89ab", r, 1);
+            } else {
+                let r = floor(random() * 16);
+                uuid = uuid + substr(hex, r, 1);
+            }
+        }
+        
+        return uuid;
+    }
+    
+    static func nil() {
+        return "00000000-0000-0000-0000-000000000000";
+    }
+    
+    static func isValid(uuid) {
+        let s = to_string(uuid);
+        if (len(s) != 36) return false;
+        
+        // Check format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        if (substr(s, 8, 1) != "-") return false;
+        if (substr(s, 13, 1) != "-") return false;
+        if (substr(s, 18, 1) != "-") return false;
+        if (substr(s, 23, 1) != "-") return false;
+        
+        return true;
+    }
+}
+
+class Random {
+    static func bytes(n) {
+        let result = [];
+        for (let i = 0; i < n; i = i + 1) {
+            list_push(result, floor(random() * 256));
+        }
+        return result;
+    }
+    
+    static func hex(n) {
+        let hex = "0123456789abcdef";
+        let result = "";
+        for (let i = 0; i < n; i = i + 1) {
+            let r = floor(random() * 16);
+            result = result + substr(hex, r, 1);
+        }
+        return result;
+    }
+    
+    static func alphanumeric(n) {
+        let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+        for (let i = 0; i < n; i = i + 1) {
+            let r = floor(random() * len(chars));
+            result = result + substr(chars, r, 1);
+        }
+        return result;
+    }
+    
+    static func choice(list) {
+        if (len(list) == 0) return null;
+        let idx = floor(random() * len(list));
+        return list[idx];
+    }
+    
+    static func shuffle(list) {
+        // Fisher-Yates shuffle
+        let n = len(list);
+        for (let i = n - 1; i > 0; i = i - 1) {
+            let j = floor(random() * (i + 1));
+            let temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
+        }
+        return list;
+    }
+}

@@ -1,0 +1,299 @@
+// DateTime Library for ProXPL
+// Provides date and time manipulation and formatting
+
+class DateTime {
+    var timestamp;
+    var year;
+    var month;
+    var day;
+    var hour;
+    var minute;
+    var second;
+    
+    // Month names
+    static const MONTHS = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+    
+    static const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    static const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+    static const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    
+    // Seconds in time units
+    static const SECOND = 1;
+    static const MINUTE = 60;
+    static const HOUR = 3600;
+    static const DAY = 86400;
+    static const WEEK = 604800;
+    
+    func init(ts) {
+        if (ts == null) {
+            this.timestamp = time();
+        } else {
+            this.timestamp = ts;
+        }
+        this._parse();
+    }
+    
+    func _parse() {
+        // Parse timestamp into components
+        // This is a simplified implementation
+        let ts = floor(this.timestamp);
+        
+        // Calculate days since epoch (Jan 1, 1970)
+        let days = floor(ts / DateTime.DAY);
+        let remaining = ts % DateTime.DAY;
+        
+        // Calculate time components
+        this.hour = floor(remaining / DateTime.HOUR);
+        remaining = remaining % DateTime.HOUR;
+        this.minute = floor(remaining / DateTime.MINUTE);
+        this.second = remaining % DateTime.MINUTE;
+        
+        // Simplified year/month/day calculation
+        // Approximate: 365.25 days per year
+        this.year = 1970 + floor(days / 365.25);
+        let dayOfYear = days % 365;
+        
+        // Simplified month calculation
+        this.month = floor(dayOfYear / 30) + 1;
+        this.day = (dayOfYear % 30) + 1;
+        
+        if (this.month > 12) this.month = 12;
+        if (this.day > 31) this.day = 31;
+    }
+    
+    // Static factory methods
+    static func now() {
+        return DateTime(time());
+    }
+    
+    static func fromTimestamp(ts) {
+        return DateTime(ts);
+    }
+    
+    static func fromDate(year, month, day, hour, minute, second) {
+        // Simplified conversion to timestamp
+        let dt = DateTime(0);
+        dt.year = year;
+        dt.month = month;
+        dt.day = day;
+        dt.hour = hour != null ? hour : 0;
+        dt.minute = minute != null ? minute : 0;
+        dt.second = second != null ? second : 0;
+        
+        // Approximate timestamp calculation
+        let years = year - 1970;
+        let days = years * 365 + floor(years / 4); // Rough leap year adjustment
+        days = days + (month - 1) * 30 + day - 1;
+        
+        dt.timestamp = days * DateTime.DAY + 
+                      dt.hour * DateTime.HOUR + 
+                      dt.minute * DateTime.MINUTE + 
+                      dt.second;
+        
+        return dt;
+    }
+    
+    // Getters
+    func getTimestamp() {
+        return this.timestamp;
+    }
+    
+    func getYear() {
+        return this.year;
+    }
+    
+    func getMonth() {
+        return this.month;
+    }
+    
+    func getDay() {
+        return this.day;
+    }
+    
+    func getHour() {
+        return this.hour;
+    }
+    
+    func getMinute() {
+        return this.minute;
+    }
+    
+    func getSecond() {
+        return this.second;
+    }
+    
+    func getDayOfWeek() {
+        // 0 = Sunday, 6 = Saturday
+        let days = floor(this.timestamp / DateTime.DAY);
+        return (days + 4) % 7; // Jan 1, 1970 was Thursday
+    }
+    
+    // Formatting
+    func format(pattern) {
+        if (pattern == null) pattern = "YYYY-MM-DD HH:mm:ss";
+        
+        let result = pattern;
+        
+        // Year
+        result = replace(result, "YYYY", to_string(this.year));
+        result = replace(result, "YY", substr(to_string(this.year), 2));
+        
+        // Month
+        result = replace(result, "MMMM", DateTime.MONTHS[this.month - 1]);
+        result = replace(result, "MMM", DateTime.MONTHS_SHORT[this.month - 1]);
+        result = replace(result, "MM", DateTime._pad(this.month));
+        result = replace(result, "M", to_string(this.month));
+        
+        // Day
+        result = replace(result, "DD", DateTime._pad(this.day));
+        result = replace(result, "D", to_string(this.day));
+        
+        // Weekday
+        let dow = this.getDayOfWeek();
+        result = replace(result, "dddd", DateTime.DAYS[dow]);
+        result = replace(result, "ddd", DateTime.DAYS_SHORT[dow]);
+        
+        // Hour
+        result = replace(result, "HH", DateTime._pad(this.hour));
+        result = replace(result, "H", to_string(this.hour));
+        
+        // 12-hour format
+        let hour12 = this.hour % 12;
+        if (hour12 == 0) hour12 = 12;
+        result = replace(result, "hh", DateTime._pad(hour12));
+        result = replace(result, "h", to_string(hour12));
+        
+        // AM/PM
+        result = replace(result, "A", this.hour >= 12 ? "PM" : "AM");
+        result = replace(result, "a", this.hour >= 12 ? "pm" : "am");
+        
+        // Minute
+        result = replace(result, "mm", DateTime._pad(this.minute));
+        result = replace(result, "m", to_string(this.minute));
+        
+        // Second
+        result = replace(result, "ss", DateTime._pad(this.second));
+        result = replace(result, "s", to_string(this.second));
+        
+        return result;
+    }
+    
+    static func _pad(n) {
+        if (n < 10) return "0" + to_string(n);
+        return to_string(n);
+    }
+    
+    func toISOString() {
+        return this.format("YYYY-MM-DDTHH:mm:ss");
+    }
+    
+    func toDateString() {
+        return this.format("YYYY-MM-DD");
+    }
+    
+    func toTimeString() {
+        return this.format("HH:mm:ss");
+    }
+    
+    func toString() {
+        return this.format("YYYY-MM-DD HH:mm:ss");
+    }
+    
+    // Arithmetic operations
+    func addSeconds(seconds) {
+        return DateTime(this.timestamp + seconds);
+    }
+    
+    func addMinutes(minutes) {
+        return this.addSeconds(minutes * DateTime.MINUTE);
+    }
+    
+    func addHours(hours) {
+        return this.addSeconds(hours * DateTime.HOUR);
+    }
+    
+    func addDays(days) {
+        return this.addSeconds(days * DateTime.DAY);
+    }
+    
+    func addWeeks(weeks) {
+        return this.addSeconds(weeks * DateTime.WEEK);
+    }
+    
+    // Comparison
+    func isBefore(other) {
+        return this.timestamp < other.timestamp;
+    }
+    
+    func isAfter(other) {
+        return this.timestamp > other.timestamp;
+    }
+    
+    func isSame(other) {
+        return this.timestamp == other.timestamp;
+    }
+    
+    func diff(other) {
+        return abs(this.timestamp - other.timestamp);
+    }
+    
+    func diffInDays(other) {
+        return floor(this.diff(other) / DateTime.DAY);
+    }
+    
+    func diffInHours(other) {
+        return floor(this.diff(other) / DateTime.HOUR);
+    }
+    
+    func diffInMinutes(other) {
+        return floor(this.diff(other) / DateTime.MINUTE);
+    }
+}
+
+// Time utilities
+class Time {
+    static func now() {
+        return time();
+    }
+    
+    static func sleep(milliseconds) {
+        sleep(milliseconds);
+    }
+    
+    static func clock() {
+        return clock();
+    }
+    
+    static func measure(callback) {
+        let start = clock();
+        callback();
+        return clock() - start;
+    }
+    
+    static func formatDuration(seconds) {
+        let s = floor(seconds);
+        let days = floor(s / DateTime.DAY);
+        s = s % DateTime.DAY;
+        let hours = floor(s / DateTime.HOUR);
+        s = s % DateTime.HOUR;
+        let minutes = floor(s / DateTime.MINUTE);
+        s = s % DateTime.MINUTE;
+        
+        let parts = [];
+        if (days > 0) list_push(parts, to_string(days) + "d");
+        if (hours > 0) list_push(parts, to_string(hours) + "h");
+        if (minutes > 0) list_push(parts, to_string(minutes) + "m");
+        if (s > 0 or len(parts) == 0) list_push(parts, to_string(s) + "s");
+        
+        let result = "";
+        for (let i = 0; i < len(parts); i = i + 1) {
+            if (i > 0) result = result + " ";
+            result = result + parts[i];
+        }
+        return result;
+    }
+}

@@ -1,0 +1,380 @@
+// Regular Expression Utilities for ProXPL
+// Provides pattern matching and text processing utilities
+
+class Regex {
+    var pattern;
+    var flags;
+    
+    func init(pattern, flags) {
+        this.pattern = to_string(pattern);
+        this.flags = flags != null ? to_string(flags) : "";
+    }
+    
+    // Simple pattern matching (limited regex support)
+    func test(str) {
+        return contains(to_string(str), this.pattern);
+    }
+    
+    func match(str) {
+        let s = to_string(str);
+        let matches = [];
+        
+        if (contains(s, this.pattern)) {
+            list_push(matches, this.pattern);
+        }
+        
+        return matches;
+    }
+    
+    func replace(str, replacement) {
+        return replace(to_string(str), this.pattern, to_string(replacement));
+    }
+    
+    func replaceAll(str, replacement) {
+        let s = to_string(str);
+        let repl = to_string(replacement);
+        
+        while (contains(s, this.pattern)) {
+            s = replace(s, this.pattern, repl);
+        }
+        
+        return s;
+    }
+    
+    func split(str) {
+        return split(to_string(str), this.pattern);
+    }
+}
+
+// Pattern matching utilities
+class Pattern {
+    // Email validation (simplified)
+    static func isEmail(str) {
+        let s = to_string(str);
+        return contains(s, "@") and contains(s, ".");
+    }
+    
+    // URL validation (simplified)
+    static func isURL(str) {
+        let s = to_string(str);
+        return startswith(s, "http://") or startswith(s, "https://") or startswith(s, "ftp://");
+    }
+    
+    // IP address validation (simplified)
+    static func isIPv4(str) {
+        let parts = split(to_string(str), ".");
+        if (len(parts) != 4) return false;
+        
+        for (let i = 0; i < 4; i = i + 1) {
+            let num = to_int(parts[i]);
+            if (num < 0 or num > 255) return false;
+        }
+        
+        return true;
+    }
+    
+    // Phone number validation (simplified)
+    static func isPhone(str) {
+        let s = to_string(str);
+        let digits = Pattern._extractDigits(s);
+        return len(digits) >= 10 and len(digits) <= 15;
+    }
+    
+    // Credit card validation (Luhn algorithm)
+    static func isCreditCard(str) {
+        let s = to_string(str);
+        let digits = Pattern._extractDigits(s);
+        
+        if (len(digits) < 13 or len(digits) > 19) return false;
+        
+        let sum = 0;
+        let alternate = false;
+        
+        for (let i = len(digits) - 1; i >= 0; i = i - 1) {
+            let digit = to_int(substr(digits, i, 1));
+            
+            if (alternate) {
+                digit = digit * 2;
+                if (digit > 9) digit = digit - 9;
+            }
+            
+            sum = sum + digit;
+            alternate = !alternate;
+        }
+        
+        return sum % 10 == 0;
+    }
+    
+    // Extract only digits from string
+    static func _extractDigits(str) {
+        let s = to_string(str);
+        let result = "";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            if (contains("0123456789", ch)) {
+                result = result + ch;
+            }
+        }
+        
+        return result;
+    }
+    
+    // Check if string is alphanumeric
+    static func isAlphanumeric(str) {
+        let s = to_string(str);
+        let valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            if (!contains(valid, substr(s, i, 1))) {
+                return false;
+            }
+        }
+        
+        return len(s) > 0;
+    }
+    
+    // Check if string is numeric
+    static func isNumeric(str) {
+        let s = to_string(str);
+        let valid = "0123456789.-";
+        let dotCount = 0;
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            if (!contains(valid, ch)) return false;
+            if (ch == ".") {
+                dotCount = dotCount + 1;
+                if (dotCount > 1) return false;
+            }
+        }
+        
+        return len(s) > 0;
+    }
+    
+    // Check if string is alphabetic
+    static func isAlpha(str) {
+        let s = to_string(str);
+        let valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            if (!contains(valid, substr(s, i, 1))) {
+                return false;
+            }
+        }
+        
+        return len(s) > 0;
+    }
+    
+    // Check if string contains only lowercase
+    static func isLowercase(str) {
+        let s = to_string(str);
+        return s == lower(s);
+    }
+    
+    // Check if string contains only uppercase
+    static func isUppercase(str) {
+        let s = to_string(str);
+        return s == upper(s);
+    }
+    
+    // Extract all numbers from string
+    static func extractNumbers(str) {
+        let s = to_string(str);
+        let numbers = [];
+        let current = "";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            if (contains("0123456789.-", ch)) {
+                current = current + ch;
+            } else {
+                if (len(current) > 0) {
+                    list_push(numbers, to_number(current));
+                    current = "";
+                }
+            }
+        }
+        
+        if (len(current) > 0) {
+            list_push(numbers, to_number(current));
+        }
+        
+        return numbers;
+    }
+    
+    // Extract all words from string
+    static func extractWords(str) {
+        let s = to_string(str);
+        let words = [];
+        let current = "";
+        let valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            if (contains(valid, ch)) {
+                current = current + ch;
+            } else {
+                if (len(current) > 0) {
+                    list_push(words, current);
+                    current = "";
+                }
+            }
+        }
+        
+        if (len(current) > 0) {
+            list_push(words, current);
+        }
+        
+        return words;
+    }
+}
+
+// Text processing utilities
+class TextUtils {
+    // Remove all whitespace
+    static func removeWhitespace(str) {
+        let s = to_string(str);
+        let result = "";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            if (ch != " " and ch != "\t" and ch != "\n" and ch != "\r") {
+                result = result + ch;
+            }
+        }
+        
+        return result;
+    }
+    
+    // Normalize whitespace (replace multiple spaces with single space)
+    static func normalizeWhitespace(str) {
+        let s = trim(to_string(str));
+        let result = "";
+        let lastWasSpace = false;
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            let isSpace = (ch == " " or ch == "\t" or ch == "\n" or ch == "\r");
+            
+            if (isSpace) {
+                if (!lastWasSpace) {
+                    result = result + " ";
+                    lastWasSpace = true;
+                }
+            } else {
+                result = result + ch;
+                lastWasSpace = false;
+            }
+        }
+        
+        return result;
+    }
+    
+    // Truncate string to length with ellipsis
+    static func truncate(str, maxLen, suffix) {
+        let s = to_string(str);
+        let suf = suffix != null ? to_string(suffix) : "...";
+        
+        if (len(s) <= maxLen) return s;
+        
+        return substr(s, 0, maxLen - len(suf)) + suf;
+    }
+    
+    // Word wrap text
+    static func wordWrap(str, width) {
+        let words = split(to_string(str), " ");
+        let lines = [];
+        let currentLine = "";
+        
+        for (let i = 0; i < len(words); i = i + 1) {
+            let word = words[i];
+            
+            if (len(currentLine) + len(word) + 1 > width) {
+                if (len(currentLine) > 0) {
+                    list_push(lines, currentLine);
+                    currentLine = word;
+                } else {
+                    list_push(lines, word);
+                }
+            } else {
+                if (len(currentLine) > 0) {
+                    currentLine = currentLine + " " + word;
+                } else {
+                    currentLine = word;
+                }
+            }
+        }
+        
+        if (len(currentLine) > 0) {
+            list_push(lines, currentLine);
+        }
+        
+        return lines;
+    }
+    
+    // Slug generation (URL-friendly string)
+    static func slugify(str) {
+        let s = lower(trim(to_string(str)));
+        let result = "";
+        let valid = "abcdefghijklmnopqrstuvwxyz0123456789-";
+        
+        for (let i = 0; i < len(s); i = i + 1) {
+            let ch = substr(s, i, 1);
+            if (contains(valid, ch)) {
+                result = result + ch;
+            } else if (ch == " ") {
+                result = result + "-";
+            }
+        }
+        
+        // Remove consecutive dashes
+        while (contains(result, "--")) {
+            result = replace(result, "--", "-");
+        }
+        
+        return result;
+    }
+    
+    // Levenshtein distance (string similarity)
+    static func levenshtein(str1, str2) {
+        let s1 = to_string(str1);
+        let s2 = to_string(str2);
+        let len1 = len(s1);
+        let len2 = len(s2);
+        
+        if (len1 == 0) return len2;
+        if (len2 == 0) return len1;
+        
+        // Simplified implementation for small strings
+        let matrix = [];
+        
+        for (let i = 0; i <= len1; i = i + 1) {
+            let row = [];
+            for (let j = 0; j <= len2; j = j + 1) {
+                if (i == 0) {
+                    list_push(row, j);
+                } else if (j == 0) {
+                    list_push(row, i);
+                } else {
+                    list_push(row, 0);
+                }
+            }
+            list_push(matrix, row);
+        }
+        
+        for (let i = 1; i <= len1; i = i + 1) {
+            for (let j = 1; j <= len2; j = j + 1) {
+                let cost = substr(s1, i - 1, 1) == substr(s2, j - 1, 1) ? 0 : 1;
+                
+                let deletion = matrix[i - 1][j] + 1;
+                let insertion = matrix[i][j - 1] + 1;
+                let substitution = matrix[i - 1][j - 1] + cost;
+                
+                matrix[i][j] = min(deletion, min(insertion, substitution));
+            }
+        }
+        
+        return matrix[len1][len2];
+    }
+}

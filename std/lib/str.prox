@@ -1,16 +1,244 @@
-use std.native.str;
+// Enhanced String Utilities Library for ProXPL
+// Provides comprehensive string manipulation functions
 
 class StringUtils {
-    static func upper(s) => native.str.upper(to_string(s));
-    static func lower(s) => native.str.lower(to_string(s));
-    static func trim(s) => native.str.trim(to_string(s));
-    static func split(s, d) => native.str.split(to_string(s), to_string(d));
-    static func replace(s, old, new_vals) => native.str.replace(to_string(s), to_string(old), to_string(new_vals));
-    static func contains(s, sub) => native.str.contains(to_string(s), to_string(sub));
-    static func startsWith(s, p) => native.str.startswith(to_string(s), to_string(p));
-    static func endsWith(s, su) => native.str.endswith(to_string(s), to_string(su));
-    static func sub(s, start, len) {
-        if (len == null) return native.str.substr(to_string(s), start);
-        return native.str.substr(to_string(s), start, len);
+    // Case conversion
+    static func upper(s) {
+        return upper(to_string(s));
+    }
+    
+    static func lower(s) {
+        return lower(to_string(s));
+    }
+    
+    static func capitalize(s) {
+        let str = to_string(s);
+        if (len(str) == 0) return str;
+        return upper(substr(str, 0, 1)) + lower(substr(str, 1));
+    }
+    
+    static func title(s) {
+        let str = to_string(s);
+        let words = split(str, " ");
+        let result = "";
+        for (let i = 0; i < len(words); i = i + 1) {
+            if (i > 0) result = result + " ";
+            result = result + StringUtils.capitalize(words[i]);
+        }
+        return result;
+    }
+    
+    // Whitespace operations
+    static func trim(s) {
+        return trim(to_string(s));
+    }
+    
+    static func trimStart(s) {
+        let str = to_string(s);
+        let i = 0;
+        while (i < len(str) and (substr(str, i, 1) == " " or substr(str, i, 1) == "\t" or substr(str, i, 1) == "\n")) {
+            i = i + 1;
+        }
+        return substr(str, i);
+    }
+    
+    static func trimEnd(s) {
+        let str = to_string(s);
+        let i = len(str) - 1;
+        while (i >= 0 and (substr(str, i, 1) == " " or substr(str, i, 1) == "\t" or substr(str, i, 1) == "\n")) {
+            i = i - 1;
+        }
+        return substr(str, 0, i + 1);
+    }
+    
+    // String operations
+    static func split(s, delimiter) {
+        return split(to_string(s), to_string(delimiter));
+    }
+    
+    static func replace(s, old, new_val) {
+        return replace(to_string(s), to_string(old), to_string(new_val));
+    }
+    
+    static func replaceAll(s, old, new_val) {
+        let str = to_string(s);
+        let oldStr = to_string(old);
+        let newStr = to_string(new_val);
+        
+        while (contains(str, oldStr)) {
+            str = replace(str, oldStr, newStr);
+        }
+        return str;
+    }
+    
+    // Search operations
+    static func contains(s, sub) {
+        return contains(to_string(s), to_string(sub));
+    }
+    
+    static func startsWith(s, prefix) {
+        return startswith(to_string(s), to_string(prefix));
+    }
+    
+    static func endsWith(s, suffix) {
+        return endswith(to_string(s), to_string(suffix));
+    }
+    
+    static func indexOf(s, sub) {
+        let str = to_string(s);
+        let search = to_string(sub);
+        let slen = len(str);
+        let sublen = len(search);
+        
+        for (let i = 0; i <= slen - sublen; i = i + 1) {
+            if (substr(str, i, sublen) == search) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    static func lastIndexOf(s, sub) {
+        let str = to_string(s);
+        let search = to_string(sub);
+        let slen = len(str);
+        let sublen = len(search);
+        
+        for (let i = slen - sublen; i >= 0; i = i - 1) {
+            if (substr(str, i, sublen) == search) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    // Substring operations
+    static func sub(s, start, length) {
+        if (length == null) {
+            return substr(to_string(s), start);
+        }
+        return substr(to_string(s), start, length);
+    }
+    
+    static func left(s, n) {
+        return substr(to_string(s), 0, n);
+    }
+    
+    static func right(s, n) {
+        let str = to_string(s);
+        let slen = len(str);
+        return substr(str, slen - n);
+    }
+    
+    // String analysis
+    static func count(s, sub) {
+        let str = to_string(s);
+        let search = to_string(sub);
+        let count = 0;
+        let pos = 0;
+        
+        while (true) {
+            let idx = StringUtils.indexOf(substr(str, pos), search);
+            if (idx == -1) break;
+            count = count + 1;
+            pos = pos + idx + len(search);
+        }
+        return count;
+    }
+    
+    static func reverse(s) {
+        let str = to_string(s);
+        let result = "";
+        for (let i = len(str) - 1; i >= 0; i = i - 1) {
+            result = result + substr(str, i, 1);
+        }
+        return result;
+    }
+    
+    static func repeat(s, n) {
+        let result = "";
+        for (let i = 0; i < n; i = i + 1) {
+            result = result + to_string(s);
+        }
+        return result;
+    }
+    
+    static func padStart(s, length, fill) {
+        let str = to_string(s);
+        let fillStr = to_string(fill);
+        if (fillStr == "null") fillStr = " ";
+        
+        while (len(str) < length) {
+            str = fillStr + str;
+        }
+        return str;
+    }
+    
+    static func padEnd(s, length, fill) {
+        let str = to_string(s);
+        let fillStr = to_string(fill);
+        if (fillStr == "null") fillStr = " ";
+        
+        while (len(str) < length) {
+            str = str + fillStr;
+        }
+        return str;
+    }
+    
+    // Character checks
+    static func isDigit(c) {
+        let ch = to_string(c);
+        if (len(ch) != 1) return false;
+        let code = StringUtils.charCode(ch);
+        return code >= 48 and code <= 57; // '0' to '9'
+    }
+    
+    static func isAlpha(c) {
+        let ch = to_string(c);
+        if (len(ch) != 1) return false;
+        let code = StringUtils.charCode(ch);
+        return (code >= 65 and code <= 90) or (code >= 97 and code <= 122); // A-Z or a-z
+    }
+    
+    static func isAlphaNumeric(c) {
+        return StringUtils.isAlpha(c) or StringUtils.isDigit(c);
+    }
+    
+    static func isWhitespace(c) {
+        let ch = to_string(c);
+        return ch == " " or ch == "\t" or ch == "\n" or ch == "\r";
+    }
+    
+    // Utility
+    static func charCode(c) {
+        // Placeholder - would need native support
+        // Returns approximate ASCII code
+        let ch = to_string(c);
+        if (ch == "0") return 48;
+        if (ch == "9") return 57;
+        if (ch == "A") return 65;
+        if (ch == "Z") return 90;
+        if (ch == "a") return 97;
+        if (ch == "z") return 122;
+        if (ch == " ") return 32;
+        return 0;
+    }
+    
+    static func join(list, separator) {
+        let sep = to_string(separator);
+        let result = "";
+        for (let i = 0; i < len(list); i = i + 1) {
+            if (i > 0) result = result + sep;
+            result = result + to_string(list[i]);
+        }
+        return result;
+    }
+    
+    static func lines(s) {
+        return split(to_string(s), "\n");
+    }
+    
+    static func words(s) {
+        return split(trim(to_string(s)), " ");
     }
 }

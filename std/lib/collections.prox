@@ -1,25 +1,243 @@
-use std.native.collections;
+// Enhanced Collections Library for ProXPL
+// Provides Stack, Queue, Set, and utility functions
 
-// Stack Implementation
+// Stack Implementation (LIFO)
 class Stack {
-    var _items = []; // Uses built-in list
+    var _items;
+    
+    func init() {
+        this._items = [];
+    }
     
     func push(item) {
-        // this._items.push(item); // Built-in lists don't have methods yet?
-        // If built-in list methods are not available, use native helpers or language intrinsics if implemented.
-        // Assuming simple append if language supports it or just placeholder.
-        // "List: Ordered, mutable collection" per spec.
-        // But no methods listed except via std.collections planned.
-        // I'll assume we can't implement this purely yet without language support for list operations.
-        // But I will leave the structure.
+        list_push(this._items, item);
+        return this;
     }
     
     func pop() {
-        // return this._items.pop();
-        return null; // Placeholder
+        if (this.isEmpty()) return null;
+        return list_pop(this._items);
+    }
+    
+    func peek() {
+        if (this.isEmpty()) return null;
+        return this._items[len(this._items) - 1];
+    }
+    
+    func isEmpty() {
+        return len(this._items) == 0;
+    }
+    
+    func size() {
+        return len(this._items);
+    }
+    
+    func clear() {
+        this._items = [];
+        return this;
     }
 }
 
+// Queue Implementation (FIFO)
 class Queue {
-    // Placeholder
+    var _items;
+    
+    func init() {
+        this._items = [];
+    }
+    
+    func enqueue(item) {
+        list_push(this._items, item);
+        return this;
+    }
+    
+    func dequeue() {
+        if (this.isEmpty()) return null;
+        let item = this._items[0];
+        // Shift all elements left
+        let newItems = [];
+        for (let i = 1; i < len(this._items); i = i + 1) {
+            list_push(newItems, this._items[i]);
+        }
+        this._items = newItems;
+        return item;
+    }
+    
+    func peek() {
+        if (this.isEmpty()) return null;
+        return this._items[0];
+    }
+    
+    func isEmpty() {
+        return len(this._items) == 0;
+    }
+    
+    func size() {
+        return len(this._items);
+    }
+    
+    func clear() {
+        this._items = [];
+        return this;
+    }
+}
+
+// Set Implementation (unique values)
+class Set {
+    var _items;
+    
+    func init() {
+        this._items = {};
+    }
+    
+    func add(item) {
+        let key = to_string(item);
+        this._items[key] = item;
+        return this;
+    }
+    
+    func has(item) {
+        let key = to_string(item);
+        return this._items[key] != null;
+    }
+    
+    func remove(item) {
+        let key = to_string(item);
+        if (this.has(item)) {
+            this._items[key] = null;
+            return true;
+        }
+        return false;
+    }
+    
+    func clear() {
+        this._items = {};
+        return this;
+    }
+    
+    func toList() {
+        let result = [];
+        // Note: Dictionary iteration would be needed here
+        // For now, this is a placeholder
+        return result;
+    }
+}
+
+// Utility Functions
+class Collections {
+    // Reverse a list
+    static func reverse(list) {
+        let result = [];
+        for (let i = len(list) - 1; i >= 0; i = i - 1) {
+            list_push(result, list[i]);
+        }
+        return result;
+    }
+    
+    // Find index of element
+    static func indexOf(list, item) {
+        for (let i = 0; i < len(list); i = i + 1) {
+            if (list[i] == item) return i;
+        }
+        return -1;
+    }
+    
+    // Check if list contains item
+    static func contains(list, item) {
+        return Collections.indexOf(list, item) != -1;
+    }
+    
+    // Filter list by predicate function
+    static func filter(list, predicate) {
+        let result = [];
+        for (let i = 0; i < len(list); i = i + 1) {
+            if (predicate(list[i])) {
+                list_push(result, list[i]);
+            }
+        }
+        return result;
+    }
+    
+    // Map list with transform function
+    static func map(list, transform) {
+        let result = [];
+        for (let i = 0; i < len(list); i = i + 1) {
+            list_push(result, transform(list[i]));
+        }
+        return result;
+    }
+    
+    // Reduce list to single value
+    static func reduce(list, reducer, initial) {
+        let acc = initial;
+        for (let i = 0; i < len(list); i = i + 1) {
+            acc = reducer(acc, list[i]);
+        }
+        return acc;
+    }
+    
+    // Sort list (simple bubble sort)
+    static func sort(list) {
+        let n = len(list);
+        for (let i = 0; i < n - 1; i = i + 1) {
+            for (let j = 0; j < n - i - 1; j = j + 1) {
+                if (list[j] > list[j + 1]) {
+                    let temp = list[j];
+                    list[j] = list[j + 1];
+                    list[j + 1] = temp;
+                }
+            }
+        }
+        return list;
+    }
+    
+    // Get unique elements
+    static func unique(list) {
+        let seen = {};
+        let result = [];
+        for (let i = 0; i < len(list); i = i + 1) {
+            let key = to_string(list[i]);
+            if (seen[key] == null) {
+                seen[key] = true;
+                list_push(result, list[i]);
+            }
+        }
+        return result;
+    }
+    
+    // Flatten nested lists
+    static func flatten(list) {
+        let result = [];
+        for (let i = 0; i < len(list); i = i + 1) {
+            let item = list[i];
+            if (type_of(item) == "list") {
+                let flattened = Collections.flatten(item);
+                for (let j = 0; j < len(flattened); j = j + 1) {
+                    list_push(result, flattened[j]);
+                }
+            } else {
+                list_push(result, item);
+            }
+        }
+        return result;
+    }
+    
+    // Take first n elements
+    static func take(list, n) {
+        let result = [];
+        let count = min(n, len(list));
+        for (let i = 0; i < count; i = i + 1) {
+            list_push(result, list[i]);
+        }
+        return result;
+    }
+    
+    // Skip first n elements
+    static func skip(list, n) {
+        let result = [];
+        for (let i = n; i < len(list); i = i + 1) {
+            list_push(result, list[i]);
+        }
+        return result;
+    }
 }
