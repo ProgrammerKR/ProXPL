@@ -1702,6 +1702,7 @@ static InterpretResult run(VM* vm) {
         pop(vm); // a
         push(vm, resVal);
         break;
+    }
     case OP_MAKE_TENSOR: {
         int dimCount = READ_BYTE();
         
