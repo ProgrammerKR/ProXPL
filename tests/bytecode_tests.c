@@ -27,6 +27,7 @@ int vm_run_chunk_simple(const Chunk *chunk);
 
 int main(void) {
     printf("ProXPL bytecode tests start\n");
+    printf("OP_CONSTANT: %d, OP_NOP: %d\n", OP_CONSTANT, OP_NOP);
 
     /* Create an example hello chunk and write to file */
     const char *outpath = "examples/hello.proxbc";

@@ -78,6 +78,9 @@ void disasm_chunk(const Chunk *chunk) {
             case OP_CONSTANT:
                 offset = constant_instruction("OP_CONSTANT", chunk, offset);
                 break;
+            case OP_NOP:
+                offset = simple_instruction("OP_NOP", offset);
+                break;
             case OP_NIL:
                 offset = simple_instruction("OP_NIL", offset);
                 break;
@@ -89,6 +92,21 @@ void disasm_chunk(const Chunk *chunk) {
                 break;
             case OP_POP:
                 offset = simple_instruction("OP_POP", offset);
+                break;
+            case OP_DUP:
+                offset = simple_instruction("OP_DUP", offset);
+                break;
+            case OP_BUILD_LIST:
+                offset = byte_instruction("OP_BUILD_LIST", chunk, offset); 
+                break;
+            case OP_BUILD_MAP:
+                offset = byte_instruction("OP_BUILD_MAP", chunk, offset);
+                break;
+            case OP_GET_INDEX:
+                offset = simple_instruction("OP_GET_INDEX", offset);
+                break;
+            case OP_SET_INDEX:
+                offset = simple_instruction("OP_SET_INDEX", offset);
                 break;
             case OP_GET_LOCAL:
                 offset = byte_instruction("OP_GET_LOCAL", chunk, offset);
@@ -104,6 +122,21 @@ void disasm_chunk(const Chunk *chunk) {
                 break;
             case OP_SET_GLOBAL:
                 offset = constant_instruction("OP_SET_GLOBAL", chunk, offset);
+                break;
+            case OP_GET_UPVALUE:
+                offset = byte_instruction("OP_GET_UPVALUE", chunk, offset);
+                break;
+            case OP_SET_UPVALUE:
+                offset = byte_instruction("OP_SET_UPVALUE", chunk, offset);
+                break;
+            case OP_GET_PROPERTY:
+                offset = constant_instruction("OP_GET_PROPERTY", chunk, offset);
+                break;
+            case OP_SET_PROPERTY:
+                offset = constant_instruction("OP_SET_PROPERTY", chunk, offset);
+                break;
+            case OP_GET_SUPER:
+                offset = constant_instruction("OP_GET_SUPER", chunk, offset);
                 break;
             case OP_EQUAL:
                 offset = simple_instruction("OP_EQUAL", offset);
@@ -126,6 +159,9 @@ void disasm_chunk(const Chunk *chunk) {
             case OP_DIVIDE:
                 offset = simple_instruction("OP_DIVIDE", offset);
                 break;
+            case OP_MODULO:
+                offset = simple_instruction("OP_MODULO", offset);
+                break;
             case OP_NOT:
                 offset = simple_instruction("OP_NOT", offset);
                 break;
@@ -145,10 +181,33 @@ void disasm_chunk(const Chunk *chunk) {
                 offset = jump_instruction("OP_LOOP", -1, chunk, offset);
                 break;
             case OP_CALL:
-                offset = byte_instruction("OP_CALL", chunk, offset); // Assume 1 byte arg count?
+                offset = byte_instruction("OP_CALL", chunk, offset);
+                break;
+            case OP_INVOKE:
+                offset = constant_instruction("OP_INVOKE", chunk, offset);
+                // Note: Invoke also has an arg count byte
+                printf("                %d args\n", chunk->code[offset]);
+                offset++;
+                break;
+            case OP_CLOSURE: {
+                offset++;
+                uint8_t constant = chunk->code[offset++];
+                printf("%-16s %4d ", "OP_CLOSURE", constant);
+                print_value(consttable_get(chunk, constant));
+                printf("\n");
+                break;
+            }
+            case OP_CLOSE_UPVALUE:
+                offset = simple_instruction("OP_CLOSE_UPVALUE", offset);
+                break;
+            case OP_RETURN:
+                offset = simple_instruction("OP_RETURN", offset);
                 break;
             case OP_CLASS:
                 offset = constant_instruction("OP_CLASS", chunk, offset);
+                break;
+            case OP_INHERIT:
+                offset = simple_instruction("OP_INHERIT", offset);
                 break;
             case OP_METHOD:
                 offset = constant_instruction("OP_METHOD", chunk, offset);
@@ -156,8 +215,17 @@ void disasm_chunk(const Chunk *chunk) {
             case OP_USE:
                 offset = constant_instruction("OP_USE", chunk, offset);
                 break;
-            case OP_RETURN:
-                offset = simple_instruction("OP_RETURN", offset);
+            case OP_INTERFACE:
+                offset = constant_instruction("OP_INTERFACE", chunk, offset);
+                break;
+            case OP_MAKE_FOREIGN:
+                offset = simple_instruction("OP_MAKE_FOREIGN", offset);
+                break;
+            case OP_MAT_MUL:
+                offset = simple_instruction("OP_MAT_MUL", offset);
+                break;
+            case OP_MAKE_TENSOR:
+                offset = simple_instruction("OP_MAKE_TENSOR", offset);
                 break;
             case OP_HALT:
                 offset = simple_instruction("OP_HALT", offset);
