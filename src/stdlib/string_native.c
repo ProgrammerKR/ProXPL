@@ -19,7 +19,62 @@
 #include <string.h>
 #include <ctype.h>
 
+// SIMD Includes
+#if defined(_MSC_VER)
+  // Windows/MSVC
+  #include <intrin.h>
+  #define PROX_SIMD_AVX2
+#elif defined(__GNUC__) || defined(__clang__)
+  // GCC/Clang
+  #include <immintrin.h>
+  #define PROX_SIMD_AVX2
+#endif
+
 extern VM vm;
+
+// ----------------------------------------------------------------------------
+// SIMD Accelerators
+// ----------------------------------------------------------------------------
+
+// AVX2 accelerated character search
+// Returns index or -1 if not found
+static int find_char_simd(const char* str, int len, char target) {
+#ifdef PROX_SIMD_AVX2
+    // Alignment checks skipped for brevity, loading unaligned
+    
+    __m256i vTarget = _mm256_set1_epi8(target); // Broadcast character
+    int i = 0;
+    
+    // Process 32 bytes at a time
+    for (; i <= len - 32; i += 32) {
+        __m256i vChunk = _mm256_loadu_si256((const __m256i*)(str + i));
+        __m256i vEq = _mm256_cmpeq_epi8(vChunk, vTarget);
+        unsigned int mask = _mm256_movemask_epi8(vEq);
+        
+        if (mask != 0) {
+            // Found in this chunk
+            // Using built-in ctz (count trailing zeros) to find index
+            #if defined(_MSC_VER)
+                unsigned long idx;
+                _BitScanForward(&idx, mask);
+                return i + idx;
+            #else
+                return i + __builtin_ctz(mask);
+            #endif
+        }
+    }
+    
+    // Scalar fallback for remaining
+    for (; i < len; i++) {
+        if (str[i] == target) return i;
+    }
+    return -1;
+#else
+    // Pure scalar
+    const char* ptr = strchr(str, target);
+    return ptr ? (int)(ptr - str) : -1;
+#endif
+}
 
 // Helper to define native function in a module
 static void defineModuleFn(ObjModule* module, const char* name, NativeFn function) {
@@ -90,8 +145,39 @@ static Value native_split(int argCount, Value* args) {
         return NIL_VAL;
     }
     
-    // TODO: Return array/list once collections are implemented
-    return args[0];
+    // Only support single-char delimiter for SIMD example
+    ObjString* strObj = AS_STRING(args[0]);
+    ObjString* delObj = AS_STRING(args[1]);
+    
+    if (delObj->length != 1) {
+         // Fallback to non-SIMD or generic implementation
+         // For now return original string as single element list (stub)
+         return args[0]; 
+    }
+    
+    char delimiter = delObj->chars[0];
+    const char* str = strObj->chars;
+    int len = strObj->length;
+    
+    // In a real impl, we'd build a List/Array object.
+    // Here we just count tokens to demonstrate scanning speed.
+    int count = 0;
+    int pos = 0;
+    while (pos < len) {
+        // Find next delimiter relative to current pos
+        int offset = find_char_simd(str + pos, len - pos, delimiter);
+        if (offset == -1) {
+            count++;
+            break;
+        }
+        count++;
+        pos += offset + 1;
+    }
+    
+    // Return the count as a basic proof of scanning
+    // (Until ObjList is fully exposed to C api)
+    // printf("SIMD Split found %d tokens\n", count);
+    return NUMBER_VAL(count);
 }
 
 // replace(str, old, new) - Replace occurrences
@@ -138,6 +224,12 @@ static Value native_contains(int argCount, Value* args) {
     
     const char* str = AS_CSTRING(args[0]);
     const char* substr = AS_CSTRING(args[1]);
+    
+    // Optim: If substr is 1 char, use SIMD
+    if (AS_STRING(args[1])->length == 1) {
+        int idx = find_char_simd(str, AS_STRING(args[0])->length, substr[0]);
+        return BOOL_VAL(idx != -1);
+    }
     
     return BOOL_VAL(strstr(str, substr) != NULL);
 }
