@@ -21,14 +21,20 @@
 
 // SIMD Includes
 #if defined(_MSC_VER)
-  // Windows/MSVC
-  #include <intrin.h>
-  #define PROX_SIMD_AVX2
+  // Windows/MSVC - Check for x86/x64 and AVX2 availability
+  #if defined(_M_AMD64) || defined(_M_IX86)
+    #include <intrin.h>
+    #if defined(__AVX2__)
+      #define PROX_SIMD_AVX2
+    #endif
+  #endif
 #elif defined(__GNUC__) || defined(__clang__)
-  // GCC/Clang
-  #include <immintrin.h>
-  #ifdef __AVX2__
-    #define PROX_SIMD_AVX2
+  // GCC/Clang - Check for x86/x64 and AVX2 availability
+  #if defined(__x86_64__) || defined(__i386__)
+    #include <immintrin.h>
+    #ifdef __AVX2__
+      #define PROX_SIMD_AVX2
+    #endif
   #endif
 #endif
 
