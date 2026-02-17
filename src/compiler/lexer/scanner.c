@@ -369,6 +369,7 @@ static PxTokenType identifierType(Scanner *scanner) {
         return checkKeyword(scanner, 2, 0, "", TOKEN_IS);
       }
     }
+    break;
   case 'k':
       if (scanner->current - scanner->start > 1) {
            switch(scanner->start[1]) {
