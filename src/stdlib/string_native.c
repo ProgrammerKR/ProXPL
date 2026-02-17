@@ -27,7 +27,9 @@
 #elif defined(__GNUC__) || defined(__clang__)
   // GCC/Clang
   #include <immintrin.h>
-  #define PROX_SIMD_AVX2
+  #ifdef __AVX2__
+    #define PROX_SIMD_AVX2
+  #endif
 #endif
 
 extern VM vm;
