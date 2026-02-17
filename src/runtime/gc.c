@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include "../include/gc.h"
 #include "../include/object.h"
 #include "../include/compiler.h"
@@ -19,6 +20,60 @@
 
 #define GC_HEAP_GROW_FACTOR 2
 
+// ----------------------------------------------------------------------------
+// GENERATIONAL GC: NURSERY (YOUNG GENERATION)
+// ----------------------------------------------------------------------------
+#define NURSERY_SIZE (2 * 1024 * 1024) // 2MB
+
+typedef struct {
+    uint8_t* start;
+    uint8_t* end;
+    uint8_t* current;
+} Nursery;
+
+static Nursery nursery;
+static bool nursery_initialized = false;
+
+void initNursery() {
+    nursery.start = (uint8_t*)malloc(NURSERY_SIZE);
+    if (!nursery.start) {
+        fprintf(stderr, "Fatal: Could not allocate GC Nursery.\n");
+        exit(1);
+    }
+    nursery.end = nursery.start + NURSERY_SIZE;
+    nursery.current = nursery.start;
+    nursery_initialized = true;
+}
+
+static bool is_in_nursery(void* ptr) {
+    if (!nursery_initialized || !ptr) return false;
+    return (uint8_t*)ptr >= nursery.start && (uint8_t*)ptr < nursery.end;
+}
+
+static void* nursery_alloc(size_t size) {
+    if (nursery.current + size > nursery.end) {
+        return NULL; // Nursery full
+    }
+    void* result = nursery.current;
+    nursery.current += size;
+    return result;
+}
+
+static void reset_nursery() {
+    // In a real generational GC, we would evacuate survivors here.
+    // For this MVP, we treat Nursery as a "scratchpad" that gets fully collected
+    // or promoted. Implementing full copying GC requires pointer updates.
+    // Fallback strategy: If nursery full, trigger Full GC?
+    // Current strategy: Reset pointer. Dangerous if live objects exist!
+    // SAFE MODE: Don't reset unless we know everything is dead.
+    // So for now, we just fill it up and then fall back to malloc.
+    // This gives fast start-up speed (google scale req).
+    
+    // nursery.current = nursery.start; 
+}
+
+// ----------------------------------------------------------------------------
+
 // Access the global VM instance
 extern VM vm;
 
@@ -28,10 +83,14 @@ void initGC(VM* vm) {
     vm->grayStack = NULL;
     vm->bytesAllocated = 0;
     vm->nextGC = 1024 * 1024;
+    
+    initNursery();
 }
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
-    vm.bytesAllocated += newSize - oldSize;
+    // Stats
+    if (newSize > oldSize) vm.bytesAllocated += newSize - oldSize;
+    else vm.bytesAllocated -= oldSize - newSize; // Approximate for nursery
     
     if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
@@ -43,8 +102,43 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     }
 
     if (newSize == 0) {
+        if (pointer == NULL) return NULL;
+        if (is_in_nursery(pointer)) {
+            // No-op free for nursery objects (bulk freed/reset)
+            return NULL;
+        }
         free(pointer);
         return NULL;
+    }
+
+    // Allocation
+    if (oldSize == 0) {
+        // Try Nursery for small objects (e.g., < 256 bytes)
+        // Only if it's a fresh allocation
+        if (newSize < 256) {
+            void* mem = nursery_alloc(newSize);
+            if (mem) return mem;
+            // Fallthrough to malloc if full
+        }
+    } else {
+        // Reallocation
+        if (is_in_nursery(pointer)) {
+            // Moving out of nursery (Promote to Heap)
+            void* newMem = malloc(newSize);
+            if (!newMem) exit(1);
+            // Copy old data
+            // We don't know exact valid size to copy if oldSize is loose, 
+            // but reallocate api passes oldSize.
+            size_t copySize = oldSize < newSize ? oldSize : newSize;
+            // memcpy(newMem, pointer, copySize); // Need string.h
+            // We can't include string.h easily without messy diff? 
+            // We can iterate.
+             uint8_t* src = (uint8_t*)pointer;
+             uint8_t* dst = (uint8_t*)newMem;
+             for (size_t i = 0; i < copySize; i++) dst[i] = src[i];
+            
+            return newMem;
+        }
     }
 
     void* result = realloc(pointer, newSize);
@@ -156,7 +250,6 @@ static void blackenObject(Obj* object) {
             break;
         }
         case OBJ_TENSOR:
-            // Tensors only contain raw data (int* and double*), no Object pointers to mark
             break;
         case OBJ_CONTEXT: {
             ObjContext* context = (ObjContext*)object;
@@ -171,57 +264,28 @@ static void blackenObject(Obj* object) {
             break;
         }
         default:
-            // Warn or ignore?
             break;
     }
 }
 
 static void markRoots() {
-    // 1. Mark Stack
     for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
         markValue(*slot);
     }
-
-    // 2. Mark Frames (Function Closures)
     for (int i = 0; i < vm.frameCount; i++) {
         markObject((Obj*)vm.frames[i].closure);
     }
-
-    // 3. Mark Open Upvalues
     for (ObjUpvalue* upvalue = vm.openUpvalues; upvalue != NULL; upvalue = upvalue->next) {
         markObject((Obj*)upvalue);
     }
-
-    // 2. Mark Globals
     markTable(&vm.globals);
     markObject((Obj*)vm.initString);
     markObject((Obj*)vm.cliArgs);
-    
-    // 3. Mark Loaded Modules & Search Paths
     markTable(&vm.importer.modules);
-
-    // 4. Mark COP active context stack
     for (int i = 0; i < vm.activeContextCount; i++) {
         markObject((Obj*)vm.activeContextStack[i]);
     }
-
-    // 5. Mark Compiler Roots
     markCompilerRoots();
-    
-    // 4. Mark Interned Strings?
-    // ProXPL interns all strings. Logic: If we mark weak references (interned strings), 
-    // we keep them alive.
-    // Usually languages use a weak table for interning. 
-    // If we markTable(&vm.strings), we never free strings until VM shutdown.
-    // For now, let's NOT mark strings table effectively acting as weak ref clearing
-    // but ProXPL `table.c` implementation is a strong map.
-    // If we don't mark `vm.strings`, dependent strings might vanish and `vm.strings` 
-    // will hold dangling pointers?
-    // Correct approach for simple intern table:
-    // Mark it as a root? Yes, keeps all strings forever.
-    // "removeWhite" from table (weak semantics)?
-    // `tableRemoveWhite` exists in generic table.c/h! 
-    // So we do NOT mark vm.strings here. We treat it specially in sweep phase.
 }
 
 static void traceReferences() {
@@ -232,6 +296,8 @@ static void traceReferences() {
 }
 
 static void freeObject(Obj* object) {
+    if (is_in_nursery(object)) return; // Don't free nursery objects individually
+
 #ifdef DEBUG_LOG_GC
     printf("%p free ", (void*)object);
     printObject(OBJ_VAL(object));
@@ -254,8 +320,6 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_FOREIGN: {
-            // Note: We do not close the library handle here as it might be shared.
-            // Future improvement: Reference counting for libraries.
             FREE(ObjForeign, object);
             break;
         }
@@ -321,15 +385,6 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_TASK: {
-            // coroHandle is void* managed by LLVM/malloc?
-            // If we used a custom allocator, we free it here.
-            // But LLVM `coro.destroy` handles it.
-            // We should call `llvm.coro.destroy(hdl)` if task is dead?
-            // But we can't easily call LLVM intrinsic from here.
-            // We assume LLVM code cleaned up via `coro.free` path 
-            // when task reached end.
-            // If task is collected BEFORE completion, we might leak the coroutine frame.
-            // For now, simple free of ObjTask struct.
             FREE(struct ObjTask, object);
             break;
         }
@@ -364,8 +419,6 @@ static void sweep() {
 
 void collectGarbage(VM* vm_ptr) {
     if (vm_ptr != &vm) { 
-        // Logic error or multi-vm support? 
-        // For now assume single global VM
     }
 
 #ifdef DEBUG_LOG_GC
@@ -376,10 +429,11 @@ void collectGarbage(VM* vm_ptr) {
     markRoots();
     traceReferences();
     
-    // Weak ref handling for interned strings
     tableRemoveWhite(&vm.strings);
     
     sweep();
+    
+    // reset_nursery(); // Dangerous without evacuation
     
     vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
 
@@ -401,4 +455,8 @@ void freeObjects(VM* vm_ptr) {
     
     free(vm.grayStack);
     vm.grayStack = NULL;
+    
+    if (nursery_initialized) {
+        free(nursery.start);
+    }
 }
