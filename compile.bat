@@ -41,5 +41,13 @@ clang -o proxpl.exe -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  src/stdlib/system_native.c ^
  src/stdlib/time_native.c ^
  src/utils/md5.c ^
- src/utils/sha256.c
-echo Build complete.
+ src/utils/sha256.c ^
+ src/prm/manifest.c ^
+ src/prm/builder.c ^
+ src/prm/commands/cmd_core.c
+if %errorlevel% equ 0 (
+    echo Build complete.
+) else (
+    echo Build FAILED. Check errors above.
+    exit /b 1
+)
