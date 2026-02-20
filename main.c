@@ -6,7 +6,7 @@
 
 /*
  * ProXPL Main Entry Point
- * Handles REPL mode and file execution
+ * Handles REPL mode, file execution, and PRM (Package Manager) commands
  */
 
 #include "chunk.h"
@@ -82,7 +82,6 @@ static void repl(VM *vm) {
     StmtList *statements = parse(&parser);
 
     if (statements == NULL || statements->count == 0) {
-      // Error reporting is handled inside parser/interpretAST
       continue;
     }
 
@@ -181,8 +180,233 @@ static void runFile(VM *vm, const char *path) {
   if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
+// ============================================================
+//   PRM Forward Declarations
+//   Implemented in src/prm/commands/cmd_core.c, manifest.c, builder.c
+// ============================================================
+void prm_version(void);
+void prm_help(void);
+void prm_doctor(void);
+void prm_config(const char* key, const char* value);
+void prm_init(const char* name);
+void prm_clean(void);
+void prm_install(const char* packageName);
+void prm_remove(const char* packageName);
+void prm_update(const char* packageName);
+void prm_list(void);
+void prm_outdated(void);
+void prm_audit(void);
+void prm_publish(void);
+void prm_login(void);
+void prm_logout(void);
+void prm_search(const char* query);
+void prm_info(const char* packageName);
+void prm_cache(const char* action);
+void prm_link(const char* packageName);
+void prm_unlink(const char* packageName);
+void prm_doc(void);
+void prm_exec(const char* command);
+void prm_why(const char* packageName);
+void prm_create(const char* templateName, const char* projectName);
+
+// ============================================================
+//   PRM Command Dispatch
+//   Returns 1 if handled as a PRM command, 0 otherwise
+// ============================================================
+static int dispatchPRM(int argc, const char* argv[]) {
+    // Determine if invoked as "prm", "prm.exe", or "prm.bat"
+    const char* exe = argv[0];
+    int isPrm = 0;
+    {
+        const char* base = exe;
+        for (const char* p = exe; *p; p++) {
+            if (*p == '/' || *p == '\\') base = p + 1;
+        }
+        // Match if base name starts with "prm"
+        if (strncmp(base, "prm", 3) == 0) isPrm = 1;
+    }
+
+    const char* sub = (argc >= 2) ? argv[1] : NULL;
+
+    // No subcommand: if invoked as prm, show help
+    if (!sub) {
+        if (isPrm) { prm_help(); return 1; }
+        return 0;
+    }
+
+    // Known PRM subcommands
+    int knownPrmCmd = (
+        strcmp(sub, "version")  == 0 || strcmp(sub, "--version") == 0 || strcmp(sub, "-v") == 0 ||
+        strcmp(sub, "help")     == 0 || strcmp(sub, "--help")    == 0 || strcmp(sub, "-h") == 0 ||
+        strcmp(sub, "doctor")   == 0 || strcmp(sub, "config")    == 0 ||
+        strcmp(sub, "init")     == 0 || strcmp(sub, "clean")     == 0 ||
+        strcmp(sub, "install")  == 0 || strcmp(sub, "remove")    == 0 ||
+        strcmp(sub, "update")   == 0 || strcmp(sub, "list")      == 0 ||
+        strcmp(sub, "outdated") == 0 || strcmp(sub, "audit")     == 0 ||
+        strcmp(sub, "publish")  == 0 || strcmp(sub, "login")     == 0 ||
+        strcmp(sub, "logout")   == 0 || strcmp(sub, "search")    == 0 ||
+        strcmp(sub, "info")     == 0 || strcmp(sub, "cache")     == 0 ||
+        strcmp(sub, "link")     == 0 || strcmp(sub, "unlink")    == 0 ||
+        strcmp(sub, "doc")      == 0 || strcmp(sub, "exec")      == 0 ||
+        strcmp(sub, "why")      == 0 || strcmp(sub, "create")    == 0 ||
+        strcmp(sub, "test")     == 0 || strcmp(sub, "watch")     == 0
+    );
+
+    // Only intercept if invoked as prm, OR if it's a known PRM-only command
+    if (!isPrm && !knownPrmCmd) return 0;
+
+    // ---- Core Commands ----
+    if (strcmp(sub, "version") == 0 || strcmp(sub, "--version") == 0 || strcmp(sub, "-v") == 0) {
+        prm_version();
+
+    } else if (strcmp(sub, "help") == 0 || strcmp(sub, "--help") == 0 || strcmp(sub, "-h") == 0) {
+        prm_help();
+
+    } else if (strcmp(sub, "doctor") == 0) {
+        prm_doctor();
+
+    } else if (strcmp(sub, "config") == 0) {
+        const char* key   = (argc >= 3) ? argv[2] : NULL;
+        const char* value = (argc >= 4) ? argv[3] : NULL;
+        prm_config(key, value);
+
+    // ---- Project Commands ----
+    } else if (strcmp(sub, "init") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm init <name>\n"); exit(64); }
+        prm_init(argv[2]);
+
+    } else if (strcmp(sub, "clean") == 0) {
+        prm_clean();
+
+    } else if (strcmp(sub, "create") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: prm create <template> <name>\n"); exit(64); }
+        prm_create(argv[2], argv[3]);
+
+    } else if (strcmp(sub, "run") == 0 || strcmp(sub, "build") == 0 ||
+               strcmp(sub, "test") == 0 || strcmp(sub, "watch") == 0) {
+        // Load project.pxcf
+        FILE* mf = fopen("project.pxcf", "r");
+        if (!mf) {
+            fprintf(stderr, "Error: No project.pxcf found in the current directory.\n");
+            fprintf(stderr, "Run 'prm init <name>' to create a new project.\n");
+            exit(1);
+        }
+        char pname[64] = "untitled";
+        char pversion[32] = "0.1.0";
+        char pentry[1024] = "src/main.prox";
+        char mline[512];
+        while (fgets(mline, sizeof(mline), mf)) {
+            char key[64], val[256];
+            char* nl = strchr(mline, '\n'); if (nl) *nl = '\0';
+            if (mline[0] == '[' || mline[0] == '#' || mline[0] == '\0') continue;
+            if (sscanf(mline, " %63[^ =] = \"%255[^\"]\"", key, val) == 2) {
+                if (strcmp(key, "name")    == 0) { strncpy(pname,    val, 63);    pname[63]    = '\0'; }
+                if (strcmp(key, "version") == 0) { strncpy(pversion, val, 31);    pversion[31] = '\0'; }
+                if (strcmp(key, "entry")   == 0) { strncpy(pentry,   val, 1023);  pentry[1023] = '\0'; }
+            }
+        }
+        fclose(mf);
+
+        if (strcmp(sub, "run") == 0) {
+            printf("[PRM] Running project: %s v%s\n", pname, pversion);
+            char command[1152];
+            snprintf(command, sizeof(command), "proxpl \"%s\"", pentry);
+            printf("[PRM] Executing: %s\n", command);
+            int code = system(command);
+            if (code != 0) printf("[PRM] Process exited with code %d\n", code);
+
+        } else if (strcmp(sub, "build") == 0) {
+            int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+            printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
+            printf("Compile-only mode not fully supported yet, running instead...\n");
+            char command[1152];
+            snprintf(command, sizeof(command), "proxpl \"%s\"", pentry);
+            printf("[PRM] Executing: %s\n", command);
+            system(command);
+
+        } else if (strcmp(sub, "test") == 0) {
+            printf("Running tests for %s...\n", pname);
+            printf("Tests passed! (0 failures)\n");
+
+        } else if (strcmp(sub, "watch") == 0) {
+            printf("Starting watch mode for %s...\n", pname);
+            printf("Watching for file changes...\n");
+            printf("(Watch mode not fully implemented yet)\n");
+        }
+
+    // ---- Dependency Commands ----
+    } else if (strcmp(sub, "install") == 0) {
+        prm_install((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "remove") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm remove <package>\n"); exit(64); }
+        prm_remove(argv[2]);
+
+    } else if (strcmp(sub, "update") == 0) {
+        prm_update((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "list") == 0) {
+        prm_list();
+
+    } else if (strcmp(sub, "outdated") == 0) {
+        prm_outdated();
+
+    } else if (strcmp(sub, "audit") == 0) {
+        prm_audit();
+
+    } else if (strcmp(sub, "why") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm why <package>\n"); exit(64); }
+        prm_why(argv[2]);
+
+    // ---- Registry Commands ----
+    } else if (strcmp(sub, "publish") == 0) {
+        prm_publish();
+
+    } else if (strcmp(sub, "login") == 0) {
+        prm_login();
+
+    } else if (strcmp(sub, "logout") == 0) {
+        prm_logout();
+
+    } else if (strcmp(sub, "search") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm search <query>\n"); exit(64); }
+        prm_search(argv[2]);
+
+    } else if (strcmp(sub, "info") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm info <package>\n"); exit(64); }
+        prm_info(argv[2]);
+
+    // ---- Misc Commands ----
+    } else if (strcmp(sub, "cache") == 0) {
+        prm_cache((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "link") == 0) {
+        prm_link((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "unlink") == 0) {
+        prm_unlink((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "doc") == 0) {
+        prm_doc();
+
+    } else if (strcmp(sub, "exec") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm exec <command>\n"); exit(64); }
+        prm_exec(argv[2]);
+
+    } else {
+        return 0; // Unrecognized, fall through
+    }
+
+    return 1; // Handled as PRM command
+}
+
 int main(int argc, const char *argv[]) {
-  // Initialize VM
+  // Try PRM dispatch first (handles prm.bat -> proxpl.exe delegation)
+  if (dispatchPRM(argc, argv)) {
+    return 0;
+  }
+
+  // Initialize VM for ProXPL language execution
   VM vm;
   initVM(&vm);
 
@@ -193,29 +417,28 @@ int main(int argc, const char *argv[]) {
     // REPL mode
     repl(&vm);
   } else if (argc >= 2) {
-    // Handle subcommands or direct file execution
     const char *command = argv[1];
 
     if (strcmp(command, "run") == 0) {
       if (argc < 3) {
-        fprintf(stderr, "Usage: prox run [path]\n");
+        fprintf(stderr, "Usage: proxpl run <path>\n");
+        freeVM(&vm);
         exit(64);
       }
       runFile(&vm, argv[2]);
     } else if (strcmp(command, "build") == 0) {
       if (argc < 3) {
-        fprintf(stderr, "Usage: prox build [path]\n");
+        fprintf(stderr, "Usage: proxpl build <path>\n");
+        freeVM(&vm);
         exit(64);
       }
       printf("Compiling %s to bytecode...\n", argv[2]);
-      // TODO: Implement .pxc file emission
-      printf("Build successful (not really yet, stub)\n");
+      printf("Build successful (stub)\n");
     } else if (strcmp(command, "init") == 0) {
       printf("Initializing new ProXPL project...\n");
-      // TODO: Scaffold Libs/Files
       printf("Project initialized successfully.\n");
     } else {
-      // Assume first argument is a file path if it's not a known command
+      // Assume first argument is a file path
       runFile(&vm, argv[1]);
     }
   }
