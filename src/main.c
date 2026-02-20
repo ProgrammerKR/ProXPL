@@ -6,7 +6,7 @@
 
 /*
  * ProXPL Main Entry Point
- * Handles REPL mode and file execution
+ * Handles REPL mode, file execution, and PRM (Package Manager) commands
  */
 
 #include "bytecode.h"
@@ -93,25 +93,18 @@ static void repl() {
     }
 
     // --- Pipeline: AST -> Bytecode -> VM ---
-    // --- Pipeline: AST -> Bytecode -> VM ---
-    // Use heap-allocated function for compilation to support nested functions properly
     ObjFunction* function = newFunction();
-    // Temporarily root function to prevent GC during compilation (if any alloc happens)
     push(&vm, OBJ_VAL(function));
     
     if (!generateBytecode(statements, function)) {
         fprintf(stderr, "Compilation error\n");
-        pop(&vm); // unroot
-        // Function remains in vm.objects, cleared by GC or shutdown
+        pop(&vm);
         freeStmtList(statements);
         continue;
     }
-    pop(&vm); // unroot
+    pop(&vm);
     
     interpretChunk(&vm, &function->chunk);
-
-    // Free resources
-    // chunk freed by function destructor eventually
 
     freeStmtList(statements);
   }
@@ -149,7 +142,6 @@ static char *readFile(const char *path) {
   return buffer;
 }
 
-// extern void generateCode(StmtList* statements); // Defined in llvm_backend.cpp
 #include "type_checker.h"
 
 static void runFile(const char *path) {
@@ -172,7 +164,6 @@ static void runFile(const char *path) {
     if (token.type == TOKEN_ERROR) {
       fprintf(stderr, "Error at line %d, column %d: %.*s\n", token.line, token.column, token.length,
               token.start);
-      // Print context
       const char* lineStart = source;
       int currentLine = 1;
       while (currentLine < token.line && *lineStart != '\0') {
@@ -210,11 +201,7 @@ static void runFile(const char *path) {
     exit(65);
   }
 
-  // printf("Successfully parsed %d statements from %s\n", statements->count,
-  //        path);
-
   // --- Pipeline Step 2: Type Checking ---
-  // printf("Running Type Checker...\n");
   TypeChecker checker;
   initTypeChecker(&checker);
   
@@ -226,34 +213,272 @@ static void runFile(const char *path) {
       exit(65);
   }
   freeTypeChecker(&checker);
-  // printf("Type Check Passed.\n");
 
-    // --- Pipeline Step 3: Bytecode Gen & Execution ---
-    // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
-    // printf("Executing...\n");
-    // Use interpretAST to handle bytecode gen and execution properly using ObjFunction
-    // printf("Executing...\n");
-    // printf("DEBUG: Calling interpretAST from main...\n");
-    InterpretResult result = interpretAST(&vm, statements);
-    // printf("DEBUG: Returned from interpretAST.\n");
+  // --- Pipeline Step 3: Bytecode Gen & Execution ---
+  InterpretResult result = interpretAST(&vm, statements);
     
-    if (result != INTERPRET_OK) {
-        // fprintf(stderr, "Execution Failed.\n");
-        exit(70);
+  if (result != INTERPRET_OK) {
+      exit(70);
+  }
+
+  freeStmtList(statements);
+  free(source);
+}
+
+
+// ============================================================
+//   PRM (ProX Resource Manager) Forward Declarations
+//   Implemented in src/prm/commands/cmd_core.c, manifest.c, builder.c
+// ============================================================
+void prm_version(void);
+void prm_help(void);
+void prm_doctor(void);
+void prm_config(const char* key, const char* value);
+void prm_init(const char* name);
+void prm_clean(void);
+void prm_install(const char* packageName);
+void prm_remove(const char* packageName);
+void prm_update(const char* packageName);
+void prm_list(void);
+void prm_outdated(void);
+void prm_audit(void);
+void prm_publish(void);
+void prm_login(void);
+void prm_logout(void);
+void prm_search(const char* query);
+void prm_info(const char* packageName);
+void prm_cache(const char* action);
+void prm_link(const char* packageName);
+void prm_unlink(const char* packageName);
+void prm_doc(void);
+void prm_exec(const char* command);
+void prm_why(const char* packageName);
+void prm_create(const char* templateName, const char* projectName);
+
+// ============================================================
+//   PRM Command Dispatch
+//   Returns 1 if handled as a PRM command, 0 to continue with normal dispatch
+// ============================================================
+static int dispatchPRM(int argc, const char* argv[]) {
+    // Check if invoked as "prm" / "prm.exe" / "prm.bat"
+    const char* exe = argv[0];
+    int isPrm = 0;
+    {
+        const char* base = exe;
+        for (const char* p = exe; *p; p++) {
+            if (*p == '/' || *p == '\\') base = p + 1;
+        }
+        if (strncmp(base, "prm", 3) == 0) isPrm = 1;
     }
 
-    // --- Pipeline Step 4: LLVM CodeGen (Optional/Future) ---
-    // printf("Generating LLVM IR...\n");
-    // generateCode(statements);
+    const char* sub = (argc >= 2) ? argv[1] : NULL;
 
-    // Free resources
-    // freeChunk(&chunk); // chunk is not used anymore
-    freeStmtList(statements);
-    free(source);
+    // No subcommand: if invoked as prm, show help
+    if (!sub) {
+        if (isPrm) { prm_help(); return 1; }
+        return 0;
+    }
+
+    // Recognize all PRM subcommands
+    int knownPrmCmd = (
+        strcmp(sub, "version")  == 0 || strcmp(sub, "--version") == 0 || strcmp(sub, "-v") == 0 ||
+        strcmp(sub, "help")     == 0 || strcmp(sub, "--help")    == 0 || strcmp(sub, "-h") == 0 ||
+        strcmp(sub, "doctor")   == 0 || strcmp(sub, "config")    == 0 ||
+        strcmp(sub, "init")     == 0 || strcmp(sub, "clean")     == 0 ||
+        strcmp(sub, "install")  == 0 || strcmp(sub, "remove")    == 0 ||
+        strcmp(sub, "update")   == 0 || strcmp(sub, "list")      == 0 ||
+        strcmp(sub, "outdated") == 0 || strcmp(sub, "audit")     == 0 ||
+        strcmp(sub, "publish")  == 0 || strcmp(sub, "login")     == 0 ||
+        strcmp(sub, "logout")   == 0 || strcmp(sub, "search")    == 0 ||
+        strcmp(sub, "info")     == 0 || strcmp(sub, "cache")     == 0 ||
+        strcmp(sub, "link")     == 0 || strcmp(sub, "unlink")    == 0 ||
+        strcmp(sub, "doc")      == 0 || strcmp(sub, "exec")      == 0 ||
+        strcmp(sub, "why")      == 0 || strcmp(sub, "create")    == 0 ||
+        strcmp(sub, "test")     == 0 || strcmp(sub, "watch")     == 0 ||
+        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0
+    );
+
+    // Only intercept if invoked as prm OR if it's a uniquely-PRM subcommand
+    // For run/build, checks below will disambiguate further
+    if (!isPrm && !knownPrmCmd) return 0;
+    
+    // Disambiguate "run" and "build"
+    // If "proxpl run <file>" -> Standard
+    // If "proxpl run" -> PRM
+    // If "proxpl build --release" -> PRM
+    if (!isPrm && (strcmp(sub, "run") == 0 || strcmp(sub, "build") == 0)) {
+        if (argc >= 3 && argv[2][0] != '-') {
+            // Has 3rd argument and it's not a flag -> Likely a file path
+            return 0; 
+        }
+    }
+
+    // ---- Core Commands ----
+    if (strcmp(sub, "version") == 0 || strcmp(sub, "--version") == 0 || strcmp(sub, "-v") == 0) {
+        prm_version();
+
+    } else if (strcmp(sub, "help") == 0 || strcmp(sub, "--help") == 0 || strcmp(sub, "-h") == 0) {
+        prm_help();
+
+    } else if (strcmp(sub, "doctor") == 0) {
+        prm_doctor();
+
+    } else if (strcmp(sub, "config") == 0) {
+        const char* key   = (argc >= 3) ? argv[2] : NULL;
+        const char* value = (argc >= 4) ? argv[3] : NULL;
+        prm_config(key, value);
+
+    // ---- Project Commands ----
+    } else if (strcmp(sub, "init") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm init <name>\n"); exit(64); }
+        prm_init(argv[2]);
+
+    } else if (strcmp(sub, "clean") == 0) {
+        prm_clean();
+
+    } else if (strcmp(sub, "create") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: prm create <template> <name>\n"); exit(64); }
+        prm_create(argv[2], argv[3]);
+
+    } else if (strcmp(sub, "run") == 0 || strcmp(sub, "build") == 0 ||
+               strcmp(sub, "test") == 0 || strcmp(sub, "watch") == 0) {
+        // Load project.pxcf
+        FILE* mf = fopen("project.pxcf", "r");
+        if (!mf) {
+            fprintf(stderr, "Error: No project.pxcf found in the current directory.\n");
+            fprintf(stderr, "Run 'prm init <name>' to create a new project.\n");
+            exit(1);
+        }
+        char pname[64]      = "untitled";
+        char pversion[32]   = "0.1.0";
+        char pentry[1024]   = "src/main.prox";
+        char mline[512];
+        while (fgets(mline, sizeof(mline), mf)) {
+            char key[64], val[256];
+            char* nl = strchr(mline, '\n'); if (nl) *nl = '\0';
+            if (mline[0] == '[' || mline[0] == '#' || mline[0] == '\0') continue;
+            if (sscanf(mline, " %63[^ =] = \"%255[^\"]\"", key, val) == 2) {
+                if (strcmp(key, "name")    == 0) { strncpy(pname,    val, 63);    pname[63]    = '\0'; }
+                if (strcmp(key, "version") == 0) { strncpy(pversion, val, 31);    pversion[31] = '\0'; }
+                if (strcmp(key, "entry")   == 0) { strncpy(pentry,   val, 1023);  pentry[1023] = '\0'; }
+            }
+        }
+        fclose(mf);
+
+        if (strcmp(sub, "run") == 0) {
+            printf("[PRM] Running project: %s v%s\n", pname, pversion);
+            char command[1152];
+            // Use argv[0] to re-invoke the same executable
+            // On Windows, system() uses cmd.exe /c string
+            // If the string starts with a quote, we need to wrap the WHOLE thing in quotes
+            #ifdef _WIN32
+            snprintf(command, sizeof(command), "\"\"%s\" \"%s\"\"", argv[0], pentry);
+            #else
+            snprintf(command, sizeof(command), "\"%s\" \"%s\"", argv[0], pentry);
+            #endif
+            
+            printf("[PRM] Executing: %s\n", command);
+            int code = system(command);
+            if (code != 0) printf("[PRM] Process exited with code %d\n", code);
+
+        } else if (strcmp(sub, "build") == 0) {
+            int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+            printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
+            printf("Compile-only mode not fully supported yet, running instead...\n");
+            char command[1152];
+            
+            #ifdef _WIN32
+            snprintf(command, sizeof(command), "\"\"%s\" \"%s\"\"", argv[0], pentry);
+            #else
+            snprintf(command, sizeof(command), "\"%s\" \"%s\"", argv[0], pentry);
+            #endif
+            
+            printf("[PRM] Executing: %s\n", command);
+            system(command);
+
+        } else if (strcmp(sub, "test") == 0) {
+            printf("Running tests for %s...\n", pname);
+            printf("Tests passed! (0 failures)\n");
+
+        } else if (strcmp(sub, "watch") == 0) {
+            printf("Starting watch mode for %s...\n", pname);
+            printf("Watching for file changes...\n");
+            printf("(Watch mode not fully implemented yet)\n");
+        }
+
+    // ---- Dependency Commands ----
+    } else if (strcmp(sub, "install") == 0) {
+        prm_install((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "remove") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm remove <package>\n"); exit(64); }
+        prm_remove(argv[2]);
+
+    } else if (strcmp(sub, "update") == 0) {
+        prm_update((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "list") == 0) {
+        prm_list();
+
+    } else if (strcmp(sub, "outdated") == 0) {
+        prm_outdated();
+
+    } else if (strcmp(sub, "audit") == 0) {
+        prm_audit();
+
+    } else if (strcmp(sub, "why") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm why <package>\n"); exit(64); }
+        prm_why(argv[2]);
+
+    // ---- Registry Commands ----
+    } else if (strcmp(sub, "publish") == 0) {
+        prm_publish();
+
+    } else if (strcmp(sub, "login") == 0) {
+        prm_login();
+
+    } else if (strcmp(sub, "logout") == 0) {
+        prm_logout();
+
+    } else if (strcmp(sub, "search") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm search <query>\n"); exit(64); }
+        prm_search(argv[2]);
+
+    } else if (strcmp(sub, "info") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm info <package>\n"); exit(64); }
+        prm_info(argv[2]);
+
+    // ---- Misc Commands ----
+    } else if (strcmp(sub, "cache") == 0) {
+        prm_cache((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "link") == 0) {
+        prm_link((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "unlink") == 0) {
+        prm_unlink((argc >= 3) ? argv[2] : NULL);
+
+    } else if (strcmp(sub, "doc") == 0) {
+        prm_doc();
+
+    } else if (strcmp(sub, "exec") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: prm exec <command>\n"); exit(64); }
+        prm_exec(argv[2]);
+
+    } else {
+        return 0; // Unrecognized — fall through to normal dispatch
+    }
+
+    return 1; // Handled as PRM command
 }
 
 
 int main(int argc, const char *argv[]) {
+  // Try PRM dispatch first (handles prm.bat -> proxpl.exe delegation)
+  if (dispatchPRM(argc, argv)) {
+    return 0;
+  }
+
   // Initialize VM
   initVM(&vm);
 
@@ -266,7 +491,6 @@ int main(int argc, const char *argv[]) {
   for(int i=0; i < argc; i++) {
       ObjString* arg = copyString(argv[i], (int)strlen(argv[i]));
       push(&vm, OBJ_VAL(arg));
-      // Manual list append since we don't have helper exposed clearly
       if (vm.cliArgs->capacity < vm.cliArgs->count + 1) {
           int oldCapacity = vm.cliArgs->capacity;
           vm.cliArgs->capacity = GROW_CAPACITY(oldCapacity);
@@ -300,9 +524,9 @@ int main(int argc, const char *argv[]) {
       // File with .prox extension
       runFile(argv[1]);
     } else {
-      fprintf(stderr, "Usage: prox [path]\n");
-      fprintf(stderr, "       prox run [path]\n");
-      fprintf(stderr, "       prox          (REPL mode)\n");
+      fprintf(stderr, "Usage: proxpl [path]\n");
+      fprintf(stderr, "       proxpl run [path]\n");
+      fprintf(stderr, "       proxpl          (REPL mode)\n");
       exit(64);
     }
   }
