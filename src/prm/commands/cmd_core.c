@@ -9,6 +9,55 @@ void prm_version() {
     printf("prm v1.2.0 (ProXPL v1.2.0)\n");
 }
 
+void prm_help() {
+    printf("ProX Resource Manager (prm) v1.2.0\n");
+    printf("Usage: prm <command> [options]\n\n");
+
+    printf("Core Commands:\n");
+    printf("  version                    Show prm and ProXPL version\n");
+    printf("  help                       Show this help message\n");
+    printf("  doctor                     Check system for ProXPL requirements\n");
+    printf("  config <key> [value]       Get or set a configuration value\n\n");
+
+    printf("Project Commands:\n");
+    printf("  init <name>                Create a new ProXPL project\n");
+    printf("  run                        Run the project (uses project.pxcf)\n");
+    printf("  build [--release]          Build the project\n");
+    printf("  test                       Run project tests\n");
+    printf("  clean                      Remove build artifacts\n");
+    printf("  watch                      Watch for changes and auto-rerun\n");
+    printf("  create <template> <name>   Create a project from a template\n\n");
+
+    printf("Dependency Commands:\n");
+    printf("  install [package]          Install a package or all dependencies\n");
+    printf("  remove <package>           Remove a package\n");
+    printf("  update [package]           Update a package or all packages\n");
+    printf("  list                       List installed packages\n");
+    printf("  outdated                   Check for outdated packages\n");
+    printf("  audit                      Run a security audit\n");
+    printf("  why <package>              Explain why a package is installed\n\n");
+
+    printf("Registry Commands:\n");
+    printf("  publish                    Publish package to registry\n");
+    printf("  login                      Log in to the package registry\n");
+    printf("  logout                     Log out from the registry\n");
+    printf("  search <query>             Search for packages\n");
+    printf("  info <package>             Show package information\n\n");
+
+    printf("Misc Commands:\n");
+    printf("  cache [clean]              Show or clear the package cache\n");
+    printf("  link [package]             Link a local package\n");
+    printf("  unlink [package]           Unlink a package\n");
+    printf("  doc                        Generate project documentation\n");
+    printf("  exec <command>             Execute a command in project context\n\n");
+
+    printf("Examples:\n");
+    printf("  prm init my_app\n");
+    printf("  prm install User/Repo\n");
+    printf("  prm run\n");
+    printf("  prm build --release\n");
+}
+
 void prm_doctor() {
     printf("Checking system for ProXPL requirements...\n");
     printf("[OK] ProXPL compiler found\n");
