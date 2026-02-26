@@ -735,7 +735,11 @@ static Stmt *statement(Parser *p) {
     }
 
     // UI Declarations
-    if (check(p, TOKEN_UI_APP) || check(p, TOKEN_UI_WINDOW)) {
+    if (check(p, TOKEN_UI_APP) || check(p, TOKEN_UI_WINDOW) || 
+        check(p, TOKEN_UI_STATE) || check(p, TOKEN_UI_ACTION) ||
+        check(p, TOKEN_UI_CONTAINER) || check(p, TOKEN_UI_BUTTON) ||
+        check(p, TOKEN_UI_TEXT) || check(p, TOKEN_UI_INPUT) ||
+        check(p, TOKEN_UI_STYLE)) {
         if (!p->uiEnabled) {
             parserError(p, "UI components require 'use UI' to be imported.");
         }
