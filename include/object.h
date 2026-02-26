@@ -200,17 +200,17 @@ struct ObjTask {
 #define IS_LAYER(value) isObjType(value, OBJ_LAYER)
 #define AS_LAYER(value) ((ObjLayer *)AS_OBJ(value))
 
-typedef struct ObjLayer {
+struct ObjLayer {
   Obj obj;
   ObjString *name;
   Table methods; // Map of name -> closure
-} ObjLayer;
+};
 
-typedef struct ObjContext {
+struct ObjContext {
   Obj obj;
   ObjString *name;
   Table layers; // Map of name -> ObjLayer
-} ObjContext;
+};
 
 typedef struct ObjTensor {
   Obj obj;
