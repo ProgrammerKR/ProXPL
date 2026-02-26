@@ -73,11 +73,24 @@ static const char *mapTag(const char *tag) {
     if (strcmp(tag, "Nav") == 0) return "nav";
     if (strcmp(tag, "Header") == 0) return "header";
     if (strcmp(tag, "Footer") == 0) return "footer";
+    if (strcmp(tag, "Main") == 0) return "main";
+    if (strcmp(tag, "Aside") == 0) return "aside";
     if (strcmp(tag, "Icon") == 0) return "i";
     if (strcmp(tag, "Form") == 0) return "form";
     if (strcmp(tag, "Label") == 0) return "label";
     if (strcmp(tag, "Select") == 0) return "select";
     if (strcmp(tag, "Option") == 0) return "option";
+    if (strcmp(tag, "Table") == 0) return "table";
+    if (strcmp(tag, "Thead") == 0) return "thead";
+    if (strcmp(tag, "Tbody") == 0) return "tbody";
+    if (strcmp(tag, "Tr") == 0) return "tr";
+    if (strcmp(tag, "Th") == 0) return "th";
+    if (strcmp(tag, "Td") == 0) return "td";
+    if (strcmp(tag, "Video") == 0) return "video";
+    if (strcmp(tag, "Audio") == 0) return "audio";
+    if (strcmp(tag, "Canvas") == 0) return "canvas";
+    if (strcmp(tag, "Pre") == 0) return "pre";
+    if (strcmp(tag, "Code") == 0) return "code";
     return tag;
 }
 

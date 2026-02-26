@@ -183,6 +183,8 @@ static PxTokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'c': return checkKeyword(scanner, 2, 4, "tion", TOKEN_UI_ACTION);
       case 'p': return checkKeyword(scanner, 2, 1, "p", TOKEN_UI_APP);
+      case 's': return checkKeyword(scanner, 2, 3, "ide", TOKEN_UI_ASIDE);
+      case 'u': return checkKeyword(scanner, 2, 3, "dio", TOKEN_UI_AUDIO);
       }
     }
     break;
@@ -248,7 +250,21 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
-  case 'C': return checkKeyword(scanner, 1, 8, "ontainer", TOKEN_UI_CONTAINER);
+  case 'C':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'o':
+        if (scanner->current - scanner->start > 2) {
+          switch (scanner->start[2]) {
+          case 'n': return checkKeyword(scanner, 3, 6, "tainer", TOKEN_UI_CONTAINER);
+          case 'd': return checkKeyword(scanner, 3, 1, "e", TOKEN_UI_CODE);
+          }
+        }
+        break;
+      case 'a': return checkKeyword(scanner, 2, 4, "nvas", TOKEN_UI_CANVAS);
+      }
+    }
+    break;
   case 'd':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
@@ -423,6 +439,7 @@ static PxTokenType identifierType(Scanner *scanner) {
     break;
   case 'N': return checkKeyword(scanner, 1, 2, "av", TOKEN_UI_NAV);
   case 'O': return checkKeyword(scanner, 1, 5, "ption", TOKEN_UI_OPTION);
+  case 'M': return checkKeyword(scanner, 1, 3, "ain", TOKEN_UI_MAIN);
   case 'p':
     if (scanner->current - scanner->start > 1) {
         switch (scanner->start[1]) {
@@ -502,6 +519,7 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
+  case 'P': return checkKeyword(scanner, 1, 2, "re", TOKEN_UI_PRE);
   case 'S':
     if (scanner->current - scanner->start > 1) {
       case 't': return checkKeyword(scanner, 2, 3, "ate", TOKEN_UI_STATE);
@@ -541,7 +559,29 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
-  case 'T': return checkKeyword(scanner, 1, 3, "ext", TOKEN_UI_TEXT);
+  case 'T':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'e':
+        if (scanner->current - scanner->start > 2) {
+          switch (scanner->start[2]) {
+          case 'x': return checkKeyword(scanner, 3, 1, "t", TOKEN_UI_TEXT);
+          }
+        }
+        break;
+      case 'a': return checkKeyword(scanner, 2, 3, "ble", TOKEN_UI_TABLE);
+      case 'h':
+        if (scanner->current - scanner->start > 2) {
+            if (scanner->start[2] == 'e' && scanner->current - scanner->start > 3 && scanner->start[3] == 'a' && scanner->start[4] == 'd')
+                return checkKeyword(scanner, 5, 0, "", TOKEN_UI_THEAD);
+        }
+        return checkKeyword(scanner, 2, 0, "", TOKEN_UI_TH);
+      case 'b': return checkKeyword(scanner, 2, 3, "ody", TOKEN_UI_TBODY);
+      case 'r': return checkKeyword(scanner, 2, 0, "", TOKEN_UI_TR);
+      case 'd': return checkKeyword(scanner, 2, 0, "", TOKEN_UI_TD);
+      }
+    }
+    break;
   case 'u': return checkKeyword(scanner, 1, 2, "se", TOKEN_USE);
   case 'v':
     if (scanner->current - scanner->start > 1) {
@@ -552,6 +592,7 @@ static PxTokenType identifierType(Scanner *scanner) {
          }
     }
     break;
+  case 'V': return checkKeyword(scanner, 1, 4, "ideo", TOKEN_UI_VIDEO);
   case 'w': return checkKeyword(scanner, 1, 4, "hile", TOKEN_WHILE);
   case 'W': return checkKeyword(scanner, 1, 5, "indow", TOKEN_UI_WINDOW);
   }

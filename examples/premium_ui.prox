@@ -1,0 +1,106 @@
+use UI;
+
+App ProfessionalDashboard {
+    State user = "ProgrammerKR";
+    State activeTab = "Analytics";
+    State revenue = "$1.2M";
+
+    Main(style: PROX_THEME_OCEAN + LAYOUT_ROW + UTIL_H_FULL) {
+        
+        // --- Sidebar Navigation ---
+        Aside(style: SIDEBAR_CONTAINER) {
+            Header(style: "margin-bottom: 3rem") {
+                Text(style: TEXT_2XL + " font-black " + ANIM_BOUNCE) { "PROX-UI" }
+                Text(style: TEXT_XS + " opacity-50") { "v1.2 Standard Library" }
+            }
+            
+            Nav(style: LAYOUT_COL) {
+                Item(style: SIDEBAR_ITEM + " bg-blue-600/20 text-blue-400") {
+                    Icon(className: "fas fa-chart-line", style: SIDEBAR_ICON);
+                    Text { "Analytics" }
+                }
+                Item(style: SIDEBAR_ITEM) {
+                    Icon(className: "fas fa-layer-group", style: SIDEBAR_ICON);
+                    Text { "Projects" }
+                }
+                Item(style: SIDEBAR_ITEM) {
+                    Icon(className: "fas fa-cog", style: SIDEBAR_ICON);
+                    Text { "Settings" }
+                }
+            }
+            
+            Footer(style: "margin-top: auto") {
+                Container(style: GLASS_CARD + " p-4 rounded-xl") {
+                    Text(style: TEXT_SM) { "Logged in as" }
+                    Text(style: "font-bold") { user }
+                }
+            }
+        }
+
+        // --- Main Content Area ---
+        Section(style: "flex-grow: 1; padding: 4rem; overflow-y: auto") {
+            
+            Header(style: FLEX_BETWEEN + " margin-bottom: 3rem") {
+                Container() {
+                    Text(style: TEXT_3XL + " font-black text-slate-800") { "Revenue Overview" }
+                    Text(style: TEXT_LG + " text-slate-500") { "Your business performance at a glance." }
+                }
+                Button(style: BTN_BASE + BTN_PRIMARY + " " + SHADOW_LG) {
+                    Icon(className: "fas fa-download", style: "margin-right: 0.5rem");
+                    "Export Data"
+                }
+            }
+
+            // --- Glassmorphic Stat Cards ---
+            Container(style: LAYOUT_GRID + " gap-8") {
+                Container(style: GLASS_CARD + " " + ANIM_FADE_IN) {
+                    Text(style: STAT_LABEL) { "Annual Revenue" }
+                    Text(style: STAT_VALUE) { revenue }
+                    Text(style: "color: " + COLOR_SECONDARY + " font-bold") { "↑ 24% Improvement" }
+                }
+                
+                Container(style: GLASS_CARD + " " + ANIM_FADE_IN + " animation-delay: 0.1s") {
+                    Text(style: STAT_LABEL) { "Active Sessions" }
+                    Text(style: STAT_VALUE) { "42.8k" }
+                    Text(style: BADGE_HOT) { "LIVE" }
+                }
+            }
+
+            // --- Neumorphic Interactive Section ---
+            Container(style: "margin-top: 4rem") {
+                Text(style: TEXT_2XL + " font-bold margin-bottom: 2rem") { "System Controls" }
+                Container(style: NEU_BASE + " p-10 " + LAYOUT_ROW + " gap-8") {
+                    Button(style: NEU_BTN) { "Sync Cloud" }
+                    Button(style: NEU_BTN) { "Optimize JS" }
+                    Button(style: NEU_BTN + " text-red-500") { "Purge Cache" }
+                }
+            }
+
+            // --- Data Table ---
+            Table(style: TABLE_BASE + " margin-top: 4rem") {
+                Thead(style: TABLE_HEAD) {
+                    Tr {
+                        Th { "Developer" }
+                        Th { "Core Language" }
+                        Th { "UI Framework" }
+                        Th { "Status" }
+                    }
+                }
+                Tbody {
+                    Tr(style: TABLE_ROW) {
+                        Td { "Kanishk Raj" }
+                        Td { "C (ProXPL Engine)" }
+                        Td { "ProX-UI Standard" }
+                        Td { Text(style: BADGE_PRIMARY) { "Maintainer" } }
+                    }
+                    Tr(style: TABLE_ROW) {
+                        Td { "Antigravity AI" }
+                        Td { "Advanced LLM" }
+                        Td { "ProX-UI Standard" }
+                        Td { Text(style: BADGE_PILL + " bg-purple-100 text-purple-800") { "Co-Author" } }
+                    }
+                }
+            }
+        }
+    }
+}

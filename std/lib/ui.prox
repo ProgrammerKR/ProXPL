@@ -121,29 +121,120 @@ const UTIL_W_FULL = "width: 100%;";
 const UTIL_H_FULL = "height: 100%;";
 const UTIL_ROUNDED_FULL = "border-radius: 9999px;";
 
-// --- Standard UI Components (Templates) ---
+// --- Advanced Shadow Systems ---
+const SHADOW_SOFT = "box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);";
+const SHADOW_GOLD = "box-shadow: 0 10px 30px -5px rgba(184, 134, 11, 0.3);";
+const SHADOW_NEUMORPH_OUT = "box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5);";
+const SHADOW_NEUMORPH_IN = "box-shadow: inset 9px 9px 16px rgb(163,177,198,0.6), inset -9px -9px 16px rgba(255,255,255, 0.5);";
 
-/* 
-Usage Example:
-use UI;
+// --- Glassmorphism Kit ---
+const GLASS_BASE = "backdrop-blur-xl bg-white/20 border border-white/30 shadow-2xl overflow-hidden";
+const GLASS_DARK = "backdrop-blur-xl bg-black/40 border border-white/10 shadow-2xl text-white";
+const GLASS_CARD = GLASS_BASE + " rounded-3xl p-8 hover:bg-white/30 transition-all";
 
-App Main {
-    State userLoggedIn = false;
-    
-    Container(style: CARD_BASE) {
-        Header() {
-            Icon(className: "fas fa-user", style: "color: " + COLOR_PRIMARY);
-            Text(style: "font-weight: bold; margin-left: 0.5rem") { "Account Details" }
-        }
-        
-        Section(style: "margin-top: 1rem") {
-            Input(placeholder: "Username", style: INPUT_BASE);
-            Button(style: BTN_BASE + " " + BTN_PRIMARY) { "Login" }
-        }
-        
-        Footer() {
-            Link(href: "#", style: NAV_LINK) { "Forgot Password?" }
-        }
-    }
-}
+// --- Neumorphism Kit ---
+const NEU_BASE = "bg-[#e0e5ec] rounded-[50px] " + SHADOW_NEUMORPH_OUT;
+const NEU_PRESSED = "bg-[#e0e5ec] rounded-[50px] " + SHADOW_NEUMORPH_IN;
+const NEU_BTN = "bg-[#e0e5ec] px-8 py-4 rounded-2xl " + SHADOW_NEUMORPH_OUT + " hover:" + SHADOW_NEUMORPH_IN + " cursor-pointer transition-all";
+
+// --- Premium Component Templates (Style Strings) ---
+
+// Alerts & Notifications
+const ALERT_SUCCESS = "bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md " + ANIM_FADE_IN;
+const ALERT_DANGER = "bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md " + ANIM_FADE_IN;
+const ALERT_WARNING = "bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md " + ANIM_FADE_IN;
+
+// Badges
+const BADGE_PILL = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider";
+const BADGE_PRIMARY = BADGE_PILL + " bg-blue-100 text-blue-800";
+const BADGE_HOT = BADGE_PILL + " bg-red-500 text-white " + ANIM_BOUNCE;
+
+// Modals
+const MODAL_OVERLAY = "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 " + LAYOUT_CENTER;
+const MODAL_CONTENT = "bg-white rounded-3xl p-10 max-w-lg w-full shadow-2xl transform " + ANIM_SLIDE_UP;
+
+// Navigation Systems
+const SIDEBAR_CONTAINER = "w-64 bg-gray-900 min-h-screen text-white p-6 " + LAYOUT_COL;
+const SIDEBAR_ITEM = "flex items-center p-3 rounded-xl hover:bg-gray-800 transition-colors mb-2 cursor-pointer";
+const SIDEBAR_ICON = "mr-3 text-lg text-blue-400";
+
+// Dashboard Components
+const STAT_CARD = CARD_BASE + " " + LAYOUT_COL + " min-w-[250px]";
+const STAT_VALUE = TEXT_3XL + " font-black text-gray-800 my-2";
+const STAT_LABEL = TEXT_SM + " text-gray-500 uppercase font-semibold";
+
+// Tables & Data Lists
+const TABLE_BASE = "w-full border-collapse bg-white rounded-2xl overflow-hidden shadow-lg";
+const TABLE_HEAD = "bg-gray-50 text-left text-gray-600 font-black uppercase text-xs tracking-widest p-4 border-b";
+const TABLE_ROW = "hover:bg-blue-50/50 transition-colors border-b border-gray-100";
+const TABLE_CELL = "p-4 text-gray-700";
+
+// --- Media & Graphics ---
+const IMAGE_CIRCLE = "rounded-full border-4 border-white shadow-xl aspect-square object-cover";
+const VIDEO_PLAYER = "rounded-3xl shadow-2xl border-8 border-gray-900 overflow-hidden w-full";
+const CANVAS_FULL = "w-full h-full bg-black cursor-crosshair";
+
+// --- Advanced Animation Kit ---
+const ANIM_PULSE = "@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } } animation: pulse 2s infinite;";
+const ANIM_REVEAL = "@keyframes reveal { from { height: 0; opacity: 0; } to { height: auto; opacity: 1; } } animation: reveal 0.3s ease-out;";
+const ANIM_SKELETON = "background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite;";
+
+// --- ProXPL Global Themes ---
+const PROX_THEME_OCEAN = "background: linear-gradient(to bottom, #ebf8ff, #ffffff); font-family: " + FONT_SANS;
+const PROX_THEME_CYBER = "background: #000000; color: #00ff00; font-family: " + FONT_MONO;
+
+// --- Helper Functions Mock (Standard Library Documentation) ---
+
+/*
+  HOW TO USE THE PROX UI LIBRARY:
+  1. Import the library at the top: `use UI;`
+  2. Define an `App` block for your application shell.
+  3. Use `Window` for desktop windows or page shells.
+  4. Use reactive `State` variables for automatic UI updates. (Prox-Alpine Bridge)
+  5. Combine standard style constants for premium looks.
+  
+  Example:
+  App Dashboard {
+      State isSidebarOpen = true;
+      State selectedTable = "Users";
+      
+      Main(style: LAYOUT_ROW + PROX_THEME_OCEAN) {
+          Aside(style: SIDEBAR_CONTAINER) {
+              Header() { Text(style: TEXT_2XL + " font-black") { "ProX Core" } }
+              Nav(style: "margin-top: 2rem") {
+                  Item(style: SIDEBAR_ITEM) { Icon(className: "fas fa-home", style: SIDEBAR_ICON); Text { "Overview" } }
+                  Item(style: SIDEBAR_ITEM) { Icon(className: "fas fa-users", style: SIDEBAR_ICON); Text { "Team" } }
+              }
+          }
+          
+          Section(style: "flex-grow: 1; padding: 3rem") {
+              Header(style: FLEX_BETWEEN) {
+                  Text(style: TEXT_3XL + " font-bold") { "Analytics Dashboard" }
+                  Button(style: BTN_BASE + BTN_PRIMARY) { "Generate Report" }
+              }
+              
+              Container(style: LAYOUT_GRID + " margin-top: 2rem") {
+                  Container(style: STAT_CARD) {
+                      Text(style: STAT_LABEL) { "Weekly Traffic" }
+                      Text(style: STAT_VALUE) { "1,429" }
+                      Text(style: "color: " + COLOR_SECONDARY) { "+ 12% vs last week" }
+                  }
+                  Container(style: STAT_CARD) {
+                      Text(style: STAT_LABEL) { "New Conversions" }
+                      Text(style: STAT_VALUE) { "84" }
+                  }
+              }
+              
+              Table(style: TABLE_BASE + " margin-top: 3rem") {
+                  Thead(style: TABLE_HEAD) {
+                      Tr { Th { "User" }; Th { "Status" }; Th { "Last Access" } }
+                  }
+                  Tbody {
+                      Tr(style: TABLE_ROW) { Td { "Alex Rivera" }; Td { Text(style: BADGE_PRIMARY) { "Active" } }; Td { "2m ago" } }
+                      Tr(style: TABLE_ROW) { Td { "Sarah Chen" }; Td { Text(style: BADGE_PILL + " bg-gray-100") { "Offline" } }; Td { "5h ago" } }
+                  }
+              }
+          }
+      }
+  }
 */
