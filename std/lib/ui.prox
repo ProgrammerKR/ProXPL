@@ -1,0 +1,9 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2026-02-26
+//   Description: UI Library marker file.
+// --------------------------------------------------
+
+// This file serves as a marker for the built-in UI library.
+// Importing this library enables UI keywords and components.

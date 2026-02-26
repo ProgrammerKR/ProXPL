@@ -19,6 +19,7 @@ typedef struct {
   int current;
   bool panicMode;
   bool hadError;
+  bool uiEnabled;
   const char *source;
 } Parser;
 

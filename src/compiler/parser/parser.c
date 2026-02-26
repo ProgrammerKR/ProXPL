@@ -95,6 +95,7 @@ void initParser(Parser *parser, Token *tokens, int count, const char *source) {
   parser->current = 0;
   parser->panicMode = false;
   parser->hadError = false;
+  parser->uiEnabled = false;
   parser->source = source;
 }
 
@@ -610,6 +611,7 @@ static Stmt *useDecl(Parser *p) {
     }
 
     appendString(modules, path);
+    if (strcmp(path, "UI") == 0) p->uiEnabled = true;
   } while (match(p, 1, TOKEN_COMMA));
 
   consume(p, TOKEN_SEMICOLON, "Expect ';'.");
@@ -733,6 +735,11 @@ static Stmt *statement(Parser *p) {
     }
 
     // UI Declarations
+    if (check(p, TOKEN_UI_APP) || check(p, TOKEN_UI_WINDOW)) {
+        if (!p->uiEnabled) {
+            parserError(p, "UI components require 'use UI' to be imported.");
+        }
+    }
     if (match(p, 1, TOKEN_UI_APP)) return uiAppDecl(p);
     if (match(p, 1, TOKEN_UI_WINDOW)) return uiWindowDecl(p);
     if (match(p, 1, TOKEN_UI_STATE)) return uiStateDecl(p);
