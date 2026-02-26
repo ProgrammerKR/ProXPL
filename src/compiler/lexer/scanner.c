@@ -168,51 +168,47 @@ static PxTokenType identifierType(Scanner *scanner) {
   case 'a':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 'b':
-        return checkKeyword(scanner, 2, 6, "stract", TOKEN_ABSTRACT);
+      case 'b': return checkKeyword(scanner, 2, 6, "stract", TOKEN_ABSTRACT);
       case 's':
-        // "as" or "async"
-        if (scanner->current - scanner->start == 2) {
-          return TOKEN_AS;
-        }
+        if (scanner->current - scanner->start == 2) return TOKEN_AS;
         return checkKeyword(scanner, 2, 3, "ync", TOKEN_ASYNC);
-      case 'w':
-        return checkKeyword(scanner, 2, 3, "ait", TOKEN_AWAIT);
-      case 'f': // New case for 'after'
-        return checkKeyword(scanner, 2, 3, "ter", TOKEN_AFTER);
-      case 'c':
-        return checkKeyword(scanner, 2, 6, "tivate", TOKEN_ACTIVATE);
+      case 'w': return checkKeyword(scanner, 2, 3, "ait", TOKEN_AWAIT);
+      case 'f': return checkKeyword(scanner, 2, 3, "ter", TOKEN_AFTER);
+      case 'c': return checkKeyword(scanner, 2, 6, "tivate", TOKEN_ACTIVATE);
       }
     }
     break;
-  case 'b':
-    return checkKeyword(scanner, 1, 4, "reak", TOKEN_BREAK);
+  case 'A':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'c': return checkKeyword(scanner, 2, 4, "tion", TOKEN_UI_ACTION);
+      case 'p': return checkKeyword(scanner, 2, 1, "p", TOKEN_UI_APP);
+      }
+    }
+    break;
+  case 'b': return checkKeyword(scanner, 1, 4, "reak", TOKEN_BREAK);
+  case 'B': return checkKeyword(scanner, 1, 5, "utton", TOKEN_UI_BUTTON);
   case 'c':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
       case 'a':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
-          case 's':
-            return checkKeyword(scanner, 3, 1, "e", TOKEN_CASE);
-          case 't':
-            return checkKeyword(scanner, 3, 2, "ch", TOKEN_CATCH);
+          case 's': return checkKeyword(scanner, 3, 1, "e", TOKEN_CASE);
+          case 't': return checkKeyword(scanner, 3, 2, "ch", TOKEN_CATCH);
           }
         }
         break;
-      case 'l':
-        return checkKeyword(scanner, 2, 3, "ass", TOKEN_CLASS);
+      case 'l': return checkKeyword(scanner, 2, 3, "ass", TOKEN_CLASS);
       case 'o':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
           case 'n':
             if (scanner->current - scanner->start > 3) {
               switch (scanner->start[3]) {
-              case 's':
-                return checkKeyword(scanner, 4, 1, "t", TOKEN_CONST);
+              case 's': return checkKeyword(scanner, 4, 1, "t", TOKEN_CONST);
               case 't':
                 if (scanner->current - scanner->start > 4) {
-                    // conte...
                     if (scanner->current - scanner->start > 6 && scanner->start[4] == 'e' && scanner->start[5] == 'x' && scanner->start[6] == 't') {
                          return checkKeyword(scanner, 7, 0, "", TOKEN_CONTEXT);
                     }
@@ -227,6 +223,7 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
+  case 'C': return checkKeyword(scanner, 1, 8, "ontainer", TOKEN_UI_CONTAINER);
   case 'd':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
@@ -234,62 +231,46 @@ static PxTokenType identifierType(Scanner *scanner) {
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
             case 'c':
-              // decay vs decrypt (dec...)
               if (scanner->current - scanner->start > 3 && scanner->start[3] == 'r')
                   return checkKeyword(scanner, 4, 3, "ypt", TOKEN_DECRYPT);
-              return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY); // decay
-            case 'i': // distributed
-              return checkKeyword(scanner, 2, 9, "stributed", TOKEN_DISTRIBUTED);
-            case 'a': // dataset
-              if (scanner->current - scanner->start > 6) { // dataset 7 chars
-                   return checkKeyword(scanner, 2, 5, "taset", TOKEN_DATASET);
-              }
-              // decay check:
-              return checkKeyword(scanner, 2, 3, "cay", TOKEN_DECAY); // Re-adjust precedence
-              // Wait, 'd' -> 'e' -> 'c' vs 'd' -> 'a'
-              // The original logic was inside 'd' -> 'e'. 
-              // 'dataset' starts with 'd' -> 'a'.
-              break;
+              return checkKeyword(scanner, 3, 2, "ay", TOKEN_DECAY);
+            case 'i': return checkKeyword(scanner, 2, 9, "stributed", TOKEN_DISTRIBUTED);
+            case 'a':
+              if (scanner->current - scanner->start > 6) return checkKeyword(scanner, 2, 5, "taset", TOKEN_DATASET);
+              return checkKeyword(scanner, 2, 3, "cay", TOKEN_DECAY); 
             case 'f':
               if (scanner->current - scanner->start > 3) {
-              switch (scanner->start[3]) {
-              case 'a':
-                return checkKeyword(scanner, 4, 3, "ult", TOKEN_DEFAULT);
-              case 'e':
-                return checkKeyword(scanner, 4, 1, "r", TOKEN_DEFER);
+                switch (scanner->start[3]) {
+                case 'a': return checkKeyword(scanner, 4, 3, "ult", TOKEN_DEFAULT);
+                case 'e': return checkKeyword(scanner, 4, 1, "r", TOKEN_DEFER);
+                }
               }
-            }
-            break;
+              break;
           }
         }
         break;
-      case 'o':
-        return checkKeyword(scanner, 2, 0, "", TOKEN_DO);
+      case 'o': return checkKeyword(scanner, 2, 0, "", TOKEN_DO);
       }
     }
     break;
   case 'e':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 's':
-        // es...
-        return checkKeyword(scanner, 2, 6, "calate", TOKEN_ESCALATE);
-      case 'l':
-        return checkKeyword(scanner, 2, 2, "se", TOKEN_ELSE);
+      case 's': return checkKeyword(scanner, 2, 6, "calate", TOKEN_ESCALATE);
+      case 'l': return checkKeyword(scanner, 2, 2, "se", TOKEN_ELSE);
       case 'n':
         if (scanner->current - scanner->start > 2) {
             switch (scanner->start[2]) {
-                case 'c': return checkKeyword(scanner, 3, 4, "rypt", TOKEN_ENCRYPT); // encrypt
+                case 'c': return checkKeyword(scanner, 3, 4, "rypt", TOKEN_ENCRYPT);
                 case 'u': return checkKeyword(scanner, 3, 1, "m", TOKEN_ENUM);
-                case 't': return checkKeyword(scanner, 3, 4, "angle", TOKEN_ENTANGLE); // entangle
+                case 't': return checkKeyword(scanner, 3, 4, "angle", TOKEN_ENTANGLE);
             }
         }
-        return checkKeyword(scanner, 2, 2, "um", TOKEN_ENUM); // Fallback for 'en' if not 'entangle'
+        return checkKeyword(scanner, 2, 2, "um", TOKEN_ENUM);
       case 'x':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
-          case 'p':
-            return checkKeyword(scanner, 3, 3, "ort", TOKEN_EXPORT);
+          case 'p': return checkKeyword(scanner, 3, 3, "ort", TOKEN_EXPORT);
           case 't':
             if (scanner->current - scanner->start > 3) {
                  switch(scanner->start[3]) {
@@ -313,44 +294,33 @@ static PxTokenType identifierType(Scanner *scanner) {
   case 'g':
       if (scanner->current - scanner->start > 1) {
            switch(scanner->start[1]) {
-               case 'p': return checkKeyword(scanner, 2, 1, "u", TOKEN_GPU); // gpu
+               case 'p': return checkKeyword(scanner, 2, 1, "u", TOKEN_GPU);
            }
       }
       break;
   case 'f':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 'a':
-        return checkKeyword(scanner, 2, 3, "lse", TOKEN_FALSE);
-      case 'i':
-        return checkKeyword(scanner, 2, 5, "nally", TOKEN_FINALLY);
-      case 'o':
-        return checkKeyword(scanner, 2, 1, "r", TOKEN_FOR);
-      case 'r':
-        return checkKeyword(scanner, 2, 2, "om", TOKEN_FROM);
-      case 'u':
-        return checkKeyword(scanner, 2, 2, "nc", TOKEN_FUNC);
+      case 'a': return checkKeyword(scanner, 2, 3, "lse", TOKEN_FALSE);
+      case 'i': return checkKeyword(scanner, 2, 5, "nally", TOKEN_FINALLY);
+      case 'o': return checkKeyword(scanner, 2, 1, "r", TOKEN_FOR);
+      case 'r': return checkKeyword(scanner, 2, 2, "om", TOKEN_FROM);
+      case 'u': return checkKeyword(scanner, 2, 2, "nc", TOKEN_FUNC);
       }
     }
     break;
   case 'i':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 'f':
-        return checkKeyword(scanner, 2, 0, "", TOKEN_IF);
+      case 'f': return checkKeyword(scanner, 2, 0, "", TOKEN_IF);
       case 'm':
-        if (scanner->current - scanner->start > 2) {
-          switch (scanner->start[2]) {
-          case 'l':
+        if (scanner->current - scanner->start > 2 && scanner->start[2] == 'l')
             return checkKeyword(scanner, 4, 7, "ements", TOKEN_IMPLEMENTS);
-          }
-        }
         break;
       case 'n':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
           case 't':
-            // "int" ... "inte"
             if (scanner->current - scanner->start > 3 && scanner->start[3] == 'e') {
                  if (scanner->current - scanner->start > 4) {
                      switch (scanner->start[4]) {
@@ -359,21 +329,20 @@ static PxTokenType identifierType(Scanner *scanner) {
                      }
                  }
             }
-            break; // Fall through
-          default:
-            return checkKeyword(scanner, 2, 0, "", TOKEN_IN);
+            break;
+          default: return checkKeyword(scanner, 2, 0, "", TOKEN_IN);
           }
         }
         return TOKEN_IN;
-      case 's':
-        return checkKeyword(scanner, 2, 0, "", TOKEN_IS);
+      case 's': return checkKeyword(scanner, 2, 0, "", TOKEN_IS);
       }
     }
     break;
+  case 'I': return checkKeyword(scanner, 1, 4, "nput", TOKEN_UI_INPUT);
   case 'k':
       if (scanner->current - scanner->start > 1) {
            switch(scanner->start[1]) {
-               case 'e': return checkKeyword(scanner, 2, 4, "rnel", TOKEN_KERNEL); // kernel
+               case 'e': return checkKeyword(scanner, 2, 4, "rnel", TOKEN_KERNEL);
            }
       }
       break;
@@ -384,43 +353,33 @@ static PxTokenType identifierType(Scanner *scanner) {
             case 'a': return checkKeyword(scanner, 2, 3, "yer", TOKEN_LAYER);
         }
     }
-    return TOKEN_IDENTIFIER;
-  case 'm': // Added for 'match' and 'model'
+    break;
+  case 'm':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
       case 'a':
           if (scanner->current - scanner->start > 2) {
-             if (scanner->start[2] == 't' && scanner->current - scanner->start > 3 && scanner->start[3] == 'r') {
-                 return checkKeyword(scanner, 4, 2, "ix", TOKEN_MATRIX); // matrix
-             }
+             if (scanner->start[2] == 't' && scanner->current - scanner->start > 3 && scanner->start[3] == 'r')
+                 return checkKeyword(scanner, 4, 2, "ix", TOKEN_MATRIX);
              return checkKeyword(scanner, 2, 3, "tch", TOKEN_MATCH);
           }
           break;
-      case 'o':
-          return checkKeyword(scanner, 2, 3, "del", TOKEN_MODEL); // model
+      case 'o': return checkKeyword(scanner, 2, 3, "del", TOKEN_MODEL);
       case 'u':
-          if (scanner->current - scanner->start > 2) {
-              switch (scanner->start[2]) {
-                  case 't': return checkKeyword(scanner, 3, 4, "able", TOKEN_MUTABLE);
-              }
-          }
+          if (scanner->current - scanner->start > 2 && scanner->start[2] == 't')
+              return checkKeyword(scanner, 3, 4, "able", TOKEN_MUTABLE);
           break;
-      case 'e': // measure
-          return checkKeyword(scanner, 2, 5, "asure", TOKEN_MEASURE);
+      case 'e': return checkKeyword(scanner, 2, 5, "asure", TOKEN_MEASURE);
       }
     }
     break;
   case 'n':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 'a':
-        return checkKeyword(scanner, 2, 4, "tive", TOKEN_NATIVE);
-      case 'e':
-        return checkKeyword(scanner, 2, 1, "w", TOKEN_NEW);
-      case 'u':
-        return checkKeyword(scanner, 2, 2, "ll", TOKEN_NULL);
-      case 'o': // node
-        return checkKeyword(scanner, 2, 2, "de", TOKEN_NODE);
+      case 'a': return checkKeyword(scanner, 2, 4, "tive", TOKEN_NATIVE);
+      case 'e': return checkKeyword(scanner, 2, 1, "w", TOKEN_NEW);
+      case 'u': return checkKeyword(scanner, 2, 2, "ll", TOKEN_NULL);
+      case 'o': return checkKeyword(scanner, 2, 2, "de", TOKEN_NODE);
       }
     }
     break;
@@ -428,20 +387,19 @@ static PxTokenType identifierType(Scanner *scanner) {
     if (scanner->current - scanner->start > 1) {
         switch (scanner->start[1]) {
             case 'a': return checkKeyword(scanner, 2, 5, "ckage", TOKEN_PACKAGE);
-            case 'o': return checkKeyword(scanner, 2, 4, "licy", TOKEN_POLICY); // policy
+            case 'o': return checkKeyword(scanner, 2, 4, "licy", TOKEN_POLICY);
             case 'u':
               if (scanner->current - scanner->start > 2) {
                   switch (scanner->start[2]) {
                       case 'b': return checkKeyword(scanner, 3, 3, "lic", TOKEN_PUBLIC);
-                      case 'r': return checkKeyword(scanner, 3, 1, "e", TOKEN_PURE); // pure
+                      case 'r': return checkKeyword(scanner, 3, 1, "e", TOKEN_PURE);
                   }
               }
               break;
             case 'r':
               if (scanner->current - scanner->start > 2) {
                   switch(scanner->start[2]) {
-                      case 'e': // predict
-                         return checkKeyword(scanner, 3, 4, "dict", TOKEN_PREDICT);
+                      case 'e': return checkKeyword(scanner, 3, 4, "dict", TOKEN_PREDICT);
                       case 'i': 
                         if (scanner->current - scanner->start > 3) {
                             switch(scanner->start[3]) {
@@ -461,15 +419,6 @@ static PxTokenType identifierType(Scanner *scanner) {
     if (scanner->current - scanner->start > 1) {
         switch (scanner->start[1]) {
             case 'e':
-                 // ... handled above? No conflict with return/resolver?
-                 // return, resolver, recovery, resilient, restart
-                 // All start with 're'
-                 // resolver -> res...
-                 // resilient -> res...
-                 // restart -> res...
-                 // return -> ret...
-                 // recovery -> rec...
-                 // Let's rewrite the 'r' case fully.
                  if (scanner->current - scanner->start > 2) {
                      switch (scanner->start[2]) {
                          case 'c': return checkKeyword(scanner, 3, 5, "overy", TOKEN_RECOVERY);
@@ -486,15 +435,14 @@ static PxTokenType identifierType(Scanner *scanner) {
                      }
                  }
                  break;
-            case 'o':
-                 return checkKeyword(scanner, 2, 6, "llback", TOKEN_ROLLBACK);
+            case 'o': return checkKeyword(scanner, 2, 6, "llback", TOKEN_ROLLBACK);
         }
     } 
-    return TOKEN_IDENTIFIER;
+    break;
   case 's':
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
-      case 'a': return checkKeyword(scanner, 2, 6, "nitize", TOKEN_SANITIZE); // sanitize
+      case 'a': return checkKeyword(scanner, 2, 6, "nitize", TOKEN_SANITIZE);
       case 't':
           if (scanner->current - scanner->start > 2) {
               switch (scanner->start[2]) {
@@ -504,17 +452,21 @@ static PxTokenType identifierType(Scanner *scanner) {
           }
           break;
       case 'u':
-          if (scanner->current - scanner->start > 2) {
-              if (scanner->start[2] == 'p') {
-                   // super... superpose or super
-                   if (scanner->current - scanner->start > 5 && scanner->start[5] == 'p')
-                       return checkKeyword(scanner, 6, 3, "ose", TOKEN_SUPERPOSE); // superpose
-                   return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
-              }
+          if (scanner->current - scanner->start > 2 && scanner->start[2] == 'p') {
+              if (scanner->current - scanner->start > 5 && scanner->start[5] == 'p')
+                  return checkKeyword(scanner, 6, 3, "ose", TOKEN_SUPERPOSE);
+              return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
           }
-          return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
-      case 'w':
-        return checkKeyword(scanner, 2, 4, "itch", TOKEN_SWITCH);
+          break;
+      case 'w': return checkKeyword(scanner, 2, 4, "itch", TOKEN_SWITCH);
+      }
+    }
+    break;
+  case 'S':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 't': return checkKeyword(scanner, 2, 3, "ate", TOKEN_UI_STATE);
+      case 'T': return checkKeyword(scanner, 2, 3, "YLE", TOKEN_UI_STYLE);
       }
     }
     break;
@@ -527,48 +479,40 @@ static PxTokenType identifierType(Scanner *scanner) {
               if (scanner->start[2] == 'n') return checkKeyword(scanner, 3, 3, "sor", TOKEN_TENSOR);
           }
           break;
-    case 'h':
+      case 'h':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
-          case 'i':
-            return checkKeyword(scanner, 3, 1, "s", TOKEN_THIS);
-          case 'r':
-            return checkKeyword(scanner, 3, 2, "ow", TOKEN_THROW);
+          case 'i': return checkKeyword(scanner, 3, 1, "s", TOKEN_THIS);
+          case 'r': return checkKeyword(scanner, 3, 2, "ow", TOKEN_THROW);
           }
         }
         break;
       case 'r':
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
-          case 'u':
-            return checkKeyword(scanner, 3, 1, "e", TOKEN_TRUE);
-          case 'a': // train
-            return checkKeyword(scanner, 3, 2, "in", TOKEN_TRAIN);
-          case 'y':
-            return checkKeyword(scanner, 3, 0, "", TOKEN_TRY);
+          case 'u': return checkKeyword(scanner, 3, 1, "e", TOKEN_TRUE);
+          case 'a': return checkKeyword(scanner, 3, 2, "in", TOKEN_TRAIN);
+          case 'y': return checkKeyword(scanner, 3, 0, "", TOKEN_TRY);
           }
         }
         break;
-      case 'y':
-        return checkKeyword(scanner, 2, 4, "peof", TOKEN_TYPEOF);
+      case 'y': return checkKeyword(scanner, 2, 4, "peof", TOKEN_TYPEOF);
       }
     }
     break;
-  case 'u':
-    return checkKeyword(scanner, 1, 2, "se", TOKEN_USE);
+  case 'T': return checkKeyword(scanner, 1, 3, "ext", TOKEN_UI_TEXT);
+  case 'u': return checkKeyword(scanner, 1, 2, "se", TOKEN_USE);
   case 'v':
     if (scanner->current - scanner->start > 1) {
          switch(scanner->start[1]) {
              case 'a': return checkKeyword(scanner, 2, 1, "r", TOKEN_VAR);
-             case 'e': return checkKeyword(scanner, 2, 4, "rify", TOKEN_VERIFY); // verify
+             case 'e': return checkKeyword(scanner, 2, 4, "rify", TOKEN_VERIFY);
              case 'o': return checkKeyword(scanner, 2, 2, "id", TOKEN_VOID);
          }
     }
-    // Fallback? Original 'void' used to be handled directly under 'v' -> check 1, 3 "oid"
-    // But now we branch.
-    return TOKEN_IDENTIFIER;
-  case 'w':
-    return checkKeyword(scanner, 1, 4, "hile", TOKEN_WHILE);
+    break;
+  case 'w': return checkKeyword(scanner, 1, 4, "hile", TOKEN_WHILE);
+  case 'W': return checkKeyword(scanner, 1, 5, "indow", TOKEN_UI_WINDOW);
   }
   return TOKEN_IDENTIFIER;
 }
