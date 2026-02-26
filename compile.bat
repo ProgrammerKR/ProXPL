@@ -4,6 +4,7 @@ clang -o proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT_SECUR
  src/compiler/lexer/scanner.c ^
  src/compiler/parser/ast.c ^
  src/compiler/parser/parser.c ^
+ src/compiler/transpiler_ui.c ^
  src/compiler/bytecode_gen.c ^
  src/compiler/importer.c ^
  src/compiler/ir.c ^

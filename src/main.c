@@ -16,6 +16,7 @@
 #include "parser.h"
 #include "scanner.h"
 #include "vm.h"
+#include "transpiler_ui.h"
 #include "object.h"
 #include "memory.h"
 #include <stdio.h>
@@ -214,7 +215,17 @@ static void runFile(const char *path) {
   }
   freeTypeChecker(&checker);
 
-  // --- Pipeline Step 3: Bytecode Gen & Execution ---
+  // --- Pipeline Step 3: UI Transpilation (if applicable) ---
+  for (int i = 0; i < statements->count; i++) {
+      if (statements->items[i]->type == STMT_UI_APP) {
+          char outputDir[512];
+          sprintf(outputDir, "dist_%s", statements->items[i]->as.ui_app.name);
+          printf("[UI] Transpiling App '%s' to %s...\n", statements->items[i]->as.ui_app.name, outputDir);
+          transpileUIApp(statements->items[i], outputDir);
+      }
+  }
+
+  // --- Pipeline Step 4: Bytecode Gen & Execution ---
   InterpretResult result = interpretAST(&vm, statements);
     
   if (result != INTERPRET_OK) {
