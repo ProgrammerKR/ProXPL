@@ -31,6 +31,7 @@ static Stmt *gpuStmt(Parser *p); // Forward
 
 static Stmt *verifyStmt(Parser *p); // Forward
 static Stmt *tensorDecl(Parser *p); // Forward
+static Stmt *contextDecl(Parser *p); // Forward
 static Stmt *layerDecl(Parser *p); // Forward
 static Stmt *activateStmt(Parser *p); // Forward
 
@@ -727,8 +728,7 @@ static Stmt *statement(Parser *p) {
     StmtList *stmts = block(p);
     return createBlockStmt(stmts, previous(p).line, 0);
   }
-  if (match(p, 1, TOKEN_ACTIVATE))
-    return activateStmt(p);
+    if (match(p, 1, TOKEN_ACTIVATE)) return activateStmt(p);
 
     // UI Declarations
     if (match(p, 1, TOKEN_UI_APP)) return uiAppDecl(p);
