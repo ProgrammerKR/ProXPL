@@ -405,7 +405,8 @@ static int dispatchPRM(int argc, const char* argv[]) {
             #endif
             
             printf("[PRM] Executing: %s\n", command);
-            system(command);
+            int res = system(command);
+            (void)res;
 
         } else if (strcmp(sub, "test") == 0) {
             printf("Running tests for %s...\n", pname);

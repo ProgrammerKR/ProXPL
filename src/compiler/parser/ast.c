@@ -700,6 +700,12 @@ Stmt *createLayerDeclStmt(const char *name, StmtList *methods, int line, int col
   return stmt;
 }
 
+Stmt *createActivateStmt(Expr *contextExpr, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_ACTIVATE;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.activate_stmt.contextExpr = contextExpr;
   stmt->as.activate_stmt.body = body;
   return stmt;
 }
@@ -990,6 +996,7 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.layer_decl.name);
     if(stmt->as.layer_decl.methods) freeStmtList(stmt->as.layer_decl.methods);
     break;
+  case STMT_ACTIVATE:
     freeExpr(stmt->as.activate_stmt.contextExpr);
     if(stmt->as.activate_stmt.body) freeStmtList(stmt->as.activate_stmt.body);
     break;
