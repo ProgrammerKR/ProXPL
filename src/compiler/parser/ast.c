@@ -700,13 +700,58 @@ Stmt *createLayerDeclStmt(const char *name, StmtList *methods, int line, int col
   return stmt;
 }
 
-Stmt *createActivateStmt(Expr *contextExpr, StmtList *body, int line, int column) {
+  stmt->as.activate_stmt.body = body;
+  return stmt;
+}
+
+Stmt *createUIAppStmt(const char *name, StmtList *body, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
-  stmt->type = STMT_ACTIVATE;
+  stmt->type = STMT_UI_APP;
   stmt->line = line;
   stmt->column = column;
-  stmt->as.activate_stmt.contextExpr = contextExpr;
-  stmt->as.activate_stmt.body = body;
+  stmt->as.ui_app.name = strdup(name);
+  stmt->as.ui_app.body = body;
+  return stmt;
+}
+
+Stmt *createUIWindowStmt(const char *name, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_UI_WINDOW;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.ui_window.name = strdup(name);
+  stmt->as.ui_window.body = body;
+  return stmt;
+}
+
+Stmt *createUIComponentStmt(const char *tag, DictPairList *props, StmtList *children, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_UI_COMPONENT;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.ui_component.tag = strdup(tag);
+  stmt->as.ui_component.props = props;
+  stmt->as.ui_component.children = children;
+  return stmt;
+}
+
+Stmt *createUIStateStmt(const char *name, Expr *initializer, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_UI_STATE;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.ui_state.name = strdup(name);
+  stmt->as.ui_state.initializer = initializer;
+  return stmt;
+}
+
+Stmt *createUIActionStmt(const char *name, StmtList *body, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_UI_ACTION;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.ui_action.name = strdup(name);
+  stmt->as.ui_action.body = body;
   return stmt;
 }
 
@@ -945,9 +990,29 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.layer_decl.name);
     if(stmt->as.layer_decl.methods) freeStmtList(stmt->as.layer_decl.methods);
     break;
-  case STMT_ACTIVATE:
     freeExpr(stmt->as.activate_stmt.contextExpr);
     if(stmt->as.activate_stmt.body) freeStmtList(stmt->as.activate_stmt.body);
+    break;
+  case STMT_UI_APP:
+    free(stmt->as.ui_app.name);
+    freeStmtList(stmt->as.ui_app.body);
+    break;
+  case STMT_UI_WINDOW:
+    free(stmt->as.ui_window.name);
+    freeStmtList(stmt->as.ui_window.body);
+    break;
+  case STMT_UI_COMPONENT:
+    free(stmt->as.ui_component.tag);
+    freeDictPairList(stmt->as.ui_component.props);
+    freeStmtList(stmt->as.ui_component.children);
+    break;
+  case STMT_UI_STATE:
+    free(stmt->as.ui_state.name);
+    freeExpr(stmt->as.ui_state.initializer);
+    break;
+  case STMT_UI_ACTION:
+    free(stmt->as.ui_action.name);
+    freeStmtList(stmt->as.ui_action.body);
     break;
   }
 

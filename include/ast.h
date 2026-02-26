@@ -66,7 +66,14 @@ typedef enum {
   STMT_TENSOR_DECL,
   STMT_CONTEXT_DECL,
   STMT_LAYER_DECL,
-  STMT_ACTIVATE
+  STMT_ACTIVATE,
+
+  // UI Statements
+  STMT_UI_APP,
+  STMT_UI_WINDOW,
+  STMT_UI_COMPONENT,
+  STMT_UI_STATE,
+  STMT_UI_ACTION
 } StmtType;
 
 // --- List Structures ---
@@ -192,6 +199,13 @@ typedef struct { char *name; StmtList *layers; } ContextDeclStmt;
 typedef struct { char *name; StmtList *methods; } LayerDeclStmt;
 typedef struct { Expr *contextExpr; StmtList *body; } ActivateStmt;
 
+// --- UI Statement Data Structures ---
+typedef struct { char *name; StmtList *body; } UIAppStmt;
+typedef struct { char *name; StmtList *body; } UIWindowStmt;
+typedef struct { char *tag; DictPairList *props; StmtList *children; } UIComponentStmt;
+typedef struct { char *name; Expr *initializer; } UIStateStmt;
+typedef struct { char *name; StmtList *body; } UIActionStmt;
+
 struct Stmt {
   StmtType type;
   int line;
@@ -218,6 +232,13 @@ struct Stmt {
     ContextDeclStmt context_decl;
     LayerDeclStmt layer_decl;
     ActivateStmt activate_stmt;
+
+    // UI
+    UIAppStmt ui_app;
+    UIWindowStmt ui_window;
+    UIComponentStmt ui_component;
+    UIStateStmt ui_state;
+    UIActionStmt ui_action;
   } as;
 };
 
@@ -277,6 +298,13 @@ Stmt *createTensorDeclStmt(const char *name, const char *dataType, int *dims, in
 Stmt *createContextDeclStmt(const char *name, StmtList *layers, int line, int column);
 Stmt *createLayerDeclStmt(const char *name, StmtList *methods, int line, int column);
 Stmt *createActivateStmt(Expr *contextExpr, StmtList *body, int line, int column);
+
+// UI
+Stmt *createUIAppStmt(const char *name, StmtList *body, int line, int column);
+Stmt *createUIWindowStmt(const char *name, StmtList *body, int line, int column);
+Stmt *createUIComponentStmt(const char *tag, DictPairList *props, StmtList *children, int line, int column);
+Stmt *createUIStateStmt(const char *name, Expr *initializer, int line, int column);
+Stmt *createUIActionStmt(const char *name, StmtList *body, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);
