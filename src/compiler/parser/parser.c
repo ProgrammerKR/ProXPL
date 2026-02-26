@@ -409,6 +409,12 @@ static Stmt *declaration(Parser *p) {
     return contextDecl(p);
   if (match(p, 1, TOKEN_LAYER))
     return layerDecl(p);
+    
+  // UI Library Specific Declarations (if enabled)
+  if (p->uiEnabled) {
+      if (match(p, 1, TOKEN_UI_APP)) return uiAppDecl(p);
+      if (match(p, 1, TOKEN_UI_WINDOW)) return uiWindowDecl(p);
+  }
 
   return statement(p);
 }

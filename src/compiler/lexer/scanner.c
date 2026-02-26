@@ -522,6 +522,7 @@ static PxTokenType identifierType(Scanner *scanner) {
   case 'P': return checkKeyword(scanner, 1, 2, "re", TOKEN_UI_PRE);
   case 'S':
     if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
       case 't': return checkKeyword(scanner, 2, 3, "ate", TOKEN_UI_STATE);
       case 'T': return checkKeyword(scanner, 2, 3, "YLE", TOKEN_UI_STYLE);
       case 'e': return checkKeyword(scanner, 2, 5, "ction", TOKEN_UI_SECTION);

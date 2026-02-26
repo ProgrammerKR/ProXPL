@@ -8,7 +8,28 @@
 #include "../../include/value.h"
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _MSC_VER
+#include <intrin.h>
+#define atomic_size_t size_t
+#define atomic_int int
+#define _Atomic(X) X
+#define atomic_init(A, V) (*(A) = (V))
+#define atomic_load(A) (*(A))
+#define atomic_load_explicit(A, M) (*(A))
+#define atomic_store_explicit(A, V, M) (*(A) = (V))
+#define atomic_thread_fence(M)
+#define memory_order_relaxed 0
+#define memory_order_acquire 0
+#define memory_order_release 0
+#define memory_order_seq_cst 0
+// Mock compare_exchange for single thread (common in dev/CLI)
+static inline bool atomic_compare_exchange_strong_explicit(size_t volatile* a, size_t* e, size_t d, int m1, int m2) {
+    if (*a == *e) { *a = d; return true; }
+    *e = *a; return false;
+}
+#else
 #include <stdatomic.h>
+#endif
 
 // ----------------------------------------------------------------------------
 // WORK-STEALING SCHEDULER (Chase-Lev Deque)
