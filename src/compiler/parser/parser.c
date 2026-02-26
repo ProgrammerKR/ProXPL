@@ -31,9 +31,16 @@ static Stmt *gpuStmt(Parser *p); // Forward
 
 static Stmt *verifyStmt(Parser *p); // Forward
 static Stmt *tensorDecl(Parser *p); // Forward
-static Stmt *contextDecl(Parser *p); // Forward
 static Stmt *layerDecl(Parser *p); // Forward
 static Stmt *activateStmt(Parser *p); // Forward
+
+// UI Forward Declarations
+static Stmt *uiAppDecl(Parser *p);
+static Stmt *uiWindowDecl(Parser *p);
+static Stmt *uiComponentDecl(Parser *p);
+static Stmt *uiStateDecl(Parser *p);
+static Stmt *uiActionDecl(Parser *p);
+
 static Stmt *useDecl(Parser *p);
 static Stmt *forStmt(Parser *p);
 static Stmt *ifStmt(Parser *p);
@@ -722,6 +729,18 @@ static Stmt *statement(Parser *p) {
   }
   if (match(p, 1, TOKEN_ACTIVATE))
     return activateStmt(p);
+
+    // UI Declarations
+    if (match(p, 1, TOKEN_UI_APP)) return uiAppDecl(p);
+    if (match(p, 1, TOKEN_UI_WINDOW)) return uiWindowDecl(p);
+    if (match(p, 1, TOKEN_UI_STATE)) return uiStateDecl(p);
+    if (match(p, 1, TOKEN_UI_ACTION)) return uiActionDecl(p);
+
+    // Generic UI Component (fallback for other UI tokens)
+    if (match(p, 5, TOKEN_UI_CONTAINER, TOKEN_UI_BUTTON, TOKEN_UI_TEXT, TOKEN_UI_INPUT, TOKEN_UI_STYLE)) {
+        return uiComponentDecl(p);
+    }
+
   return exprStmt(p);
 }
 
@@ -1523,6 +1542,82 @@ static Stmt *activateStmt(Parser *p) {
     
     Stmt *stmt = createActivateStmt(contextExpr, body, keyword.line, 0);
     free(contextName);
+    return stmt;
+}
+
+static Stmt *uiAppDecl(Parser *p) {
+    Token keyword = previous(p);
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect App name.");
+    char *name = tokenToString(nameTok);
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before App body.");
+    StmtList *body = block(p);
+    Stmt *stmt = createUIAppStmt(name, body, keyword.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *uiWindowDecl(Parser *p) {
+    Token keyword = previous(p);
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect Window name.");
+    char *name = tokenToString(nameTok);
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before Window body.");
+    StmtList *body = block(p);
+    Stmt *stmt = createUIWindowStmt(name, body, keyword.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *uiStateDecl(Parser *p) {
+    Token keyword = previous(p);
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect state variable name.");
+    char *name = tokenToString(nameTok);
+    Expr *initializer = NULL;
+    if (match(p, 1, TOKEN_EQUAL)) {
+        initializer = expression(p);
+    }
+    consume(p, TOKEN_SEMICOLON, "Expect ';' after state declaration.");
+    Stmt *stmt = createUIStateStmt(name, initializer, keyword.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *uiActionDecl(Parser *p) {
+    Token keyword = previous(p);
+    Token nameTok = consume(p, TOKEN_IDENTIFIER, "Expect action name.");
+    char *name = tokenToString(nameTok);
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before action body.");
+    StmtList *body = block(p);
+    Stmt *stmt = createUIActionStmt(name, body, keyword.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *uiComponentDecl(Parser *p) {
+    Token tagTok = previous(p);
+    char *tag = tokenToString(tagTok);
+    DictPairList *props = createDictPairList();
+    
+    if (match(p, 1, TOKEN_LEFT_PAREN)) {
+        if (!check(p, TOKEN_RIGHT_PAREN)) {
+            do {
+                Expr *key = expression(p);
+                consume(p, TOKEN_COLON, "Expect ':'.");
+                Expr *value = expression(p);
+                appendDictPair(props, key, value);
+            } while (match(p, 1, TOKEN_COMMA));
+        }
+        consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after properties.");
+    }
+
+    StmtList *children = NULL;
+    if (match(p, 1, TOKEN_LEFT_BRACE)) {
+        children = block(p);
+    } else {
+        consume(p, TOKEN_SEMICOLON, "Expect ';' or '{' after component.");
+    }
+
+    Stmt *stmt = createUIComponentStmt(tag, props, children, tagTok.line, 0);
+    free(tag);
     return stmt;
 }
 
