@@ -750,7 +750,10 @@ static Stmt *statement(Parser *p) {
     if (match(p, 1, TOKEN_UI_ACTION)) return uiActionDecl(p);
 
     // Generic UI Component (fallback for other UI tokens)
-    if (match(p, 5, TOKEN_UI_CONTAINER, TOKEN_UI_BUTTON, TOKEN_UI_TEXT, TOKEN_UI_INPUT, TOKEN_UI_STYLE)) {
+    if (match(p, 18, TOKEN_UI_CONTAINER, TOKEN_UI_BUTTON, TOKEN_UI_TEXT, TOKEN_UI_INPUT, TOKEN_UI_STYLE,
+              TOKEN_UI_IMAGE, TOKEN_UI_LINK, TOKEN_UI_LIST, TOKEN_UI_ITEM, TOKEN_UI_SECTION,
+              TOKEN_UI_NAV, TOKEN_UI_HEADER, TOKEN_UI_FOOTER, TOKEN_UI_ICON, TOKEN_UI_FORM,
+              TOKEN_UI_LABEL, TOKEN_UI_SELECT, TOKEN_UI_OPTION)) {
         return uiComponentDecl(p);
     }
 

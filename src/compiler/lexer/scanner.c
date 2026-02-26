@@ -186,6 +186,31 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
+  case 'F':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'o':
+        if (scanner->current - scanner->start > 2) {
+          switch (scanner->start[2]) {
+          case 'o': return checkKeyword(scanner, 3, 3, "ter", TOKEN_UI_FOOTER);
+          case 'r': return checkKeyword(scanner, 3, 1, "m", TOKEN_UI_FORM);
+          }
+        }
+        break;
+      }
+    }
+    break;
+  case 'H': return checkKeyword(scanner, 1, 5, "eader", TOKEN_UI_HEADER);
+  case 'I':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'm': return checkKeyword(scanner, 2, 3, "age", TOKEN_UI_IMAGE);
+      case 'c': return checkKeyword(scanner, 2, 2, "on", TOKEN_UI_ICON);
+      case 't': return checkKeyword(scanner, 2, 2, "em", TOKEN_UI_ITEM);
+      case 'n': return checkKeyword(scanner, 2, 3, "put", TOKEN_UI_INPUT);
+      }
+    }
+    break;
   case 'b': return checkKeyword(scanner, 1, 4, "reak", TOKEN_BREAK);
   case 'B': return checkKeyword(scanner, 1, 5, "utton", TOKEN_UI_BUTTON);
   case 'c':
@@ -338,7 +363,21 @@ static PxTokenType identifierType(Scanner *scanner) {
       }
     }
     break;
-  case 'I': return checkKeyword(scanner, 1, 4, "nput", TOKEN_UI_INPUT);
+  case 'L':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'i':
+        if (scanner->current - scanner->start > 2) {
+            switch (scanner->start[2]) {
+                case 'n': return checkKeyword(scanner, 3, 1, "k", TOKEN_UI_LINK);
+                case 's': return checkKeyword(scanner, 3, 1, "t", TOKEN_UI_LIST);
+            }
+        }
+        break;
+      case 'a': return checkKeyword(scanner, 2, 3, "bel", TOKEN_UI_LABEL);
+      }
+    }
+    break;
   case 'k':
       if (scanner->current - scanner->start > 1) {
            switch(scanner->start[1]) {
@@ -378,11 +417,12 @@ static PxTokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'a': return checkKeyword(scanner, 2, 4, "tive", TOKEN_NATIVE);
       case 'e': return checkKeyword(scanner, 2, 1, "w", TOKEN_NEW);
-      case 'u': return checkKeyword(scanner, 2, 2, "ll", TOKEN_NULL);
       case 'o': return checkKeyword(scanner, 2, 2, "de", TOKEN_NODE);
       }
     }
     break;
+  case 'N': return checkKeyword(scanner, 1, 2, "av", TOKEN_UI_NAV);
+  case 'O': return checkKeyword(scanner, 1, 5, "ption", TOKEN_UI_OPTION);
   case 'p':
     if (scanner->current - scanner->start > 1) {
         switch (scanner->start[1]) {
@@ -464,9 +504,10 @@ static PxTokenType identifierType(Scanner *scanner) {
     break;
   case 'S':
     if (scanner->current - scanner->start > 1) {
-      switch (scanner->start[1]) {
       case 't': return checkKeyword(scanner, 2, 3, "ate", TOKEN_UI_STATE);
       case 'T': return checkKeyword(scanner, 2, 3, "YLE", TOKEN_UI_STYLE);
+      case 'e': return checkKeyword(scanner, 2, 5, "ction", TOKEN_UI_SECTION);
+      case 'l': return checkKeyword(scanner, 2, 4, "ect", TOKEN_UI_SELECT);
       }
     }
     break;

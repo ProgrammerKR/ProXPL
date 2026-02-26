@@ -60,6 +60,27 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
     fclose(js);
 }
 
+static const char *mapTag(const char *tag) {
+    if (strcmp(tag, "Container") == 0) return "div";
+    if (strcmp(tag, "Button") == 0) return "button";
+    if (strcmp(tag, "Text") == 0) return "span";
+    if (strcmp(tag, "Input") == 0) return "input";
+    if (strcmp(tag, "Image") == 0) return "img";
+    if (strcmp(tag, "Link") == 0) return "a";
+    if (strcmp(tag, "List") == 0) return "ul";
+    if (strcmp(tag, "Item") == 0) return "li";
+    if (strcmp(tag, "Section") == 0) return "section";
+    if (strcmp(tag, "Nav") == 0) return "nav";
+    if (strcmp(tag, "Header") == 0) return "header";
+    if (strcmp(tag, "Footer") == 0) return "footer";
+    if (strcmp(tag, "Icon") == 0) return "i";
+    if (strcmp(tag, "Form") == 0) return "form";
+    if (strcmp(tag, "Label") == 0) return "label";
+    if (strcmp(tag, "Select") == 0) return "select";
+    if (strcmp(tag, "Option") == 0) return "option";
+    return tag;
+}
+
 static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
     if (!stmt) return;
 
@@ -86,8 +107,9 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             break;
 
         case STMT_UI_COMPONENT: {
+            const char *htmlTag = mapTag(stmt->as.ui_component.tag);
             printIndent(html, indent);
-            fprintf(html, "<%s", stmt->as.ui_component.tag);
+            fprintf(html, "<%s", htmlTag);
             
             // Props
             DictPairList *props = stmt->as.ui_component.props;
@@ -98,6 +120,12 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
                 transpileExpr(props->items[i].value, html);
                 fprintf(html, "\"");
             }
+            
+            if (strcmp(htmlTag, "img") == 0 || strcmp(htmlTag, "input") == 0) {
+                fprintf(html, " />\n");
+                break;
+            }
+            
             fprintf(html, ">");
 
             // Children
@@ -108,7 +136,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
                 }
                 printIndent(html, indent);
             }
-            fprintf(html, "</%s>\n", stmt->as.ui_component.tag);
+            fprintf(html, "</%s>\n", htmlTag);
             break;
         }
 
