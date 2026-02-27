@@ -81,9 +81,26 @@ int main(int argc, char** argv) {
 
     // --- Project ---
     else if (strcmp(cmd, "build") == 0) {
-        Manifest m;
-        if (prm_load_manifest(&m)) prm_build(&m, false);
-        else return 1;
+        if (argc >= 3 && strcmp(argv[2], "web") == 0) {
+            Manifest m;
+            if (prm_load_manifest(&m)) {
+                const char* outDir = NULL;
+                for (int i = 3; i < argc; i++) {
+                    if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
+                        outDir = argv[i+1];
+                        break;
+                    }
+                }
+                prm_build_web(&m, outDir);
+            } else {
+                printf("Error: project.pxcf not found.\n");
+                return 1;
+            }
+        } else {
+            Manifest m;
+            if (prm_load_manifest(&m)) prm_build(&m, false);
+            else return 1;
+        }
     }
     else if (strcmp(cmd, "run") == 0) {
         Manifest m;

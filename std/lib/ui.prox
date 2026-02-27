@@ -2,237 +2,556 @@
 //   Project: ProX Programming Language (ProXPL)
 //   Author:  ProgrammerKR
 //   Created: 2026-02-26
+//   Updated: 2026-02-27
 //   Description: ProXPL UI Standard Library (UI Kit)
 // --------------------------------------------------
 
-// --- Design System Tokens ---
+// ===================================================
+//  SECTION 1: DESIGN SYSTEM TOKENS
+// ===================================================
 
-// Colors (ProX Design System)
-const COLOR_PRIMARY = "#3b82f6";
-const COLOR_SECONDARY = "#10b981";
-const COLOR_DANGER = "#ef4444";
-const COLOR_WARNING = "#f59e0b";
-const COLOR_INFO = "#3b82f6";
-const COLOR_DARK = "#1f2937";
-const COLOR_LIGHT = "#f3f4f6";
-const COLOR_WHITE = "#ffffff";
-const COLOR_BLACK = "#000000";
+// --- Core Colors ---
+const COLOR_PRIMARY    = "#3b82f6";
+const COLOR_SECONDARY  = "#10b981";
+const COLOR_DANGER     = "#ef4444";
+const COLOR_WARNING    = "#f59e0b";
+const COLOR_INFO       = "#3b82f6";
+const COLOR_DARK       = "#1f2937";
+const COLOR_LIGHT      = "#f3f4f6";
+const COLOR_WHITE      = "#ffffff";
+const COLOR_BLACK      = "#000000";
 
-// Gradients
+// --- Extended Color Palette ---
+const COLOR_PURPLE     = "#8b5cf6";
+const COLOR_PINK       = "#ec4899";
+const COLOR_ORANGE     = "#f97316";
+const COLOR_TEAL       = "#14b8a6";
+const COLOR_INDIGO     = "#6366f1";
+const COLOR_ROSE       = "#f43f5e";
+const COLOR_VIOLET     = "#7c3aed";
+const COLOR_CYAN       = "#06b6d4";
+const COLOR_LIME       = "#84cc16";
+const COLOR_AMBER      = "#f59e0b";
+const COLOR_EMERALD    = "#059669";
+const COLOR_SKY        = "#0ea5e9";
+
+// --- Semantic Colors ---
+const COLOR_SUCCESS    = "#22c55e";
+const COLOR_ERROR      = "#ef4444";
+const COLOR_MUTED      = "#9ca3af";
+const COLOR_BORDER     = "#e5e7eb";
+const COLOR_SURFACE    = "#f9fafb";
+const COLOR_CARD_BG    = "#ffffff";
+
+// ===================================================
+//  SECTION 2: GRADIENTS
+// ===================================================
+
+// Core Gradients
 const GRADIENT_PRIMARY = "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)";
-const GRADIENT_DARK = "linear-gradient(135deg, #1f2937 0%, #111827 100%)";
+const GRADIENT_DARK    = "linear-gradient(135deg, #1f2937 0%, #111827 100%)";
 const GRADIENT_SUCCESS = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
 
-// Typography
-const FONT_SANS = "Inter, system-ui, sans-serif";
-const FONT_MONO = "Fira Code, monospace";
-const TEXT_XS = "0.75rem";
-const TEXT_SM = "0.875rem";
-const TEXT_BASE = "1rem";
-const TEXT_LG = "1.125rem";
-const TEXT_XL = "1.25rem";
-const TEXT_2XL = "1.5rem";
-const TEXT_3XL = "1.875rem";
+// Extended Gradients
+const GRADIENT_SUNSET  = "linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%)";
+const GRADIENT_OCEAN   = "linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%)";
+const GRADIENT_FIRE    = "linear-gradient(135deg, #ef4444 0%, #f97316 100%)";
+const GRADIENT_NEON    = "linear-gradient(135deg, #00ff88 0%, #00bfff 100%)";
+const GRADIENT_AURORA  = "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)";
+const GRADIENT_GOLD    = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
+const GRADIENT_NIGHT   = "linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%)";
+const GRADIENT_MINT    = "linear-gradient(135deg, #84cc16 0%, #14b8a6 100%)";
+const GRADIENT_CANDY   = "linear-gradient(135deg, #ec4899 0%, #f97316 100%)";
 
-// Spacing (Utility Classes)
-const P_0 = "padding: 0";
-const P_1 = "padding: 0.25rem";
-const P_2 = "padding: 0.5rem";
-const P_4 = "padding: 1rem";
-const P_8 = "padding: 2rem";
+// ===================================================
+//  SECTION 3: TYPOGRAPHY
+// ===================================================
 
-const M_0 = "margin: 0";
-const M_1 = "margin: 0.25rem";
-const M_2 = "margin: 0.5rem";
-const M_4 = "margin: 1rem";
+const FONT_SANS        = "Inter, system-ui, -apple-system, sans-serif";
+const FONT_MONO        = "Fira Code, JetBrains Mono, monospace";
+const FONT_DISPLAY     = "Outfit, Poppins, sans-serif";
+const FONT_SERIF       = "Georgia, Times New Roman, serif";
+
+// Font Sizes
+const TEXT_XS          = "font-size: 0.75rem";
+const TEXT_SM          = "font-size: 0.875rem";
+const TEXT_BASE        = "font-size: 1rem";
+const TEXT_LG          = "font-size: 1.125rem";
+const TEXT_XL          = "font-size: 1.25rem";
+const TEXT_2XL         = "font-size: 1.5rem";
+const TEXT_3XL         = "font-size: 1.875rem";
+const TEXT_4XL         = "font-size: 2.25rem";
+const TEXT_5XL         = "font-size: 3rem";
+const TEXT_6XL         = "font-size: 3.75rem";
+
+// Font Weights
+const FONT_THIN        = "font-weight: 100";
+const FONT_LIGHT       = "font-weight: 300";
+const FONT_NORMAL      = "font-weight: 400";
+const FONT_MEDIUM      = "font-weight: 500";
+const FONT_SEMIBOLD    = "font-weight: 600";
+const FONT_BOLD        = "font-weight: 700";
+const FONT_EXTRABOLD   = "font-weight: 800";
+const FONT_BLACK       = "font-weight: 900";
+
+// Text Alignment
+const TEXT_LEFT        = "text-align: left";
+const TEXT_CENTER      = "text-align: center";
+const TEXT_RIGHT       = "text-align: right";
+const TEXT_JUSTIFY     = "text-align: justify";
+
+// Text Transform
+const TEXT_UPPER       = "text-transform: uppercase";
+const TEXT_LOWER       = "text-transform: lowercase";
+const TEXT_CAPITALIZE  = "text-transform: capitalize";
+
+// Line Heights
+const LEADING_TIGHT    = "line-height: 1.25";
+const LEADING_NORMAL   = "line-height: 1.5";
+const LEADING_LOOSE    = "line-height: 2";
+
+// Letter Spacing
+const TRACKING_TIGHT   = "letter-spacing: -0.05em";
+const TRACKING_NORMAL  = "letter-spacing: 0";
+const TRACKING_WIDE    = "letter-spacing: 0.05em";
+const TRACKING_WIDER   = "letter-spacing: 0.1em";
+const TRACKING_WIDEST  = "letter-spacing: 0.2em";
+
+// ===================================================
+//  SECTION 4: SPACING
+// ===================================================
+
+const P_0  = "padding: 0";
+const P_1  = "padding: 0.25rem";
+const P_2  = "padding: 0.5rem";
+const P_3  = "padding: 0.75rem";
+const P_4  = "padding: 1rem";
+const P_6  = "padding: 1.5rem";
+const P_8  = "padding: 2rem";
+const P_10 = "padding: 2.5rem";
+const P_12 = "padding: 3rem";
+const P_16 = "padding: 4rem";
+
+const M_0    = "margin: 0";
+const M_1    = "margin: 0.25rem";
+const M_2    = "margin: 0.5rem";
+const M_4    = "margin: 1rem";
+const M_6    = "margin: 1.5rem";
+const M_8    = "margin: 2rem";
 const M_auto = "margin: auto";
 
-// --- Styled Component Primitives (CSS Class Strings) ---
+// Gap Utilities
+const GAP_1 = "gap: 0.25rem";
+const GAP_2 = "gap: 0.5rem";
+const GAP_4 = "gap: 1rem";
+const GAP_6 = "gap: 1.5rem";
+const GAP_8 = "gap: 2rem";
 
-// Layouts
-const LAYOUT_CENTER = "display: flex; justify-content: center; align-items: center;";
-const LAYOUT_COL = "display: flex; flex-direction: column;";
-const LAYOUT_ROW = "display: flex; flex-direction: row;";
-const LAYOUT_GRID = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;";
+// ===================================================
+//  SECTION 5: BORDER & BORDER RADIUS
+// ===================================================
 
-// Buttons
-const BTN_BASE = "px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 active:scale-95 cursor-pointer";
-const BTN_PRIMARY = "bg-blue-600 text-white hover:bg-blue-700 shadow-lg";
-const BTN_SECONDARY = "bg-green-600 text-white hover:bg-green-700 shadow-lg";
-const BTN_OUTLINE = "border-2 border-blue-600 text-blue-600 hover:bg-blue-50";
-const BTN_GHOST = "text-gray-600 hover:bg-gray-100";
+// Borders
+const BORDER_NONE    = "border: none";
+const BORDER_SM      = "border: 1px solid " + COLOR_BORDER;
+const BORDER_MD      = "border: 2px solid " + COLOR_BORDER;
+const BORDER_PRIMARY = "border: 2px solid " + COLOR_PRIMARY;
+const BORDER_DANGER  = "border: 2px solid " + COLOR_DANGER;
+const BORDER_B       = "border-bottom: 1px solid " + COLOR_LIGHT;
+const BORDER_T       = "border-top: 1px solid " + COLOR_LIGHT;
 
-// Inputs
-const INPUT_BASE = "w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 transition-all outline-none";
-const INPUT_ERROR = "border-red-500 focus:border-red-600";
-const INPUT_SUCCESS = "border-green-500 focus:border-green-600";
+// Border Radius
+const ROUNDED_NONE   = "border-radius: 0";
+const ROUNDED_SM     = "border-radius: 0.125rem";
+const ROUNDED        = "border-radius: 0.25rem";
+const ROUNDED_MD     = "border-radius: 0.375rem";
+const ROUNDED_LG     = "border-radius: 0.5rem";
+const ROUNDED_XL     = "border-radius: 0.75rem";
+const ROUNDED_2XL    = "border-radius: 1rem";
+const ROUNDED_3XL    = "border-radius: 1.5rem";
+const ROUNDED_FULL   = "border-radius: 9999px";
 
-// Cards
-const CARD_BASE = "bg-white p-6 rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow";
-const CARD_GLASS = "backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl rounded-2xl p-6";
+// ===================================================
+//  SECTION 6: SHADOW SYSTEM
+// ===================================================
 
-// Navigation
-const NAV_BASE = "flex items-center justify-between px-8 py-4 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50";
-const NAV_LINK = "text-gray-600 hover:text-blue-600 font-medium transition-colors";
+const SHADOW_NONE     = "box-shadow: none";
+const SHADOW_SM       = "box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)";
+const SHADOW_MD       = "box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)";
+const SHADOW_LG       = "box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)";
+const SHADOW_XL       = "box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)";
+const SHADOW_2XL      = "box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25)";
+const SHADOW_INNER    = "box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)";
+const SHADOW_SOFT     = "box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05)";
+const SHADOW_GOLD     = "box-shadow: 0 10px 30px -5px rgba(184, 134, 11, 0.3)";
+const SHADOW_BLUE     = "box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.4)";
+const SHADOW_PURPLE   = "box-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.4)";
+const SHADOW_GREEN    = "box-shadow: 0 10px 30px -5px rgba(16, 185, 129, 0.4)";
 
-// --- Animation Keyframes (CSS Snippets) ---
+// Neumorphism Shadows
+const SHADOW_NEUMORPH_OUT = "box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5)";
+const SHADOW_NEUMORPH_IN  = "box-shadow: inset 9px 9px 16px rgb(163,177,198,0.6), inset -9px -9px 16px rgba(255,255,255, 0.5)";
 
-const ANIM_FADE_IN = "@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } animation: fadeIn 0.5s ease-out;";
-const ANIM_SLIDE_UP = "@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } } animation: slideUp 0.5s ease-out;";
-const ANIM_BOUNCE = "@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } } animation: bounce 1s infinite;";
-const ANIM_SPIN = "@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } animation: spin 1s linear infinite;";
+// ===================================================
+//  SECTION 7: LAYOUT & FLEX/GRID
+// ===================================================
 
-// --- Shadow Tiers ---
-const SHADOW_SM = "box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);";
-const SHADOW_MD = "box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);";
-const SHADOW_LG = "box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);";
-const SHADOW_XL = "box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);";
-const SHADOW_INNER = "box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);";
+const LAYOUT_CENTER  = "display: flex; justify-content: center; align-items: center";
+const LAYOUT_COL     = "display: flex; flex-direction: column";
+const LAYOUT_ROW     = "display: flex; flex-direction: row";
+const LAYOUT_GRID    = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem";
+const LAYOUT_WRAP    = "display: flex; flex-wrap: wrap";
+const LAYOUT_STACK   = "display: flex; flex-direction: column; gap: 1rem";
 
-// --- Responsive Breakpoints (Helper Strings) ---
-const SCREEN_SM = "640px";
-const SCREEN_MD = "768px";
-const SCREEN_LG = "1024px";
-const SCREEN_XL = "1280px";
+// Flex Helpers
+const FLEX_BETWEEN   = "display: flex; justify-content: space-between; align-items: center";
+const FLEX_START     = "display: flex; justify-content: flex-start; align-items: center";
+const FLEX_END       = "display: flex; justify-content: flex-end; align-items: center";
+const FLEX_AROUND    = "display: flex; justify-content: space-around; align-items: center";
+const FLEX_EVENLY    = "display: flex; justify-content: space-evenly; align-items: center";
+const FLEX_GROW      = "flex: 1 1 auto";
+const FLEX_SHRINK    = "flex: 0 0 auto";
+const FLEX_1         = "flex: 1";
 
-// --- Layout Presets ---
-const CENTER_FULL = "display: flex; justify-content: center; align-items: center; min-height: 100vh; background: " + COLOR_LIGHT;
-const GRID_DASHBOARD = "display: grid; grid-template-columns: 250px 1fr; min-height: 100vh;";
-const FLEX_BETWEEN = "display: flex; justify-content: space-between; align-items: center;";
+// Grid Presets
+const GRID_2_COL     = "display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem";
+const GRID_3_COL     = "display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem";
+const GRID_4_COL     = "display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem";
 
-// --- Global Theme Object ---
-const THEME_DARK = "background-color: " + COLOR_DARK + "; color: " + COLOR_WHITE + ";";
-const THEME_LIGHT = "background-color: " + COLOR_WHITE + "; color: " + COLOR_BLACK + ";";
+// Layout Presets
+const CENTER_FULL    = "display: flex; justify-content: center; align-items: center; min-height: 100vh; background: " + COLOR_LIGHT;
+const GRID_DASHBOARD = "display: grid; grid-template-columns: 250px 1fr; min-height: 100vh";
 
-// --- More CSS Utilities ---
-const CURSOR_POINTER = "cursor: pointer;";
-const SELECT_NONE = "user-select: none;";
-const OVERFLOW_HIDDEN = "overflow: hidden;";
-const BORDER_B = "border-bottom: 1px solid " + COLOR_LIGHT;
-const TRANSITION_FAST = "transition: all 0.2s ease-in-out;";
-const TRANSITION_NORMAL = "transition: all 0.3s ease-in-out;";
+// ===================================================
+//  SECTION 8: BUTTONS
+// ===================================================
 
-// --- Standard UI Components (Templates) ---
+const BTN_BASE      = "display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; font-family: " + FONT_SANS + "; transition: all 0.2s ease; cursor: pointer; border: none; outline: none; text-decoration: none";
+const BTN_SM        = "padding: 0.25rem 0.75rem; font-size: 0.875rem; border-radius: 0.375rem";
+const BTN_LG        = "padding: 0.75rem 2rem; font-size: 1.125rem; border-radius: 0.75rem";
+const BTN_XL        = "padding: 1rem 2.5rem; font-size: 1.25rem; border-radius: 1rem";
+const BTN_ICON      = "padding: 0.5rem; border-radius: 50%; aspect-ratio: 1";
 
-// Note: These can be used in className props
-const UTIL_HIDDEN = "display: none;";
-const UTIL_FLEX = "display: flex;";
-const UTIL_W_FULL = "width: 100%;";
-const UTIL_H_FULL = "height: 100%;";
-const UTIL_ROUNDED_FULL = "border-radius: 9999px;";
+// Button Color Variants
+const BTN_PRIMARY   = "background: " + GRADIENT_PRIMARY + "; color: #ffffff; box-shadow: 0 4px 15px rgba(59,130,246,0.4)";
+const BTN_SECONDARY = "background: " + GRADIENT_SUCCESS + "; color: #ffffff; box-shadow: 0 4px 15px rgba(16,185,129,0.4)";
+const BTN_DANGER    = "background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; box-shadow: 0 4px 15px rgba(239,68,68,0.4)";
+const BTN_SUCCESS   = "background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; box-shadow: 0 4px 15px rgba(34,197,94,0.4)";
+const BTN_WARNING   = "background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; box-shadow: 0 4px 15px rgba(245,158,11,0.4)";
+const BTN_PURPLE    = "background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: #ffffff; box-shadow: 0 4px 15px rgba(139,92,246,0.4)";
+const BTN_OUTLINE   = "background: transparent; border: 2px solid " + COLOR_PRIMARY + "; color: " + COLOR_PRIMARY;
+const BTN_GHOST     = "background: transparent; color: " + COLOR_DARK + "; hover: background rgba(0,0,0,0.05)";
+const BTN_DARK      = "background: " + GRADIENT_DARK + "; color: #ffffff";
+const BTN_GLASS     = "background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); color: #ffffff";
 
-// --- Advanced Shadow Systems ---
-const SHADOW_SOFT = "box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);";
-const SHADOW_GOLD = "box-shadow: 0 10px 30px -5px rgba(184, 134, 11, 0.3);";
-const SHADOW_NEUMORPH_OUT = "box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5);";
-const SHADOW_NEUMORPH_IN = "box-shadow: inset 9px 9px 16px rgb(163,177,198,0.6), inset -9px -9px 16px rgba(255,255,255, 0.5);";
+// ===================================================
+//  SECTION 9: INPUTS & FORMS
+// ===================================================
 
-// --- Glassmorphism Kit ---
-const GLASS_BASE = "backdrop-blur-xl bg-white/20 border border-white/30 shadow-2xl overflow-hidden";
-const GLASS_DARK = "backdrop-blur-xl bg-black/40 border border-white/10 shadow-2xl text-white";
-const GLASS_CARD = GLASS_BASE + " rounded-3xl p-8 hover:bg-white/30 transition-all";
+const INPUT_BASE    = "width: 100%; padding: 0.625rem 1rem; border: 2px solid " + COLOR_BORDER + "; border-radius: 0.5rem; font-family: " + FONT_SANS + "; font-size: 1rem; outline: none; transition: all 0.2s ease; background: #fff";
+const INPUT_DARK    = "width: 100%; padding: 0.625rem 1rem; border: 2px solid #374151; border-radius: 0.5rem; font-family: " + FONT_SANS + "; font-size: 1rem; outline: none; background: #1f2937; color: #fff";
+const INPUT_PILL    = "width: 100%; padding: 0.625rem 1.5rem; border: 2px solid " + COLOR_BORDER + "; border-radius: 9999px; font-family: " + FONT_SANS + "; font-size: 1rem; outline: none; transition: all 0.2s ease";
+const INPUT_ERROR   = "border-color: " + COLOR_DANGER + " !important";
+const INPUT_SUCCESS = "border-color: " + COLOR_SUCCESS + " !important";
+const INPUT_FOCUS   = "border-color: " + COLOR_PRIMARY + "; box-shadow: 0 0 0 3px rgba(59,130,246,0.15)";
 
-// --- Neumorphism Kit ---
-const NEU_BASE = "bg-[#e0e5ec] rounded-[50px] " + SHADOW_NEUMORPH_OUT;
-const NEU_PRESSED = "bg-[#e0e5ec] rounded-[50px] " + SHADOW_NEUMORPH_IN;
-const NEU_BTN = "bg-[#e0e5ec] px-8 py-4 rounded-2xl " + SHADOW_NEUMORPH_OUT + " hover:" + SHADOW_NEUMORPH_IN + " cursor-pointer transition-all";
+const TEXTAREA_BASE = "width: 100%; padding: 0.75rem 1rem; border: 2px solid " + COLOR_BORDER + "; border-radius: 0.5rem; font-family: " + FONT_SANS + "; font-size: 1rem; outline: none; resize: vertical; min-height: 120px; transition: all 0.2s ease";
+const SELECT_BASE   = "width: 100%; padding: 0.625rem 1rem; border: 2px solid " + COLOR_BORDER + "; border-radius: 0.5rem; font-family: " + FONT_SANS + "; font-size: 1rem; outline: none; background: #fff; cursor: pointer; appearance: none";
 
-// --- Premium Component Templates (Style Strings) ---
+const LABEL_BASE    = "display: block; font-size: 0.875rem; font-weight: 600; color: " + COLOR_DARK + "; margin-bottom: 0.5rem";
+const FORM_GROUP    = "display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem";
 
-// Alerts & Notifications
-const ALERT_SUCCESS = "bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md " + ANIM_FADE_IN;
-const ALERT_DANGER = "bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md " + ANIM_FADE_IN;
-const ALERT_WARNING = "bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md " + ANIM_FADE_IN;
+const CHECKBOX_BASE = "width: 1.25rem; height: 1.25rem; border: 2px solid " + COLOR_BORDER + "; border-radius: 0.25rem; cursor: pointer; accent-color: " + COLOR_PRIMARY;
+const RADIO_BASE    = "width: 1.25rem; height: 1.25rem; border: 2px solid " + COLOR_BORDER + "; border-radius: 50%; cursor: pointer; accent-color: " + COLOR_PRIMARY;
 
-// Badges
-const BADGE_PILL = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider";
-const BADGE_PRIMARY = BADGE_PILL + " bg-blue-100 text-blue-800";
-const BADGE_HOT = BADGE_PILL + " bg-red-500 text-white " + ANIM_BOUNCE;
+// ===================================================
+//  SECTION 10: CARDS
+// ===================================================
 
-// Modals
-const MODAL_OVERLAY = "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 " + LAYOUT_CENTER;
-const MODAL_CONTENT = "bg-white rounded-3xl p-10 max-w-lg w-full shadow-2xl transform " + ANIM_SLIDE_UP;
+const CARD_BASE    = "background: " + COLOR_CARD_BG + "; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid " + COLOR_BORDER + "; transition: box-shadow 0.3s ease";
+const CARD_HOVER   = "box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); transform: translateY(-2px)";
+const CARD_DARK    = "background: #1e293b; padding: 1.5rem; border-radius: 1rem; border: 1px solid #334155; color: #f1f5f9";
+const CARD_FLAT    = "background: " + COLOR_SURFACE + "; padding: 1.5rem; border-radius: 1rem; border: 1px solid " + COLOR_BORDER;
+const CARD_OUTLINED = "background: transparent; padding: 1.5rem; border-radius: 1rem; border: 2px solid " + COLOR_BORDER;
 
-// Navigation Systems
-const SIDEBAR_CONTAINER = "w-64 bg-gray-900 min-h-screen text-white p-6 " + LAYOUT_COL;
-const SIDEBAR_ITEM = "flex items-center p-3 rounded-xl hover:bg-gray-800 transition-colors mb-2 cursor-pointer";
-const SIDEBAR_ICON = "mr-3 text-lg text-blue-400";
+// Glassmorphism
+const GLASS_BASE   = "backdrop-filter: blur(16px) saturate(180%); background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 25px 50px rgba(0,0,0,0.1); overflow: hidden";
+const GLASS_DARK   = "backdrop-filter: blur(16px) saturate(180%); background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.3); color: #fff";
+const GLASS_CARD   = GLASS_BASE + "; border-radius: 1.5rem; padding: 2rem; transition: all 0.3s ease";
+const GLASS_BLUE   = "backdrop-filter: blur(16px); background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); border-radius: 1rem; padding: 1.5rem";
 
-// Dashboard Components
-const STAT_CARD = CARD_BASE + " " + LAYOUT_COL + " min-w-[250px]";
-const STAT_VALUE = TEXT_3XL + " font-black text-gray-800 my-2";
-const STAT_LABEL = TEXT_SM + " text-gray-500 uppercase font-semibold";
+// Neumorphism
+const NEU_BASE     = "background: #e0e5ec; border-radius: 3rem; " + SHADOW_NEUMORPH_OUT;
+const NEU_PRESSED  = "background: #e0e5ec; border-radius: 3rem; " + SHADOW_NEUMORPH_IN;
+const NEU_BTN      = "background: #e0e5ec; padding: 1rem 2rem; border-radius: 1rem; " + SHADOW_NEUMORPH_OUT + "; cursor: pointer; transition: all 0.2s ease; border: none; font-family: " + FONT_SANS;
 
-// Tables & Data Lists
-const TABLE_BASE = "w-full border-collapse bg-white rounded-2xl overflow-hidden shadow-lg";
-const TABLE_HEAD = "bg-gray-50 text-left text-gray-600 font-black uppercase text-xs tracking-widest p-4 border-b";
-const TABLE_ROW = "hover:bg-blue-50/50 transition-colors border-b border-gray-100";
-const TABLE_CELL = "p-4 text-gray-700";
+// ===================================================
+//  SECTION 11: NAVIGATION
+// ===================================================
 
-// --- Media & Graphics ---
-const IMAGE_CIRCLE = "rounded-full border-4 border-white shadow-xl aspect-square object-cover";
-const VIDEO_PLAYER = "rounded-3xl shadow-2xl border-8 border-gray-900 overflow-hidden w-full";
-const CANVAS_FULL = "w-full h-full bg-black cursor-crosshair";
+const NAV_BASE      = "display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid " + COLOR_BORDER + "; position: sticky; top: 0; z-index: 50";
+const NAV_DARK      = "display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: rgba(15,23,42,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 50";
+const NAV_LINK      = "color: " + COLOR_MUTED + "; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: color 0.2s ease; padding: 0.5rem";
+const NAV_LINK_ACT  = "color: " + COLOR_PRIMARY + "; text-decoration: none; font-weight: 600; font-size: 0.9rem";
 
-// --- Advanced Animation Kit ---
-const ANIM_PULSE = "@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } } animation: pulse 2s infinite;";
-const ANIM_REVEAL = "@keyframes reveal { from { height: 0; opacity: 0; } to { height: auto; opacity: 1; } } animation: reveal 0.3s ease-out;";
-const ANIM_SKELETON = "background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite;";
+const SIDEBAR_CONTAINER = "width: 260px; background: #0f172a; min-height: 100vh; color: #fff; padding: 1.5rem; display: flex; flex-direction: column";
+const SIDEBAR_ITEM      = "display: flex; align-items: center; padding: 0.75rem 1rem; border-radius: 0.75rem; transition: background 0.2s ease; margin-bottom: 0.25rem; cursor: pointer; text-decoration: none; color: #94a3b8; font-size: 0.9rem";
+const SIDEBAR_ITEM_ACT  = "background: rgba(99,102,241,0.2); color: " + COLOR_INDIGO + "; font-weight: 600";
+const SIDEBAR_ICON      = "margin-right: 0.75rem; font-size: 1.1rem; width: 20px; text-align: center";
 
-// --- ProXPL Global Themes ---
-const PROX_THEME_OCEAN = "background: linear-gradient(to bottom, #ebf8ff, #ffffff); font-family: " + FONT_SANS;
-const PROX_THEME_CYBER = "background: #000000; color: #00ff00; font-family: " + FONT_MONO;
+// ===================================================
+//  SECTION 12: BADGES & LABELS
+// ===================================================
 
-// --- Helper Functions Mock (Standard Library Documentation) ---
+const BADGE_PILL    = "display: inline-flex; align-items: center; padding: 0.2rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em";
+const BADGE_PRIMARY = BADGE_PILL + "; background: rgba(59,130,246,0.1); color: " + COLOR_PRIMARY;
+const BADGE_SUCCESS = BADGE_PILL + "; background: rgba(34,197,94,0.1); color: " + COLOR_SUCCESS;
+const BADGE_DANGER  = BADGE_PILL + "; background: rgba(239,68,68,0.1); color: " + COLOR_DANGER;
+const BADGE_WARNING = BADGE_PILL + "; background: rgba(245,158,11,0.1); color: " + COLOR_AMBER;
+const BADGE_PURPLE  = BADGE_PILL + "; background: rgba(139,92,246,0.1); color: " + COLOR_PURPLE;
+const BADGE_DARK    = BADGE_PILL + "; background: rgba(0,0,0,0.1); color: " + COLOR_DARK;
+const BADGE_HOT     = BADGE_PILL + "; background: " + COLOR_DANGER + "; color: #fff";
+
+// ===================================================
+//  SECTION 13: ALERTS & NOTIFICATIONS
+// ===================================================
+
+const ALERT_BASE    = "padding: 1rem 1.25rem; border-radius: 0.5rem; border-left: 4px solid; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem";
+const ALERT_SUCCESS = ALERT_BASE + "; background: #f0fdf4; border-color: " + COLOR_SUCCESS + "; color: #166534";
+const ALERT_DANGER  = ALERT_BASE + "; background: #fef2f2; border-color: " + COLOR_DANGER + "; color: #991b1b";
+const ALERT_WARNING = ALERT_BASE + "; background: #fffbeb; border-color: " + COLOR_WARNING + "; color: #92400e";
+const ALERT_INFO    = ALERT_BASE + "; background: #eff6ff; border-color: " + COLOR_PRIMARY + "; color: #1e40af";
+
+// Toast
+const TOAST_BASE    = "position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 1rem 1.5rem; border-radius: 0.75rem; box-shadow: 0 20px 40px rgba(0,0,0,0.15); font-weight: 500; z-index: 9999; min-width: 250px";
+const TOAST_SUCCESS = TOAST_BASE + "; background: " + COLOR_SUCCESS + "; color: #fff";
+const TOAST_ERROR   = TOAST_BASE + "; background: " + COLOR_DANGER + "; color: #fff";
+
+// ===================================================
+//  SECTION 14: MODALS
+// ===================================================
+
+const MODAL_OVERLAY  = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem";
+const MODAL_CONTENT  = "background: " + COLOR_WHITE + "; border-radius: 1.5rem; padding: 2.5rem; max-width: 32rem; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative";
+const MODAL_DARK     = "background: #1e293b; border-radius: 1.5rem; padding: 2.5rem; max-width: 32rem; width: 100%; border: 1px solid #334155; color: #f1f5f9";
+const MODAL_HEADER   = FLEX_BETWEEN + "; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid " + COLOR_BORDER;
+const MODAL_FOOTER   = FLEX_END + "; gap: 0.75rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid " + COLOR_BORDER;
+
+// ===================================================
+//  SECTION 15: TABLES
+// ===================================================
+
+const TABLE_BASE    = "width: 100%; border-collapse: collapse; background: " + COLOR_WHITE + "; border-radius: 1rem; overflow: hidden; box-shadow: " + SHADOW_MD;
+const TABLE_HEAD    = "background: " + COLOR_SURFACE + "; text-align: left; color: " + COLOR_MUTED + "; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; padding: 1rem 1.25rem; border-bottom: 1px solid " + COLOR_BORDER;
+const TABLE_ROW     = "transition: background 0.15s ease; border-bottom: 1px solid " + COLOR_BORDER;
+const TABLE_ROW_ACT = "background: rgba(59,130,246,0.05)";
+const TABLE_CELL    = "padding: 1rem 1.25rem; color: " + COLOR_DARK + "; font-size: 0.9rem";
+
+// ===================================================
+//  SECTION 16: DASHBOARD COMPONENTS
+// ===================================================
+
+const STAT_CARD   = CARD_BASE + "; display: flex; flex-direction: column; min-width: 220px";
+const STAT_VALUE  = "font-size: 2rem; font-weight: 900; color: " + COLOR_DARK + "; margin: 0.5rem 0; line-height: 1";
+const STAT_LABEL  = "font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: " + COLOR_MUTED + "; letter-spacing: 0.1em";
+const STAT_CHANGE = "font-size: 0.875rem; font-weight: 600";
+const STAT_UP     = STAT_CHANGE + "; color: " + COLOR_SUCCESS;
+const STAT_DOWN   = STAT_CHANGE + "; color: " + COLOR_DANGER;
+
+// Progress Bars
+const PROGRESS_WRAP    = "width: 100%; height: 0.5rem; background: " + COLOR_LIGHT + "; border-radius: 9999px; overflow: hidden";
+const PROGRESS_FILL    = "height: 100%; background: " + GRADIENT_PRIMARY + "; border-radius: 9999px; transition: width 0.5s ease";
+const PROGRESS_SUCCESS = "height: 100%; background: " + GRADIENT_SUCCESS + "; border-radius: 9999px";
+const PROGRESS_DANGER  = "height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); border-radius: 9999px";
+const PROGRESS_ORANGE  = "height: 100%; background: linear-gradient(90deg, #f97316, #ea580c); border-radius: 9999px";
+
+// ===================================================
+//  SECTION 17: MEDIA & GRAPHICS
+// ===================================================
+
+const IMAGE_CIRCLE   = "border-radius: 50%; border: 4px solid " + COLOR_WHITE + "; box-shadow: " + SHADOW_XL + "; aspect-ratio: 1; object-fit: cover";
+const IMAGE_CARD     = "border-radius: 0.75rem; object-fit: cover; width: 100%";
+const VIDEO_PLAYER   = "border-radius: 1.5rem; box-shadow: " + SHADOW_2XL + "; border: 8px solid #111827; overflow: hidden; width: 100%";
+const CANVAS_FULL    = "width: 100%; height: 100%; background: #000; cursor: crosshair";
+const AVATAR_SM      = "width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover";
+const AVATAR_MD      = "width: 3rem; height: 3rem; border-radius: 50%; object-fit: cover";
+const AVATAR_LG      = "width: 5rem; height: 5rem; border-radius: 50%; object-fit: cover; border: 4px solid " + COLOR_WHITE + "; " + SHADOW_LG;
+
+// ===================================================
+//  SECTION 18: ANIMATIONS
+// ===================================================
+
+const ANIM_FADE_IN   = "@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }; animation: fadeIn 0.5s ease-out";
+const ANIM_FADE_OUT  = "@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }; animation: fadeOut 0.5s ease-out";
+const ANIM_SLIDE_UP  = "@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }; animation: slideUp 0.5s ease-out";
+const ANIM_SLIDE_DOWN = "@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }; animation: slideDown 0.4s ease-out";
+const ANIM_SLIDE_LEFT = "@keyframes slideLeft { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }; animation: slideLeft 0.4s ease-out";
+const ANIM_BOUNCE    = "@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }; animation: bounce 1s infinite";
+const ANIM_SPIN      = "@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }; animation: spin 1s linear infinite";
+const ANIM_PULSE     = "@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.03); } 100% { opacity: 1; transform: scale(1); } }; animation: pulse 2s infinite";
+const ANIM_SHAKE     = "@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }; animation: shake 0.5s ease-out";
+const ANIM_FLIP      = "@keyframes flip { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }; animation: flip 1s ease-in-out";
+const ANIM_ZOOM_IN   = "@keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }; animation: zoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
+const ANIM_WAVE      = "@keyframes wave { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(20deg); } 75% { transform: rotate(-20deg); } }; animation: wave 1.5s ease infinite";
+const ANIM_REVEAL    = "@keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0% 0 0); } }; animation: reveal 0.6s ease-out";
+const ANIM_SKELETON  = "background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; @keyframes loadingShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }; animation: loadingShimmer 1.5s infinite";
+
+// Transition Utilities
+const TRANSITION_FAST   = "transition: all 0.15s ease-in-out";
+const TRANSITION_NORMAL = "transition: all 0.3s ease-in-out";
+const TRANSITION_SLOW   = "transition: all 0.5s ease-in-out";
+const TRANSITION_SPRING = "transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+// ===================================================
+//  SECTION 19: FILTERS & EFFECTS
+// ===================================================
+
+const BLUR_SM        = "filter: blur(4px)";
+const BLUR_MD        = "filter: blur(8px)";
+const BLUR_LG        = "filter: blur(16px)";
+const SATURATE_HIGH  = "filter: saturate(1.5)";
+const GRAYSCALE      = "filter: grayscale(1)";
+const BRIGHTNESS_UP  = "filter: brightness(1.15)";
+const BRIGHTNESS_DOWN = "filter: brightness(0.85)";
+const SEPIA          = "filter: sepia(0.6)";
+
+// Backdrop Filters
+const BACKDROP_BLUR_SM  = "backdrop-filter: blur(4px)";
+const BACKDROP_BLUR_MD  = "backdrop-filter: blur(12px)";
+const BACKDROP_BLUR_LG  = "backdrop-filter: blur(20px)";
+const BACKDROP_SATURATE = "backdrop-filter: saturate(180%)";
+
+// ===================================================
+//  SECTION 20: OPACITY, VISIBILITY & Z-INDEX
+// ===================================================
+
+const OPACITY_0   = "opacity: 0";
+const OPACITY_25  = "opacity: 0.25";
+const OPACITY_50  = "opacity: 0.5";
+const OPACITY_75  = "opacity: 0.75";
+const OPACITY_90  = "opacity: 0.9";
+const OPACITY_100 = "opacity: 1";
+
+const VISIBLE   = "visibility: visible";
+const INVISIBLE = "visibility: hidden";
+
+const Z_0        = "z-index: 0";
+const Z_BASE     = "z-index: 10";
+const Z_DROPDOWN = "z-index: 100";
+const Z_STICKY   = "z-index: 200";
+const Z_OVERLAY  = "z-index: 500";
+const Z_MODAL    = "z-index: 9000";
+const Z_TOAST    = "z-index: 9999";
+
+// ===================================================
+//  SECTION 21: CSS UTILITIES
+// ===================================================
+
+const CURSOR_POINTER    = "cursor: pointer";
+const CURSOR_DEFAULT    = "cursor: default";
+const CURSOR_NOT_ALLOWED = "cursor: not-allowed";
+const CURSOR_GRAB       = "cursor: grab";
+const SELECT_NONE       = "user-select: none";
+const SELECT_ALL        = "user-select: all";
+const OVERFLOW_HIDDEN   = "overflow: hidden";
+const OVERFLOW_AUTO     = "overflow: auto";
+const OVERFLOW_SCROLL   = "overflow: scroll";
+const OVERFLOW_X_AUTO   = "overflow-x: auto";
+const OVERFLOW_Y_AUTO   = "overflow-y: auto";
+
+const UTIL_HIDDEN   = "display: none";
+const UTIL_FLEX     = "display: flex";
+const UTIL_BLOCK    = "display: block";
+const UTIL_INLINE   = "display: inline";
+const UTIL_INLINE_FLEX = "display: inline-flex";
+const UTIL_W_FULL   = "width: 100%";
+const UTIL_H_FULL   = "height: 100%";
+const UTIL_W_SCREEN = "width: 100vw";
+const UTIL_H_SCREEN = "height: 100vh";
+const UTIL_MAX_W_SM = "max-width: 24rem";
+const UTIL_MAX_W_MD = "max-width: 32rem";
+const UTIL_MAX_W_LG = "max-width: 56rem";
+const UTIL_MAX_W_XL = "max-width: 80rem";
+const UTIL_MAX_W_FULL = "max-width: 100%";
+const UTIL_ROUNDED_FULL = "border-radius: 9999px";
+const UTIL_TRUNCATE = "overflow: hidden; text-overflow: ellipsis; white-space: nowrap";
+const UTIL_BREAK_WORD = "overflow-wrap: break-word; word-break: break-word";
+const UTIL_SR_ONLY  = "position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0";
+
+// Position Utilities
+const POS_RELATIVE = "position: relative";
+const POS_ABSOLUTE = "position: absolute";
+const POS_FIXED    = "position: fixed";
+const POS_STICKY   = "position: sticky; top: 0";
+const POS_INSET_0  = "inset: 0";
+
+// ===================================================
+//  SECTION 22: THEMES
+// ===================================================
+
+// Light Theme
+const THEME_LIGHT     = "background-color: " + COLOR_WHITE + "; color: " + COLOR_DARK + "; font-family: " + FONT_SANS;
+
+// Dark Theme
+const THEME_DARK      = "background-color: #0f172a; color: #f1f5f9; font-family: " + FONT_SANS;
+const DARK_SURFACE    = "background-color: #1e293b";
+const DARK_ELEVATED   = "background-color: #334155";
+const DARK_BORDER     = "border-color: #475569";
+const DARK_TEXT       = "color: #f1f5f9";
+const DARK_TEXT_MUTED = "color: #94a3b8";
+
+// ProXPL Official Themes
+const PROX_THEME_OCEAN  = "background: linear-gradient(to bottom, #ebf8ff, #ffffff); font-family: " + FONT_SANS;
+const PROX_THEME_CYBER  = "background: #000000; color: #00ff00; font-family: " + FONT_MONO;
+const PROX_THEME_MIDNIGHT = "background: " + GRADIENT_NIGHT + "; font-family: " + FONT_SANS + "; color: #e2e8f0; min-height: 100vh";
+const PROX_THEME_AURORA = "background: linear-gradient(135deg, #0f0c29 0%, #1a1a4e 40%, #24243e 100%); font-family: " + FONT_SANS + "; color: #f0f4ff; min-height: 100vh";
+const PROX_THEME_DAWN   = "background: linear-gradient(to bottom right, #ffecd2, #fcb69f, #ffd1ff); font-family: " + FONT_SANS + "; min-height: 100vh";
+const PROX_THEME_FOREST = "background: linear-gradient(135deg, #134e4a, #0f766e); font-family: " + FONT_SANS + "; color: #f0fdf4; min-height: 100vh";
+
+// ===================================================
+//  SECTION 23: HOW TO USE THE PROX UI LIBRARY
+// ===================================================
 
 /*
   HOW TO USE THE PROX UI LIBRARY:
-  1. Import the library at the top: `use UI;`
-  2. Define an `App` block for your application shell.
-  3. Use `Window` for desktop windows or page shells.
-  4. Use reactive `State` variables for automatic UI updates. (Prox-Alpine Bridge)
-  5. Combine standard style constants for premium looks.
+  ─────────────────────────────────────────────────
+  1. Import at the top:        `use UI;`
+  2. Define App block:         `App MyApp { ... }`
+  3. Declare reactive state:   `State count = 0;`
+  4. Define actions:           `Action doSomething { ... }`
+  5. Use Window/Main for layout
   
-  Example:
+  BUILD WEB COMMANDS (prm):
+  ─────────────────────────────────────────────────
+  prm build web                   Build UI to dist/ folder
+  prm build web --output myapp    Build to custom folder
+  proxpl build web src/main.prox  Build specific file
+  
+  COMMONLY USED TOKENS:
+  ─────────────────────────────────────────────────
+  Layout:    LAYOUT_ROW, LAYOUT_COL, LAYOUT_GRID, FLEX_BETWEEN
+  Buttons:   BTN_BASE + BTN_PRIMARY / BTN_SECONDARY / BTN_DANGER
+  Cards:     CARD_BASE, GLASS_CARD, NEU_BASE
+  Text:      TEXT_XL, FONT_BOLD, COLOR_PRIMARY
+  Themes:    PROX_THEME_MIDNIGHT, PROX_THEME_AURORA
+  Anim:      ANIM_FADE_IN, ANIM_SLIDE_UP, ANIM_ZOOM_IN
+  
+  EXAMPLE (Dashboard):
+  ─────────────────────────────────────────────────
   App Dashboard {
-      State isSidebarOpen = true;
-      State selectedTable = "Users";
+      State user = "ProgrammerKR";
+      State count = 42;
       
-      Main(style: LAYOUT_ROW + PROX_THEME_OCEAN) {
-          Aside(style: SIDEBAR_CONTAINER) {
-              Header() { Text(style: TEXT_2XL + " font-black") { "ProX Core" } }
-              Nav(style: "margin-top: 2rem") {
-                  Item(style: SIDEBAR_ITEM) { Icon(className: "fas fa-home", style: SIDEBAR_ICON); Text { "Overview" } }
-                  Item(style: SIDEBAR_ITEM) { Icon(className: "fas fa-users", style: SIDEBAR_ICON); Text { "Team" } }
-              }
+      Main(style: PROX_THEME_MIDNIGHT) {
+          Nav(style: NAV_DARK) {
+              Text(style: TEXT_XL + "; " + FONT_BOLD) { "Dashboard" }
           }
           
-          Section(style: "flex-grow: 1; padding: 3rem") {
-              Header(style: FLEX_BETWEEN) {
-                  Text(style: TEXT_3XL + " font-bold") { "Analytics Dashboard" }
-                  Button(style: BTN_BASE + BTN_PRIMARY) { "Generate Report" }
-              }
-              
-              Container(style: LAYOUT_GRID + " margin-top: 2rem") {
-                  Container(style: STAT_CARD) {
-                      Text(style: STAT_LABEL) { "Weekly Traffic" }
-                      Text(style: STAT_VALUE) { "1,429" }
-                      Text(style: "color: " + COLOR_SECONDARY) { "+ 12% vs last week" }
-                  }
-                  Container(style: STAT_CARD) {
-                      Text(style: STAT_LABEL) { "New Conversions" }
-                      Text(style: STAT_VALUE) { "84" }
-                  }
-              }
-              
-              Table(style: TABLE_BASE + " margin-top: 3rem") {
-                  Thead(style: TABLE_HEAD) {
-                      Tr { Th { "User" }; Th { "Status" }; Th { "Last Access" } }
-                  }
-                  Tbody {
-                      Tr(style: TABLE_ROW) { Td { "Alex Rivera" }; Td { Text(style: BADGE_PRIMARY) { "Active" } }; Td { "2m ago" } }
-                      Tr(style: TABLE_ROW) { Td { "Sarah Chen" }; Td { Text(style: BADGE_PILL + " bg-gray-100") { "Offline" } }; Td { "5h ago" } }
-                  }
+          Section(style: "padding: 3rem; " + LAYOUT_GRID) {
+              Container(style: GLASS_CARD + "; " + ANIM_ZOOM_IN) {
+                  Text(style: STAT_LABEL) { "Active Users" }
+                  Text(style: STAT_VALUE) { count }
+                  Text(style: BADGE_SUCCESS) { "LIVE" }
               }
           }
       }

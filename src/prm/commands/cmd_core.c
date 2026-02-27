@@ -22,7 +22,8 @@ void prm_help() {
     printf("Project Commands:\n");
     printf("  init <name>                Create a new ProXPL project\n");
     printf("  run                        Run the project (uses project.pxcf)\n");
-    printf("  build [--release]          Build the project\n");
+    printf("  build                      Build the project\n");
+    printf("  build web [--output <dir>] Build UI app to web dist folder\n");
     printf("  test                       Run project tests\n");
     printf("  clean                      Remove build artifacts\n");
     printf("  watch                      Watch for changes and auto-rerun\n");

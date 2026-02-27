@@ -306,7 +306,8 @@ static int dispatchPRM(int argc, const char* argv[]) {
         strcmp(sub, "doc")      == 0 || strcmp(sub, "exec")      == 0 ||
         strcmp(sub, "why")      == 0 || strcmp(sub, "create")    == 0 ||
         strcmp(sub, "test")     == 0 || strcmp(sub, "watch")     == 0 ||
-        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0
+        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0 ||
+        (strcmp(sub, "build") == 0 && argc >= 3 && strcmp(argv[2], "web") == 0)
     );
 
     // Only intercept if invoked as prm OR if it's a uniquely-PRM subcommand
@@ -393,20 +394,40 @@ static int dispatchPRM(int argc, const char* argv[]) {
             if (code != 0) printf("[PRM] Process exited with code %d\n", code);
 
         } else if (strcmp(sub, "build") == 0) {
-            int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
-            printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
-            printf("Compile-only mode not fully supported yet, running instead...\n");
-            char command[1152];
-            
-            #ifdef _WIN32
-            snprintf(command, sizeof(command), "\"\"%s\" \"%s\"\"", argv[0], pentry);
-            #else
-            snprintf(command, sizeof(command), "\"%s\" \"%s\"", argv[0], pentry);
-            #endif
-            
-            printf("[PRM] Executing: %s\n", command);
-            int res = system(command);
-            (void)res;
+            if (argc >= 3 && strcmp(argv[2], "web") == 0) {
+                Manifest m;
+                // Try to load manifest, if fails, use defaults
+                if (!prm_load_manifest(&m)) {
+                    strcpy(m.name, "untitled");
+                    strcpy(m.version, "0.1.0");
+                    strcpy(m.entryPoint, (argc >= 4 && argv[3][0] != '-') ? argv[3] : "src/main.prox");
+                }
+                
+                const char* outDir = NULL;
+                for (int i = 2; i < argc; i++) {
+                    if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
+                        outDir = argv[i+1];
+                        break;
+                    }
+                }
+                
+                prm_build_web(&m, outDir);
+            } else {
+                int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+                printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
+                printf("Compile-only mode not fully supported yet, running instead...\n");
+                char command[1152];
+                
+                #ifdef _WIN32
+                snprintf(command, sizeof(command), "\"\"%s\" \"%s\"\"", argv[0], pentry);
+                #else
+                snprintf(command, sizeof(command), "\"%s\" \"%s\"", argv[0], pentry);
+                #endif
+                
+                printf("[PRM] Executing: %s\n", command);
+                int res = system(command);
+                (void)res;
+            }
 
         } else if (strcmp(sub, "test") == 0) {
             printf("Running tests for %s...\n", pname);

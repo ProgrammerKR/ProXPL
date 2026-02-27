@@ -32,6 +32,9 @@ bool prm_load_manifest(Manifest* manifest);
 // Build the project
 void prm_build(const Manifest* manifest, bool releaseMode);
 
+// Build the project for web (UI App)
+void prm_build_web(const Manifest* manifest, const char* outputDir);
+
 // Run the project
 void prm_run(const Manifest* manifest);
 
