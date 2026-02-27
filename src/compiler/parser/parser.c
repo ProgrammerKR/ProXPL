@@ -981,7 +981,7 @@ static Expr *ternary(Parser *p) {
 static Expr *orExpr(Parser *p) {
   Expr *expr = andExpr(p);
 
-  while (match(p, 1, TOKEN_PIPE_PIPE)) {
+  while (match(p, 2, TOKEN_PIPE_PIPE, TOKEN_OR)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
     Expr *right = andExpr(p);
@@ -995,7 +995,7 @@ static Expr *orExpr(Parser *p) {
 static Expr *andExpr(Parser *p) {
   Expr *expr = bitwiseOr(p);
 
-  while (match(p, 1, TOKEN_AMPERSAND_AMPERSAND)) {
+  while (match(p, 2, TOKEN_AMPERSAND_AMPERSAND, TOKEN_AND)) {
     Token op = previous(p);
     char *opStr = tokenToString(op);
     Expr *right = bitwiseOr(p);

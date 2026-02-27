@@ -199,10 +199,16 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
                 const char *rawKey  = (props->items[i].key && props->items[i].key->type == EXPR_VARIABLE)
                                        ? props->items[i].key->as.variable.name : NULL;
                 const char *mappedKey = rawKey ? mapPropName(rawKey) : NULL;
+                bool isVariableValue = (props->items[i].value && props->items[i].value->type == EXPR_VARIABLE);
 
                 fprintf(html, " ");
                 if (mappedKey) {
-                    fprintf(html, "%s", mappedKey);
+                    // Reactive prefix for Alpine
+                    if (isVariableValue && (strcmp(mappedKey, "class") != 0)) {
+                         fprintf(html, ":%s", mappedKey);
+                    } else {
+                         fprintf(html, "%s", mappedKey);
+                    }
                 } else {
                     transpileExpr(props->items[i].key, html);
                 }
@@ -249,6 +255,22 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             fprintf(js, ";\n");
             break;
 
+        case STMT_EXPRESSION:
+            // Handle text content or JS expressions
+            if (html) {
+                if (stmt->as.expression.expression->type == EXPR_VARIABLE) {
+                    // Reactive text
+                    fprintf(html, "<span x-text=\"%s\"></span>", stmt->as.expression.expression->as.variable.name);
+                } else {
+                    transpileExpr(stmt->as.expression.expression, html);
+                }
+            } else if (js) {
+                printIndent(js, indent);
+                transpileExpr(stmt->as.expression.expression, js);
+                fprintf(js, ";\n");
+            }
+            break;
+
         default:
             // Non-UI statements silently skipped in UI context
             break;
@@ -280,13 +302,8 @@ static void transpileExpr(Expr *expr, FILE *out) {
             break;
 
         case EXPR_BINARY:
-            // Handle string concat (+)
             transpileExpr(expr->as.binary.left, out);
-            if (expr->as.binary.op == TOKEN_PLUS) {
-                // no separator for style string concatenation
-            } else {
-                fprintf(out, " %c ", (char)expr->as.binary.op);
-            }
+            fprintf(out, " %s ", expr->as.binary.operator);
             transpileExpr(expr->as.binary.right, out);
             break;
 
