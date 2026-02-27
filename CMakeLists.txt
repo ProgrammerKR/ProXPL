@@ -220,15 +220,32 @@ else()
 endif()
 
 # --- PRM Executable ---
-add_executable(prm 
-    tools/prm_main.c 
-    src/prm/manifest.c 
-    src/prm/builder.c
-    src/prm/commands/cmd_core.c
-)
-# PRM doesn't strictly need proxpl_lib unless it uses core types?
-# For now, it's standalone, but let's link it if needed later.
-# target_link_libraries(prm PRIVATE proxpl_lib)
+add_executable(prm tools/prm_main.c)
+
+if(PROX_STATIC_BUILD)
+    target_sources(prm PRIVATE ${LIB_SOURCES})
+    if (LLVM_FOUND)
+        target_link_libraries(prm PRIVATE ${llvm_libs})
+    endif()
+    if (LIBFFI_FOUND)
+        target_link_libraries(prm PRIVATE ${LIBFFI_LIBRARIES})
+    endif()
+    if(UNIX)
+        if(APPLE)
+            target_link_libraries(prm PRIVATE pthread dl z)
+        else()
+            target_link_libraries(prm PRIVATE pthread dl z tinfo)
+        endif()
+    endif()
+else()
+    target_link_libraries(prm PRIVATE proxpl_lib)
+    if (LLVM_FOUND)
+        target_link_libraries(prm PRIVATE ${llvm_libs})
+    endif()
+    if (LIBFFI_FOUND)
+        target_link_libraries(prm PRIVATE ${LIBFFI_LIBRARIES})
+    endif()
+endif()
 
 # --- Optional components ---
 option(BUILD_TESTS "Build tests" OFF)
