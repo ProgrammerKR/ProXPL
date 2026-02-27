@@ -475,7 +475,6 @@ static PxTokenType identifierType(Scanner *scanner) {
               break;
         }
     }
-    }
     break;
   case 'q':
     if (scanner->current - scanner->start > 1) {
