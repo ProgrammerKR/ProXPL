@@ -3,8 +3,8 @@
 #include <string.h>
 #include "prm.h"
 #include "transpiler_ui.h"
-#include "../compiler/lexer/scanner.h"
-#include "../compiler/parser/parser.h"
+#include "scanner.h"
+#include "parser.h"
 
 // Helper to read file content for parsing
 static char* read_file_prm(const char* path) {
