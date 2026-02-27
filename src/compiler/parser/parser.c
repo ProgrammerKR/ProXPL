@@ -308,6 +308,7 @@ static bool isValidTensorDimensions(ExprList *elements, int *outDims, int *outDi
 }
 
 // Count total number of numeric elements in a potentially nested list
+/*
 static int getTensorElementCount(ExprList *elements) {
     if (!elements) return 0;
     
@@ -322,6 +323,7 @@ static int getTensorElementCount(ExprList *elements) {
     }
     return count;
 }
+*/
 
 // === Main Parse Function ===
 

@@ -506,14 +506,13 @@ static PxTokenType identifierType(Scanner *scanner) {
                                  }
                              }
                              break;
-                         case 't': return checkKeyword(scanner, 3, 3, "urn", TOKEN_RETURN);
+                           case 't': return checkKeyword(scanner, 3, 3, "urn", TOKEN_RETURN);
                      }
                  }
-                 break;
+                 return checkKeyword(scanner, 2, 5, "plica", TOKEN_REPLICA);
             case 'o': return checkKeyword(scanner, 2, 6, "llback", TOKEN_ROLLBACK);
-            case 'e': return checkKeyword(scanner, 2, 5, "plica", TOKEN_REPLICA);
         }
-    } 
+    }
     break;
   case 's':
     if (scanner->current - scanner->start > 1) {

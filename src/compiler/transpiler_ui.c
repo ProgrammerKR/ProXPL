@@ -247,14 +247,6 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             break;
         }
 
-        case STMT_ASSIGN:
-            // JS assignment inside actions
-            printIndent(js, indent);
-            fprintf(js, "this.%s = ", stmt->as.assign.name);
-            if (stmt->as.assign.value) transpileExpr(stmt->as.assign.value, js);
-            fprintf(js, ";\n");
-            break;
-
         case STMT_EXPRESSION:
             // Handle text content or JS expressions
             if (html) {
@@ -299,6 +291,12 @@ static void transpileExpr(Expr *expr, FILE *out) {
 
         case EXPR_VARIABLE:
             fprintf(out, "%s", expr->as.variable.name);
+            break;
+
+        case EXPR_ASSIGN:
+            // Assume JS action context for now
+            fprintf(out, "this.%s = ", expr->as.assign.name);
+            if (expr->as.assign.value) transpileExpr(expr->as.assign.value, out);
             break;
 
         case EXPR_BINARY:
