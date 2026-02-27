@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "prm.h"
-#include "../transpiler_ui.h"
+#include "transpiler_ui.h"
 #include "../compiler/lexer/scanner.h"
 #include "../compiler/parser/parser.h"
 

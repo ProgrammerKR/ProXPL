@@ -84,7 +84,7 @@ static Token consume(Parser *p, PxTokenType type, const char *message);
 // Tensor literal detection helpers
 static bool isTensorCandidate(ExprList *elements);
 static bool isValidTensorDimensions(ExprList *elements, int *outDims, int *outDimCount);
-static int getTensorElementCount(ExprList *elements);
+// static int getTensorElementCount(ExprList *elements);
 
 
 // === Initialization ===
