@@ -238,33 +238,9 @@ static void runFile(const char *path) {
 
 
 // ============================================================
-//   PRM (ProX Resource Manager) Forward Declarations
-//   Implemented in src/prm/commands/cmd_core.c, manifest.c, builder.c
+//   PRM (ProX Resource Manager) Include
 // ============================================================
-void prm_version(void);
-void prm_help(void);
-void prm_doctor(void);
-void prm_config(const char* key, const char* value);
-void prm_init(const char* name);
-void prm_clean(void);
-void prm_install(const char* packageName);
-void prm_remove(const char* packageName);
-void prm_update(const char* packageName);
-void prm_list(void);
-void prm_outdated(void);
-void prm_audit(void);
-void prm_publish(void);
-void prm_login(void);
-void prm_logout(void);
-void prm_search(const char* query);
-void prm_info(const char* packageName);
-void prm_cache(const char* action);
-void prm_link(const char* packageName);
-void prm_unlink(const char* packageName);
-void prm_doc(void);
-void prm_exec(const char* command);
-void prm_why(const char* packageName);
-void prm_create(const char* templateName, const char* projectName);
+#include "prm/prm.h"
 
 // ============================================================
 //   PRM Command Dispatch
