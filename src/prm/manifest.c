@@ -21,8 +21,8 @@
 #define CHDIR(d) chdir(d)
 #endif
 
-// Very basic TOML line parser for Phase 1
-// Looks for key = "value"
+// Very basic parser for phase 1 of PRM.
+// Looks for key: "value" across the block structure
 static void parseLine(char* line, Manifest* manifest) {
     char key[64];
     char value[256];
@@ -31,18 +31,19 @@ static void parseLine(char* line, Manifest* manifest) {
     char* newline = strchr(line, '\n');
     if (newline) *newline = '\0';
     
-    // Skip [headers] and comments
-    if (line[0] == '[' || line[0] == '#' || line[0] == '\0') return;
+    // Skip comments and basic blocks without data
+    if (line[0] == '#' || line[0] == '\0' || strchr(line, '{') || strchr(line, '}')) return;
     
-    // Parse: key = "value"
-    if (sscanf(line, " %63[^ =] = \"%255[^\"]\"", key, value) == 2) {
+    // Parse: key: "value"
+    if (sscanf(line, " %63[^:] : \"%255[^\"]\"", key, value) == 2) {
         if (strcmp(key, "name") == 0) {
             strncpy(manifest->name, value, MAX_NAME_LEN - 1);
             manifest->name[MAX_NAME_LEN - 1] = '\0';
         } else if (strcmp(key, "version") == 0) {
             strncpy(manifest->version, value, MAX_VERSION_LEN - 1);
             manifest->version[MAX_VERSION_LEN - 1] = '\0';
-        } else if (strcmp(key, "entry") == 0) {
+        } else if (strcmp(key, "entry") == 0 || strcmp(key, "src") == 0) {
+            // "entry" or "src" can serve as the entry point marker for PRM
             strncpy(manifest->entryPoint, value, MAX_PATH_LEN - 1);
             manifest->entryPoint[MAX_PATH_LEN - 1] = '\0';
         }
@@ -83,16 +84,34 @@ void prm_init(const char* name) {
         return;
     }
     
-    fprintf(file, "[project]\n");
-    fprintf(file, "name = \"%s\"\n", name);
-    fprintf(file, "version = \"0.1.0\"\n");
-    fprintf(file, "description = \"A new ProXPL project\"\n");
-    fprintf(file, "authors = [\"Your Name <you@example.com>\"]\n");
-    fprintf(file, "license = \"MIT\"\n");
-    fprintf(file, "entry = \"src/main.prox\"\n");
+    fprintf(file, "# ProX Project Configuration\n\n");
+    fprintf(file, "project {\n");
+    fprintf(file, "    name: \"%s\"\n", name);
+    fprintf(file, "    version: \"0.1.0\"\n");
+    fprintf(file, "    author: \"Your Name <you@example.com>\"\n");
+    fprintf(file, "    license: \"MIT\"\n");
+    fprintf(file, "}\n\n");
 
-    fprintf(file, "\n[dependencies]\n");
-    fprintf(file, "# std = \"1.0.0\"\n");
+    fprintf(file, "compiler {\n");
+    fprintf(file, "    optimize: true\n");
+    fprintf(file, "    debug: false\n");
+    fprintf(file, "    target: \"native\"\n");
+    fprintf(file, "}\n\n");
+
+    fprintf(file, "paths {\n");
+    fprintf(file, "    src: \"./src\"\n");
+    fprintf(file, "    build: \"./build\"\n");
+    fprintf(file, "    entry: \"src/main.prox\"\n");
+    fprintf(file, "}\n\n");
+
+    fprintf(file, "dependencies {\n");
+    fprintf(file, "    # http: \"1.2.0\"\n");
+    fprintf(file, "}\n\n");
+
+    fprintf(file, "runtime {\n");
+    fprintf(file, "    threads: 8\n");
+    fprintf(file, "    memory_limit: \"1GB\"\n");
+    fprintf(file, "}\n");
     
     fclose(file);
     

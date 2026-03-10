@@ -1,5 +1,8 @@
 @echo off
-clang -o proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
+if not exist build mkdir build
+if not exist build\obj mkdir build\obj
+
+clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  src/main.c ^
  src/compiler/lexer/scanner.c ^
  src/compiler/parser/ast.c ^
@@ -46,7 +49,13 @@ clang -o proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT_SECUR
  src/prm/manifest.c ^
  src/prm/builder.c ^
  src/prm/commands/cmd_core.c
+
 if %errorlevel% equ 0 (
+    move /y *.obj build\obj\ >nul 2>&1
+    move /y *.exp build\obj\ >nul 2>&1
+    move /y *.lib build\obj\ >nul 2>&1
+    move /y *.pdb build\obj\ >nul 2>&1
+    copy /y build\proxpl.exe . >nul 2>&1
     echo Build complete.
 ) else (
     echo Build FAILED. Check errors above.

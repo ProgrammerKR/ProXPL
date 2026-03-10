@@ -7,7 +7,7 @@ LDFLAGS = -lm
 TARGET = prox
 SRCDIR = .
 INCDIR = ../include
-OBJDIR = obj
+OBJDIR = build/obj
 
 # All source files
 SOURCES = main.c \
