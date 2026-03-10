@@ -11,6 +11,7 @@ OBJDIR = build/obj
 
 # All source files
 SOURCES = main.c \
+          utils/pxcf.c \
           lexer/scanner.c \
           parser/parser.c \
           parser/ast.c \

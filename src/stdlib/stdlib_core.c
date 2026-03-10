@@ -302,6 +302,10 @@ void registerStdLib(VM* vm) {
     defineNative(vm, "list_pop", native_pop);
     defineNative(vm, "pop", native_pop);   // Alias for benchmarks
     defineNative(vm, "substr", native_substr);
+    
+    // Config Parser Support
+    extern Value nativeLoadConfig(int argCount, Value *args);
+    defineNative(vm, "loadConfig", nativeLoadConfig);
 
     // Register math globals
     register_math_globals(vm);

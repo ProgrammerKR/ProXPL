@@ -14,7 +14,8 @@ clang -o build/bytecode_tests.exe ^
  src/runtime/table.c ^
  src/runtime/chunk.c ^
  src/compiler/parser/ast.c ^
- src/runtime/vm_helpers.c
+ src/runtime/vm_helpers.c ^
+ src/utils/pxcf.c
 
 if %errorlevel% equ 0 (
     move /y *.obj build\obj\ >nul 2>&1

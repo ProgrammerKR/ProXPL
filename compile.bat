@@ -27,6 +27,7 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT
  src/runtime/vm.c ^
  src/runtime/vm_helpers.c ^
  src/utils/error_report.c ^
+ src/utils/pxcf.c ^
  src/stdlib/collections_native.c ^
  src/stdlib/convert_native.c ^
  src/stdlib/core_native.c ^

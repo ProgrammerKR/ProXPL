@@ -1,0 +1,16 @@
+// test_pxcf.prox
+use std.io;
+
+std.io.println("--- Testing PXCF Parser ---");
+
+// Load the generated proxconfig.pxcf
+// Note: We use std.io.print directly or print if available globally
+var config = loadConfig("proxconfig.pxcf");
+
+if (config != nil) {
+    std.io.println(config.project.name);
+    std.io.println(config.runtime.threads);
+    std.io.println(config.project.author);
+} else {
+    std.io.println("Failed to load config file!");
+}
