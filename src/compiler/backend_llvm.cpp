@@ -467,18 +467,18 @@ public:
         // Implement prox_rt_resume wrapper
         llvm::BasicBlock* Entry = llvm::BasicBlock::Create(*Context, "entry", FResume);
         llvm::IRBuilder<> ResBuilder(Entry);
-        llvm::Function* FCoroResume = llvm::Intrinsic::getDeclaration(ModuleOb.get(), llvm::Intrinsic::coro_resume);
-        // Note: getDeclaration is deprecated but for some LLVM versions getOrInsertDeclaration is for non-intrinsics?
-        // Actually, for intrinsics, getDeclaration is still standard in many versions.
-        // But the warning says use getOrInsertDeclaration? 
-        // Wait, Intrinsic::getDeclaration returns Function*.
-        // getOrInsertDeclaration returns FunctionCallee.
-        // Let's stick to getDeclaration for now if it works, or suppress warning.
-        // If compilation failed with error, we change. It was a WARNING.
-        // I will keep it as is, or suppress warning if strict.
-        // User asked to fix ERRORS. This is a warning.
-        // But let's try to update if possible.
-        // llvm::Function* FCoroResume = llvm::Intrinsic::getDeclaration(ModuleOb.get(), llvm::Intrinsic::coro_resume);
+        
+        // Declare llvm.coro.resume manually instead of Intrinsic::getDeclaration for LLVM 15+ compatibility
+        llvm::Function* FCoroResume = ModuleOb->getFunction("llvm.coro.resume");
+        if (!FCoroResume) {
+            llvm::FunctionType *CoroResumeType = llvm::FunctionType::get(
+                Builder->getVoidTy(),
+                {Builder->getPtrTy()},
+                false
+            );
+            FCoroResume = llvm::Function::Create(CoroResumeType, llvm::Function::ExternalLinkage, "llvm.coro.resume", ModuleOb.get());
+        }
+        
         ResBuilder.CreateCall(FCoroResume, {FResume->arg_begin()});
         ResBuilder.CreateRetVoid();
 
