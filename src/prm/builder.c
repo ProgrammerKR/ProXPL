@@ -6,6 +6,13 @@
 #include "scanner.h"
 #include "parser.h"
 
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
+
 // Helper to read file content for parsing
 static char* read_file_prm(const char* path) {
     FILE* file = fopen(path, "rb");
@@ -47,8 +54,22 @@ static void invoke_compiler(const char* file, bool run) {
         return;
     }
     
-    printf("[PRM] Executing: %s\n", command);
-    int code = system(command);
+    printf("[PRM] Executing: %s \"%s\"\n", exe, file);
+    
+    int code = -1;
+    #ifdef _WIN32
+    code = _spawnlp(_P_WAIT, exe, exe, file, NULL);
+    #else
+    pid_t pid = fork();
+    if (pid == 0) {
+        execlp(exe, exe, file, (char*)NULL);
+        exit(1);
+    } else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) code = WEXITSTATUS(status);
+    }
+    #endif
     
     if (code != 0) {
         printf("[PRM] Process exited with code %d\n", code);

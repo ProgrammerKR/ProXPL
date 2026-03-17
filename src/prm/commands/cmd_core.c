@@ -3,6 +3,15 @@
 #include <string.h>
 #include "../prm.h"
 
+#ifdef _WIN32
+#include <process.h>
+#include <direct.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#endif
+
 // --- Core ---
 static int isValidPrmArg(const char* arg) {
     if (!arg) return 0;
@@ -119,9 +128,9 @@ void prm_install(const char* packageName) {
         
         // Ensure prox_modules directory exists
         #ifdef _WIN32
-            system("if not exist prox_modules mkdir prox_modules");
+            _mkdir("prox_modules");
         #else
-            system("mkdir -p prox_modules");
+            mkdir("prox_modules", 0777);
         #endif
         
         // Determine target folder name from package name
@@ -142,8 +151,7 @@ void prm_install(const char* packageName) {
             targetPath[len - 4] = '\0';
         }
         
-        // Construct git clone command
-        char command[512];
+        char packageUrl[512];
         
         if (strstr(packageName, "://")) {
              // Full URL
@@ -151,18 +159,32 @@ void prm_install(const char* packageName) {
                  fprintf(stderr, "Error: Invalid characters in package URL.\n");
                  return;
              }
-             snprintf(command, sizeof(command), "git clone %s %s", packageName, targetPath);
+             snprintf(packageUrl, sizeof(packageUrl), "%s", packageName);
         } else {
              // "User/Repo" format -> GitHub
              if (!isValidPrmArg(packageName)) {
                  fprintf(stderr, "Error: Invalid characters in package name.\n");
                  return;
              }
-             snprintf(command, sizeof(command), "git clone https://github.com/%s.git %s", packageName, targetPath);
+             snprintf(packageUrl, sizeof(packageUrl), "https://github.com/%s.git", packageName);
         }
         
-        printf("Running: %s\n", command);
-        int result = system(command);
+        printf("Running: git clone %s %s\n", packageUrl, targetPath);
+        int result = -1;
+        
+        #ifdef _WIN32
+        result = _spawnlp(_P_WAIT, "git", "git", "clone", packageUrl, targetPath, NULL);
+        #else
+        pid_t pid = fork();
+        if (pid == 0) {
+            execlp("git", "git", "clone", packageUrl, targetPath, (char*)NULL);
+            exit(1);
+        } else if (pid > 0) {
+            int status;
+            waitpid(pid, &status, 0);
+            if (WIFEXITED(status)) result = WEXITSTATUS(status);
+        }
+        #endif
         
         if (result == 0) {
             printf("Successfully installed %s to %s.\n", packageName, targetPath);

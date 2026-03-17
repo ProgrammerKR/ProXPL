@@ -23,6 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
 
 void registerStdLib(VM* vm);
 
@@ -246,15 +252,6 @@ static void runFile(const char *path) {
 //   PRM Command Dispatch
 //   Returns 1 if handled as a PRM command, 0 to continue with normal dispatch
 // ============================================================
-static int isValidArg(const char* arg) {
-    if (!arg) return 0;
-    while (*arg) {
-        if (strchr("&|;><`$\\", *arg)) return 0;
-        arg++;
-    }
-    return 1;
-}
-
 static int dispatchPRM(int argc, const char* argv[]) {
     // Check if invoked as "prm" / "prm.exe" / "prm.bat"
     const char* exe = argv[0];
@@ -364,22 +361,23 @@ static int dispatchPRM(int argc, const char* argv[]) {
 
         if (strcmp(sub, "run") == 0) {
             printf("[PRM] Running project: %s v%s\n", pname, pversion);
-            char command[1152];
-            // Use argv[0] to re-invoke the same executable
-            // On Windows, system() uses cmd.exe /c string
-            // If the string starts with a quote, we need to wrap the WHOLE thing in quotes
+            printf("[PRM] Executing: %s %s\n", argv[0], pentry);
+            
+            int code = -1;
             #ifdef _WIN32
-            snprintf(command, sizeof(command), "\"\"%s\" \"%s\"\"", argv[0], pentry);
+            code = _spawnl(_P_WAIT, argv[0], argv[0], pentry, NULL);
             #else
-            snprintf(command, sizeof(command), "\"%s\" \"%s\"", argv[0], pentry);
+            pid_t pid = fork();
+            if (pid == 0) {
+                execl(argv[0], argv[0], pentry, (char*)NULL);
+                exit(1);
+            } else if (pid > 0) {
+                int status;
+                waitpid(pid, &status, 0);
+                if (WIFEXITED(status)) code = WEXITSTATUS(status);
+            }
             #endif
             
-            printf("[PRM] Executing: %s\n", command);
-            if (!isValidArg(argv[0]) || !isValidArg(pentry)) {
-                fprintf(stderr, "Error: Invalid characters in command arguments.\n");
-                return 1;
-            }
-            int code = system(command);
             if (code != 0) printf("[PRM] Process exited with code %d\n", code);
 
         } else if (strcmp(sub, "build") == 0) {
@@ -405,20 +403,23 @@ static int dispatchPRM(int argc, const char* argv[]) {
                 int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
                 printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
                 printf("Compile-only mode not fully supported yet, running instead...\n");
-                char command[1152];
+                printf("[PRM] Executing: %s %s\n", argv[0], pentry);
                 
+                int res = -1;
                 #ifdef _WIN32
-                snprintf(command, sizeof(command), "\"\"%s\" \"%s\"\"", argv[0], pentry);
+                res = _spawnl(_P_WAIT, argv[0], argv[0], pentry, NULL);
                 #else
-                snprintf(command, sizeof(command), "\"%s\" \"%s\"", argv[0], pentry);
+                pid_t pid = fork();
+                if (pid == 0) {
+                    execl(argv[0], argv[0], pentry, (char*)NULL);
+                    exit(1);
+                } else if (pid > 0) {
+                    int status;
+                    waitpid(pid, &status, 0);
+                    if (WIFEXITED(status)) res = WEXITSTATUS(status);
+                }
                 #endif
                 
-                printf("[PRM] Executing: %s\n", command);
-                if (!isValidArg(argv[0]) || !isValidArg(pentry)) {
-                    fprintf(stderr, "Error: Invalid characters in command arguments.\n");
-                    return 1;
-                }
-                int res = system(command);
                 (void)res;
             }
 

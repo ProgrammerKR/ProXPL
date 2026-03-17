@@ -20,6 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
+
 
 static void repl(VM *vm) {
   char line[1024];
@@ -309,20 +316,40 @@ static int dispatchPRM(int argc, const char* argv[]) {
 
         if (strcmp(sub, "run") == 0) {
             printf("[PRM] Running project: %s v%s\n", pname, pversion);
-            char command[1152];
-            snprintf(command, sizeof(command), "proxpl \"%s\"", pentry);
-            printf("[PRM] Executing: %s\n", command);
-            int code = system(command);
+            printf("[PRM] Executing: proxpl %s\n", pentry);
+            int code = -1;
+            #ifdef _WIN32
+            code = _spawnlp(_P_WAIT, "proxpl", "proxpl", pentry, NULL);
+            #else
+            pid_t pid = fork();
+            if (pid == 0) {
+                execlp("proxpl", "proxpl", pentry, (char*)NULL);
+                exit(1);
+            } else if (pid > 0) {
+                int status;
+                waitpid(pid, &status, 0);
+                if (WIFEXITED(status)) code = WEXITSTATUS(status);
+            }
+            #endif
             if (code != 0) printf("[PRM] Process exited with code %d\n", code);
 
         } else if (strcmp(sub, "build") == 0) {
             int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
             printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
             printf("Compile-only mode not fully supported yet, running instead...\n");
-            char command[1152];
-            snprintf(command, sizeof(command), "proxpl \"%s\"", pentry);
-            printf("[PRM] Executing: %s\n", command);
-            system(command);
+            printf("[PRM] Executing: proxpl %s\n", pentry);
+            #ifdef _WIN32
+            _spawnlp(_P_WAIT, "proxpl", "proxpl", pentry, NULL);
+            #else
+            pid_t pid = fork();
+            if (pid == 0) {
+                execlp("proxpl", "proxpl", pentry, (char*)NULL);
+                exit(1);
+            } else if (pid > 0) {
+                int status;
+                waitpid(pid, &status, 0);
+            }
+            #endif
 
         } else if (strcmp(sub, "test") == 0) {
             printf("Running tests for %s...\n", pname);
