@@ -53,25 +53,16 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # Use llvm-config to find the cmake dir dynamically (LLVM is pre-installed on runner)
-          $llvmConfig = (Get-Command llvm-config -ErrorAction SilentlyContinue)?.Source
-          if ($llvmConfig) {
-            $llvmCmakeDir = & llvm-config --cmakedir
-            Write-Host "Found LLVM cmake dir: $llvmCmakeDir"
-            echo "LLVM_DIR=$llvmCmakeDir" >> $env:GITHUB_ENV
+          $llvmBin = "C:\Program Files\LLVM\bin"
+          $llvmConfig = "$llvmBin\llvm-config.exe"
+          if (Test-Path $llvmConfig) {
+            $cmakeDir = & $llvmConfig --cmakedir
+            Write-Host "LLVM cmake dir: $cmakeDir"
+            echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
+            echo "CMAKE_PREFIX_PATH=C:\Program Files\LLVM" >> $env:GITHUB_ENV
           } else {
-            # Fallback: check common install paths
-            $candidates = @(
-              "C:\Program Files\LLVM\lib\cmake\llvm",
-              "C:\ProgramData\chocolatey\lib\llvm\tools\llvm\lib\cmake\llvm"
-            )
-            foreach ($p in $candidates) {
-              if (Test-Path $p) {
-                Write-Host "Found LLVM at fallback: $p"
-                echo "LLVM_DIR=$p" >> $env:GITHUB_ENV
-                break
-              }
-            }
+            Write-Error "llvm-config.exe not found at $llvmConfig — LLVM is not installed!"
+            exit 1
           }
 
 
@@ -91,6 +82,7 @@ jobs:
           cmake -S . -B build `
              -G "Visual Studio 17 2022" -A x64 `
              -DLLVM_DIR="$env:LLVM_DIR" `
+             -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
              -DBUILD_TESTS=OFF `
              -DBUILD_BENCH=OFF
