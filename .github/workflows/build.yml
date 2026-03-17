@@ -49,12 +49,18 @@ jobs:
           brew install llvm
           echo "CMAKE_PREFIX_PATH=$(brew --prefix llvm)" >> $GITHUB_ENV
 
-      - name: Install LLVM (Windows)
+      - name: Set up LLVM (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          choco install llvm --version=17.0.6 -y
-          echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
+          # LLVM is pre-installed on windows-latest runners; just export the path
+          $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
+          if (Test-Path $llvmDir) {
+            echo "LLVM_DIR=$llvmDir" >> $env:GITHUB_ENV
+            Write-Host "Using pre-installed LLVM at $llvmDir"
+          } else {
+            Write-Warning "LLVM cmake dir not found at expected path; CMake will search automatically"
+          }
 
 
       - name: Configure (Unix)
