@@ -53,57 +53,46 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # Try to find llvm-config first
-          $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-          
-          if (-not $llvmConfig) {
-            Write-Host "LLVM not in PATH. Checking common locations..."
-            $commonPaths = @(
-                "C:\Program Files\LLVM\bin\llvm-config.exe",
-                "C:\Program Files (x86)\LLVM\bin\llvm-config.exe",
-                "C:\ProgramData\chocolatey\bin\llvm-config.exe",
-                "C:\ProgramData\chocolatey\lib\llvm\tools\llvm\bin\llvm-config.exe",
-                "C:\tools\llvm\bin\llvm-config.exe"
-            )
-            foreach ($path in $commonPaths) {
-                if (Test-Path $path) {
-                    $llvmConfig = $path
-                    Write-Host "Found llvm-config at: $path"
-                    break
-                }
+          function Find-LLVM {
+            $searchPaths = @("C:\Program Files\LLVM", "C:\Program Files (x86)\LLVM", "C:\ProgramData\chocolatey", "C:\tools\llvm")
+            
+            # 1. Try to find llvm-config.exe
+            $config = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+            if (-not $config) {
+              $config = Get-ChildItem -Path $searchPaths -Filter "llvm-config.exe" -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
             }
+            
+            # 2. Try to find LLVMConfig.cmake
+            $cmake = Get-ChildItem -Path $searchPaths -Filter "LLVMConfig.cmake" -Recurse -Depth 6 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+            
+            return @{ Config = $config; CMake = $cmake }
           }
 
-          # If still not found, try to install/reinstall
-          if (-not $llvmConfig) {
+          $res = Find-LLVM
+          if (-not $res.Config -and -not $res.CMake) {
             Write-Host "LLVM not found. Attempting to install LLVM 17.0.6 via Chocolatey..."
-            # Use --allow-downgrade in case a newer version is partially present or we want to pin 17
             choco install llvm -y --version 17.0.6 --allow-downgrade --limit-output
-            
-            # Refresh path to find newly installed llvm-config
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-            $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-            
-            if (-not $llvmConfig) {
-                # Last ditch effort: search the choco lib dir specifically
-                $llvmConfig = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\llvm" -Filter "llvm-config.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-            }
+            $res = Find-LLVM
           }
 
-          if ($llvmConfig) {
-            Write-Host "Using llvm-config at: $llvmConfig"
-            $llvmBin = Split-Path -Parent $llvmConfig
-            $llvmRoot = Split-Path -Parent $llvmBin
-            $cmakeDir = & $llvmConfig --cmakedir
-            
-            Write-Host "LLVM Root: $llvmRoot"
-            Write-Host "LLVM CMake dir: $cmakeDir"
-            
-            echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
-            echo "CMAKE_PREFIX_PATH=$llvmRoot" >> $env:GITHUB_ENV
-            echo "$llvmBin" >> $env:GITHUB_PATH
+          if ($res.Config -or $res.CMake) {
+            if ($res.Config) {
+              Write-Host "Found llvm-config at: $($res.Config)"
+              $llvmBin = Split-Path -Parent $res.Config
+              $llvmRoot = Split-Path -Parent $llvmBin
+              $cmakeDir = & $res.Config --cmakedir
+              echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
+              echo "CMAKE_PREFIX_PATH=$llvmRoot" >> $env:GITHUB_ENV
+              echo "$llvmBin" >> $env:GITHUB_PATH
+            } elseif ($res.CMake) {
+              Write-Host "Found LLVMConfig.cmake at: $($res.CMake)"
+              $cmakeDir = Split-Path -Parent $res.CMake
+              $llvmRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $cmakeDir))
+              echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
+              echo "CMAKE_PREFIX_PATH=$llvmRoot" >> $env:GITHUB_ENV
+            }
           } else {
-            Write-Error "LLVM detection and installation failed!"
+            Write-Error "Exhaustive LLVM detection failed!"
             exit 1
           }
 
