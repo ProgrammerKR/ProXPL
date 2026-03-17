@@ -53,13 +53,25 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # LLVM is pre-installed on windows-latest runners; just export the path
-          $llvmDir = "C:\Program Files\LLVM\lib\cmake\llvm"
-          if (Test-Path $llvmDir) {
-            echo "LLVM_DIR=$llvmDir" >> $env:GITHUB_ENV
-            Write-Host "Using pre-installed LLVM at $llvmDir"
+          # Use llvm-config to find the cmake dir dynamically (LLVM is pre-installed on runner)
+          $llvmConfig = (Get-Command llvm-config -ErrorAction SilentlyContinue)?.Source
+          if ($llvmConfig) {
+            $llvmCmakeDir = & llvm-config --cmakedir
+            Write-Host "Found LLVM cmake dir: $llvmCmakeDir"
+            echo "LLVM_DIR=$llvmCmakeDir" >> $env:GITHUB_ENV
           } else {
-            Write-Warning "LLVM cmake dir not found at expected path; CMake will search automatically"
+            # Fallback: check common install paths
+            $candidates = @(
+              "C:\Program Files\LLVM\lib\cmake\llvm",
+              "C:\ProgramData\chocolatey\lib\llvm\tools\llvm\lib\cmake\llvm"
+            )
+            foreach ($p in $candidates) {
+              if (Test-Path $p) {
+                Write-Host "Found LLVM at fallback: $p"
+                echo "LLVM_DIR=$p" >> $env:GITHUB_ENV
+                break
+              }
+            }
           }
 
 
@@ -120,4 +132,4 @@ jobs:
           # For Linux/Mac, it still uploads the single binary.
           path: |
             ${{ matrix.bin_path }}
-            benchmarks/
+            examples/
