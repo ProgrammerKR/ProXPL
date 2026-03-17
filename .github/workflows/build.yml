@@ -49,9 +49,12 @@ jobs:
           brew install llvm
           echo "CMAKE_PREFIX_PATH=$(brew --prefix llvm)" >> $GITHUB_ENV
 
-      - name: Install Ninja (Windows)
+      - name: Install LLVM (Windows)
         if: matrix.os == 'windows-latest'
-        run: choco install ninja -y
+        shell: pwsh
+        run: |
+          choco install llvm --version=17.0.6 -y
+          echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
 
 
       - name: Configure (Unix)
@@ -68,7 +71,8 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build `
-             -G "Ninja" `
+             -G "Visual Studio 17 2022" -A x64 `
+             -DLLVM_DIR="$env:LLVM_DIR" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
              -DBUILD_TESTS=OFF `
              -DBUILD_BENCH=OFF
@@ -81,7 +85,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            EXE_PATH="build/proxpl.exe"
+            EXE_PATH="build/Release/proxpl.exe"
           else
             EXE_PATH="build/proxpl"
           fi
@@ -95,11 +99,11 @@ jobs:
         run: |
           choco install innosetup -y
           New-Item -ItemType Directory -Force -Path bin
-          Copy-Item "build/proxpl.exe" -Destination "bin/"
-          Copy-Item "build/prm.exe" -Destination "bin/"
-          if (Test-Path "build/proxpl_lib.dll") {
-            Copy-Item "build/proxpl_lib.dll" -Destination "bin/"
-          }
+          # Visual Studio puts Release binaries in build/Release/
+          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
+          Copy-Item "build/Release/prm.exe" -Destination "bin/"
+          # Copy any DLLs produced by the build (e.g. LLVM shared libs)
+          Get-ChildItem "build/Release/*.dll" -ErrorAction SilentlyContinue | Copy-Item -Destination "bin/"
           iscc setup.iss
 
       - name: Upload Artifact
