@@ -53,15 +53,45 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $llvmBin = "C:\Program Files\LLVM\bin"
-          $llvmConfig = "$llvmBin\llvm-config.exe"
-          if (Test-Path $llvmConfig) {
+          # Install LLVM via Chocolatey if not present
+          if (-not (Get-Command llvm-config -ErrorAction SilentlyContinue)) {
+            Write-Host "LLVM not found. Installing via Chocolatey..."
+            choco install llvm -y --version 17.0.6 # Pin version for stability
+          }
+
+          # Robust detection logic
+          $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          if (-not $llvmConfig) {
+              $commonPaths = @(
+                  "C:\Program Files\LLVM\bin\llvm-config.exe",
+                  "C:\Program Files (x86)\LLVM\bin\llvm-config.exe",
+                  "C:\ProgramData\chocolatey\bin\llvm-config.exe",
+                  "C:\ProgramData\chocolatey\lib\llvm\tools\llvm\bin\llvm-config.exe"
+              )
+              foreach ($path in $commonPaths) {
+                  if (Test-Path $path) {
+                      $llvmConfig = $path
+                      break
+                  }
+              }
+          }
+
+          if ($llvmConfig) {
+            Write-Host "Found llvm-config at: $llvmConfig"
+            $llvmBin = Split-Path -Parent $llvmConfig
+            $llvmRoot = Split-Path -Parent $llvmBin
             $cmakeDir = & $llvmConfig --cmakedir
-            Write-Host "LLVM cmake dir: $cmakeDir"
+            
+            Write-Host "LLVM Root: $llvmRoot"
+            Write-Host "LLVM CMake dir: $cmakeDir"
+            
             echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
-            echo "CMAKE_PREFIX_PATH=C:\Program Files\LLVM" >> $env:GITHUB_ENV
+            echo "CMAKE_PREFIX_PATH=$llvmRoot" >> $env:GITHUB_ENV
+            
+            # Add bin to path for subsequent steps if needed
+            echo "$llvmBin" >> $env:GITHUB_PATH
           } else {
-            Write-Error "llvm-config.exe not found at $llvmConfig — LLVM is not installed!"
+            Write-Error "LLVM installation failed or llvm-config.exe not found in common paths!"
             exit 1
           }
 
