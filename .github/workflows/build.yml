@@ -53,31 +53,45 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # Install LLVM via Chocolatey if not present
-          if (-not (Get-Command llvm-config -ErrorAction SilentlyContinue)) {
-            Write-Host "LLVM not found. Installing via Chocolatey..."
-            choco install llvm -y --version 17.0.6 # Pin version for stability
+          # Try to find llvm-config first
+          $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          
+          if (-not $llvmConfig) {
+            Write-Host "LLVM not in PATH. Checking common locations..."
+            $commonPaths = @(
+                "C:\Program Files\LLVM\bin\llvm-config.exe",
+                "C:\Program Files (x86)\LLVM\bin\llvm-config.exe",
+                "C:\ProgramData\chocolatey\bin\llvm-config.exe",
+                "C:\ProgramData\chocolatey\lib\llvm\tools\llvm\bin\llvm-config.exe",
+                "C:\tools\llvm\bin\llvm-config.exe"
+            )
+            foreach ($path in $commonPaths) {
+                if (Test-Path $path) {
+                    $llvmConfig = $path
+                    Write-Host "Found llvm-config at: $path"
+                    break
+                }
+            }
           }
 
-          # Robust detection logic
-          $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          # If still not found, try to install/reinstall
           if (-not $llvmConfig) {
-              $commonPaths = @(
-                  "C:\Program Files\LLVM\bin\llvm-config.exe",
-                  "C:\Program Files (x86)\LLVM\bin\llvm-config.exe",
-                  "C:\ProgramData\chocolatey\bin\llvm-config.exe",
-                  "C:\ProgramData\chocolatey\lib\llvm\tools\llvm\bin\llvm-config.exe"
-              )
-              foreach ($path in $commonPaths) {
-                  if (Test-Path $path) {
-                      $llvmConfig = $path
-                      break
-                  }
-              }
+            Write-Host "LLVM not found. Attempting to install LLVM 17.0.6 via Chocolatey..."
+            # Use --allow-downgrade in case a newer version is partially present or we want to pin 17
+            choco install llvm -y --version 17.0.6 --allow-downgrade --limit-output
+            
+            # Refresh path to find newly installed llvm-config
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+            
+            if (-not $llvmConfig) {
+                # Last ditch effort: search the choco lib dir specifically
+                $llvmConfig = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\llvm" -Filter "llvm-config.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+            }
           }
 
           if ($llvmConfig) {
-            Write-Host "Found llvm-config at: $llvmConfig"
+            Write-Host "Using llvm-config at: $llvmConfig"
             $llvmBin = Split-Path -Parent $llvmConfig
             $llvmRoot = Split-Path -Parent $llvmBin
             $cmakeDir = & $llvmConfig --cmakedir
@@ -87,11 +101,9 @@ jobs:
             
             echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
             echo "CMAKE_PREFIX_PATH=$llvmRoot" >> $env:GITHUB_ENV
-            
-            # Add bin to path for subsequent steps if needed
             echo "$llvmBin" >> $env:GITHUB_PATH
           } else {
-            Write-Error "LLVM installation failed or llvm-config.exe not found in common paths!"
+            Write-Error "LLVM detection and installation failed!"
             exit 1
           }
 
