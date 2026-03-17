@@ -246,6 +246,15 @@ static void runFile(const char *path) {
 //   PRM Command Dispatch
 //   Returns 1 if handled as a PRM command, 0 to continue with normal dispatch
 // ============================================================
+static int isValidArg(const char* arg) {
+    if (!arg) return 0;
+    while (*arg) {
+        if (strchr("&|;><`$\\", *arg)) return 0;
+        arg++;
+    }
+    return 1;
+}
+
 static int dispatchPRM(int argc, const char* argv[]) {
     // Check if invoked as "prm" / "prm.exe" / "prm.bat"
     const char* exe = argv[0];
@@ -366,6 +375,10 @@ static int dispatchPRM(int argc, const char* argv[]) {
             #endif
             
             printf("[PRM] Executing: %s\n", command);
+            if (!isValidArg(argv[0]) || !isValidArg(pentry)) {
+                fprintf(stderr, "Error: Invalid characters in command arguments.\n");
+                return 1;
+            }
             int code = system(command);
             if (code != 0) printf("[PRM] Process exited with code %d\n", code);
 
@@ -401,6 +414,10 @@ static int dispatchPRM(int argc, const char* argv[]) {
                 #endif
                 
                 printf("[PRM] Executing: %s\n", command);
+                if (!isValidArg(argv[0]) || !isValidArg(pentry)) {
+                    fprintf(stderr, "Error: Invalid characters in command arguments.\n");
+                    return 1;
+                }
                 int res = system(command);
                 (void)res;
             }

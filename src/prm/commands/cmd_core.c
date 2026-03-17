@@ -4,6 +4,14 @@
 #include "../prm.h"
 
 // --- Core ---
+static int isValidPrmArg(const char* arg) {
+    if (!arg) return 0;
+    while (*arg) {
+        if (strchr("&|;><`$\\", *arg)) return 0;
+        arg++;
+    }
+    return 1;
+}
 
 void prm_version() {
     printf("prm v1.2.0 (ProXPL v1.2.0)\n");
@@ -139,9 +147,17 @@ void prm_install(const char* packageName) {
         
         if (strstr(packageName, "://")) {
              // Full URL
+             if (!isValidPrmArg(packageName)) {
+                 fprintf(stderr, "Error: Invalid characters in package URL.\n");
+                 return;
+             }
              snprintf(command, sizeof(command), "git clone %s %s", packageName, targetPath);
         } else {
              // "User/Repo" format -> GitHub
+             if (!isValidPrmArg(packageName)) {
+                 fprintf(stderr, "Error: Invalid characters in package name.\n");
+                 return;
+             }
              snprintf(command, sizeof(command), "git clone https://github.com/%s.git %s", packageName, targetPath);
         }
         

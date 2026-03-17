@@ -934,7 +934,6 @@ void freeStmt(Stmt *stmt) {
     free(stmt->as.extern_decl.libraryPath);
     free(stmt->as.extern_decl.symbolName);
     free(stmt->as.extern_decl.name);
-    free(stmt->as.extern_decl.name);
     freeStringList(stmt->as.extern_decl.params);
     break;
   case STMT_INTENT_DECL:

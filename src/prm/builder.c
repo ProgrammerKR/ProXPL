@@ -35,6 +35,18 @@ static void invoke_compiler(const char* file, bool run) {
         snprintf(command, sizeof(command), "%s \"%s\"", exe, file);
     }
     
+    // Simple validation
+    const char* p = file;
+    bool safe = true;
+    while(p && *p) {
+        if(strchr("&|;><`$\\", *p)) { safe = false; break; }
+        p++;
+    }
+    if (!safe) {
+        fprintf(stderr, "[PRM] Error: Invalid characters in file path.\n");
+        return;
+    }
+    
     printf("[PRM] Executing: %s\n", command);
     int code = system(command);
     

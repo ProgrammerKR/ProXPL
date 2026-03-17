@@ -162,10 +162,13 @@
     "prm",
     "package manager"
   ],
-  "author": "Kanishk Raj <programmerkanishkraj@gmail.com>",
+  "author": "Kanishk Raj <programmerkr.123@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ProgrammerKR/ProXPL/issues"
   },
-  "homepage": "https://github.com/ProgrammerKR/ProXPL#readme"
+  "homepage": "https://github.com/ProgrammerKR/ProXPL#readme",
+  "overrides": {
+    "minimatch": "^9.0.0"
+  }
 }

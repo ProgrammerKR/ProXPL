@@ -97,9 +97,14 @@ typedef Value (*NativeFn)(int argCount, Value *args);
   #define PROX_API
 #endif
 
-// Debugging
-// #define DEBUG_PRINT_CODE
-// #define DEBUG_TRACE_EXECUTION
-// #define DEBUG_PRINT_CODE
+// Security utilities
+static inline bool isSafeArg(const char* arg) {
+    if (!arg) return false;
+    while (*arg) {
+        if (strchr("&|;><`$\\", *arg)) return false;
+        arg++;
+    }
+    return true;
+}
 
 #endif // PROX_COMMON_H
