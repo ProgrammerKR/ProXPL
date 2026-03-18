@@ -32,7 +32,7 @@ int main(void) {
     printf("OP_CONSTANT: %d, OP_NOP: %d\n", OP_CONSTANT, OP_NOP);
 
     /* Create an example hello chunk and write to file */
-    const char *outpath = "examples/hello.proxbc";
+    const char *outpath = "hello.proxbc";
     if (example_write_hello(outpath) == 0) {
         printf("Wrote example chunk to %s\n", outpath);
     } else {
@@ -65,7 +65,7 @@ int main(void) {
     example_create_hello_blob(&buf, &buflen);
     if (buf && buflen) {
         /* write to temporary file to reuse loader */
-        const char *tmp = "examples/hello_blob.proxbc";
+        const char *tmp = "hello_blob.proxbc";
         FILE *f = fopen(tmp,"wb");
         if (f) { fwrite(buf,1,buflen,f); fclose(f); printf("Wrote blob to %s\n", tmp); }
         free(buf);

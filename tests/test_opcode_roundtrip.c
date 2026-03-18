@@ -14,7 +14,7 @@
 #include <string.h>
 #include <assert.h>
 #include "bytecode.h"
-#include "../include/vm.h"
+#include "vm.h"
 
 #include "../include/value.h"
 #include "../include/object.h"
@@ -24,7 +24,7 @@
 
 int main(void) {
     initVM(&vm);
-    const char *tmp = "tests/tmp_opcode_rt.proxbc";
+    const char *tmp = "tmp_opcode_rt.proxbc";
 
     Chunk c;
     initChunk(&c);

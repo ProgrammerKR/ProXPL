@@ -86,7 +86,16 @@ if (-not $layout) {
     Write-Host "Refreshing PATH..."
     $env:PATH = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     
-    $layout = Resolve-LLVMLayout
+    # Retry detection loop
+    for ($i = 1; $i -le 3; $i++) {
+        Write-Host "Retrying LLVM detection (Attempt $i/3)..."
+        $layout = Resolve-LLVMLayout
+        if ($layout) { break }
+        if ($i -lt 3) {
+            Write-Host "Waiting 5 seconds before next attempt..."
+            Start-Sleep -Seconds 5
+        }
+    }
 }
 
 # 3. Export findings
