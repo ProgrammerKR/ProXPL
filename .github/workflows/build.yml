@@ -62,10 +62,10 @@ jobs:
             $possiblePaths.Add("C:\tools\llvm")
             
             if ($env:ProgramFiles) { $possiblePaths.Add((Join-Path $env:ProgramFiles "LLVM")) }
-            if ($env:{"ProgramFiles(x86)"}) { $possiblePaths.Add((Join-Path $env:{"ProgramFiles(x86)"} "LLVM")) }
+            if (${env:ProgramFiles(x86)}) { $possiblePaths.Add((Join-Path ${env:ProgramFiles(x86)} "LLVM")) }
 
             # Broaden search to ANY LLVM-like folder in Program Files
-            foreach ($pf in @($env:ProgramFiles, $env:{"ProgramFiles(x86)"}, "C:\Program Files", "C:\Program Files (x86)")) {
+            foreach ($pf in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, "C:\Program Files", "C:\Program Files (x86)")) {
               if ($pf -and (Test-Path $pf)) {
                 Get-ChildItem -Path $pf -Filter "LLVM*" -ErrorAction SilentlyContinue | ForEach-Object { $possiblePaths.Add($_.FullName) }
               }
