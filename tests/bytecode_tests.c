@@ -13,6 +13,7 @@
 */
 
 #include "../include/bytecode.h"
+#include "../include/vm.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,7 @@ void disasm_chunk(const Chunk *chunk);
 int vm_run_chunk_simple(const Chunk *chunk);
 
 int main(void) {
+    initVM(&vm);
     printf("ProXPL bytecode tests start\n");
     printf("OP_CONSTANT: %d, OP_NOP: %d\n", OP_CONSTANT, OP_NOP);
 

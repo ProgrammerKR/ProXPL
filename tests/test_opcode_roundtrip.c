@@ -14,6 +14,7 @@
 #include <string.h>
 #include <assert.h>
 #include "bytecode.h"
+#include "../include/vm.h"
 
 #include "../include/value.h"
 #include "../include/object.h"
@@ -22,6 +23,7 @@
 // So we need vm stub or link with vm_stub.o
 
 int main(void) {
+    initVM(&vm);
     const char *tmp = "tests/tmp_opcode_rt.proxbc";
 
     Chunk c;
