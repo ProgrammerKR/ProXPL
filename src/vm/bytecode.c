@@ -136,7 +136,7 @@ int64_t read_sleb128_from(const uint8_t *buf, size_t buf_len, size_t *out_read) 
     int64_t result = 0;
     unsigned shift = 0;
     size_t i = 0;
-    uint8_t byte;
+    uint8_t byte = 0;
     do {
         if (i >= buf_len) break;
         byte = buf[i++];

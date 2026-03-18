@@ -56,8 +56,8 @@ static size_t constant_instruction(const char* name, const Chunk* chunk, size_t 
 static size_t jump_instruction(const char* name, int sign, const Chunk* chunk, size_t offset) {
     uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
     jump |= chunk->code[offset + 2];
-    printf("%-16s %4d -> %d\n", name, offset,
-           offset + 3 + sign * jump);
+    printf("%-16s %4zu -> %zu\n", name, offset,
+           offset + 3 + sign * (size_t)jump);
     return offset + 3;
 }
 

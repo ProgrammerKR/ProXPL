@@ -124,17 +124,19 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 include_directories(include)
 include_directories(src)
 
-# --- Library Sources ---
+# List of all C/C++ source files for the library, excluding those with a 'main' function
 file(GLOB_RECURSE LIB_SOURCES 
-    "src/*.c"
+    "src/*.c" 
     "src/*.cpp"
 )
-# Exclude main entry point from library
-list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
-list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_v2\\.c$")
-list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_dispatch\\.c$")
-list(FILTER LIB_SOURCES EXCLUDE REGEX ".*instr_handlers_template\\.c$")
-list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_register\\.c$")
+
+# Explicitly exclude files that contain a 'main()' function or are specific VM implementations
+list(REMOVE_ITEM LIB_SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/vm/vm_v2.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/vm/vm_register.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/instr_handlers_template.c"
+)
 
 # --- Build Configuration ---
 option(PROX_STATIC_BUILD "Build as a single static executable" ON)
