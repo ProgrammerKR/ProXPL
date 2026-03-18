@@ -52,127 +52,7 @@ jobs:
       - name: Set up LLVM (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: |
-          function Find-LLVM {
-            Write-Host "--- Starting LLVM Detection ---"
-            $possiblePaths = New-Object System.Collections.Generic.List[string]
-            $possiblePaths.Add("C:\Program Files\LLVM")
-            $possiblePaths.Add("C:\Program Files (x86)\LLVM")
-            $possiblePaths.Add("C:\ProgramData\chocolatey\lib\llvm\tools\llvm")
-            $possiblePaths.Add("C:\tools\llvm")
-            
-            if ($env:ProgramFiles) { $possiblePaths.Add((Join-Path $env:ProgramFiles "LLVM")) }
-            if (${env:ProgramFiles(x86)}) { $possiblePaths.Add((Join-Path ${env:ProgramFiles(x86)} "LLVM")) }
-
-            # Broaden search to ANY LLVM-like folder in Program Files
-            foreach ($pf in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, "C:\Program Files", "C:\Program Files (x86)")) {
-              if ($pf -and (Test-Path $pf)) {
-                Get-ChildItem -Path $pf -Filter "LLVM*" -ErrorAction SilentlyContinue | ForEach-Object { $possiblePaths.Add($_.FullName) }
-              }
-            }
-
-            $uniquePaths = $possiblePaths | Select-Object -Unique
-            $config = $null
-            $cmake = $null
-
-            Write-Host "Checking candidate paths..."
-            foreach ($path in $uniquePaths) {
-              if ($path -and (Test-Path $path)) {
-                Write-Host "  Checking: $path"
-                if (Test-Path "$path\bin\llvm-config.exe") {
-                  $config = "$path\bin\llvm-config.exe"
-                  Write-Host "  >> Found llvm-config: $config"
-                  break
-                }
-              }
-            }
-
-            if (-not $config) {
-              Write-Host "  Checking PATH for llvm-config..."
-              $config = Get-Command llvm-config -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
-              if ($config) { Write-Host "  >> Found llvm-config in PATH: $config" }
-            }
-
-            # Search for LLVMConfig.cmake
-            Write-Host "Searching for LLVMConfig.cmake..."
-            foreach ($path in $uniquePaths) {
-              if ($path -and (Test-Path $path)) {
-                $found = Get-ChildItem -Path $path -Filter "LLVMConfig.cmake" -Recurse -Depth 10 -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) {
-                  $cmake = $found.FullName
-                  Write-Host "  >> Found LLVMConfig.cmake: $cmake"
-                  break
-                }
-              }
-            }
-
-            return @{ Config = $config; CMake = $cmake }
-          }
-
-          $res = Find-LLVM
-          if (-not $res.Config -and -not $res.CMake) {
-            Write-Host "LLVM not initially found. Installing via Chocolatey..."
-            choco install llvm -y --version 17.0.6 --allow-downgrade --limit-output
-            
-            Write-Host "Refreshing PATH..."
-            $env:PATH = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-            
-            $res = Find-LLVM
-          }
-
-          if ($res.Config -or $res.CMake) {
-            $llvmRoot = $null
-            $cmakeDir = $null
-            $binDir = $null
-
-            if ($res.Config) {
-              $binDir = Split-Path -Parent $res.Config
-              $llvmRoot = Split-Path -Parent $binDir
-              try {
-                $cmakeDir = & $res.Config --cmakedir
-                Write-Host "llvm-config reported cmakedir: $cmakeDir"
-              } catch {
-                Write-Host "llvm-config --cmakedir failed. Using fallbacks."
-              }
-            }
-
-            if (-not $cmakeDir -and $res.CMake) {
-              $cmakeDir = Split-Path -Parent $res.CMake
-              if (-not $llvmRoot) {
-                # Heuristic: lib/cmake/llvm -> root
-                $llvmRoot = $cmakeDir
-                for ($i=0; $i -lt 3; $i++) { $llvmRoot = Split-Path -Parent $llvmRoot }
-              }
-            }
-
-            # Final check for cmakeDir if still null
-            if (-not $cmakeDir -and $llvmRoot) {
-               $found = Get-ChildItem -Path $llvmRoot -Filter "LLVMConfig.cmake" -Recurse -Depth 6 -ErrorAction SilentlyContinue | Select-Object -First 1
-               if ($found) { $cmakeDir = $found.DirectoryName }
-            }
-
-            if ($llvmRoot) {
-              Write-Host "Setting GITHUB_ENV: LLVM_DIR=$cmakeDir"
-              Write-Host "Setting GITHUB_ENV: CMAKE_PREFIX_PATH=$llvmRoot"
-              echo "LLVM_DIR=$cmakeDir" >> $env:GITHUB_ENV
-              echo "CMAKE_PREFIX_PATH=$llvmRoot" >> $env:GITHUB_ENV
-              if ($binDir) {
-                Write-Host "Adding to GITHUB_PATH: $binDir"
-                echo "$binDir" >> $env:GITHUB_PATH
-              } elseif (Test-Path "$llvmRoot\bin") {
-                Write-Host "Adding to GITHUB_PATH: $llvmRoot\bin"
-                echo "$llvmRoot\bin" >> $env:GITHUB_PATH
-              }
-            } else {
-              Write-Error "Could not resolve LLVM Root!"
-              exit 1
-            }
-          } else {
-            Write-Host "DUMPING C:\ PROGRAM FILES TO DEBUG:"
-            Get-ChildItem "C:\Program Files" -ErrorAction SilentlyContinue | Select-Object Name
-            Write-Error "Exhaustive LLVM detection failed after installation!"
-            exit 1
-          }
+        run: ./scripts/setup_llvm_windows.ps1
 
       - name: Configure (Unix)
         if: matrix.os != 'windows-latest'
@@ -180,7 +60,7 @@ jobs:
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DBUILD_TESTS=OFF \
+            -DBUILD_TESTS=ON \
             -DBUILD_BENCH=OFF
 
       - name: Configure (Windows)
@@ -188,19 +68,25 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "LLVM_DIR is: $env:LLVM_DIR"
+          Write-Host "LLVM_ROOT is: $env:LLVM_ROOT"
           Write-Host "CMAKE_PREFIX_PATH is: $env:CMAKE_PREFIX_PATH"
           cmake -S . -B build `
              -G "Visual Studio 17 2022" -A x64 `
              -DLLVM_DIR="$env:LLVM_DIR" `
-             -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH" `
+             -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-             -DBUILD_TESTS=OFF `
+             -DBUILD_TESTS=ON `
              -DBUILD_BENCH=OFF
-
 
       - name: Build
         shell: bash
         run: cmake --build build --config Release --verbose
+
+      - name: Run Tests
+        shell: bash
+        run: |
+          cd build
+          ctest -C Release --output-on-failure
 
       - name: Run Benchmarks
         shell: bash
@@ -231,8 +117,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ProXPL-v1.2.0-${{ matrix.os }}
-          # UPDATED: This will now upload the .exe and the .dll for Windows
-          # For Linux/Mac, it still uploads the single binary.
           path: |
             ${{ matrix.bin_path }}
             examples/

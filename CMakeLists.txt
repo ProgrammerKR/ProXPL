@@ -28,16 +28,35 @@ if(WIN32)
     # If LLVM_DIR is not set or invalid, search common paths
     if(NOT LLVM_DIR)
         message(STATUS "Searching for LLVM on Windows...")
-        set(LLVM_SEARCH_PATHS
-            "C:/Program Files/LLVM/lib/cmake/llvm"
-            "C:/Program Files/LLVM/share/llvm/cmake"
-            "C:/Program Files/LLVM/cmake"
-            "C:/Program Files (x86)/LLVM/lib/cmake/llvm"
-            "C:/Program Files (x86)/LLVM/share/llvm/cmake"
+        set(LLVM_ROOT_HINTS
+            "$ENV{LLVM_ROOT}"
+            "$ENV{ProgramFiles}/LLVM"
+            "$ENV{ProgramFiles(x86)}/LLVM"
+            "C:/Program Files/LLVM"
+            "C:/Program Files (x86)/LLVM"
+            "C:/ProgramData/chocolatey/lib/llvm/tools/llvm"
         )
+
+        set(LLVM_SEARCH_PATHS
+            "$ENV{LLVM_DIR}"
+        )
+
+        foreach(llvm_root ${LLVM_ROOT_HINTS})
+            if(llvm_root)
+                list(APPEND CMAKE_PREFIX_PATH "${llvm_root}")
+                list(APPEND LLVM_SEARCH_PATHS
+                    "${llvm_root}/lib/cmake/llvm"
+                    "${llvm_root}/lib/llvm/cmake"
+                    "${llvm_root}/share/llvm/cmake"
+                    "${llvm_root}/cmake"
+                )
+            endif()
+        endforeach()
+
+        list(REMOVE_DUPLICATES LLVM_SEARCH_PATHS)
         
         foreach(search_path ${LLVM_SEARCH_PATHS})
-            if(EXISTS "${search_path}/LLVMConfig.cmake")
+            if(search_path AND EXISTS "${search_path}/LLVMConfig.cmake")
                 set(LLVM_DIR "${search_path}" CACHE PATH "LLVM CMake directory")
                 message(STATUS "Found LLVM CMake files at: ${search_path}")
                 break()
@@ -70,13 +89,11 @@ else()
 endif()
 
 # --- LibFFI Configuration ---
-# specialized find_package might be needed if not in standard path, but let's try standard first
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND)
     pkg_check_modules(LIBFFI libffi)
 endif()
 
-# Fallback or manual find if pkg-config fails or on simple windows setups
 if(NOT LIBFFI_FOUND)
     find_path(LIBFFI_INCLUDE_DIRS ffi.h)
     find_library(LIBFFI_LIBRARIES NAMES ffi libffi)
@@ -96,16 +113,7 @@ endif()
 if(LLVM_FOUND)
     include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
-
-    # Explicitly add LLVM library directories
     link_directories(${LLVM_LIBRARY_DIRS})
-
-    if(WIN32)
-        # Additional linking configuration for Windows
-        link_directories(${LLVM_LIBRARY_DIRS})
-    endif()
-
-    # Map generic components to specific libs
     llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
 endif()
 
@@ -126,51 +134,33 @@ list(FILTER LIB_SOURCES EXCLUDE REGEX ".*main\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_v2\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_dispatch\\.c$")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*instr_handlers_template\\.c$")
-# Exclude prototype VM register which has its own main
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*vm_register\\.c$")
 
-if (NOT LLVM_FOUND)
-    list(FILTER LIB_SOURCES EXCLUDE REGEX ".*backend_llvm\\.cpp$")
-endif()
-
-
-# --- Build Configuration ---
 # --- Build Configuration ---
 option(PROX_STATIC_BUILD "Build as a single static executable" ON)
 
-if (PROX_STATIC_BUILD)
+# Define the core library that all tools link against
+add_library(prox_core STATIC ${LIB_SOURCES})
+target_include_directories(prox_core PUBLIC include src)
+
+if (LLVM_FOUND)
+    target_link_libraries(prox_core PUBLIC ${llvm_libs})
+endif()
+if (LIBFFI_FOUND)
+    target_link_libraries(prox_core PUBLIC ${LIBFFI_LIBRARIES})
+endif()
+
+if(PROX_STATIC_BUILD)
     add_definitions(-DPROX_STATIC)
-    
-    # Configure Static CRT for MSVC to avoid DLL dependencies
     if(MSVC)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
         add_compile_options($<$<CONFIG:Release>:/MT> $<$<CONFIG:Debug>:/MTd>)
     endif()
-
-    # Monolithic build: Sources directly in executable to ensure all symbols are included
-    add_executable(proxpl src/main.c ${LIB_SOURCES})
-else()
-    # Traditional split build
-    add_library(proxpl_lib SHARED ${LIB_SOURCES})
-    if (LLVM_FOUND)
-        target_link_libraries(proxpl_lib PRIVATE ${llvm_libs})
-    endif()
-    if (LIBFFI_FOUND)
-        target_link_libraries(proxpl_lib PRIVATE ${LIBFFI_LIBRARIES})
-    endif()
-    add_executable(proxpl src/main.c)
-    target_link_libraries(proxpl PRIVATE proxpl_lib)
 endif()
 
-# --- Main Executable Linking ---
-# (Common linking logic)
-if (LLVM_FOUND)
-    target_link_libraries(proxpl PRIVATE ${llvm_libs})
-endif()
-
-if (LIBFFI_FOUND)
-    target_link_libraries(proxpl PRIVATE ${LIBFFI_LIBRARIES})
-endif()
+# Main executable
+add_executable(proxpl src/main.c)
+target_link_libraries(proxpl PRIVATE prox_core)
 
 if(UNIX)
     if(APPLE)
@@ -182,68 +172,20 @@ endif()
 
 # --- IR Test Executable ---
 add_executable(ir_gen_test tools/ir_gen_test.c)
-if(PROX_STATIC_BUILD)
-    # Link directly to sources for static build since proxpl_lib doesn't exist
-    target_sources(ir_gen_test PRIVATE ${LIB_SOURCES})
-    if (LLVM_FOUND)
-         target_link_libraries(ir_gen_test PRIVATE ${llvm_libs})
-    endif()
-    if (LIBFFI_FOUND)
-         target_link_libraries(ir_gen_test PRIVATE ${LIBFFI_LIBRARIES})
-    endif()
-else()
-    target_link_libraries(ir_gen_test PRIVATE proxpl_lib)
-    if (LLVM_FOUND)
-        target_link_libraries(ir_gen_test PRIVATE ${llvm_libs})
-    endif()
-    if (LIBFFI_FOUND)
-        target_link_libraries(ir_gen_test PRIVATE ${LIBFFI_LIBRARIES})
-    endif()
-endif()
+target_link_libraries(ir_gen_test PRIVATE prox_core)
 
 # --- LLVM Gen Test Executable ---
 add_executable(llvm_gen_test tools/llvm_gen_test.c)
-
-if(PROX_STATIC_BUILD)
-    target_sources(llvm_gen_test PRIVATE ${LIB_SOURCES})
-    if (LLVM_FOUND)
-        target_link_libraries(llvm_gen_test PRIVATE ${llvm_libs})
-    endif()
-    if (LIBFFI_FOUND)
-        target_link_libraries(llvm_gen_test PRIVATE ${LIBFFI_LIBRARIES})
-    endif()
-else()
-    target_link_libraries(llvm_gen_test PRIVATE proxpl_lib ${llvm_libs})
-    if (LIBFFI_FOUND)
-        target_link_libraries(llvm_gen_test PRIVATE ${LIBFFI_LIBRARIES})
-    endif()
-endif()
+target_link_libraries(llvm_gen_test PRIVATE prox_core)
 
 # --- PRM Executable ---
 add_executable(prm tools/prm_main.c)
-
-if(PROX_STATIC_BUILD)
-    target_sources(prm PRIVATE ${LIB_SOURCES})
-    if (LLVM_FOUND)
-        target_link_libraries(prm PRIVATE ${llvm_libs})
-    endif()
-    if (LIBFFI_FOUND)
-        target_link_libraries(prm PRIVATE ${LIBFFI_LIBRARIES})
-    endif()
-    if(UNIX)
-        if(APPLE)
-            target_link_libraries(prm PRIVATE pthread dl z)
-        else()
-            target_link_libraries(prm PRIVATE pthread dl z tinfo)
-        endif()
-    endif()
-else()
-    target_link_libraries(prm PRIVATE proxpl_lib)
-    if (LLVM_FOUND)
-        target_link_libraries(prm PRIVATE ${llvm_libs})
-    endif()
-    if (LIBFFI_FOUND)
-        target_link_libraries(prm PRIVATE ${LIBFFI_LIBRARIES})
+target_link_libraries(prm PRIVATE prox_core)
+if(UNIX)
+    if(APPLE)
+        target_link_libraries(prm PRIVATE pthread dl z)
+    else()
+        target_link_libraries(prm PRIVATE pthread dl z tinfo)
     endif()
 endif()
 
