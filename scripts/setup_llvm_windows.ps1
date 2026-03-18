@@ -7,22 +7,21 @@ function Resolve-LLVMLayout {
     # 1. Direct LLVM_ROOT or LLVM_DIR environment variables
     if ($env:LLVM_ROOT -and (Test-Path $env:LLVM_ROOT)) { $candidateRoots.Add($env:LLVM_ROOT) }
     if ($env:LLVM_DIR -and (Test-Path $env:LLVM_DIR)) {
-        # If LLVM_DIR points to cmake dir, root is likely 2 or 3 levels up
         $dir = $env:LLVM_DIR
-        $candidateRoots.Add((Split-Path (Split-Path (Split-Path $dir)))) # lib/cmake/llvm -> lib/cmake -> lib -> root
+        $candidateRoots.Add((Split-Path (Split-Path (Split-Path $dir)))) # lib/cmake/llvm -> root
         $candidateRoots.Add((Split-Path (Split-Path $dir)))              # cmake -> root
     }
 
     # 2. Check if llvm-config is in PATH
     $llvmConfig = Get-Command llvm-config -ErrorAction SilentlyContinue
     if ($llvmConfig) {
-        $binPath = $llvmConfig.Source
-        $binDir = Split-Path $binPath
+        $binDir = Split-Path $llvmConfig.Source
         $root = Split-Path $binDir
         $candidateRoots.Add($root)
     }
 
     # 3. Known installation paths
+    $candidateRoots.Add("C:\LLVM")
     $candidateRoots.Add("C:\Program Files\LLVM")
     $candidateRoots.Add("C:\Program Files (x86)\LLVM")
     $candidateRoots.Add("C:\ProgramData\chocolatey\lib\llvm\tools\llvm")
@@ -50,34 +49,27 @@ function Resolve-LLVMLayout {
         foreach ($suffix in $cmakeSuffixes) {
             $cmakeDir = Join-Path $root $suffix
             if (Test-Path (Join-Path $cmakeDir "LLVMConfig.cmake")) {
-                return @{
-                    Root = $root
-                    CMakeDir = $cmakeDir
-                    BinDir = Join-Path $root "bin"
-                }
+                return @{ Root = $root; CMakeDir = $cmakeDir; BinDir = Join-Path $root "bin" }
             }
         }
     }
 
-    # 4. Fallback: Recursive search in common areas
-    Write-Host "Performing exhaustive search for LLVMConfig.cmake..."
-    $searchRoots = @("C:\Program Files", "C:\Program Files (x86)", "C:\ProgramData\chocolatey", "C:\tools")
+    # 4. Fallback: Recursive search in common areas with INCREASED DEPTH
+    Write-Host "Performing exhaustive search for LLVMConfig.cmake (Depth 8)..."
+    $searchRoots = @("C:\LLVM", "C:\Program Files", "C:\Program Files (x86)", "C:\ProgramData\chocolatey", "C:\tools")
     foreach ($sr in $searchRoots) {
         if (-not (Test-Path $sr)) { continue }
-        $configFile = Get-ChildItem -Path $sr -Filter "LLVMConfig.cmake" -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1
+        # Depth 8 ensures we find it even in deep Chocolatey paths
+        $configFile = Get-ChildItem -Path $sr -Filter "LLVMConfig.cmake" -Recurse -Depth 8 -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($configFile) {
             $cmakeDir = $configFile.DirectoryName
             Write-Host "Found LLVMConfig.cmake at: $cmakeDir"
             
             # Try to find the root by looking for 'bin' nearby
             $root = $cmakeDir
-            for ($i = 0; $i -lt 4; $i++) {
+            for ($i = 0; $i -lt 5; $i++) {
                 if (Test-Path (Join-Path $root "bin")) { 
-                    return @{
-                        Root = $root
-                        CMakeDir = $cmakeDir
-                        BinDir = Join-Path $root "bin"
-                    }
+                    return @{ Root = $root; CMakeDir = $cmakeDir; BinDir = Join-Path $root "bin" }
                 }
                 $parent = Split-Path -Parent $root
                 if ($parent -eq $root) { break }
@@ -94,8 +86,8 @@ $layout = Resolve-LLVMLayout
 # 2. Install if not found
 if (-not $layout) {
     Write-Host "LLVM not initially found. Installing via Chocolatey..."
-    # Using --params to add LLVM to PATH
-    choco install llvm -y --version 17.0.6 --allow-downgrade --no-progress --limit-output --package-parameters="\"/InstallDir:C:\LLVM\""
+    # Attempt install with BOTH package params and install arguments for maximum compatibility
+    choco install llvm -y --version 17.0.6 --allow-downgrade --no-progress --limit-output --package-parameters="'/InstallDir:C:\LLVM'" --install-arguments='/D=C:\LLVM'
     
     # Refresh PATH for the current session
     Write-Host "Refreshing PATH..."
@@ -119,7 +111,7 @@ if ($layout) {
     $cmakeDir = $layout.CMakeDir -replace "\\", "/"
     $binDir = $layout.BinDir
 
-    Write-Host "Resolved LLVM root: $llvmRoot"
+    Write-Host "`nResolved LLVM root: $llvmRoot"
     Write-Host "Resolved LLVM_DIR: $cmakeDir"
     Write-Host "Resolved BinDir: $binDir"
 
@@ -134,16 +126,17 @@ if ($layout) {
     }
 } else {
     Write-Host "`n--- DEBUG INFO: SEARCH FAILED ---"
-    Write-Host "Listing top-level directories for clues:"
-    $debugPaths = @("C:\Program Files", "C:\Program Files (x86)", "C:\ProgramData\chocolatey\lib", "C:\LLVM", "C:\tools")
+    Write-Host "Listing candidate root contents for diagnostics:"
+    $debugPaths = @("C:\LLVM", "C:\Program Files\LLVM", "C:\ProgramData\chocolatey\lib\llvm")
     foreach ($dp in $debugPaths) {
         if (Test-Path $dp) {
             Write-Host "`nContents of $dp`:"
-            Get-ChildItem $dp -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders
+            Get-ChildItem $dp -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object FullName | Format-Table -HideTableHeaders
         }
     }
     
-    Write-Error "Failed to detect LLVM after installation. Check logs above for directory contents."
+    Write-Error "Failed to detect LLVM after installation."
     exit 1
 }
+
 
