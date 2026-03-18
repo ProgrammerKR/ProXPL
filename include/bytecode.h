@@ -12,6 +12,10 @@
 
 #define AM_CONST 1
 
+#ifndef OP_PUSH_CONST
+#define OP_PUSH_CONST OP_CONSTANT
+#endif
+
 // OpCodes
 typedef enum {
   OP_CONSTANT,
@@ -102,5 +106,13 @@ int read_chunk_from_file(const char *path, Chunk *out);
 // LEB128 Utilities
 uint64_t read_uleb128_from(const uint8_t *buf, size_t buf_len, size_t *out_read);
 int64_t read_sleb128_from(const uint8_t *buf, size_t buf_len, size_t *out_read);
+
+// Emission helpers
+void emit_opcode(Chunk *chunk, OpCode op);
+void emit_u8(Chunk *chunk, uint8_t x);
+void emit_u16_le(Chunk *chunk, uint16_t x);
+void emit_u32_le(Chunk *chunk, uint32_t x);
+void emit_uleb128(Chunk *chunk, uint64_t value);
+void emit_sleb128(Chunk *chunk, int64_t value);
 
 #endif // PROX_BYTECODE_H
