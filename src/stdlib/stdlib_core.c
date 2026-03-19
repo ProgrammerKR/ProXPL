@@ -159,6 +159,10 @@ void registerStdLib(VM* vm) {
     registerModule(vm, "std.reflect", reflectMod);
 
     registerModule(vm, "std.core", create_std_core_module());
+    
+    ObjModule* uiMod = create_empty_module(vm, "UI");
+    registerModule(vm, "std.native.ui", uiMod);
+    registerModule(vm, "std.ui", uiMod);
 
     // Legacy
     register_convert_natives(vm);

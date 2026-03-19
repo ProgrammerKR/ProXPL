@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(ProXPL VERSION 1.3.0 LANGUAGES C CXX)
+project(ProXPL VERSION 1.2.0 LANGUAGES C CXX)
 
 # Enable C and C++
 enable_language(C CXX)

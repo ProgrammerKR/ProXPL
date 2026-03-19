@@ -1,4 +1,4 @@
-use UI;
+use std.ui;
 
 App MyLibraryApp {
     State count = 0;
@@ -7,7 +7,7 @@ App MyLibraryApp {
         count = count + 1;
     }
 
-    Window Main {
+    Window MainWindow {
         Container(className: "hero") {
             Text(value: "Welcome to ProXPL UI");
             Button(onClick: increment) {

@@ -619,7 +619,7 @@ static Stmt *useDecl(Parser *p) {
     }
 
     appendString(modules, path);
-    if (strcmp(path, "UI") == 0) p->uiEnabled = true;
+    if (strcmp(path, "std.ui") == 0) p->uiEnabled = true;
   } while (match(p, 1, TOKEN_COMMA));
 
   consume(p, TOKEN_SEMICOLON, "Expect ';'.");
