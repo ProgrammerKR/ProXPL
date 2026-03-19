@@ -158,14 +158,14 @@ static Value native_char_at(int argCount, Value* args) {
 // len(value) moved to stdlib_core.c
 
 // Register all conversion functions with the VM
-void register_convert_natives(VM* vm) {
-    defineNative(vm, "to_int", native_to_int);
-    defineNative(vm, "to_float", native_to_float);
-    defineNative(vm, "to_string", native_to_string);
-    defineNative(vm, "to_bool", native_to_bool);
-    defineNative(vm, "to_hex", native_to_hex);
-    defineNative(vm, "to_bin", native_to_bin);
-    defineNative(vm, "char_at", native_char_at);
-    // defineNative(vm, "len", native_len); // Moved to stdlib_core.c
+void register_convert_natives(VM* pVM) {
+    defineNative(pVM, "to_int", native_to_int);
+    defineNative(pVM, "to_float", native_to_float);
+    defineNative(pVM, "to_string", native_to_string);
+    defineNative(pVM, "to_bool", native_to_bool);
+    defineNative(pVM, "to_hex", native_to_hex);
+    defineNative(pVM, "to_bin", native_to_bin);
+    defineNative(pVM, "char_at", native_char_at);
+    // defineNative(pVM, "len", native_len); // Moved to stdlib_core.c
 }
 

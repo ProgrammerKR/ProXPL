@@ -138,13 +138,13 @@ static Value native_sleep(int argCount, Value* args) {
 }
 
 // Register all system functions with the VM
-void register_system_natives(VM* vm) {
-    defineNative(vm, "exit", native_exit);
-    defineNative(vm, "env", native_env);
-    defineNative(vm, "platform", native_platform);
-    defineNative(vm, "version", native_version);
-    defineNative(vm, "exec", native_exec);
-    defineNative(vm, "time", native_time);
-    defineNative(vm, "sleep", native_sleep);
+void register_system_natives(VM* pVM) {
+    defineNative(pVM, "exit", native_exit);
+    defineNative(pVM, "env", native_env);
+    defineNative(pVM, "platform", native_platform);
+    defineNative(pVM, "version", native_version);
+    defineNative(pVM, "exec", native_exec);
+    defineNative(pVM, "time", native_time);
+    defineNative(pVM, "sleep", native_sleep);
 }
 

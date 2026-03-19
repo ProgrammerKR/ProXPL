@@ -16,19 +16,19 @@
 #include "../include/compiler.h"
 
 
-void closeUpvalues(VM *vm, Value *last) {
-  while (vm->openUpvalues != NULL &&
-         vm->openUpvalues->location >= last) {
-    ObjUpvalue *upvalue = vm->openUpvalues;
+void closeUpvalues(VM *pVM, Value *last) {
+  while (pVM->openUpvalues != NULL &&
+         pVM->openUpvalues->location >= last) {
+    ObjUpvalue *upvalue = pVM->openUpvalues;
     upvalue->closed = *upvalue->location;
     upvalue->location = &upvalue->closed;
-    vm->openUpvalues = upvalue->next;
+    pVM->openUpvalues = upvalue->next;
   }
 }
 
-ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
+ObjUpvalue *captureUpvalue(Value *local, VM *pVM) {
   ObjUpvalue *prevUpvalue = NULL;
-  ObjUpvalue *upvalue = vm->openUpvalues;
+  ObjUpvalue *upvalue = pVM->openUpvalues;
   while (upvalue != NULL && upvalue->location > local) {
     prevUpvalue = upvalue;
     upvalue = upvalue->next;
@@ -42,7 +42,7 @@ ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
   createdUpvalue->next = upvalue;
 
   if (prevUpvalue == NULL) {
-    vm->openUpvalues = createdUpvalue;
+    pVM->openUpvalues = createdUpvalue;
   } else {
     prevUpvalue->next = createdUpvalue;
   }
@@ -50,100 +50,100 @@ ObjUpvalue *captureUpvalue(Value *local, VM *vm) {
   return createdUpvalue;
 }
 
-void defineMethod(ObjString *name, VM *vm) {
-  Value method = peek(vm, 0);
-  ObjClass *klass = AS_CLASS(peek(vm, 1));
+void defineMethod(ObjString *name, VM *pVM) {
+  Value method = peek(pVM, 0);
+  ObjClass *klass = AS_CLASS(peek(pVM, 1));
   if (IS_CLOSURE(method)) {
       AS_CLOSURE(method)->function->ownerClass = klass;
   }
   tableSet(&klass->methods, name, method);
-  pop(vm);
+  pop(pVM);
 }
 
-bool bindMethod(struct ObjClass *klass, ObjString *name, VM *vm) {
+bool bindMethod(struct ObjClass *klass, ObjString *name, VM *pVM) {
   Value method;
   if (!tableGet(&klass->methods, name, &method)) {
-    runtimeError(vm, "Undefined property '%s'.", name->chars);
+    runtimeError(pVM, "Undefined property '%s'.", name->chars);
     return false;
   }
 
-  ObjBoundMethod *bound = newBoundMethod(peek(vm, 0), AS_CLOSURE(method));
-  pop(vm);
-  push(vm, OBJ_VAL(bound));
+  ObjBoundMethod *bound = newBoundMethod(peek(pVM, 0), AS_CLOSURE(method));
+  pop(pVM);
+  push(pVM, OBJ_VAL(bound));
   return true;
 }
 
-bool call(ObjClosure *closure, int argCount, VM *vm) {
+bool call(ObjClosure *closure, int argCount, VM *pVM) {
   if (argCount != closure->function->arity) {
-    runtimeError(vm, "Expected %d arguments but got %d.",
+    runtimeError(pVM, "Expected %d arguments but got %d.",
                  closure->function->arity, argCount);
     return false;
   }
 
-  if (vm->frameCount == FRAMES_MAX) {
-    runtimeError(vm, "Stack overflow.");
+  if (pVM->frameCount == FRAMES_MAX) {
+    runtimeError(pVM, "Stack overflow.");
     return false;
   }
 
-  CallFrame *frame = &vm->frames[vm->frameCount++];
+  CallFrame *frame = &pVM->frames[pVM->frameCount++];
   frame->closure = closure;
   frame->ip = closure->function->chunk.code;
-  frame->slots = vm->stackTop - argCount - 1;
+  frame->slots = pVM->stackTop - argCount - 1;
   return true;
 }
 
-bool callValue(Value callee, int argCount, VM *vm) {
+bool callValue(Value callee, int argCount, VM *pVM) {
   if (IS_OBJ(callee)) {
     switch (OBJ_TYPE(callee)) {
     case OBJ_BOUND_METHOD: {
       ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
-      vm->stackTop[-argCount - 1] = bound->receiver;
-      return call(bound->method, argCount, vm);
+      pVM->stackTop[-argCount - 1] = bound->receiver;
+      return call(bound->method, argCount, pVM);
     }
     case OBJ_CLASS: {
       ObjClass *klass = AS_CLASS(callee);
-      vm->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+      pVM->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
       Value initializer;
-      if (tableGet(&klass->methods, vm->initString, &initializer)) {
-        return call(AS_CLOSURE(initializer), argCount, vm);
+      if (tableGet(&klass->methods, pVM->initString, &initializer)) {
+        return call(AS_CLOSURE(initializer), argCount, pVM);
       } else if (argCount != 0) {
-        runtimeError(vm, "Expected 0 arguments but got %d.", argCount);
+        runtimeError(pVM, "Expected 0 arguments but got %d.", argCount);
         return false;
       }
       return true;
     }
     case OBJ_CLOSURE:
-      return call(AS_CLOSURE(callee), argCount, vm);
+      return call(AS_CLOSURE(callee), argCount, pVM);
     case OBJ_NATIVE: {
       NativeFn native = AS_NATIVE(callee);
-      Value result = native(argCount, vm->stackTop - argCount);
-      vm->stackTop -= argCount + 1;
-      push(vm, result);
+      Value result = native(argCount, pVM->stackTop - argCount);
+      pVM->stackTop -= argCount + 1;
+      push(pVM, result);
       return true;
     }
     default:
       break; // Non-callable object type
     }
   }
-  runtimeError(vm, "Can only call functions and classes.");
+  runtimeError(pVM, "Can only call functions and classes.");
   return false;
 }
 
 bool invokeFromClass(struct ObjClass *klass, ObjString *name,
-                            int argCount, VM *vm) {
+                            int argCount, VM *pVM) {
   Value method;
   if (!tableGet(&klass->methods, name, &method)) {
-    runtimeError(vm, "Undefined property '%s'.", name->chars);
+    runtimeError(pVM, "Undefined property '%s'.", name->chars);
     return false;
   }
-  return call(AS_CLOSURE(method), argCount, vm);
+  return call(AS_CLOSURE(method), argCount, pVM);
 }
 
-bool invoke(ObjString *name, int argCount, VM *vm) {
-  Value receiver = peek(vm, argCount);
+bool invoke(ObjString *name, int argCount, VM *pVM) {
+  Value receiver = peek(pVM, argCount);
 
   if (!IS_INSTANCE(receiver)) {
-    runtimeError(vm, "Only instances have methods.");
+    runtimeError(pVM, "Only instances have methods.");
     return false;
   }
 
@@ -151,11 +151,11 @@ bool invoke(ObjString *name, int argCount, VM *vm) {
 
   Value value;
   if (tableGet(&instance->fields, name, &value)) {
-    vm->stackTop[-argCount - 1] = value;
-    return callValue(value, argCount, vm);
+    pVM->stackTop[-argCount - 1] = value;
+    return callValue(value, argCount, pVM);
   }
 
-  return invokeFromClass(instance->klass, name, argCount, vm);
+  return invokeFromClass(instance->klass, name, argCount, pVM);
 }
 
 void appendToList(ObjList* list, Value value) {

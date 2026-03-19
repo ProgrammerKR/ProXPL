@@ -45,10 +45,10 @@ static char* trimWhitespace(char* str) {
     return str;
 }
 
-Value parsePxcf(VM* vm, const char* content) {
+Value parsePxcf(VM* pVM, const char* content) {
     // Create the root dictionary
     ObjDictionary* rootDict = newDictionary();
-    push(vm, OBJ_VAL(rootDict)); // Protect from GC
+    push(pVM, OBJ_VAL(rootDict)); // Protect from GC
 
     // We maintain a stack of active dictionaries to handle nesting
     // PXCF usually only has 1 level of nesting: root -> block
@@ -57,7 +57,7 @@ Value parsePxcf(VM* vm, const char* content) {
     // We'll duplicate the string to safely tokenize it line by line
     char* contentCopy = strdup(content);
     if (!contentCopy) {
-        pop(vm);
+        pop(pVM);
         return NIL_VAL;
     }
 
@@ -79,7 +79,7 @@ Value parsePxcf(VM* vm, const char* content) {
             line = strtok(NULL, "\n\r");
             continue;
         }
-
+ 
         // Check for block opening e.g., "project {"
         char* openBrace = strchr(trimmed, '{');
         if (openBrace != NULL) {
@@ -87,15 +87,15 @@ Value parsePxcf(VM* vm, const char* content) {
             char* blockName = trimWhitespace(trimmed);
             
             ObjDictionary* newBlock = newDictionary();
-            push(vm, OBJ_VAL(newBlock));
+            push(pVM, OBJ_VAL(newBlock));
             
             ObjString* keyStr = copyString(blockName, (int)strlen(blockName));
-            push(vm, OBJ_VAL(keyStr));
+            push(pVM, OBJ_VAL(keyStr));
             
             tableSet(&rootDict->items, keyStr, OBJ_VAL(newBlock));
             
-            pop(vm); // pop keyStr
-            pop(vm); // pop newBlock
+            pop(pVM); // pop keyStr
+            pop(pVM); // pop newBlock
             
             activeDict = newBlock;
             line = strtok(NULL, "\n\r");
@@ -111,7 +111,7 @@ Value parsePxcf(VM* vm, const char* content) {
 
             // Create key object
             ObjString* keyObj = copyString(rawKey, (int)strlen(rawKey));
-            push(vm, OBJ_VAL(keyObj));
+            push(pVM, OBJ_VAL(keyObj));
             
             Value valObj = NIL_VAL;
 
@@ -140,10 +140,10 @@ Value parsePxcf(VM* vm, const char* content) {
                 }
             }
 
-            push(vm, valObj);
+            push(pVM, valObj);
             tableSet(&activeDict->items, keyObj, valObj);
-            pop(vm); // pop valObj
-            pop(vm); // pop keyObj
+            pop(pVM); // pop valObj
+            pop(pVM); // pop keyObj
         }
 
         line = strtok(NULL, "\n\r");
@@ -152,8 +152,8 @@ Value parsePxcf(VM* vm, const char* content) {
     free(contentCopy);
     
     // Return the root dictionary
-    Value result = peek(vm, 0); 
-    pop(vm); // pop rootDict
+    Value result = peek(pVM, 0); 
+    pop(pVM); // pop rootDict
     return result;
 }
 

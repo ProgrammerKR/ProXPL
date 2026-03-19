@@ -384,28 +384,28 @@ ObjModule* create_std_math_module() {
 }
 
 // Register math functions as globals (for benchmarks/ease of use)
-void register_math_globals(VM* vm) {
-    defineNative(vm, "abs", native_abs);
-    defineNative(vm, "ceil", native_ceil);
-    defineNative(vm, "floor", native_floor);
-    defineNative(vm, "round", native_round);
-    defineNative(vm, "max", native_max);
-    defineNative(vm, "min", native_min);
-    defineNative(vm, "pow", native_pow);
-    defineNative(vm, "sqrt", native_sqrt);
-    defineNative(vm, "sin", native_sin);
-    defineNative(vm, "cos", native_cos);
-    defineNative(vm, "tan", native_tan);
-    defineNative(vm, "asin", native_asin);
-    defineNative(vm, "acos", native_acos);
-    defineNative(vm, "atan", native_atan);
-    defineNative(vm, "log", native_log);
-    defineNative(vm, "exp", native_exp);
-    defineNative(vm, "random", native_random);
-    defineNative(vm, "randint", native_randint);
-    defineNative(vm, "seed", native_seed);
-    defineNative(vm, "sigmoid", native_sigmoid);
-    defineNative(vm, "relu", native_relu);
-    defineNative(vm, "tanh", native_tanh);
-    defineNative(vm, "transpose", native_transpose);
+void register_math_globals(VM* pVM) {
+    defineNative(pVM, "abs", native_abs);
+    defineNative(pVM, "ceil", native_ceil);
+    defineNative(pVM, "floor", native_floor);
+    defineNative(pVM, "round", native_round);
+    defineNative(pVM, "max", native_max);
+    defineNative(pVM, "min", native_min);
+    defineNative(pVM, "pow", native_pow);
+    defineNative(pVM, "sqrt", native_sqrt);
+    defineNative(pVM, "sin", native_sin);
+    defineNative(pVM, "cos", native_cos);
+    defineNative(pVM, "tan", native_tan);
+    defineNative(pVM, "asin", native_asin);
+    defineNative(pVM, "acos", native_acos);
+    defineNative(pVM, "atan", native_atan);
+    defineNative(pVM, "log", native_log);
+    defineNative(pVM, "exp", native_exp);
+    defineNative(pVM, "random", native_random);
+    defineNative(pVM, "randint", native_randint);
+    defineNative(pVM, "seed", native_seed);
+    defineNative(pVM, "sigmoid", native_sigmoid);
+    defineNative(pVM, "relu", native_relu);
+    defineNative(pVM, "tanh", native_tanh);
+    defineNative(pVM, "transpose", native_transpose);
 }

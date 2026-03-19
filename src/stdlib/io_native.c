@@ -149,8 +149,8 @@ ObjModule* create_std_io_module() {
 }
 
 // Register I/O functions as globals (for convenience)
-void register_io_globals(VM* vm) {
-    defineNative(vm, "print", native_print_raw);
-    defineNative(vm, "println", native_println);
-    defineNative(vm, "input", native_input);
+void register_io_globals(VM* pVM) {
+    defineNative(pVM, "print", native_print_raw);
+    defineNative(pVM, "println", native_println);
+    defineNative(pVM, "input", native_input);
 }

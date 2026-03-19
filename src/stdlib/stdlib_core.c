@@ -53,13 +53,21 @@ static Value native_len(int argCount, Value* args) {
     return NUMBER_VAL(0);
 }
 
-static void registerModule(VM* vm, const char* name, ObjModule* module) {
+static ObjModule* create_empty_module(VM* vm, const char* name) {
+    ObjString* nameStr = copyString(name, (int)strlen(name));
+    push(vm, OBJ_VAL(nameStr));
+    ObjModule* module = newModule(nameStr);
+    pop(vm);
+    return module;
+}
+
+static void registerModule(VM* pVM, const char* name, ObjModule* module) {
     ObjString* nameObj = copyString(name, (int)strlen(name));
-    push(vm, OBJ_VAL(nameObj));
-    push(vm, OBJ_VAL(module));
-    tableSet(&vm->importer.modules, nameObj, peek(vm, 0));
-    pop(vm);
-    pop(vm);
+    push(pVM, OBJ_VAL(nameObj));
+    push(pVM, OBJ_VAL(module));
+    tableSet(&pVM->importer.modules, nameObj, peek(pVM, 0));
+    pop(pVM);
+    pop(pVM);
 }
 
 static Value native_push(int argCount, Value* args) {
@@ -108,159 +116,159 @@ static Value native_substr(int argCount, Value* args) {
  * Register all standard library modules
  * Called during VM initialization
  */
-void registerStdLib(VM* vm) {
+void registerStdLib(VM* pVM) {
     // New Module System + Aliases
     ObjModule* ioMod = create_std_io_module();
-    registerModule(vm, "std.native.io", ioMod);
-    registerModule(vm, "std.io", ioMod);
+    registerModule(pVM, "std.native.io", ioMod);
+    registerModule(pVM, "std.io", ioMod);
 
     ObjModule* fsMod = create_std_fs_module();
-    registerModule(vm, "std.native.fs", fsMod);
-    registerModule(vm, "std.fs", fsMod);
+    registerModule(pVM, "std.native.fs", fsMod);
+    registerModule(pVM, "std.fs", fsMod);
 
     ObjModule* sysMod = create_std_sys_module();
-    registerModule(vm, "std.native.sys", sysMod);
-    registerModule(vm, "std.sys", sysMod);
+    registerModule(pVM, "std.native.sys", sysMod);
+    registerModule(pVM, "std.sys", sysMod);
     
     ObjModule* mathMod = create_std_math_module();
-    registerModule(vm, "std.native.math", mathMod);
-    registerModule(vm, "std.math", mathMod);
+    registerModule(pVM, "std.native.math", mathMod);
+    registerModule(pVM, "std.math", mathMod);
 
     ObjModule* strMod = create_std_str_module();
-    registerModule(vm, "std.native.str", strMod);
-    registerModule(vm, "std.str", strMod);
+    registerModule(pVM, "std.native.str", strMod);
+    registerModule(pVM, "std.str", strMod);
 
     ObjModule* timeMod = create_std_time_module();
-    registerModule(vm, "std.native.time", timeMod);
-    registerModule(vm, "std.time", timeMod);
+    registerModule(pVM, "std.native.time", timeMod);
+    registerModule(pVM, "std.time", timeMod);
 
     ObjModule* jsonMod = create_std_json_module();
-    registerModule(vm, "std.native.json", jsonMod);
-    registerModule(vm, "std.json", jsonMod);
+    registerModule(pVM, "std.native.json", jsonMod);
+    registerModule(pVM, "std.json", jsonMod);
 
     ObjModule* osMod = create_std_os_module();
-    registerModule(vm, "std.native.os", osMod);
-    registerModule(vm, "std.os", osMod);
+    registerModule(pVM, "std.native.os", osMod);
+    registerModule(pVM, "std.os", osMod);
 
     ObjModule* hashMod = create_std_hash_module();
-    registerModule(vm, "std.native.hash", hashMod);
-    registerModule(vm, "std.hash", hashMod);
+    registerModule(pVM, "std.native.hash", hashMod);
+    registerModule(pVM, "std.hash", hashMod);
 
     ObjModule* netMod = create_std_net_module();
-    registerModule(vm, "std.native.net", netMod);
-    registerModule(vm, "std.net", netMod);
+    registerModule(pVM, "std.native.net", netMod);
+    registerModule(pVM, "std.net", netMod);
 
     ObjModule* colMod = create_std_collections_module();
-    registerModule(vm, "std.native.collections", colMod);
-    registerModule(vm, "std.collections", colMod);
+    registerModule(pVM, "std.native.collections", colMod);
+    registerModule(pVM, "std.collections", colMod);
 
     ObjModule* reflectMod = create_std_reflect_module();
-    registerModule(vm, "std.native.reflect", reflectMod);
-    registerModule(vm, "std.reflect", reflectMod);
+    registerModule(pVM, "std.native.reflect", reflectMod);
+    registerModule(pVM, "std.reflect", reflectMod);
 
-    registerModule(vm, "std.core", create_std_core_module());
+    registerModule(pVM, "std.core", create_std_core_module());
     
-    ObjModule* uiMod = create_empty_module(vm, "UI");
-    registerModule(vm, "std.native.ui", uiMod);
-    registerModule(vm, "std.ui", uiMod);
+    ObjModule* uiMod = create_empty_module(pVM, "UI");
+    registerModule(pVM, "std.native.ui", uiMod);
+    registerModule(pVM, "std.ui", uiMod);
 
     // Legacy
-    register_convert_natives(vm);
+    register_convert_natives(pVM);
 
     // Setup global 'std' object
     ObjString* stdName = copyString("std", 3);
-    push(vm, OBJ_VAL(stdName));
+    push(pVM, OBJ_VAL(stdName));
     ObjModule* stdMod = newModule(stdName);
-    push(vm, OBJ_VAL(stdMod));
+    push(pVM, OBJ_VAL(stdMod));
     
     // Bind sub-modules to 'std'
     Value ioVal;
     ObjString* ioKey = copyString("std.native.io", 13);
-    push(vm, OBJ_VAL(ioKey));
-    if (tableGet(&vm->importer.modules, ioKey, &ioVal)) {
+    push(pVM, OBJ_VAL(ioKey));
+    if (tableGet(&pVM->importer.modules, ioKey, &ioVal)) {
         ObjString* field = copyString("io", 2);
-        push(vm, OBJ_VAL(field));
+        push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, ioVal);
-        pop(vm);
+        pop(pVM);
     }
-    pop(vm);
+    pop(pVM);
     
     Value fsVal;
     ObjString* fsKey = copyString("std.native.fs", 13);
-    push(vm, OBJ_VAL(fsKey));
-    if (tableGet(&vm->importer.modules, fsKey, &fsVal)) {
+    push(pVM, OBJ_VAL(fsKey));
+    if (tableGet(&pVM->importer.modules, fsKey, &fsVal)) {
         ObjString* field = copyString("fs", 2);
-        push(vm, OBJ_VAL(field));
+        push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, fsVal);
-        pop(vm);
+        pop(pVM);
     }
-    pop(vm);
+    pop(pVM);
 
     Value sysVal;
     ObjString* sysKey = copyString("std.native.sys", 14);
-    push(vm, OBJ_VAL(sysKey));
-    if (tableGet(&vm->importer.modules, sysKey, &sysVal)) {
+    push(pVM, OBJ_VAL(sysKey));
+    if (tableGet(&pVM->importer.modules, sysKey, &sysVal)) {
         ObjString* field = copyString("sys", 3);
-        push(vm, OBJ_VAL(field));
+        push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, sysVal);
-        pop(vm);
+        pop(pVM);
     }
-    pop(vm);
+    pop(pVM);
 
     ObjModule* gcMod = create_std_gc_module();
-    registerModule(vm, "std.native.gc", gcMod);
-    registerModule(vm, "std.gc", gcMod);
+    registerModule(pVM, "std.native.gc", gcMod);
+    registerModule(pVM, "std.gc", gcMod);
 
     Value gcVal;
     ObjString* gcKey = copyString("std.native.gc", 13);
-    push(vm, OBJ_VAL(gcKey));
-    if (tableGet(&vm->importer.modules, gcKey, &gcVal)) {
+    push(pVM, OBJ_VAL(gcKey));
+    if (tableGet(&pVM->importer.modules, gcKey, &gcVal)) {
         ObjString* field = copyString("gc", 2);
-        push(vm, OBJ_VAL(field));
+        push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, gcVal);
-        pop(vm);
+        pop(pVM);
     }
-    pop(vm);
+    pop(pVM);
 
     Value hashVal;
     ObjString* hashKey = copyString("std.native.hash", 15);
-    push(vm, OBJ_VAL(hashKey));
-    if (tableGet(&vm->importer.modules, hashKey, &hashVal)) {
+    push(pVM, OBJ_VAL(hashKey));
+    if (tableGet(&pVM->importer.modules, hashKey, &hashVal)) {
         ObjString* field = copyString("hash", 4);
-        push(vm, OBJ_VAL(field));
+        push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, hashVal);
-        pop(vm);
+        pop(pVM);
     }
-    pop(vm);
+    pop(pVM);
     
     Value coreVal;
     ObjString* coreKey = copyString("std.core", 8);
-    push(vm, OBJ_VAL(coreKey));
-    if (tableGet(&vm->importer.modules, coreKey, &coreVal)) {
+    push(pVM, OBJ_VAL(coreKey));
+    if (tableGet(&pVM->importer.modules, coreKey, &coreVal)) {
         ObjString* field = copyString("core", 4);
-        push(vm, OBJ_VAL(field));
+        push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, coreVal);
-        pop(vm);
+        pop(pVM);
     }
-    pop(vm);
+    pop(pVM);
 
-    tableSet(&vm->globals, stdName, OBJ_VAL(stdMod));
-    pop(vm);
-    pop(vm);
+    tableSet(&pVM->globals, stdName, OBJ_VAL(stdMod));
+    pop(pVM);
+    pop(pVM);
 
-    defineNative(vm, "clock", native_clock);
-    defineNative(vm, "len", native_len);
-    defineNative(vm, "list_push", native_push);
-    defineNative(vm, "push", native_push); 
-    defineNative(vm, "limit_pop", native_pop); 
-    defineNative(vm, "list_pop", native_pop);
-    defineNative(vm, "pop", native_pop);   
-    defineNative(vm, "substr", native_substr);
+    defineNative(pVM, "clock", native_clock);
+    defineNative(pVM, "len", native_len);
+    defineNative(pVM, "list_push", native_push);
+    defineNative(pVM, "push", native_push); 
+    defineNative(pVM, "limit_pop", native_pop); 
+    defineNative(pVM, "list_pop", native_pop);
+    defineNative(pVM, "pop", native_pop);   
+    defineNative(pVM, "substr", native_substr);
     
     extern Value nativeLoadConfig(int argCount, Value *args);
-    defineNative(vm, "loadConfig", nativeLoadConfig);
+    defineNative(pVM, "loadConfig", nativeLoadConfig);
 
-    register_math_globals(vm);
-    register_string_globals(vm);
-    register_io_globals(vm);
+    register_math_globals(pVM);
+    register_string_globals(pVM);
+    register_io_globals(pVM);
 }

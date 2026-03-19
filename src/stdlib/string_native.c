@@ -321,15 +321,15 @@ ObjModule* create_std_str_module() {
 }
 
 // Register string functions as globals
-void register_string_globals(VM* vm) {
-    defineNative(vm, "upper", native_upper);
-    defineNative(vm, "lower", native_lower);
-    defineNative(vm, "trim", native_trim);
-    defineNative(vm, "split", native_split);
-    defineNative(vm, "replace", native_replace);
-    defineNative(vm, "contains", native_contains);
-    defineNative(vm, "startswith", native_startswith);
-    defineNative(vm, "endswith", native_endswith);
+void register_string_globals(VM* pVM) {
+    defineNative(pVM, "upper", native_upper);
+    defineNative(pVM, "lower", native_lower);
+    defineNative(pVM, "trim", native_trim);
+    defineNative(pVM, "split", native_split);
+    defineNative(pVM, "replace", native_replace);
+    defineNative(pVM, "contains", native_contains);
+    defineNative(pVM, "startswith", native_startswith);
+    defineNative(pVM, "endswith", native_endswith);
     // substr is already registered in stdlib_core.c, but no harm re-registering or skipping.
     // stdlib_core.c handles substr separately for some reason.
 }
