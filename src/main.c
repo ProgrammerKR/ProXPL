@@ -365,13 +365,10 @@ static int dispatchPRM(int argc, const char* argv[]) {
             }
 
         } else if (strcmp(sub, "test") == 0) {
-            printf("Running tests for %s...\n", pname);
-            printf("Tests passed! (0 failures)\n");
+            prm_test(&m);
 
         } else if (strcmp(sub, "watch") == 0) {
-            printf("Starting watch mode for %s...\n", pname);
-            printf("Watching for file changes...\n");
-            printf("(Watch mode not fully implemented yet)\n");
+            prm_watch(&m);
         }
 
     // ---- Dependency Commands ----
