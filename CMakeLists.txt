@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(ProXPL VERSION 1.2.0 LANGUAGES C CXX)
+project(ProXPL VERSION 1.3.0 LANGUAGES C CXX)
 
 # Enable C and C++
 enable_language(C CXX)
@@ -9,9 +9,23 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (MSVC)
-  add_compile_options(/W4 /wd4244 /wd4245 /wd4267 /wd4100)
+  add_compile_options(/W4 /wd4244 /wd4245 /wd4267 /wd4100 /wd4200)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
   add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter)
+endif()
+
+# --- Build Configuration ---
+option(PROX_STATIC_BUILD "Build as a single static executable" ON)
+
+if(PROX_STATIC_BUILD)
+    add_definitions(-DPROX_STATIC)
+    if(MSVC)
+        # Set dynamic/static CRT for the whole project before targets are added
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        # Also add flags for older CMake versions or explicit control
+        add_compile_options($<$<CONFIG:Release>:/MT> $<$<CONFIG:Debug>:/MTd>)
+    endif()
 endif()
 
 # --- LLVM Configuration ---
@@ -183,9 +197,6 @@ list(REMOVE_ITEM LIB_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/instr_handlers_template.c"
 )
 
-# --- Build Configuration ---
-option(PROX_STATIC_BUILD "Build as a single static executable" ON)
-
 # Define the core library that all tools link against
 add_library(prox_core STATIC ${LIB_SOURCES})
 target_include_directories(prox_core PUBLIC include src)
@@ -199,14 +210,6 @@ if (LLVM_FOUND)
 endif()
 if (LIBFFI_FOUND)
     target_link_libraries(prox_core PUBLIC ${LIBFFI_LIBRARIES})
-endif()
-
-if(PROX_STATIC_BUILD)
-    add_definitions(-DPROX_STATIC)
-    if(MSVC)
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        add_compile_options($<$<CONFIG:Release>:/MT> $<$<CONFIG:Debug>:/MTd>)
-    endif()
 endif()
 
 # Main executable

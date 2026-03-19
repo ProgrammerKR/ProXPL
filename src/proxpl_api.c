@@ -49,30 +49,30 @@ static char* readFile(const char* path) {
     return buffer;
 }
 
-void proxpl_vm_init(VM *vm) {
+void proxpl_vm_init(VM *pvm) {
     // Standard CLOX uses a global VM instance, so we ignore the pointer for now
     // or assume 'vm' points to the global one.
-    initVM(vm); 
+    initVM(pvm); 
 }
 
-void proxpl_vm_free(VM *vm) {
-    freeVM(vm);
+void proxpl_vm_free(VM *pvm) {
+    freeVM(pvm);
 }
 
-InterpretResult proxpl_interpret_chunk(VM *vm, const Chunk *chunk) {
-    (void)vm; (void)chunk;
+InterpretResult proxpl_interpret_chunk(VM *pvm, const Chunk *chunk) {
+    (void)pvm; (void)chunk;
     // ERROR: The standard VM interprets Source Code strings, not raw Chunks.
     // To support this, you would need to expose the internal run() function.
     fprintf(stderr, "API Error: interpreting raw chunks is not supported in this version.\n");
     return INTERPRET_RUNTIME_ERROR;
 }
 
-InterpretResult proxpl_interpret_file(VM *vm, const char *path) {
+InterpretResult proxpl_interpret_file(VM *pvm, const char *path) {
     char* source = readFile(path);
     if (source == NULL) return INTERPRET_COMPILE_ERROR;
 
     // Pass the source string to interpret
-    InterpretResult result = interpret(vm, source);
+    InterpretResult result = interpret(pvm, source);
     
     free(source);
     return result;

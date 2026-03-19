@@ -72,14 +72,14 @@ void runtimeError(VM* pvm, const char* format, ...) {
   reportRuntimeError(pvm->source, line, message);
 
   for (int i = pvm->frameCount - 1; i >= 0; i--) {
-    CallFrame* frame = &pvm->frames[i];
-    ObjFunction* function = frame->closure->function;
-    size_t instruction = frame->ip - function->chunk.code - 1;
-    fprintf(stderr, "  [line %d] in ", function->chunk.lines[instruction]);
-    if (function->name == NULL) {
+    CallFrame* f = &pvm->frames[i];
+    ObjFunction* fn = f->closure->function;
+    size_t inst = f->ip - fn->chunk.code - 1;
+    fprintf(stderr, "  [line %d] in ", fn->chunk.lines[inst]);
+    if (fn->name == NULL) {
       fprintf(stderr, "script\n");
     } else {
-      fprintf(stderr, "%s()\n", function->name->chars);
+      fprintf(stderr, "%s()\n", fn->name->chars);
     }
   }
 
@@ -113,9 +113,9 @@ bool isFalsey(Value value) {
   return IS_NULL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static bool performTensorArithmetic(VM* vm, char op) {
-    Value bVal = peek(vm, 0);
-    Value aVal = peek(vm, 1);
+static bool performTensorArithmetic(VM* pvm, char op) {
+    Value bVal = peek(pvm, 0);
+    Value aVal = peek(pvm, 1);
     
     // Case 1: Tensor op Tensor
     if (IS_TENSOR(aVal) && IS_TENSOR(bVal)) {
@@ -124,23 +124,23 @@ static bool performTensorArithmetic(VM* vm, char op) {
         
         // Element-wise arithmetic requires matching size
         if (a->size != b->size) {
-            runtimeError(vm, "Tensor size mismatch: %d vs %d.", a->size, b->size);
+            runtimeError(pvm, "Tensor size mismatch: %d vs %d.", a->size, b->size);
             return true;
         }
         
         if (a->dimCount != b->dimCount) {
-             runtimeError(vm, "Tensor rank mismatch.");
+             runtimeError(pvm, "Tensor rank mismatch.");
              return true;
         }
         for (int i=0; i<a->dimCount; i++) {
              if (a->dims[i] != b->dims[i]) {
-                 runtimeError(vm, "Tensor dimension mismatch at axis %d: %d vs %d.", i, a->dims[i], b->dims[i]);
+                 runtimeError(pvm, "Tensor dimension mismatch at axis %d: %d vs %d.", i, a->dims[i], b->dims[i]);
                  return true;
              }
         }
         
         ObjTensor* res = newTensor(a->dimCount, a->dims, NULL);
-        push(vm, OBJ_VAL(res)); 
+        push(pvm, OBJ_VAL(res)); 
         
         for (int i = 0; i < a->size; i++) {
             double vA = a->data[i];
@@ -153,10 +153,10 @@ static bool performTensorArithmetic(VM* vm, char op) {
             }
         }
         
-        Value resVal = pop(vm);
-        pop(vm); // b
-        pop(vm); // a
-        push(vm, resVal);
+        Value resVal = pop(pvm);
+        pop(pvm); // b
+        pop(pvm); // a
+        push(pvm, resVal);
         return true;
     }
     
@@ -166,7 +166,7 @@ static bool performTensorArithmetic(VM* vm, char op) {
         double b = AS_NUMBER(bVal);
         
         ObjTensor* res = newTensor(a->dimCount, a->dims, NULL);
-        push(vm, OBJ_VAL(res));
+        push(pvm, OBJ_VAL(res));
         
         for (int i = 0; i < a->size; i++) {
             double vA = a->data[i];
@@ -177,8 +177,8 @@ static bool performTensorArithmetic(VM* vm, char op) {
                 case '/': res->data[i] = vA / b; break;
             }
         }
-        Value resVal = pop(vm);
-        pop(vm); pop(vm); push(vm, resVal);
+        Value resVal = pop(pvm);
+        pop(pvm); pop(pvm); push(pvm, resVal);
         return true;
     }
     
@@ -188,7 +188,7 @@ static bool performTensorArithmetic(VM* vm, char op) {
         ObjTensor* b = AS_TENSOR(bVal);
         
         ObjTensor* res = newTensor(b->dimCount, b->dims, NULL);
-        push(vm, OBJ_VAL(res));
+        push(pvm, OBJ_VAL(res));
         
         for (int i = 0; i < b->size; i++) {
             double vB = b->data[i];
@@ -199,8 +199,8 @@ static bool performTensorArithmetic(VM* vm, char op) {
                 case '/': res->data[i] = a / vB; break;
             }
         }
-        Value resVal = pop(vm);
-        pop(vm); pop(vm); push(vm, resVal);
+        Value resVal = pop(pvm);
+        pop(pvm); pop(pvm); push(pvm, resVal);
         return true;
     }
 
@@ -1730,7 +1730,7 @@ static InterpretResult run(VM* vm) {
         ObjTensor *tensor = newTensor(dimCount, dims, NULL);
         if (elementCount == 0 && totalSize > 0) {
              memset(tensor->data, 0, totalSize * sizeof(double));
-        } else if (elementCount == totalSize) {
+        } else if (elementCount == (uint32_t)totalSize) {
             // Pop elements (reverse order as they were pushed in order, stack top is last)
             for (int i = totalSize - 1; i >= 0; i--) {
                 Value val = pop(vm);

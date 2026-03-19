@@ -171,7 +171,6 @@ static int vm_execute_simple(const Chunk *chunk) {
         }
 
 #else
-dispatch_switch:
         switch (opcode) {
             case OP_NOP: break;
             case OP_CONSTANT: {

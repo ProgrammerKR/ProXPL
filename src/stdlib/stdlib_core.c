@@ -16,18 +16,29 @@
 #include "../include/memory.h"
 
 // Forward declarations for module creators
-ObjModule* create_std_io_module();
-ObjModule* create_std_fs_module();
-ObjModule* create_std_sys_module();
-ObjModule* create_std_core_module();
+extern ObjModule* create_std_io_module();
+extern ObjModule* create_std_fs_module();
+extern ObjModule* create_std_sys_module();
+extern ObjModule* create_std_core_module();
+extern ObjModule* create_std_math_module();
+extern ObjModule* create_std_str_module();
+extern ObjModule* create_std_time_module();
+extern ObjModule* create_std_json_module();
+extern ObjModule* create_std_os_module();
+extern ObjModule* create_std_hash_module();
+extern ObjModule* create_std_net_module();
+extern ObjModule* create_std_collections_module();
+extern ObjModule* create_std_reflect_module();
+extern ObjModule* create_std_gc_module();
 
 // Legacy
-void register_math_natives(VM* vm);
-void register_math_globals(VM* vm);
-void register_string_natives(VM* vm);
-void register_convert_natives(VM* vm);
-void register_system_natives(VM* vm);
-void register_io_globals(VM* vm);
+extern void register_math_natives(VM* vm);
+extern void register_math_globals(VM* vm);
+extern void register_string_natives(VM* vm);
+extern void register_string_globals(VM* vm);
+extern void register_convert_natives(VM* vm);
+extern void register_system_natives(VM* vm);
+extern void register_io_globals(VM* vm);
 
 // Exposed natives
 extern Value native_clock(int argCount, Value* args);
@@ -62,7 +73,7 @@ static Value native_push(int argCount, Value* args) {
         list->items = GROW_ARRAY(Value, list->items, oldCapacity, list->capacity);
     }
     list->items[list->count++] = item;
-    return item; // Return pushed item or nil? JS returns new length
+    return item; 
 }
 
 static Value native_pop(int argCount, Value* args) {
@@ -74,41 +85,14 @@ static Value native_pop(int argCount, Value* args) {
 }
 
 static Value native_substr(int argCount, Value* args) {
-    // DEBUG: Track substr calls
-    #ifdef DEBUG_SUBSTR
-    printf("[DEBUG_SUBSTR] Called with %d args\n", argCount);
-    if (argCount >= 1) {
-        printf("[DEBUG_SUBSTR] arg[0]: IS_OBJ=%d IS_STRING=%d\n", 
-               IS_OBJ(args[0]), IS_STRING(args[0]));
-        if (IS_OBJ(args[0])) {
-            Obj* obj = AS_OBJ(args[0]);
-            printf("[DEBUG_SUBSTR] arg[0] obj type=%d ptr=%p\n", obj->type, (void*)obj);
-            if (IS_STRING(args[0])) {
-                ObjString* str = AS_STRING(args[0]);
-                printf("[DEBUG_SUBSTR] arg[0] string: len=%d ptr=%p hash=%u\n", 
-                       str->length, (void*)str, str->hash);
-            }
-        }
-    }
-    #endif
-    
     if (argCount < 3) return NIL_VAL;
     if (!IS_STRING(args[0]) || !IS_NUMBER(args[1]) || !IS_NUMBER(args[2])) {
-        #ifdef DEBUG_SUBSTR
-        printf("[DEBUG_SUBSTR] Type check failed: IS_STRING=%d IS_NUM[1]=%d IS_NUM[2]=%d\n",
-               IS_STRING(args[0]), IS_NUMBER(args[1]), IS_NUMBER(args[2]));
-        #endif
         return NIL_VAL;
     }
     
     ObjString* source = AS_STRING(args[0]);
     int start = (int)AS_NUMBER(args[1]);
     int length = (int)AS_NUMBER(args[2]);
-    
-    #ifdef DEBUG_SUBSTR
-    printf("[DEBUG_SUBSTR] source string: len=%d start=%d length=%d\n", 
-           source->length, start, length);
-    #endif
     
     if (start < 0 || start >= source->length) {
         return OBJ_VAL(copyString("", 0));
@@ -117,10 +101,6 @@ static Value native_substr(int argCount, Value* args) {
     if (start + length > source->length) length = source->length - start;
     
     ObjString* result = copyString(source->chars + start, length);
-    #ifdef DEBUG_SUBSTR
-    printf("[DEBUG_SUBSTR] result string: len=%d ptr=%p\n", result->length, (void*)result);
-    #endif
-    
     return OBJ_VAL(result);
 }
 
@@ -142,62 +122,42 @@ void registerStdLib(VM* vm) {
     registerModule(vm, "std.native.sys", sysMod);
     registerModule(vm, "std.sys", sysMod);
     
-    // Math
-    extern ObjModule* create_std_math_module();
     ObjModule* mathMod = create_std_math_module();
     registerModule(vm, "std.native.math", mathMod);
     registerModule(vm, "std.math", mathMod);
 
-    // String
-    extern ObjModule* create_std_str_module();
     ObjModule* strMod = create_std_str_module();
     registerModule(vm, "std.native.str", strMod);
     registerModule(vm, "std.str", strMod);
 
-    // Time
-    extern ObjModule* create_std_time_module();
     ObjModule* timeMod = create_std_time_module();
     registerModule(vm, "std.native.time", timeMod);
     registerModule(vm, "std.time", timeMod);
 
-    // JSON
-    extern ObjModule* create_std_json_module();
     ObjModule* jsonMod = create_std_json_module();
     registerModule(vm, "std.native.json", jsonMod);
     registerModule(vm, "std.json", jsonMod);
 
-    // OS
-    extern ObjModule* create_std_os_module();
     ObjModule* osMod = create_std_os_module();
     registerModule(vm, "std.native.os", osMod);
     registerModule(vm, "std.os", osMod);
 
-    // Hash
-    extern ObjModule* create_std_hash_module();
     ObjModule* hashMod = create_std_hash_module();
     registerModule(vm, "std.native.hash", hashMod);
     registerModule(vm, "std.hash", hashMod);
 
-    // Net
-    extern ObjModule* create_std_net_module();
     ObjModule* netMod = create_std_net_module();
     registerModule(vm, "std.native.net", netMod);
     registerModule(vm, "std.net", netMod);
 
-    // Collections
-    extern ObjModule* create_std_collections_module();
     ObjModule* colMod = create_std_collections_module();
     registerModule(vm, "std.native.collections", colMod);
     registerModule(vm, "std.collections", colMod);
 
-    // Reflect
-    extern ObjModule* create_std_reflect_module();
     ObjModule* reflectMod = create_std_reflect_module();
     registerModule(vm, "std.native.reflect", reflectMod);
     registerModule(vm, "std.reflect", reflectMod);
 
-    // std.core creator is usually registered as std.core
-    extern ObjModule* create_std_core_module();
     registerModule(vm, "std.core", create_std_core_module());
 
     // Legacy
@@ -210,7 +170,6 @@ void registerStdLib(VM* vm) {
     push(vm, OBJ_VAL(stdMod));
     
     // Bind sub-modules to 'std'
-    // std.io
     Value ioVal;
     ObjString* ioKey = copyString("std.native.io", 13);
     push(vm, OBJ_VAL(ioKey));
@@ -218,11 +177,10 @@ void registerStdLib(VM* vm) {
         ObjString* field = copyString("io", 2);
         push(vm, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, ioVal);
-        pop(vm); // field
+        pop(vm);
     }
-    pop(vm); // ioKey
+    pop(vm);
     
-    // std.fs
     Value fsVal;
     ObjString* fsKey = copyString("std.native.fs", 13);
     push(vm, OBJ_VAL(fsKey));
@@ -234,7 +192,6 @@ void registerStdLib(VM* vm) {
     }
     pop(vm);
 
-    // std.sys
     Value sysVal;
     ObjString* sysKey = copyString("std.native.sys", 14);
     push(vm, OBJ_VAL(sysKey));
@@ -244,15 +201,12 @@ void registerStdLib(VM* vm) {
         tableSet(&stdMod->exports, field, sysVal);
         pop(vm);
     }
-    pop(vm); // sysKey
+    pop(vm);
 
-    // GC
-    extern ObjModule* create_std_gc_module();
     ObjModule* gcMod = create_std_gc_module();
     registerModule(vm, "std.native.gc", gcMod);
     registerModule(vm, "std.gc", gcMod);
 
-    // std.gc (bind to main std object)
     Value gcVal;
     ObjString* gcKey = copyString("std.native.gc", 13);
     push(vm, OBJ_VAL(gcKey));
@@ -260,11 +214,10 @@ void registerStdLib(VM* vm) {
         ObjString* field = copyString("gc", 2);
         push(vm, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, gcVal);
-        pop(vm); // field
+        pop(vm);
     }
-    pop(vm); // gcKey
+    pop(vm);
 
-    // std.hash
     Value hashVal;
     ObjString* hashKey = copyString("std.native.hash", 15);
     push(vm, OBJ_VAL(hashKey));
@@ -272,11 +225,10 @@ void registerStdLib(VM* vm) {
         ObjString* field = copyString("hash", 4);
         push(vm, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, hashVal);
-        pop(vm); // field
+        pop(vm);
     }
-    pop(vm); // hashKey
+    pop(vm);
     
-    // std.core (bind to main std object)
     Value coreVal;
     ObjString* coreKey = copyString("std.core", 8);
     push(vm, OBJ_VAL(coreKey));
@@ -284,36 +236,27 @@ void registerStdLib(VM* vm) {
         ObjString* field = copyString("core", 4);
         push(vm, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, coreVal);
-        pop(vm); // field
+        pop(vm);
     }
-    pop(vm); // coreKey
+    pop(vm);
 
-    // Register 'std' as global
     tableSet(&vm->globals, stdName, OBJ_VAL(stdMod));
-    pop(vm); // stdMod
-    pop(vm); // stdName
+    pop(vm);
+    pop(vm);
 
-    // Register simple globals for convenience
     defineNative(vm, "clock", native_clock);
     defineNative(vm, "len", native_len);
     defineNative(vm, "list_push", native_push);
-    defineNative(vm, "push", native_push); // Alias for benchmarks
+    defineNative(vm, "push", native_push); 
     defineNative(vm, "limit_pop", native_pop); 
     defineNative(vm, "list_pop", native_pop);
-    defineNative(vm, "pop", native_pop);   // Alias for benchmarks
+    defineNative(vm, "pop", native_pop);   
     defineNative(vm, "substr", native_substr);
     
-    // Config Parser Support
     extern Value nativeLoadConfig(int argCount, Value *args);
     defineNative(vm, "loadConfig", nativeLoadConfig);
 
-    // Register math globals
     register_math_globals(vm);
-    
-    // Register String globals
-    extern void register_string_globals(VM* vm);
     register_string_globals(vm);
-    
-    // Register I/O globals
     register_io_globals(vm);
 }

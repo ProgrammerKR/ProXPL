@@ -377,7 +377,7 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
 
         case EXPR_INDEX: {
             // Array/Matrix indexing returns tainted values (IFC)
-            TypeInfo target = checkExpr(checker, expr->as.index.target);
+            checkExpr(checker, expr->as.index.target);
             TypeInfo index = checkExpr(checker, expr->as.index.index);
             
             // Index should be numeric

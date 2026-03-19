@@ -155,7 +155,6 @@ int vm_execute_optimized(const Chunk *chunk) {
         do_HALT: { return 0; }
 
 #else
-dispatch_switch:
         switch (op) {
             case OP_CONSTANT: {
                 uint8_t idx = chunk->code[ip++];

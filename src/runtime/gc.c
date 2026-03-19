@@ -77,12 +77,12 @@ static void reset_nursery() {
 // Access the global VM instance
 extern VM vm;
 
-void initGC(VM* vm) {
-    vm->grayCount = 0;
-    vm->grayCapacity = 0;
-    vm->grayStack = NULL;
-    vm->bytesAllocated = 0;
-    vm->nextGC = 1024 * 1024;
+void initGC(VM* pvm) {
+    pvm->grayCount = 0;
+    pvm->grayCapacity = 0;
+    pvm->grayStack = NULL;
+    pvm->bytesAllocated = 0;
+    pvm->nextGC = 1024 * 1024;
     
     initNursery();
 }

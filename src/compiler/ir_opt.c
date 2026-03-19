@@ -205,7 +205,7 @@ void constantFold(IRFunction* func) {
             } else if (instr->opcode == IR_OP_ADD || instr->opcode == IR_OP_SUB || 
                        instr->opcode == IR_OP_MUL || instr->opcode == IR_OP_DIV) {
                 
-                Value left, right;
+                Value left = NIL_VAL, right = NIL_VAL;
                 bool c1 = false, c2 = false;
 
                 if (instr->operands[0].type == OPERAND_CONST) {
@@ -225,7 +225,7 @@ void constantFold(IRFunction* func) {
                 }
 
                 if (c1 && c2) {
-                    Value v_result;
+                    Value v_result = NIL_VAL;
                     bool folded = false;
                     if (IS_NUMBER(left) && IS_NUMBER(right)) {
                         double l = AS_NUMBER(left);
