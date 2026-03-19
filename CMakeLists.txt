@@ -69,6 +69,34 @@ endif()
 if(WIN32)
     # Try to find LLVM, but don't require it on Windows
     find_package(LLVM CONFIG QUIET)
+    
+    # Fallback for Windows if config not found (common with official installers)
+    if(NOT LLVM_FOUND)
+        message(STATUS "LLVM Config not found. Attempting manual detection via llvm-config...")
+        find_program(LLVM_CONFIG_EXE NAMES llvm-config llvm-config.exe
+            HINTS 
+                "${LLVM_ROOT}/bin" 
+                "$ENV{LLVM_ROOT}/bin"
+                "C:/LLVM/bin"
+                "C:/Program Files/LLVM/bin"
+        )
+        
+        if(LLVM_CONFIG_EXE)
+            message(STATUS "Found llvm-config at: ${LLVM_CONFIG_EXE}")
+            execute_process(COMMAND ${LLVM_CONFIG_EXE} --includedir OUTPUT_VARIABLE LLVM_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
+            execute_process(COMMAND ${LLVM_CONFIG_EXE} --libdir OUTPUT_VARIABLE LLVM_LIBRARY_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
+            execute_process(COMMAND ${LLVM_CONFIG_EXE} --version OUTPUT_VARIABLE LLVM_PACKAGE_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+            
+            # Convert to CMake paths
+            file(TO_CMAKE_PATH "${LLVM_INCLUDE_DIRS}" LLVM_INCLUDE_DIRS)
+            file(TO_CMAKE_PATH "${LLVM_LIBRARY_DIRS}" LLVM_LIBRARY_DIRS)
+            
+            set(LLVM_FOUND TRUE)
+            set(LLVM_VERSION ${LLVM_PACKAGE_VERSION})
+            # Note: llvm_map_components_to_libnames will still fail if not found.
+            # We'll handle that below by providing a simplified list if needed.
+        endif()
+    endif()
 else()
     # LLVM is required on Unix platforms
     find_package(LLVM CONFIG REQUIRED)
@@ -114,7 +142,18 @@ if(LLVM_FOUND)
     include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
     link_directories(${LLVM_LIBRARY_DIRS})
-    llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
+    
+    if(COMMAND llvm_map_components_to_libnames)
+        llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
+    elseif(LLVM_CONFIG_EXE)
+        # Fallback for when LLVMConfig.cmake is missing but llvm-config works
+        execute_process(COMMAND ${LLVM_CONFIG_EXE} --libnames core support executionengine native ipo analysis transformutils bitwriter 
+            OUTPUT_VARIABLE llvm_libs OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REPLACE " " ";" llvm_libs "${llvm_libs}")
+    else()
+        # Final fallback: just try common library names
+        set(llvm_libs LLVMCore LLVMSupport LLVMExecutionEngine LLVMAnalysis LLVMTarget)
+    endif()
 endif()
 
 # Export symbols for Windows DLL

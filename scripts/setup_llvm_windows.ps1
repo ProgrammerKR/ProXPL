@@ -65,6 +65,7 @@ function Resolve-LLVMLayout {
                     "share\cmake\llvm",
                     "share\cmake"
                 )
+                $bestCMakeDir = $null
                 foreach ($suffix in $cmakeSuffixes) {
                     $cmakeDir = Join-Path $root $suffix
                     if (Test-Path $cmakeDir) {
@@ -72,11 +73,14 @@ function Resolve-LLVMLayout {
                         if (Test-Path (Join-Path $cmakeDir "LLVMConfig.cmake")) {
                             return @{ Root = $root; CMakeDir = $cmakeDir; BinDir = $binDir }
                         }
-                        if (Test-Path (Join-Path $cmakeDir "llvm-config.cmake")) {
-                            return @{ Root = $root; CMakeDir = $cmakeDir; BinDir = $binDir }
-                        }
+                        # Store the first valid-looking cmake dir as a fallback
+                        if (-not $bestCMakeDir) { $bestCMakeDir = $cmakeDir }
                     }
                 }
+                # Partial success: binaries found but no LLVMConfig.cmake
+                # We return it anyway so LLVM_ROOT can be exported
+                Write-Host "Found LLVM binaries at $root but no LLVMConfig.cmake found."
+                return @{ Root = $root; CMakeDir = $bestCMakeDir; BinDir = $binDir }
             }
         }
     }
@@ -165,7 +169,7 @@ if ($layout) {
     Write-Host "Resolved BinDir: $binDir"
 
     if ($env:GITHUB_ENV) {
-        Add-Content $env:GITHUB_ENV "LLVM_DIR=$cmakeDir"
+        if ($cmakeDir) { Add-Content $env:GITHUB_ENV "LLVM_DIR=$cmakeDir" }
         Add-Content $env:GITHUB_ENV "LLVM_ROOT=$llvmRoot"
         Add-Content $env:GITHUB_ENV "CMAKE_PREFIX_PATH=$llvmRoot"
     }
