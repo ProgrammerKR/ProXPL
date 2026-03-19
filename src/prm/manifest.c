@@ -128,5 +128,76 @@ void prm_init(const char* name) {
         fclose(mainFile);
     }
     
+    // Initialize storage (lockfile and cache)
+    prm_init_cache();
+    Manifest dummy;
+    strcpy(dummy.name, name);
+    strcpy(dummy.version, "0.1.0");
+    prm_save_lockfile(&dummy);
+
     printf("Created new project: %s\n", name);
+}
+
+void prm_save_lockfile(const Manifest* manifest) {
+    FILE* file = fopen("project-lock.pxcf", "w");
+    if (!file) return;
+
+    fprintf(file, "# ProXPL Project Lockfile - DO NOT EDIT MANUALLY\n");
+    fprintf(file, "lock_version: \"1.0.0\"\n");
+    fprintf(file, "project: \"%s\"\n", manifest->name);
+    fprintf(file, "version: \"%s\"\n\n", manifest->version);
+    
+    fprintf(file, "dependencies {\n");
+    fprintf(file, "    # Resolved hashes will go here\n");
+    fprintf(file, "}\n");
+    
+    fclose(file);
+}
+
+void prm_init_cache() {
+    #ifdef _WIN32
+        _mkdir(".pxcache");
+    #else
+        mkdir(".pxcache", 0777);
+    #endif
+    
+    FILE* readme = fopen(".pxcache/README.txt", "w");
+    if (readme) {
+        fprintf(readme, "ProXPL Compiler Cache. Safe to delete.\n");
+        fclose(readme);
+    }
+}
+
+bool prm_is_cached(const char* artifactName) {
+    char path[256];
+    snprintf(path, sizeof(path), ".pxcache/%s", artifactName);
+    FILE* f = fopen(path, "r");
+    if (f) {
+        fclose(f);
+        return true;
+    }
+    return false;
+}
+
+bool prm_load_manifest_auto(Manifest* manifest, const char* hintName) {
+    // 1. Try current directory
+    if (prm_load_manifest(manifest)) return true;
+
+    // 2. Try hint directory (e.g. if user just did 'prm init project' and is still in parent)
+    if (hintName) {
+        char path[512];
+        snprintf(path, sizeof(path), "%s/project.pxcf", hintName);
+        FILE* f = fopen(path, "r");
+        if (f) {
+            fclose(f);
+            if (CHDIR(hintName) == 0) {
+                return prm_load_manifest(manifest);
+            }
+        }
+    }
+
+    // 3. (Optional) Walk subdirectories to find exactly one project.pxcf
+    // For now, let's keep it simple and just do the hint or current.
+    
+    return false;
 }

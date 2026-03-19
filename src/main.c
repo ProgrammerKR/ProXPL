@@ -336,60 +336,21 @@ static int dispatchPRM(int argc, const char* argv[]) {
 
     } else if (strcmp(sub, "run") == 0 || strcmp(sub, "build") == 0 ||
                strcmp(sub, "test") == 0 || strcmp(sub, "watch") == 0) {
-        // Load project.pxcf
-        FILE* mf = fopen("project.pxcf", "r");
-        if (!mf) {
-            fprintf(stderr, "Error: No project.pxcf found in the current directory.\n");
-            fprintf(stderr, "Run 'prm init <name>' to create a new project.\n");
+        // Unified manifest loading
+        Manifest m;
+        const char* hint = (argc >= 3 && strcmp(argv[2], "web") != 0) ? argv[2] : NULL;
+        
+        if (!prm_load_manifest_auto(&m, hint)) {
+            fprintf(stderr, "Error: No project.pxcf found in the current directory or specified path.\n");
+            fprintf(stderr, "Run 'prm init <name>' to create a new project, or 'cd' into your project folder.\n");
             exit(1);
         }
-        char pname[64]      = "untitled";
-        char pversion[32]   = "0.1.0";
-        char pentry[1024]   = "src/main.prox";
-        char mline[512];
-        while (fgets(mline, sizeof(mline), mf)) {
-            char key[64], val[256];
-            char* nl = strchr(mline, '\n'); if (nl) *nl = '\0';
-            if (mline[0] == '[' || mline[0] == '#' || mline[0] == '\0') continue;
-            if (sscanf(mline, " %63[^ =] = \"%255[^\"]\"", key, val) == 2) {
-                if (strcmp(key, "name")    == 0) { strncpy(pname,    val, 63);    pname[63]    = '\0'; }
-                if (strcmp(key, "version") == 0) { strncpy(pversion, val, 31);    pversion[31] = '\0'; }
-                if (strcmp(key, "entry")   == 0) { strncpy(pentry,   val, 1023);  pentry[1023] = '\0'; }
-            }
-        }
-        fclose(mf);
 
         if (strcmp(sub, "run") == 0) {
-            printf("[PRM] Running project: %s v%s\n", pname, pversion);
-            printf("[PRM] Executing: %s %s\n", argv[0], pentry);
-            
-            int code = -1;
-            #ifdef _WIN32
-            code = _spawnl(_P_WAIT, argv[0], argv[0], pentry, NULL);
-            #else
-            pid_t pid = fork();
-            if (pid == 0) {
-                execl(argv[0], argv[0], pentry, (char*)NULL);
-                exit(1);
-            } else if (pid > 0) {
-                int status;
-                waitpid(pid, &status, 0);
-                if (WIFEXITED(status)) code = WEXITSTATUS(status);
-            }
-            #endif
-            
-            if (code != 0) printf("[PRM] Process exited with code %d\n", code);
+            prm_run(&m);
 
         } else if (strcmp(sub, "build") == 0) {
             if (argc >= 3 && strcmp(argv[2], "web") == 0) {
-                Manifest m;
-                // Try to load manifest, if fails, use defaults
-                if (!prm_load_manifest(&m)) {
-                    strcpy(m.name, "untitled");
-                    strcpy(m.version, "0.1.0");
-                    strcpy(m.entryPoint, (argc >= 4 && argv[3][0] != '-') ? argv[3] : "src/main.prox");
-                }
-                
                 const char* outDir = NULL;
                 for (int i = 2; i < argc; i++) {
                     if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
@@ -397,30 +358,10 @@ static int dispatchPRM(int argc, const char* argv[]) {
                         break;
                     }
                 }
-                
                 prm_build_web(&m, outDir);
             } else {
-                int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
-                printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
-                printf("Compile-only mode not fully supported yet, running instead...\n");
-                printf("[PRM] Executing: %s %s\n", argv[0], pentry);
-                
-                int res = -1;
-                #ifdef _WIN32
-                res = _spawnl(_P_WAIT, argv[0], argv[0], pentry, NULL);
-                #else
-                pid_t pid = fork();
-                if (pid == 0) {
-                    execl(argv[0], argv[0], pentry, (char*)NULL);
-                    exit(1);
-                } else if (pid > 0) {
-                    int status;
-                    waitpid(pid, &status, 0);
-                    if (WIFEXITED(status)) res = WEXITSTATUS(status);
-                }
-                #endif
-                
-                (void)res;
+                bool releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+                prm_build(&m, releaseMode);
             }
 
         } else if (strcmp(sub, "test") == 0) {

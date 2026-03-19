@@ -75,4 +75,10 @@ void prm_doc();
 void prm_exec(const char* command);
 void prm_why(const char* packageName);
 
+// --- Extended Storage & Manifest ---
+bool prm_load_manifest_auto(Manifest* manifest, const char* hintName);
+void prm_save_lockfile(const Manifest* manifest);
+void prm_init_cache();
+bool prm_is_cached(const char* artifactName);
+
 #endif
