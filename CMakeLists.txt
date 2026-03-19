@@ -93,8 +93,6 @@ if(WIN32)
             
             set(LLVM_FOUND TRUE)
             set(LLVM_VERSION ${LLVM_PACKAGE_VERSION})
-            # Note: llvm_map_components_to_libnames will still fail if not found.
-            # We'll handle that below by providing a simplified list if needed.
         endif()
     endif()
 else()
@@ -109,11 +107,15 @@ if(NOT LLVM_FOUND)
         message(FATAL_ERROR "LLVM not found! Please install LLVM and set LLVM_DIR.")
     endif()
 else()
+    # Ensure LLVM_INCLUDE_DIRS is set (sometimes it's LLVM_INCLUDE_DIR)
+    if(NOT LLVM_INCLUDE_DIRS AND LLVM_INCLUDE_DIR)
+        set(LLVM_INCLUDE_DIRS ${LLVM_INCLUDE_DIR})
+    endif()
+
     message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
     message(STATUS "LLVM Include Dirs: ${LLVM_INCLUDE_DIRS}")
     message(STATUS "LLVM Library Dirs: ${LLVM_LIBRARY_DIRS}")
     message(STATUS "LLVM Definitions: ${LLVM_DEFINITIONS}")
-    add_definitions(-DUSE_LLVM_BACKEND)
 endif()
 
 # --- LibFFI Configuration ---
@@ -139,10 +141,6 @@ else()
 endif()
 
 if(LLVM_FOUND)
-    include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
-    add_definitions(${LLVM_DEFINITIONS})
-    link_directories(${LLVM_LIBRARY_DIRS})
-    
     if(COMMAND llvm_map_components_to_libnames)
         llvm_map_components_to_libnames(llvm_libs core support executionengine native ipo analysis transformutils bitwriter)
     elseif(LLVM_CONFIG_EXE)
@@ -164,10 +162,18 @@ include_directories(include)
 include_directories(src)
 
 # List of all C/C++ source files for the library, excluding those with a 'main' function
-file(GLOB_RECURSE LIB_SOURCES 
-    "src/*.c" 
-    "src/*.cpp"
-)
+file(GLOB_RECURSE LIB_SOURCES "src/*.c")
+file(GLOB_RECURSE LIB_SOURCES_CPP "src/*.cpp")
+
+# Handle LLVM Backend Source: Only include if LLVM was found
+if(LLVM_FOUND)
+    message(STATUS "LLVM backend enabled - including backend_llvm.cpp")
+else()
+    message(STATUS "LLVM backend disabled - excluding backend_llvm.cpp")
+    list(REMOVE_ITEM LIB_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/backend_llvm.cpp")
+endif()
+
+list(APPEND LIB_SOURCES ${LIB_SOURCES_CPP})
 
 # Explicitly exclude files that contain a 'main()' function or are specific VM implementations
 list(REMOVE_ITEM LIB_SOURCES 
@@ -185,6 +191,10 @@ add_library(prox_core STATIC ${LIB_SOURCES})
 target_include_directories(prox_core PUBLIC include src)
 
 if (LLVM_FOUND)
+    target_include_directories(prox_core PRIVATE ${LLVM_INCLUDE_DIRS})
+    target_compile_definitions(prox_core PRIVATE USE_LLVM_BACKEND)
+    # Apply LLVM compile definitions globally as some headers might need them
+    add_definitions(${LLVM_DEFINITIONS})
     target_link_libraries(prox_core PUBLIC ${llvm_libs})
 endif()
 if (LIBFFI_FOUND)

@@ -1,3 +1,5 @@
+#ifdef USE_LLVM_BACKEND
+
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -10,6 +12,8 @@
 #include <memory>
 #include "../../include/backend_llvm.h"
 #include "../../include/object.h"
+
+// ... [rest of the file as before]
 
 // Do NOT use 'using namespace llvm;' due to clash with our 'Value' type.
 
@@ -527,3 +531,4 @@ extern "C" void emitLLVM(IRModule* module) {
     emitter.emitModule(module);
 }
 
+#endif // USE_LLVM_BACKEND
