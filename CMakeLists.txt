@@ -31,7 +31,7 @@ if(WIN32)
         set(LLVM_ROOT_HINTS
             "$ENV{LLVM_ROOT}"
             "$ENV{ProgramFiles}/LLVM"
-            "$ENV{ProgramFiles(x86)}/LLVM"
+            "$ENV{ProgramFiles\(x86\)}/LLVM"
             "C:/Program Files/LLVM"
             "C:/Program Files (x86)/LLVM"
             "C:/ProgramData/chocolatey/lib/llvm/tools/llvm"
