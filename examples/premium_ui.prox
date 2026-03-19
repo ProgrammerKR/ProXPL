@@ -51,24 +51,31 @@ App ProfessionalDashboard {
                 }
             }
 
-            // --- Glassmorphic Stat Cards ---
-            Container(style: LAYOUT_GRID + " gap-8") {
-                Container(style: GLASS_CARD + " " + ANIM_FADE_IN) {
-                    Text(style: STAT_LABEL) { "Annual Revenue" }
-                    Text(style: STAT_VALUE) { revenue }
-                    Text(style: "color: " + COLOR_SECONDARY + " font-bold") { "↑ 24% Improvement" }
+            // --- Glassmorphic Stat Cards (v2) ---
+            Container(style: BENTO_GRID) {
+                Container(style: GLASS_V2_DARK + " " + BENTO_ITEM_W2 + " " + BENTO_ITEM_H2 + " " + ANIM_FADE_IN) {
+                    Text(style: STAT_LABEL) { "Total Ecosystem Revenue" }
+                    Text(style: STAT_VALUE + " font-black") { revenue }
+                    Text(style: "color: " + COLOR_SUCCESS + " font-bold") { "↑ 32% Year-to-Date" }
+                    Text(style: "margin-top: 1rem; opacity: 0.7") { "Projected growth based on ProXPL adoption rates." }
                 }
                 
-                Container(style: GLASS_CARD + " " + ANIM_FADE_IN + " animation-delay: 0.1s") {
-                    Text(style: STAT_LABEL) { "Active Sessions" }
-                    Text(style: STAT_VALUE) { "42.8k" }
+                Container(style: GLASS_V2_PURPLE + " " + ANIM_FADE_IN + " animation-delay: 0.1s") {
+                    Text(style: STAT_LABEL) { "Active Nodes" }
+                    Text(style: STAT_VALUE) { "1,248" }
                     Text(style: BADGE_HOT) { "LIVE" }
+                }
+                
+                Container(style: GLASS_V2_LIGHT + " color: #1e293b; " + ANIM_FADE_IN + " animation-delay: 0.2s") {
+                    Text(style: STAT_LABEL + " color: #64748b") { "System Health" }
+                    Text(style: STAT_VALUE) { "99.9%" }
+                    Text(style: BADGE_SUCCESS) { "STABLE" }
                 }
             }
 
             // --- Neumorphic Interactive Section ---
             Container(style: "margin-top: 4rem") {
-                Text(style: TEXT_2XL + " font-bold margin-bottom: 2rem") { "System Controls" }
+                Text(style: TEXT_2XL + " font-bold margin-bottom: 2rem") { "Core System Controls" }
                 Container(style: NEU_BASE + " p-10 " + LAYOUT_ROW + " gap-8") {
                     Button(style: NEU_BTN) { "Sync Cloud" }
                     Button(style: NEU_BTN) { "Optimize JS" }

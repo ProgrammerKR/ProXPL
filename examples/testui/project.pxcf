@@ -1,0 +1,29 @@
+# ProX Project Configuration
+
+project {
+    name: "testui"
+    version: "0.1.0"
+    author: "Your Name <you@example.com>"
+    license: "MIT"
+}
+
+compiler {
+    optimize: true
+    debug: false
+    target: "native"
+}
+
+paths {
+    src: "./src"
+    build: "./build"
+    entry: "src/main.prox"
+}
+
+dependencies {
+    # http: "1.2.0"
+}
+
+runtime {
+    threads: 8
+    memory_limit: "1GB"
+}

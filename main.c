@@ -334,22 +334,41 @@ static int dispatchPRM(int argc, const char* argv[]) {
             if (code != 0) printf("[PRM] Process exited with code %d\n", code);
 
         } else if (strcmp(sub, "build") == 0) {
-            int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
-            printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
-            printf("Compile-only mode not fully supported yet, running instead...\n");
-            printf("[PRM] Executing: proxpl %s\n", pentry);
-            #ifdef _WIN32
-            _spawnlp(_P_WAIT, "proxpl", "proxpl", pentry, NULL);
-            #else
-            pid_t pid = fork();
-            if (pid == 0) {
-                execlp("proxpl", "proxpl", pentry, (char*)NULL);
-                exit(1);
-            } else if (pid > 0) {
-                int status;
-                waitpid(pid, &status, 0);
+            if (argc >= 3 && strcmp(argv[2], "web") == 0) {
+                printf("[PRM] Building Web App for project: %s v%s\n", pname, pversion);
+                // Implementation would call prm_build_web if linked correctly
+                // For now, we update the logic to handle the web subcommand
+                printf("[PRM] Web build sequence initiated for %s...\n", pentry);
+                #ifdef _WIN32
+                _spawnlp(_P_WAIT, "proxpl", "proxpl", "build", "web", pentry, NULL);
+                #else
+                pid_t pid = fork();
+                if (pid == 0) {
+                    execlp("proxpl", "proxpl", "build", "web", pentry, (char*)NULL);
+                    exit(1);
+                } else if (pid > 0) {
+                    int status;
+                    waitpid(pid, &status, 0);
+                }
+                #endif
+            } else {
+                int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+                printf("[PRM] Building project: %s v%s%s\n", pname, pversion, releaseMode ? " (release)" : "");
+                printf("Compile-only mode not fully supported yet, running instead...\n");
+                printf("[PRM] Executing: proxpl %s\n", pentry);
+                #ifdef _WIN32
+                _spawnlp(_P_WAIT, "proxpl", "proxpl", pentry, NULL);
+                #else
+                pid_t pid = fork();
+                if (pid == 0) {
+                    execlp("proxpl", "proxpl", pentry, (char*)NULL);
+                    exit(1);
+                } else if (pid > 0) {
+                    int status;
+                    waitpid(pid, &status, 0);
+                }
+                #endif
             }
-            #endif
 
         } else if (strcmp(sub, "test") == 0) {
             printf("Running tests for %s...\n", pname);

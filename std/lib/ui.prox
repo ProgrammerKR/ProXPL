@@ -63,6 +63,13 @@ const GRADIENT_NIGHT   = "linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #2424
 const GRADIENT_MINT    = "linear-gradient(135deg, #84cc16 0%, #14b8a6 100%)";
 const GRADIENT_CANDY   = "linear-gradient(135deg, #ec4899 0%, #f97316 100%)";
 
+// Premium Gradients v2
+const GRADIENT_VIOLET_DREAM = "linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)";
+const GRADIENT_CYBER_PUNK   = "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)";
+const GRADIENT_FOREST_ZEN   = "linear-gradient(135deg, #134e4a 0%, #065f46 100%)";
+const GRADIENT_ROSE_GOLD    = "linear-gradient(135deg, #fb7185 0%, #e11d48 100%)";
+const GRADIENT_DEEP_SPACE   = "linear-gradient(135deg, #000000 0%, #434343 100%)";
+
 // ===================================================
 //  SECTION 3: TYPOGRAPHY
 // ===================================================
@@ -222,6 +229,14 @@ const GRID_4_COL     = "display: grid; grid-template-columns: repeat(4, 1fr); ga
 const CENTER_FULL    = "display: flex; justify-content: center; align-items: center; min-height: 100vh; background: " + COLOR_LIGHT;
 const GRID_DASHBOARD = "display: grid; grid-template-columns: 250px 1fr; min-height: 100vh";
 
+// Bento Grid Utilities
+const BENTO_GRID     = "display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(150px, auto); gap: 1.5rem";
+const BENTO_ITEM_W2  = "grid-column: span 2";
+const BENTO_ITEM_W3  = "grid-column: span 3";
+const BENTO_ITEM_W4  = "grid-column: span 4";
+const BENTO_ITEM_H2  = "grid-row: span 2";
+const BENTO_ITEM_H3  = "grid-row: span 3";
+
 // ===================================================
 //  SECTION 8: BUTTONS
 // ===================================================
@@ -279,6 +294,11 @@ const GLASS_BASE   = "backdrop-filter: blur(16px) saturate(180%); background: rg
 const GLASS_DARK   = "backdrop-filter: blur(16px) saturate(180%); background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.3); color: #fff";
 const GLASS_CARD   = GLASS_BASE + "; border-radius: 1.5rem; padding: 2rem; transition: all 0.3s ease";
 const GLASS_BLUE   = "backdrop-filter: blur(16px); background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); border-radius: 1rem; padding: 1.5rem";
+
+// Glassmorphism v2 (Premium)
+const GLASS_V2_LIGHT = "backdrop-filter: blur(24px) saturate(200%); background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15)";
+const GLASS_V2_DARK  = "backdrop-filter: blur(24px) saturate(200%); background: rgba(17, 24, 39, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45)";
+const GLASS_V2_PURPLE = "backdrop-filter: blur(20px); background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.3); box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.2)";
 
 // Neumorphism
 const NEU_BASE     = "background: #e0e5ec; border-radius: 3rem; " + SHADOW_NEUMORPH_OUT;
@@ -401,6 +421,14 @@ const TRANSITION_FAST   = "transition: all 0.15s ease-in-out";
 const TRANSITION_NORMAL = "transition: all 0.3s ease-in-out";
 const TRANSITION_SLOW   = "transition: all 0.5s ease-in-out";
 const TRANSITION_SPRING = "transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+// Extra Components
+const ACCORDION_ITEM  = "border-bottom: 1px solid " + COLOR_BORDER + "; overflow: hidden";
+const ACCORDION_BTN   = "width: 100%; padding: 1rem; text-align: left; background: none; border: none; font-weight: 600; cursor: pointer";
+const TOOLTIP_WRAP    = "position: relative; display: inline-block";
+const TOOLTIP_BOX     = "position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding: 0.5rem; background: #000; color: #fff; font-size: 0.75rem; border-radius: 0.25rem; visibility: hidden; opacity: 0; transition: opacity 0.2s";
+const BREADCRUMB_ITEM = "display: inline-flex; align-items: center; color: " + COLOR_MUTED + "; font-size: 0.875rem";
+const BREADCRUMB_SEP  = "margin: 0 0.5rem; color: " + COLOR_BORDER;
 
 // ===================================================
 //  SECTION 19: FILTERS & EFFECTS
