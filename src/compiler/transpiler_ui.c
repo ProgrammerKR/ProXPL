@@ -198,16 +198,40 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
 
             // Emit props/attributes
             DictPairList *props = stmt->as.ui_component.props;
+            Expr *innerTextValue = NULL;
+
             for (int i = 0; i < props->count; i++) {
                 const char *rawKey  = (props->items[i].key && props->items[i].key->type == EXPR_VARIABLE)
                                        ? props->items[i].key->as.variable.name : NULL;
                 const char *mappedKey = rawKey ? mapPropName(rawKey) : NULL;
                 bool isVariableValue = (props->items[i].value && props->items[i].value->type == EXPR_VARIABLE);
 
+                // Special handling for 'value' prop on non-form elements
+                if (rawKey && strcmp(rawKey, "value") == 0) {
+                    if (strcmp(htmlTag, "input") != 0 && strcmp(htmlTag, "option") != 0 && 
+                        strcmp(htmlTag, "textarea") != 0 && strcmp(htmlTag, "select") != 0 &&
+                        strcmp(htmlTag, "progress") != 0 && strcmp(htmlTag, "meter") != 0) {
+                        
+                        // If literal string, inject as inner text
+                        if (props->items[i].value && props->items[i].value->type == EXPR_LITERAL && IS_STRING(props->items[i].value->as.literal.value)) {
+                            innerTextValue = props->items[i].value;
+                            continue; // Skip emitting this attribute
+                        } else {
+                            // Any other expression becomes a reactive x-text attribute
+                            mappedKey = "x-text";
+                            isVariableValue = false; // x-text is natively reactive, do not prefix with ':'
+                        }
+                    }
+                }
+
                 fprintf(html, " ");
                 if (mappedKey) {
-                    // Reactive prefix for Alpine
-                    if (isVariableValue) {
+                    // Only add ':' reactive prefix for plain HTML attribute bindings.
+                    // Event handlers (@click etc.) and Alpine directives (x-model, x-show etc.)
+                    // must NOT be prefixed with ':'.
+                    bool isEventHandler = (mappedKey[0] == '@');
+                    bool isAlpineDirective = (mappedKey[0] == 'x' && mappedKey[1] == '-');
+                    if (isVariableValue && !isEventHandler && !isAlpineDirective) {
                          fprintf(html, ":%s", mappedKey);
                     } else {
                          fprintf(html, "%s", mappedKey);
@@ -227,9 +251,14 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
 
             fprintf(html, ">");
 
+            if (innerTextValue) {
+                transpileExpr(innerTextValue, html);
+            }
+
             // Children
             if (stmt->as.ui_component.children && stmt->as.ui_component.children->count > 0) {
-                fprintf(html, "\n");
+                if (!innerTextValue) fprintf(html, "\n");
+                else fprintf(html, "\n");
                 for (int i = 0; i < stmt->as.ui_component.children->count; i++) {
                     transpileStmt(stmt->as.ui_component.children->items[i], html, js, indent + 1);
                 }
@@ -409,8 +438,18 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
     fprintf(js, "function app() {\n  return {\n");
 
     StmtList *body = appStmt->as.ui_app.body;
+
+    // Pass 1: emit Window/Component HTML structure (no JS)
     for (int i = 0; i < body->count; i++) {
         transpileStmt(body->items[i], html, NULL, 1);
+    }
+
+    // Pass 2: emit State + Action into app.js
+    for (int i = 0; i < body->count; i++) {
+        Stmt *s = body->items[i];
+        if (s->type == STMT_UI_STATE || s->type == STMT_UI_ACTION) {
+            transpileStmt(s, NULL, js, 2);
+        }
     }
 
     fprintf(js,   "  };\n}\n");

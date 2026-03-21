@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyLibraryApp</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body x-data="app()">
+  <div id="window-MainWindow" class="prox-window">
+    <div class="hero">
+      <span>Welcome to ProXPL UI</span>
+      <button @click="increment">
+        <span>Click Me</span>
+      </button>
+      <span x-text="count"></span>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
