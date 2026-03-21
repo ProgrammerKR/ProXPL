@@ -163,6 +163,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
 
     switch (stmt->type) {
         case STMT_UI_STATE:
+            if (!js) break;
             printIndent(js, indent);
             fprintf(js, "%s: ", stmt->as.ui_state.name);
             if (stmt->as.ui_state.initializer) {
@@ -174,6 +175,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             break;
 
         case STMT_UI_ACTION:
+            if (!js) break;
             printIndent(js, indent);
             fprintf(js, "%s() {\n", stmt->as.ui_action.name);
             // Transpile action body statements if they exist
@@ -189,6 +191,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             break;
 
         case STMT_UI_COMPONENT: {
+            if (!html) break;
             const char *htmlTag = mapTag(stmt->as.ui_component.tag);
             printIndent(html, indent);
             fprintf(html, "<%s", htmlTag);
@@ -237,6 +240,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
         }
 
         case STMT_UI_WINDOW: {
+            if (!html) break;
             printIndent(html, indent);
             fprintf(html, "<div id=\"window-%s\" class=\"prox-window\">\n", stmt->as.ui_window.name);
             for (int i = 0; i < stmt->as.ui_window.body->count; i++) {
