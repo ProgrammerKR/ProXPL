@@ -1,0 +1,44 @@
+use std.UI;
+
+ui app "TestApp" {
+    state count = 0
+    state isActive = true
+
+    action increment() {
+        count = count + 1
+    }
+
+    action toggle() {
+        isActive = !isActive
+    }
+
+    Window "MainWindow" {
+        Container {
+            className = "p-4 bg-gray-100"
+            
+            H1 {
+                "Counter App"
+            }
+
+            Text {
+                xText = "Count: " + count
+            }
+
+            Button {
+                onClick = increment
+                "Increment"
+            }
+
+            Button {
+                onClick = toggle
+                className = isActive ? "bg-blue-500" : "bg-red-500"
+                "Toggle Status"
+            }
+            
+            P {
+                xShow = isActive
+                "Status: Active"
+            }
+        }
+    }
+}

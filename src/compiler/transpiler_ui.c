@@ -204,7 +204,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
                 fprintf(html, " ");
                 if (mappedKey) {
                     // Reactive prefix for Alpine
-                    if (isVariableValue && (strcmp(mappedKey, "class") != 0)) {
+                    if (isVariableValue) {
                          fprintf(html, ":%s", mappedKey);
                     } else {
                          fprintf(html, "%s", mappedKey);
@@ -249,13 +249,14 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
 
         case STMT_EXPRESSION:
             // Handle text content or JS expressions
-            if (html) {
+            if (html && !js) { 
                 if (stmt->as.expression.expression->type == EXPR_VARIABLE) {
                     // Reactive text
                     fprintf(html, "<span x-text=\"%s\"></span>", stmt->as.expression.expression->as.variable.name);
-                } else {
+                } else if (stmt->as.expression.expression->type == EXPR_LITERAL) {
                     transpileExpr(stmt->as.expression.expression, html);
                 }
+                // Skip assignments or other complex exprs in HTML output
             } else if (js) {
                 printIndent(js, indent);
                 transpileExpr(stmt->as.expression.expression, js);
@@ -311,6 +312,64 @@ static void transpileExpr(Expr *expr, FILE *out) {
     }
 }
 
+static void emitBaseStyles(FILE *css, const char *appName) {
+    fprintf(css, "/* ============================================\n");
+    fprintf(css, "   ProXPL UI — Generated style.css\n");
+    fprintf(css, "   App: %s\n", appName);
+    fprintf(css, "   ============================================ */\n\n");
+
+    // CSS Reset
+    fprintf(css, "/* === CSS Reset === */\n");
+    fprintf(css, "*, *::before, *::after {\n");
+    fprintf(css, "  box-sizing: border-box;\n");
+    fprintf(css, "  margin: 0;\n");
+    fprintf(css, "  padding: 0;\n");
+    fprintf(css, "}\n\n");
+
+    // Base Styles
+    fprintf(css, "/* === Base === */\n");
+    fprintf(css, "html {\n");
+    fprintf(css, "  font-size: 16px;\n");
+    fprintf(css, "  scroll-behavior: smooth;\n");
+    fprintf(css, "}\n\n");
+
+    fprintf(css, "body {\n");
+    fprintf(css, "  font-family: 'Inter', system-ui, -apple-system, sans-serif;\n");
+    fprintf(css, "  font-size: 1rem;\n");
+    fprintf(css, "  line-height: 1.6;\n");
+    fprintf(css, "  color: #1f2937;\n");
+    fprintf(css, "  background: #f9fafb;\n");
+    fprintf(css, "  min-height: 100vh;\n");
+    fprintf(css, "}\n\n");
+
+    fprintf(css, "img, video, canvas {\n");
+    fprintf(css, "  max-width: 100%%;\n");
+    fprintf(css, "  display: block;\n");
+    fprintf(css, "}\n\n");
+
+    fprintf(css, "input, button, textarea, select {\n");
+    fprintf(css, "  font: inherit;\n");
+    fprintf(css, "}\n\n");
+
+    // ProXPL Window component
+    fprintf(css, "/* === ProXPL Window Component === */\n");
+    fprintf(css, ".prox-window {\n");
+    fprintf(css, "  background: #ffffff;\n");
+    fprintf(css, "  border-radius: 1rem;\n");
+    fprintf(css, "  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);\n");
+    fprintf(css, "  border: 1px solid rgba(0, 0, 0, 0.05);\n");
+    fprintf(css, "  padding: 2rem;\n");
+    fprintf(css, "  margin: 2rem;\n");
+    fprintf(css, "}\n\n");
+
+    // Basic animations
+    fprintf(css, "/* === Animations === */\n");
+    fprintf(css, "@keyframes fadeIn {\n");
+    fprintf(css, "  from { opacity: 0; }\n");
+    fprintf(css, "  to   { opacity: 1; }\n");
+    fprintf(css, "}\n\n");
+}
+
 // =====================================================
 //  BASIC MODE: transpileUIApp()
 //  Used by runFile() for quick previews
@@ -320,14 +379,17 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
 
     MKDIR(outputDir);
 
-    char htmlPath[512], jsPath[512];
+    char htmlPath[512], cssPath[512], jsPath[512];
     sprintf(htmlPath, "%s/index.html", outputDir);
+    sprintf(cssPath,  "%s/style.css",  outputDir);
     sprintf(jsPath,   "%s/app.js",     outputDir);
 
     FILE *html = fopen(htmlPath, "w");
+    FILE *css  = fopen(cssPath,  "w");
     FILE *js   = fopen(jsPath,   "w");
-    if (!html || !js) {
+    if (!html || !css || !js) {
         if (html) fclose(html);
+        if (css)  fclose(css);
         if (js)   fclose(js);
         return;
     }
@@ -336,6 +398,7 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
     fprintf(html, "  <meta charset=\"UTF-8\">\n");
     fprintf(html, "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
     fprintf(html, "  <title>%s</title>\n", appStmt->as.ui_app.name);
+    fprintf(html, "  <link rel=\"stylesheet\" href=\"style.css\">\n");
     fprintf(html, "  <script src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\" defer></script>\n");
     fprintf(html, "</head>\n<body x-data=\"app()\">\n");
 
@@ -343,17 +406,22 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
 
     StmtList *body = appStmt->as.ui_app.body;
     for (int i = 0; i < body->count; i++) {
-        transpileStmt(body->items[i], html, js, 1);
+        transpileStmt(body->items[i], html, NULL, 1);
     }
 
     fprintf(js,   "  };\n}\n");
     fprintf(html, "  <script src=\"app.js\"></script>\n");
     fprintf(html, "</body>\n</html>\n");
 
+    // Emit base styles to style.css
+    emitBaseStyles(css, appStmt->as.ui_app.name);
+
     fclose(html);
+    fclose(css);
     fclose(js);
 
     printf("[UI] Generated: %s/index.html\n", outputDir);
+    printf("[UI] Generated: %s/style.css\n", outputDir);
     printf("[UI] Generated: %s/app.js\n", outputDir);
 }
 
@@ -422,7 +490,7 @@ void transpileUIAppWeb(Stmt *appStmt, const char *outputDir) {
     // ─────────────────────────────────────────────
     StmtList *body = appStmt->as.ui_app.body;
     for (int i = 0; i < body->count; i++) {
-        transpileStmt(body->items[i], html, js, 1);
+        transpileStmt(body->items[i], html, NULL, 1);
     }
 
     // Close HTML
@@ -434,46 +502,17 @@ void transpileUIAppWeb(Stmt *appStmt, const char *outputDir) {
     // ─────────────────────────────────────────────
     //  style.css — CSS Reset + ProXPL Base Styles
     // ─────────────────────────────────────────────
-    fprintf(css, "/* ============================================\n");
-    fprintf(css, "   ProXPL Web Build — Generated style.css\n");
-    fprintf(css, "   App: %s\n", appName);
-    fprintf(css, "   Built with: prm build web\n");
-    fprintf(css, "   ============================================ */\n\n");
+    emitBaseStyles(css, appName);
 
-    // CSS Reset
-    fprintf(css, "/* === CSS Reset === */\n");
-    fprintf(css, "*, *::before, *::after {\n");
-    fprintf(css, "  box-sizing: border-box;\n");
-    fprintf(css, "  margin: 0;\n");
-    fprintf(css, "  padding: 0;\n");
-    fprintf(css, "}\n\n");
-
-    // Base Styles
-    fprintf(css, "/* === Base === */\n");
-    fprintf(css, "html {\n");
-    fprintf(css, "  font-size: 16px;\n");
-    fprintf(css, "  scroll-behavior: smooth;\n");
-    fprintf(css, "  -webkit-text-size-adjust: 100%%;\n");
-    fprintf(css, "}\n\n");
-
+    // Additional Rich Styles for Web Build
+    fprintf(css, "/* === Rich Web Build Extras === */\n");
     fprintf(css, "body {\n");
-    fprintf(css, "  font-family: 'Inter', system-ui, -apple-system, sans-serif;\n");
-    fprintf(css, "  font-size: 1rem;\n");
-    fprintf(css, "  line-height: 1.6;\n");
-    fprintf(css, "  color: #1f2937;\n");
-    fprintf(css, "  background: #f9fafb;\n");
-    fprintf(css, "  min-height: 100vh;\n");
     fprintf(css, "  -webkit-font-smoothing: antialiased;\n");
     fprintf(css, "  -moz-osx-font-smoothing: grayscale;\n");
     fprintf(css, "}\n\n");
 
-    fprintf(css, "img, video, canvas {\n");
-    fprintf(css, "  max-width: 100%%;\n");
-    fprintf(css, "  display: block;\n");
-    fprintf(css, "}\n\n");
-
-    fprintf(css, "input, button, textarea, select {\n");
-    fprintf(css, "  font: inherit;\n");
+    fprintf(css, "html {\n");
+    fprintf(css, "  -webkit-text-size-adjust: 100%%;\n");
     fprintf(css, "}\n\n");
 
     fprintf(css, "a {\n");
@@ -489,24 +528,7 @@ void transpileUIAppWeb(Stmt *appStmt, const char *outputDir) {
     fprintf(css, "  border-collapse: collapse;\n");
     fprintf(css, "}\n\n");
 
-    // ProXPL Window component
-    fprintf(css, "/* === ProXPL Window Component === */\n");
-    fprintf(css, ".prox-window {\n");
-    fprintf(css, "  background: #ffffff;\n");
-    fprintf(css, "  border-radius: 1rem;\n");
-    fprintf(css, "  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);\n");
-    fprintf(css, "  border: 1px solid rgba(0, 0, 0, 0.08);\n");
-    fprintf(css, "  padding: 2rem;\n");
-    fprintf(css, "  overflow: hidden;\n");
-    fprintf(css, "}\n\n");
-
-    // Global keyframe animations
-    fprintf(css, "/* === ProXPL Animations === */\n");
-    fprintf(css, "@keyframes fadeIn {\n");
-    fprintf(css, "  from { opacity: 0; }\n");
-    fprintf(css, "  to   { opacity: 1; }\n");
-    fprintf(css, "}\n\n");
-
+    // Global keyframe animations (extended)
     fprintf(css, "@keyframes slideUp {\n");
     fprintf(css, "  from { transform: translateY(20px); opacity: 0; }\n");
     fprintf(css, "  to   { transform: translateY(0);    opacity: 1; }\n");
@@ -604,7 +626,7 @@ void transpileUIAppWeb(Stmt *appStmt, const char *outputDir) {
     for (int i = 0; i < body->count; i++) {
         Stmt *s = body->items[i];
         if (s->type == STMT_UI_STATE || s->type == STMT_UI_ACTION) {
-            transpileStmt(s, html, js, 2);
+            transpileStmt(s, NULL, js, 2);
         }
     }
 

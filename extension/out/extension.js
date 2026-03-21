@@ -66,10 +66,10 @@ function activate(context) {
             vscode.window.showErrorMessage('Not a ProXPL (.prox or .pxpl) file.');
             return;
         }
-        // Check if proxpl is in PATH
-        cp.exec('proxpl --version', (err) => {
+        // Check if prm is in PATH
+        cp.exec('prm --version', (err) => {
             if (err) {
-                vscode.window.showInformationMessage('ProXPL compiler not found in PATH. Please install it to run scripts.', 'View Installation Docs').then((selection) => {
+                vscode.window.showInformationMessage('PRM (ProX Resource Manager) not found in PATH. Please install it to run scripts.', 'View Installation Docs').then((selection) => {
                     if (selection === 'View Installation Docs') {
                         vscode.env.openExternal(vscode.Uri.parse('https://github.com/ProgrammerKR/ProXPL#installation'));
                     }
@@ -83,7 +83,7 @@ function activate(context) {
                     terminal = vscode.window.createTerminal('ProXPL');
                 }
                 terminal.show();
-                terminal.sendText(`proxpl run "${fileName}"`);
+                terminal.sendText(`prm run "${fileName}"`);
             });
         });
     });
@@ -108,6 +108,8 @@ function activate(context) {
                 'return': 'Exits a function and optionally returns a value.',
                 'print': 'Output values to the terminal.',
                 'use': 'Incorporates external modules.',
+                'from': 'Specifies the source module for an import.',
+                'as': 'Aliases an imported member or type casts.',
                 'class': 'Defines a new class.',
                 'interface': 'Defines an interface contract.',
                 'implements': 'Declares that a class implements an interface.',
@@ -128,7 +130,36 @@ function activate(context) {
                 'type': 'Returns the type of a value.',
                 'try': 'Starts a block of code to test for errors.',
                 'catch': 'Handles errors thrown in the try block.',
-                'throw': 'Throws an error/exception.'
+                'throw': 'Throws an error/exception.',
+                'context': 'Groups behavioral layers.',
+                'layer': 'Defines a behavioral layer within a context.',
+                'activate': 'Enables a context for the duration of a block.',
+                'App': 'Defines a UI Application component.',
+                'State': 'Declares reactive state inside a UI App.',
+                'Action': 'Declares a state-mutating action inside a UI App.',
+                'defer': 'Defers the execution of a statement until the surrounding function returns.',
+                'tensor': 'Declarator for multi-dimensional array types.',
+                'intent': 'Defines an Intent-Oriented goal.',
+                'resolver': 'Fulfills a declared intent.',
+                'model': 'Declares an AI/ML model structure.',
+                'train': 'Initiates training sequence for a model.',
+                'predict': 'Executes inference on a trained model.',
+                'resilient': 'Marks a block or function as fault-tolerant.',
+                'recovery': 'Defines fallback logic for resilient blocks.',
+                'verify': 'Validates system state or cryptographic identities.',
+                'identity': 'Represents an authenticated entity context.',
+                'to_int': 'Type conversion to integer.',
+                'to_float': 'Type conversion to floating-point number.',
+                'to_string': 'Type conversion to string.',
+                'to_bool': 'Type conversion to boolean.',
+                'to_hex': 'Integer to Hexadecimal string string conversion.',
+                'to_bin': 'Integer to Binary string conversion.',
+                'char_at': 'Retrieves the character at a specific index from a string.',
+                'std.core': 'Standard module: Core Utilities (assert, typeOf, id, hash).',
+                'std.math': 'Standard module: Mathematics (abs, min, pow, random, sin).',
+                'std.string': 'Standard module: String Manipulation (upper, split, replace).',
+                'std.io': 'Standard module: Input/Output (read_file, write_file).',
+                'std.sys': 'Standard module: System Interface (exit, env, exec).'
             };
             if (descriptions[word]) {
                 return new vscode.Hover(new vscode.MarkdownString(descriptions[word]));

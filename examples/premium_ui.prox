@@ -1,4 +1,4 @@
-use UI;
+use std.ui;
 
 App ProfessionalDashboard {
     State user = "ProgrammerKR";
