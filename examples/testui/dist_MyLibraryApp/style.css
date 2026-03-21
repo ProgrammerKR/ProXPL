@@ -1,52 +1,75 @@
 /* ============================================
-   ProXPL UI — Generated style.css
+   ProXPL UI — Premium Generated style.css
    App: MyLibraryApp
    ============================================ */
 
-/* === CSS Reset === */
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* === Base === */
 html {
   font-size: 16px;
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #1f2937;
-  background: #f9fafb;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  color: var(--text-main);
+  background: var(--bg-gradient);
   min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-img, video, canvas {
-  max-width: 100%;
-  display: block;
-}
-
-input, button, textarea, select {
-  font: inherit;
-}
-
-/* === ProXPL Window Component === */
 .prox-window {
-  background: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 2rem;
-  margin: 2rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 3rem;
+  margin: 1rem;
+  max-width: 600px;
+  width: 90%;
+  animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* === Animations === */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+}
+
+button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+span {
+  font-size: 1.1rem;
 }
 

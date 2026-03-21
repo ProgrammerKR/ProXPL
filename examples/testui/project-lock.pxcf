@@ -1,0 +1,8 @@
+# ProXPL Project Lockfile - DO NOT EDIT MANUALLY
+lock_version: "1.0.0"
+project: "testui"
+version: "0.1.0"
+
+dependencies {
+    # Resolved hashes will go here
+}
