@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -13,7 +14,7 @@
 #endif
 
 static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent);
-static void transpileExpr(Expr *expr, FILE *out);
+static void transpileExpr(Expr *expr, FILE *out, bool isJS);
 
 static void printIndent(FILE *out, int level) {
     for (int i = 0; i < level; i++) fprintf(out, "  ");
@@ -167,7 +168,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             printIndent(js, indent);
             fprintf(js, "%s: ", stmt->as.ui_state.name);
             if (stmt->as.ui_state.initializer) {
-                transpileExpr(stmt->as.ui_state.initializer, js);
+                transpileExpr(stmt->as.ui_state.initializer, js, true);
             } else {
                 fprintf(js, "null");
             }
@@ -237,10 +238,10 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
                          fprintf(html, "%s", mappedKey);
                     }
                 } else {
-                    transpileExpr(props->items[i].key, html);
+                    transpileExpr(props->items[i].key, html, false);
                 }
                 fprintf(html, "=\"");
-                transpileExpr(props->items[i].value, html);
+                transpileExpr(props->items[i].value, html, false);
                 fprintf(html, "\"");
             }
 
@@ -252,7 +253,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
             fprintf(html, ">");
 
             if (innerTextValue) {
-                transpileExpr(innerTextValue, html);
+                transpileExpr(innerTextValue, html, false);
             }
 
             // Children
@@ -287,12 +288,12 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
                     // Reactive text
                     fprintf(html, "<span x-text=\"%s\"></span>", stmt->as.expression.expression->as.variable.name);
                 } else if (stmt->as.expression.expression->type == EXPR_LITERAL) {
-                    transpileExpr(stmt->as.expression.expression, html);
+                    transpileExpr(stmt->as.expression.expression, html, false);
                 }
                 // Skip assignments or other complex exprs in HTML output
             } else if (js) {
                 printIndent(js, indent);
-                transpileExpr(stmt->as.expression.expression, js);
+                transpileExpr(stmt->as.expression.expression, js, true);
                 fprintf(js, ";\n");
             }
             break;
@@ -303,7 +304,7 @@ static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent) {
     }
 }
 
-static void transpileExpr(Expr *expr, FILE *out) {
+static void transpileExpr(Expr *expr, FILE *out, bool isJS) {
     if (!expr) return;
     switch (expr->type) {
         case EXPR_LITERAL:
@@ -324,19 +325,20 @@ static void transpileExpr(Expr *expr, FILE *out) {
             break;
 
         case EXPR_VARIABLE:
+            if (isJS) fprintf(out, "this.");
             fprintf(out, "%s", expr->as.variable.name);
             break;
 
         case EXPR_ASSIGN:
-            // Assume JS action context for now
-            fprintf(out, "this.%s = ", expr->as.assign.name);
-            if (expr->as.assign.value) transpileExpr(expr->as.assign.value, out);
+            if (isJS) fprintf(out, "this.");
+            fprintf(out, "%s = ", expr->as.assign.name);
+            if (expr->as.assign.value) transpileExpr(expr->as.assign.value, out, isJS);
             break;
 
         case EXPR_BINARY:
-            transpileExpr(expr->as.binary.left, out);
+            transpileExpr(expr->as.binary.left, out, isJS);
             fprintf(out, " %s ", expr->as.binary.operator);
-            transpileExpr(expr->as.binary.right, out);
+            transpileExpr(expr->as.binary.right, out, isJS);
             break;
 
         default:
@@ -347,12 +349,21 @@ static void transpileExpr(Expr *expr, FILE *out) {
 
 static void emitBaseStyles(FILE *css, const char *appName) {
     fprintf(css, "/* ============================================\n");
-    fprintf(css, "   ProXPL UI — Generated style.css\n");
+    fprintf(css, "   ProXPL UI — Premium Generated style.css\n");
     fprintf(css, "   App: %s\n", appName);
     fprintf(css, "   ============================================ */\n\n");
 
+    // Modern Design Tokens
+    fprintf(css, ":root {\n");
+    fprintf(css, "  --primary: #6366f1;\n");
+    fprintf(css, "  --primary-hover: #4f46e5;\n");
+    fprintf(css, "  --bg-gradient: linear-gradient(135deg, #f8fafc 0%%, #e2e8f0 100%%);\n");
+    fprintf(css, "  --card-bg: rgba(255, 255, 255, 0.8);\n");
+    fprintf(css, "  --text-main: #0f172a;\n");
+    fprintf(css, "  --text-muted: #64748b;\n");
+    fprintf(css, "}\n\n");
+
     // CSS Reset
-    fprintf(css, "/* === CSS Reset === */\n");
     fprintf(css, "*, *::before, *::after {\n");
     fprintf(css, "  box-sizing: border-box;\n");
     fprintf(css, "  margin: 0;\n");
@@ -360,46 +371,61 @@ static void emitBaseStyles(FILE *css, const char *appName) {
     fprintf(css, "}\n\n");
 
     // Base Styles
-    fprintf(css, "/* === Base === */\n");
     fprintf(css, "html {\n");
     fprintf(css, "  font-size: 16px;\n");
     fprintf(css, "  scroll-behavior: smooth;\n");
     fprintf(css, "}\n\n");
 
     fprintf(css, "body {\n");
-    fprintf(css, "  font-family: 'Inter', system-ui, -apple-system, sans-serif;\n");
-    fprintf(css, "  font-size: 1rem;\n");
-    fprintf(css, "  line-height: 1.6;\n");
-    fprintf(css, "  color: #1f2937;\n");
-    fprintf(css, "  background: #f9fafb;\n");
+    fprintf(css, "  font-family: 'Outfit', 'Inter', system-ui, sans-serif;\n");
+    fprintf(css, "  color: var(--text-main);\n");
+    fprintf(css, "  background: var(--bg-gradient);\n");
     fprintf(css, "  min-height: 100vh;\n");
+    fprintf(css, "  display: flex;\n");
+    fprintf(css, "  align-items: center;\n");
+    fprintf(css, "  justify-content: center;\n");
     fprintf(css, "}\n\n");
 
-    fprintf(css, "img, video, canvas {\n");
-    fprintf(css, "  max-width: 100%%;\n");
-    fprintf(css, "  display: block;\n");
-    fprintf(css, "}\n\n");
-
-    fprintf(css, "input, button, textarea, select {\n");
-    fprintf(css, "  font: inherit;\n");
-    fprintf(css, "}\n\n");
-
-    // ProXPL Window component
-    fprintf(css, "/* === ProXPL Window Component === */\n");
+    // ProXPL Window Component (Glassmorphism)
     fprintf(css, ".prox-window {\n");
-    fprintf(css, "  background: #ffffff;\n");
-    fprintf(css, "  border-radius: 1rem;\n");
-    fprintf(css, "  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);\n");
-    fprintf(css, "  border: 1px solid rgba(0, 0, 0, 0.05);\n");
-    fprintf(css, "  padding: 2rem;\n");
-    fprintf(css, "  margin: 2rem;\n");
+    fprintf(css, "  background: var(--card-bg);\n");
+    fprintf(css, "  backdrop-filter: blur(12px);\n");
+    fprintf(css, "  -webkit-backdrop-filter: blur(12px);\n");
+    fprintf(css, "  border-radius: 2rem;\n");
+    fprintf(css, "  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);\n");
+    fprintf(css, "  border: 1px solid rgba(255, 255, 255, 0.3);\n");
+    fprintf(css, "  padding: 3rem;\n");
+    fprintf(css, "  margin: 1rem;\n");
+    fprintf(css, "  max-width: 600px;\n");
+    fprintf(css, "  width: 90%%;\n");
+    fprintf(css, "  animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);\n");
     fprintf(css, "}\n\n");
 
-    // Basic animations
-    fprintf(css, "/* === Animations === */\n");
-    fprintf(css, "@keyframes fadeIn {\n");
-    fprintf(css, "  from { opacity: 0; }\n");
-    fprintf(css, "  to   { opacity: 1; }\n");
+    // Basic components
+    fprintf(css, "button {\n");
+    fprintf(css, "  background: var(--primary);\n");
+    fprintf(css, "  color: white;\n");
+    fprintf(css, "  border: none;\n");
+    fprintf(css, "  padding: 0.75rem 1.5rem;\n");
+    fprintf(css, "  border-radius: 1rem;\n");
+    fprintf(css, "  font-weight: 600;\n");
+    fprintf(css, "  cursor: pointer;\n");
+    fprintf(css, "  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n");
+    fprintf(css, "  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);\n");
+    fprintf(css, "}\n\n");
+
+    fprintf(css, "button:hover {\n");
+    fprintf(css, "  background: var(--primary-hover);\n");
+    fprintf(css, "  transform: translateY(-2px);\n");
+    fprintf(css, "  box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);\n");
+    fprintf(css, "}\n\n");
+
+    fprintf(css, "button:active {\n");
+    fprintf(css, "  transform: translateY(0);\n");
+    fprintf(css, "}\n\n");
+
+    fprintf(css, "span {\n");
+    fprintf(css, "  font-size: 1.1rem;\n");
     fprintf(css, "}\n\n");
 }
 
