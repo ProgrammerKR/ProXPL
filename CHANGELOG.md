@@ -404,6 +404,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 1.2.0
+**Current Version**: 1.3.0
 **Last Updated**: January 27, 2026
 **Next Release**: 1.3.0 (Q1 2026)

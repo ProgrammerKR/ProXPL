@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -59,7 +59,7 @@ ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, maki
 | 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
 | 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
 
-## 🏛️ The 10 Operational Pillars (v1.2.0)
+## 🏛️ The 10 Operational Pillars (v1.3.0)
 
 ProXPL introduces 10 revolutionary concepts that redefine modern systems programming:
 
@@ -406,7 +406,7 @@ paths {
 }
 
 dependencies {
-    http: "1.2.0"
+    http: "1.3.0"
     json: "1.1.0"
 }
 
@@ -590,7 +590,8 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
   - **Object-Oriented Programming**: Classes, Methods, Inheritance, Properties. ✅
   - **Keywords**: `class`, `new`, `this`, `extends`, `interface`. ✅
   - **Runtime**: Optimized VM with Object Support. ✅
-- **v1.2.0 (Current)**:
+- **v1.3.0 (Current)**:
+- **v1.2.0**:
   - **The 10 Operational Pillars**: Full frontend implementation of Intent-Oriented, Context-Aware, ASR, Intrinsic Security, Chrono-Native, Event-Concurreny, AI-Native, Quantum-Ready, Hardware-Math, and Zero-Trust features. ✅
   - **Frontend Feature Complete**: Lexer, Parser, AST, and Type Checker support all 10 pillars. ✅
 
