@@ -617,10 +617,15 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - ✅ **Exception Handling**: `try`/`catch` blocks.
 - ✅ **Verification**: Verified via `tests/oop_v1.0.0.prox`.
 
-### Future Roadmap (2026+)
-- 📋 **v1.2.0**: FFI Stability & ProX Studio Alpha.
-- 📋 **v1.3.0**: Pattern Matching, Enums, Generics.
-- 📋 **v2.0.0**: Async/Await, WebAssembly, JIT.
+### Future Roadmap (2026–2028)
+- 📋 **[v1.3.0](docs/releases/v1.3.0.md)** — Pattern Matching, Enums, Generics, FFI Stability.
+- 📋 **[v1.4.0](docs/releases/v1.4.0.md)** — Async/Await Runtime, Generators, Networking (`std.net`), JSON.
+- 📋 **[v1.5.0](docs/releases/v1.5.0.md)** — Traits, Result/Option Types, Generational GC, Debugger (DAP).
+- 📋 **[v1.6.0](docs/releases/v1.6.0.md)** — ProX Studio Alpha, PRM Registry, Testing Framework, Macros.
+- 📋 **[v1.7.0](docs/releases/v1.7.0.md)** — WebAssembly Target, String Templates, Operator Overloading, Formatter.
+- 📋 **[v1.8.0](docs/releases/v1.8.0.md)** — Channels, Actors, Database Connectivity, LSP v2, Compile-Time Eval.
+- 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
+- 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
 
 ## 🛠️ Contributing
 

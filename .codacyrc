@@ -1,0 +1,7 @@
+---
+exclude_paths:
+  - "preprocessed_vm.c"
+  - "logs/**"
+  - "tests/bin/**"
+  - "tests/temp_src/**"
+  - "build/**"
