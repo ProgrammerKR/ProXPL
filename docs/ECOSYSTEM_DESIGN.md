@@ -128,42 +128,44 @@ module std.sys {
 
 PRM is the official CLI toolchain for ProXPL, handling dependency management, building, testing, and publishing.
 
-### 3.1 Package Format (`prox.toml`)
-Every project is defined by a TOML manifest.
+### 3.1 Package Format (`project.pxcf`)
+Every project is defined by a `.pxcf` manifest.
 
-```toml
-[package]
-name = "my-web-server"
-version = "1.0.0"
-authors = ["Jane Doe <jane@example.com>"]
-edition = "2025"
-description = "A fast web server for ProXPL"
-license = "MIT"
+```javascript
+// project.pxcf
+project {
+    name: "my-web-server"
+    version: "1.0.0"
+    author: "Jane Doe <jane@example.com>"
+    license: "MIT"
+}
 
-[dependencies]
-std = "0.1.0"  # Core stdlib is versioned too!
-http_parser = { git = "https://github.com/...", tag = "v1.2" }
-json = "2.1.0"
+dependencies {
+    std: "0.1.0"
+    http_parser: "1.2.0"
+    json: "2.1.0"
+}
 
-[build]
-target = "native" # or "bytecode"
-optimize = true
+compiler {
+    target: "native"
+    optimize: true
+}
 ```
 
 ### 3.2 Command Suite
 
 | Command | Description |
 | :--- | :--- |
-| `prm init <name>` | Scaffolds a new project with `prox.toml` and `src/main.prox`. |
+| `prm init <name>` | Scaffolds a new project with `project.pxcf` and `src/main.prox`. |
 | `prm build` | Compiles the project. Supports `--dev` (fast, debug info) and `--release` (opt, stripped). |
 | `prm run` | Builds and runs the binary (or interprets in dev mode). |
 | `prm test` | Discovers and runs tests in `tests/` or files ending in `_test.prox`. |
-| `prm add <pkg>` | Adds a dependency to `prox.toml` and updates lockfile. |
+| `prm add <pkg>` | Adds a dependency to `project.pxcf` and updates lockfile. |
 | `prm update` | Updates dependencies within semantic versioning bounds. |
-| `prm install` | Downloads dependencies defined in `prox.lock`. |
+| `prm install` | Downloads dependencies defined in `project-lock.pxcf`. |
 
 ### 3.3 Dependency Resolution & Cache
-- **Lockfile (`prox.lock`)**: Pin exact versions of entire dependency tree. Checked into git.
+- **Lockfile (`project-lock.pxcf`)**: Pin exact versions of entire dependency tree. Checked into git.
 - **Global Cache**: `~/.prox/cache/registry` stores downloaded packages to avoid re-downloading.
 - **Structure**:
     - `~/.prox/bin/`: Installed global binaries.
@@ -226,12 +228,12 @@ test "failure case" {
 ### Phase 1: Foundation (Weeks 1-4)
 *Goal: Minimum usable Standard Library and Build System.*
 - [ ] **Stdlib v0.1**: Implement `std.core`, `std.io`, `std.fs`, `std.sys` (Native bindings).
-- [ ] **PRM v0.1**: Basic `prox.toml` parsing and `prm build` (local files only).
+- [ ] **PRM v0.1**: Basic `project.pxcf` parsing and `prm build` (local files only).
 - [ ] **Docs**: Initial `stdlib` API reference.
 
 ### Phase 2: Package Management (Weeks 5-8)
 *Goal: Allow sharing code.*
-- [ ] **PRM v0.5**: Git dependency support. `prm install` & `prox.lock`.
+- [ ] **PRM v0.5**: Git dependency support. `prm install` & `project-lock.pxcf`.
 - [ ] **Stdlib v0.2**: Add `std.net` (basic sockets) and `std.json`.
 
 ### Phase 3: Tooling & Stability (Weeks 9-12)

@@ -382,24 +382,38 @@ prm update
 prm remove old-package
 ```
 
-### Project Structure (`prox.toml`)
+### Project Structure (`project.pxcf`)
 
-```toml
-[package]
-name = "my-web-server"
-version = "1.1.0"
-authors = ["Your Name <you@example.com>"]
-edition = "2025"
-description = "A fast web server built with ProXPL"
-license = "MIT"
+```javascript
+// project.pxcf
+project {
+    name: "my-web-server"
+    version: "1.1.0"
+    author: "Your Name <you@example.com>"
+    license: "MIT"
+}
 
-[dependencies]
-http_parser = "2.1.0"
-json = "1.5.0"
+compiler {
+    optimize: true
+    debug: false
+    target: "native"
+}
 
-[build]
-target = "native"
-optimize = true
+paths {
+    src: "./src"
+    build: "./build"
+    entry: "src/main.prox"
+}
+
+dependencies {
+    http: "1.2.0"
+    json: "1.1.0"
+}
+
+runtime {
+    threads: 8
+    memory_limit: "1GB"
+}
 ```
 
 ---
