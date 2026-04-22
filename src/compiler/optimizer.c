@@ -20,7 +20,7 @@ static Expr* foldBinary(Expr* expr) {
             double b = AS_NUMBER(rv);
             const char* op = expr->as.binary.operator;
 
-            Value res;
+            Value res = NIL_VAL;
             bool folded = true;
 
             if (strcmp(op, "+") == 0) res = NUMBER_VAL(a + b);

@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "type_checker.h"
+#include "optimizer.h"
 
 #ifdef _WIN32
 #include <process.h>
@@ -150,9 +152,6 @@ static char *readFile(const char *path) {
   fclose(file);
   return buffer;
 }
-
-#include "type_checker.h"
-#include "optimizer.h"
 
 static void runFile(const char *path) {
   char *source = readFile(path);
