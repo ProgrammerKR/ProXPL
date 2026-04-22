@@ -242,7 +242,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
 
 // Helper functions moved to vm_helpers.c to avoid duplication
 
-static InterpretResult run(VM* vm) {
+static InterpretResult run(VM* pvm) {
+#define vm pvm
   CallFrame* frame = &vm->frames[vm->frameCount - 1];
 
 #define READ_BYTE() (*frame->ip++)
@@ -1053,19 +1054,16 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       if (vm->activeContextCount > 0) vm->activeContextCount--;
       DISPATCH();
   }
-  
-  CASE_OP(OP_UNKNOWN) {
-      runtimeError(vm, "Unknown opcode %d.", frame->ip[-1]);
-      return INTERPRET_RUNTIME_ERROR;
-  }
 
+  // End of opcodes
 #ifndef __GNUC__
     default:
-      runtimeError(vm, "Unknown opcode %d.", instruction);
+      runtimeError(pvm, "Unknown opcode %d.", instruction);
       return INTERPRET_RUNTIME_ERROR;
     }
   }
 #endif
+#undef vm
 
 #undef READ_BYTE
 #undef READ_SHORT
