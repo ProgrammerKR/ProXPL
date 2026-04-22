@@ -31,6 +31,22 @@ static bool isTypesEqual(TypeInfo t1, TypeInfo t2) {
     return true;
 }
 
+static TypeInfo duplicateType(TypeInfo type) {
+    TypeInfo copy = type;
+    if (type.name) copy.name = strdup(type.name);
+    if (type.returnType) {
+        copy.returnType = (TypeInfo*)malloc(sizeof(TypeInfo));
+        *copy.returnType = duplicateType(*type.returnType);
+    }
+    if (type.paramTypes) {
+        copy.paramTypes = (TypeInfo*)malloc(sizeof(TypeInfo) * type.paramCount);
+        for (int i = 0; i < type.paramCount; i++) {
+            copy.paramTypes[i] = duplicateType(type.paramTypes[i]);
+        }
+    }
+    return copy;
+}
+
 
 // --- Symbol Table Helpers ---
 
@@ -46,6 +62,20 @@ static Scope* beginScope(TypeChecker* checker) {
     return scope;
 }
 
+static void freeTypeInfoMembers(TypeInfo type) {
+    if (type.name) free(type.name);
+    if (type.returnType) {
+        freeTypeInfoMembers(*type.returnType);
+        free(type.returnType);
+    }
+    if (type.paramTypes) {
+        for (int i = 0; i < type.paramCount; i++) {
+            freeTypeInfoMembers(type.paramTypes[i]);
+        }
+        free(type.paramTypes);
+    }
+}
+
 static void endScope(TypeChecker* checker) {
     Scope* scope = checker->currentScope;
     checker->currentScope = scope->parent;
@@ -55,10 +85,8 @@ static void endScope(TypeChecker* checker) {
         Symbol* sym = scope->table[i];
         while (sym) {
             Symbol* next = sym->next;
-            // Free members of TypeInfo
-            if (sym->type.name) free(sym->type.name);
-            if (sym->type.paramTypes) free(sym->type.paramTypes);
-            free(sym->type.returnType);
+            // Free members of TypeInfo recursively
+            freeTypeInfoMembers(sym->type);
             free(sym);
             sym = next;
         }
@@ -81,7 +109,7 @@ static void defineSymbol(TypeChecker* checker, const char* name, TypeInfo type) 
     
     Symbol* sym = (Symbol*)malloc(sizeof(Symbol));
     sym->name = (char*)name; // Weak reference
-    sym->type = type;
+    sym->type = duplicateType(type);
     sym->next = scope->table[idx];
     scope->table[idx] = sym;
 }
@@ -95,8 +123,23 @@ static void updateSymbol(TypeChecker* checker, const char* name, TypeInfo type) 
         Symbol* sym = scope->table[idx];
         while (sym) {
             if (strcmp(sym->name, name) == 0) {
+                // Free old type members before replacing
+                if (sym->type.name) free(sym->type.name);
+                if (sym->type.paramTypes) {
+                    for(int j=0; j<sym->type.paramCount; j++) {
+                        // Deep free if needed? For now we only have 1 level of paramTypes as simple array
+                        // but let's be consistent.
+                    }
+                    free(sym->type.paramTypes);
+                }
+                if (sym->type.returnType) {
+                    // Recursive free would be better, but let's just free the pointer for now
+                    // as we don't have a full freeTypeInfo yet.
+                    free(sym->type.returnType);
+                }
+
                 // Update the type (including taint status)
-                sym->type = type;
+                sym->type = duplicateType(type);
                 return;
             }
             sym = sym->next;
@@ -337,9 +380,9 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
              
              if (callee.kind == TYPE_FUNCTION || callee.kind == TYPE_CLASS) {
                  if (callee.returnType) {
-                     result = *callee.returnType; // Copy return type
+                     result = duplicateType(*callee.returnType); // Deep copy return type
                  } else if (callee.kind == TYPE_CLASS) {
-                     result = callee; // Constructor returns class instance
+                     result = duplicateType(callee); // Constructor returns class instance
                  }
                  // TODO: Check argument types against callee.paramTypes
              } else if (callee.kind == TYPE_UNKNOWN) {

@@ -219,8 +219,6 @@ static void runFile(const char *path) {
       free(source);
       exit(65);
   }
-  freeTypeChecker(&checker);
-
   // --- Pipeline Step 3: UI Transpilation (if applicable) ---
   for (int i = 0; i < statements->count; i++) {
       if (statements->items[i]->type == STMT_UI_APP) {
@@ -234,6 +232,8 @@ static void runFile(const char *path) {
   // --- Pipeline Step 4: Bytecode Gen & Execution ---
   InterpretResult result = interpretAST(&vm, statements);
     
+  freeTypeChecker(&checker);
+
   if (result != INTERPRET_OK) {
       exit(70);
   }
