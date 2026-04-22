@@ -266,7 +266,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Woverride-init"
   static void* dispatch_table[256] = {
-      [0 ... 255] = &&DO_OP_UNKNOWN,
+      [0 ... 255] = &&trap,
       [OP_CONSTANT] = &&DO_OP_CONSTANT,
       [OP_NOP] = &&DO_OP_NOP,
       [OP_NIL] = &&DO_OP_NIL,
@@ -1053,6 +1053,12 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_END_ACTIVATE) {
       if (vm->activeContextCount > 0) vm->activeContextCount--;
       DISPATCH();
+  }
+
+trap:
+  {
+      runtimeError(pvm, "Unknown opcode %d.", frame->ip[-1]);
+      return INTERPRET_RUNTIME_ERROR;
   }
 
   // End of opcodes
