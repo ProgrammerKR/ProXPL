@@ -13,6 +13,11 @@ if (MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
   add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter)
+  # Aggressive optimizations for GCC/Clang
+  add_compile_options($<$<CONFIG:Release>:-O3 -march=native -flto>)
+  if(NOT APPLE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
+  endif()
 endif()
 
 # --- Build Configuration ---

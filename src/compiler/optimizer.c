@@ -111,12 +111,36 @@ static void foldStmt(Stmt* stmt) {
             break;
         case STMT_IF:
             stmt->as.if_stmt.condition = foldExpr(stmt->as.if_stmt.condition);
-            foldStmt(stmt->as.if_stmt.then_branch);
-            foldStmt(stmt->as.if_stmt.else_branch);
+            if (stmt->as.if_stmt.condition->type == EXPR_LITERAL) {
+                Value cond = stmt->as.if_stmt.condition->as.literal.value;
+                bool is_true = !IS_NIL(cond) && (!IS_BOOL(cond) || AS_BOOL(cond));
+                if (is_true) {
+                    // Only keep then branch (simplified for now by just folding children)
+                    foldStmt(stmt->as.if_stmt.then_branch);
+                } else {
+                    // Only keep else branch
+                    if (stmt->as.if_stmt.else_branch)
+                        foldStmt(stmt->as.if_stmt.else_branch);
+                }
+            } else {
+                foldStmt(stmt->as.if_stmt.then_branch);
+                foldStmt(stmt->as.if_stmt.else_branch);
+            }
             break;
         case STMT_WHILE:
             stmt->as.while_stmt.condition = foldExpr(stmt->as.while_stmt.condition);
-            foldStmt(stmt->as.while_stmt.body);
+            if (stmt->as.while_stmt.condition->type == EXPR_LITERAL) {
+                Value cond = stmt->as.while_stmt.condition->as.literal.value;
+                bool is_true = !IS_NIL(cond) && (!IS_BOOL(cond) || AS_BOOL(cond));
+                if (!is_true) {
+                    // Loop will never run. We could technically remove the statement.
+                    // For now, we just mark it as potentially skippable or do nothing.
+                } else {
+                    foldStmt(stmt->as.while_stmt.body);
+                }
+            } else {
+                foldStmt(stmt->as.while_stmt.body);
+            }
             break;
         case STMT_BLOCK:
             if (stmt->as.block.statements) {
