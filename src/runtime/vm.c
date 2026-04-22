@@ -139,15 +139,11 @@ static bool performTensorArithmetic(VM* pvm, char op) {
         ObjTensor* res = newTensor(a->dimCount, a->dims, NULL);
         push(pvm, OBJ_VAL(res)); 
         
-        for (int i = 0; i < a->size; i++) {
-            double vA = a->data[i];
-            double vB = b->data[i];
-            switch (op) {
-                case '+': res->data[i] = vA + vB; break;
-                case '-': res->data[i] = vA - vB; break;
-                case '*': res->data[i] = vA * vB; break;
-                case '/': res->data[i] = vA / vB; break;
-            }
+        switch (op) {
+            case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b->data[i]; break;
+            case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b->data[i]; break;
+            case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b->data[i]; break;
+            case '/': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b->data[i]; break;
         }
         
         Value resVal = pop(pvm);
@@ -165,14 +161,11 @@ static bool performTensorArithmetic(VM* pvm, char op) {
         ObjTensor* res = newTensor(a->dimCount, a->dims, NULL);
         push(pvm, OBJ_VAL(res));
         
-        for (int i = 0; i < a->size; i++) {
-            double vA = a->data[i];
-            switch (op) {
-                case '+': res->data[i] = vA + b; break;
-                case '-': res->data[i] = vA - b; break;
-                case '*': res->data[i] = vA * b; break;
-                case '/': res->data[i] = vA / b; break;
-            }
+        switch (op) {
+            case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b; break;
+            case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b; break;
+            case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b; break;
+            case '/': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b; break;
         }
         Value resVal = pop(pvm);
         pop(pvm); pop(pvm); push(pvm, resVal);
@@ -187,14 +180,11 @@ static bool performTensorArithmetic(VM* pvm, char op) {
         ObjTensor* res = newTensor(b->dimCount, b->dims, NULL);
         push(pvm, OBJ_VAL(res));
         
-        for (int i = 0; i < b->size; i++) {
-            double vB = b->data[i];
-            switch (op) {
-                case '+': res->data[i] = a + vB; break;
-                case '-': res->data[i] = a - vB; break;
-                case '*': res->data[i] = a * vB; break;
-                case '/': res->data[i] = a / vB; break;
-            }
+        switch (op) {
+            case '+': for (int i = 0; i < b->size; i++) res->data[i] = a + b->data[i]; break;
+            case '-': for (int i = 0; i < b->size; i++) res->data[i] = a - b->data[i]; break;
+            case '*': for (int i = 0; i < b->size; i++) res->data[i] = a * b->data[i]; break;
+            case '/': for (int i = 0; i < b->size; i++) res->data[i] = a / b->data[i]; break;
         }
         Value resVal = pop(pvm);
         pop(pvm); pop(pvm); push(pvm, resVal);
@@ -487,12 +477,23 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       PUSH(frame->slots[slot]);
       DISPATCH();
   }
-  
+
+  CASE_OP(OP_GET_LOCAL_0) { PUSH(frame->slots[0]); DISPATCH(); }
+  CASE_OP(OP_GET_LOCAL_1) { PUSH(frame->slots[1]); DISPATCH(); }
+  CASE_OP(OP_GET_LOCAL_2) { PUSH(frame->slots[2]); DISPATCH(); }
+  CASE_OP(OP_GET_LOCAL_3) { PUSH(frame->slots[3]); DISPATCH(); }
+
   CASE_OP(OP_SET_LOCAL) {
       uint8_t slot = READ_BYTE();
       frame->slots[slot] = peek(vm, 0);
       DISPATCH();
   }
+
+  CASE_OP(OP_SET_LOCAL_0) { frame->slots[0] = peek(vm, 0); DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_1) { frame->slots[1] = peek(vm, 0); DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_2) { frame->slots[2] = peek(vm, 0); DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_3) { frame->slots[3] = peek(vm, 0); DISPATCH(); }
+
   
   CASE_OP(OP_GET_GLOBAL) {
       ObjString* name = READ_STRING();
