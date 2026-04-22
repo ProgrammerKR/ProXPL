@@ -270,8 +270,12 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
         case EXPR_VARIABLE: {
             int arg = resolveLocal(gen, expr->as.variable.name);
             if (arg != -1) {
-                writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
-                writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                if (arg <= 3) {
+                    writeChunk(gen->chunk, OP_GET_LOCAL_0 + arg, expr->line);
+                } else {
+                    writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
+                    writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                }
             } else {
                  Value nameVal = OBJ_VAL(copyString(expr->as.variable.name, strlen(expr->as.variable.name)));
                  int nameConst = addConstant(gen->chunk, nameVal);
@@ -284,8 +288,12 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             genExpr(gen, expr->as.assign.value);
              int arg = resolveLocal(gen, expr->as.assign.name);
              if (arg != -1) {
-                 writeChunk(gen->chunk, OP_SET_LOCAL, expr->line);
-                 writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                 if (arg <= 3) {
+                     writeChunk(gen->chunk, OP_SET_LOCAL_0 + arg, expr->line);
+                 } else {
+                     writeChunk(gen->chunk, OP_SET_LOCAL, expr->line);
+                     writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                 }
              } else {
                  Value nameVal = OBJ_VAL(copyString(expr->as.assign.name, strlen(expr->as.assign.name)));
                  int nameConst = addConstant(gen->chunk, nameVal);
