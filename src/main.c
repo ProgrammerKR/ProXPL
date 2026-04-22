@@ -100,6 +100,8 @@ static void repl() {
     }
 
     // --- Pipeline: AST -> Bytecode -> VM ---
+    optimizeAST(statements);
+
     ObjFunction* function = newFunction();
     push(&vm, OBJ_VAL(function));
     
@@ -150,6 +152,7 @@ static char *readFile(const char *path) {
 }
 
 #include "type_checker.h"
+#include "optimizer.h"
 
 static void runFile(const char *path) {
   char *source = readFile(path);
@@ -208,7 +211,10 @@ static void runFile(const char *path) {
     exit(65);
   }
 
-  // --- Pipeline Step 2: Type Checking ---
+  // --- Pipeline Step 2: Optimization ---
+  optimizeAST(statements);
+
+  // --- Pipeline Step 3: Type Checking ---
   TypeChecker checker;
   initTypeChecker(&checker);
   
