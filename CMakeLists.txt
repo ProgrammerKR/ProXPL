@@ -14,7 +14,7 @@ if (MSVC)
 else()
   add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter)
   # Aggressive optimizations for GCC/Clang
-  add_compile_options($<$<CONFIG:Release>:-O3 -march=native -flto>)
+  add_compile_options($<$<CONFIG:Release>:-O3;-march=native;-flto>)
   if(NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
   endif()
