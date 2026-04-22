@@ -55,8 +55,8 @@ static void endScope(TypeChecker* checker) {
         Symbol* sym = scope->table[i];
         while (sym) {
             Symbol* next = sym->next;
-            // TypeInfo might have allocated members, but for now we assume AST ownership
-            // or simple types. If we alloc param arrays, we should free them here.
+            // Free members of TypeInfo
+            if (sym->type.name) free(sym->type.name);
             if (sym->type.paramTypes) free(sym->type.paramTypes);
             free(sym->type.returnType);
             free(sym);

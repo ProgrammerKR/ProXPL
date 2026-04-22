@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [Unreleased]
+## [1.3.1] - 2026-04-22
+
+### Fixed
+- **Memory Management**: Resolved a critical memory leak in the Type Checker where symbol names and parameter types were not being deallocated during scope exit.
+- **VM Stability**: Unified the VM dispatch loop (GNUC Computed Goto and Fallback Switch-Case) to eliminate logic divergence and fix missing opcodes (`OP_INTERFACE`, `OP_IMPLEMENT`).
+- **GC Rooting**: Fixed a race condition in `OP_MAKE_TENSOR` where newly allocated tensors were rooted after stack pops, preventing premature collection.
+- **Error Handling**: Refactored VM stack overflow handling to report recoverable runtime errors instead of calling `exit(1)`.
+
+## [1.3.0] - 2026-01-27
 
 ### Added
 - **AI-Native Primitives**: 
