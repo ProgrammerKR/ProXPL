@@ -10,9 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (MSVC)
   add_compile_options(/W4 /wd4244 /wd4245 /wd4267 /wd4100 /wd4200)
-  add_compile_options($<$<CONFIG:Release>:/O2;/Ot;/GL>)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
-  add_link_options($<$<CONFIG:Release>:/LTCG>)
 else()
   add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter)
 endif()
@@ -220,6 +218,10 @@ if(NOT MSVC)
     if(NOT APPLE)
         target_link_options(prox_core PUBLIC $<$<CONFIG:Release>:-flto>)
     endif()
+else()
+    # Aggressive optimizations for MSVC in Release mode
+    target_compile_options(prox_core PRIVATE $<$<CONFIG:Release>:/O2 /Ot /GL>)
+    target_link_options(prox_core PUBLIC $<$<CONFIG:Release>:/LTCG>)
 endif()
 
 # Main executable
