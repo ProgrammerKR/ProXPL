@@ -630,13 +630,14 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_ADD) {
-      if (performTensorArithmetic(vm, '+')) { DISPATCH(); }
-      if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
-          concatenate(vm);
-      } else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
           double b = AS_NUMBER(pop(vm));
           double a = AS_NUMBER(pop(vm));
           PUSH(NUMBER_VAL(a + b));
+      } else if (IS_TENSOR(peek(vm, 0)) || IS_TENSOR(peek(vm, 1))) {
+          if (performTensorArithmetic(vm, '+')) { DISPATCH(); }
+      } else if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
+          concatenate(vm);
       } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
           Value numVal = peek(vm, 0);
           char buffer[32];
@@ -662,26 +663,44 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_SUBTRACT) {
-      if (performTensorArithmetic(vm, '-')) { DISPATCH(); }
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL(a - b));
+      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          double b = AS_NUMBER(pop(vm));
+          double a = AS_NUMBER(pop(vm));
+          PUSH(NUMBER_VAL(a - b));
+      } else if (performTensorArithmetic(vm, '-')) { 
+          DISPATCH(); 
+      } else {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       DISPATCH();
   }
   
   CASE_OP(OP_MULTIPLY) {
-      if (performTensorArithmetic(vm, '*')) { DISPATCH(); }
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL(a * b));
+      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          double b = AS_NUMBER(pop(vm));
+          double a = AS_NUMBER(pop(vm));
+          PUSH(NUMBER_VAL(a * b));
+      } else if (performTensorArithmetic(vm, '*')) { 
+          DISPATCH(); 
+      } else {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       DISPATCH();
   }
   
   CASE_OP(OP_DIVIDE) {
-      if (performTensorArithmetic(vm, '/')) { DISPATCH(); }
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL(a / b));
+      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
+          double b = AS_NUMBER(pop(vm));
+          double a = AS_NUMBER(pop(vm));
+          PUSH(NUMBER_VAL(a / b));
+      } else if (performTensorArithmetic(vm, '/')) { 
+          DISPATCH(); 
+      } else {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       DISPATCH();
   }
   
