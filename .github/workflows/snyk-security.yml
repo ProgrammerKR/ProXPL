@@ -39,23 +39,28 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@master
+
       - name: Snyk Code test
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        with:
-          command: code test
-          args: --sarif-file-output=snyk-code.sarif
+        run: |
+          snyk code test --sarif-file-output=snyk-code.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Verify SARIF file
+      - name: Verify and Patch SARIF file
         run: |
-          if [ -f snyk-code.sarif ]; then
-            echo "SARIF file found."
-            ls -l snyk-code.sarif
+          if [ -s snyk-code.sarif ]; then
+            echo "SARIF file found and not empty."
+            # If the file exists but has an empty runs array, GitHub will reject it.
+            # We check for the specific pattern of an empty runs array.
+            if grep -q '"runs":\[\]' snyk-code.sarif || grep -q '"runs": \[\]' snyk-code.sarif; then
+              echo "Patching empty runs array for GitHub compatibility..."
+              sed -i 's/"runs":\s*\[\]/"runs":\[{"tool":{"driver":{"name":"SnykCode"}},"results":[]}\]/g' snyk-code.sarif
+            fi
           else
-            echo "SARIF file NOT found. Creating empty valid SARIF to prevent crash."
-            echo '{"$schema":"https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json","version":"2.1.0","runs":[]}' > snyk-code.sarif
+            echo "SARIF file NOT found or empty. Creating valid placeholder SARIF."
+            echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"SnykCode"}},"results":[]}]}' > snyk-code.sarif
           fi
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
