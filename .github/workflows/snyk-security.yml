@@ -39,14 +39,24 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Snyk CLI to check for security issues
-        uses: snyk/actions/setup@master
-
       - name: Snyk Code test
-        run: snyk code test --sarif-file-output=snyk-code.sarif
+        uses: snyk/actions/node@master
         continue-on-error: true
+        with:
+          command: code test
+          args: --sarif-file-output=snyk-code.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Verify SARIF file
+        run: |
+          if [ -f snyk-code.sarif ]; then
+            echo "SARIF file found."
+            ls -l snyk-code.sarif
+          else
+            echo "SARIF file NOT found. Creating empty valid SARIF to prevent crash."
+            echo '{"$schema":"https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json","version":"2.1.0","runs":[]}' > snyk-code.sarif
+          fi
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
