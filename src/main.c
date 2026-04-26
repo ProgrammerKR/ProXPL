@@ -9,6 +9,17 @@
  * Handles REPL mode, file execution, and PRM (Package Manager) commands
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
+
 #include "bytecode.h"
 #include "common.h"
 #include "compiler.h"
@@ -19,18 +30,9 @@
 #include "transpiler_ui.h"
 #include "object.h"
 #include "memory.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "type_checker.h"
 #include "optimizer.h"
-
-#ifdef _WIN32
-#include <process.h>
-#else
-#include <unistd.h>
-#include <sys/wait.h>
-#endif
+#include "prm/prm.h"
 
 void registerStdLib(VM* vm);
 
@@ -70,24 +72,27 @@ static void repl() {
     Token tokens[256];
     int tokenCount = 0;
 
+    bool scanError = false;
     for (;;) {
       Token token = scanToken(&scanner);
+      if (tokenCount >= 256) {
+        fprintf(stderr, "Error: Too many tokens\n");
+        scanError = true;
+        break;
+      }
       tokens[tokenCount++] = token;
 
       if (token.type == TOKEN_ERROR) {
         fprintf(stderr, "Error: %.*s\n", token.length, token.start);
+        scanError = true;
         break;
       }
 
       if (token.type == TOKEN_EOF)
         break;
-      if (tokenCount >= 256) {
-        fprintf(stderr, "Error: Too many tokens\n");
-        break;
-      }
     }
 
-    if (tokens[tokenCount - 1].type == TOKEN_ERROR) {
+    if (scanError) {
       continue;
     }
 
@@ -98,6 +103,7 @@ static void repl() {
 
     if (statements == NULL || statements->count == 0) {
       fprintf(stderr, "Parse error\n");
+      if (statements != NULL) freeStmtList(statements);
       continue;
     }
 
@@ -129,7 +135,13 @@ static char *readFile(const char *path) {
   }
 
   fseek(file, 0L, SEEK_END);
-  size_t fileSize = ftell(file);
+  long ftellSize = ftell(file);
+  if (ftellSize < 0) {
+      fprintf(stderr, "Could not determine size of file \"%s\".\n", path);
+      fclose(file);
+      return NULL;
+  }
+  size_t fileSize = (size_t)ftellSize;
   rewind(file);
 
   char *buffer = (char *)malloc(fileSize + 1);
@@ -166,8 +178,14 @@ static void runFile(const char *path) {
   Token tokens[4096];
   int tokenCount = 0;
 
+  bool scanError = false;
   for (;;) {
     Token token = scanToken(&scanner);
+    if (tokenCount >= 4096) {
+      fprintf(stderr, "Error: Too many tokens\n");
+      scanError = true;
+      break;
+    }
     tokens[tokenCount++] = token;
 
     if (token.type == TOKEN_ERROR) {
@@ -186,17 +204,17 @@ static void runFile(const char *path) {
       for(int i=1; i < token.column; i++) fprintf(stderr, " ");
       fprintf(stderr, "^\n");
       
-      free(source);
-      exit(65);
+      scanError = true;
+      break;
     }
 
     if (token.type == TOKEN_EOF)
       break;
-    if (tokenCount >= 4096) {
-      fprintf(stderr, "Error: Too many tokens\n");
-      free(source);
-      exit(65);
-    }
+  }
+
+  if (scanError) {
+    free(source);
+    exit(65);
   }
 
   // Parse
@@ -206,6 +224,7 @@ static void runFile(const char *path) {
 
   if (statements == NULL || statements->count == 0) {
     fprintf(stderr, "Parse error\n");
+    if (statements != NULL) freeStmtList(statements);
     free(source);
     exit(65);
   }
@@ -228,18 +247,18 @@ static void runFile(const char *path) {
   for (int i = 0; i < statements->count; i++) {
       if (statements->items[i]->type == STMT_UI_APP) {
           char outputDir[512];
-          sprintf(outputDir, "dist_%s", statements->items[i]->as.ui_app.name);
+          snprintf(outputDir, sizeof(outputDir), "dist_%s", statements->items[i]->as.ui_app.name);
           printf("[UI] Transpiling App '%s' to %s...\n", statements->items[i]->as.ui_app.name, outputDir);
           transpileUIApp(statements->items[i], outputDir);
       }
   }
 
   // --- Pipeline Step 4: Bytecode Gen & Execution ---
-  InterpretResult result = interpretAST(&vm, statements);
-    
   freeTypeChecker(&checker);
 
   if (result != INTERPRET_OK) {
+      freeStmtList(statements);
+      free(source);
       exit(70);
   }
 
@@ -249,9 +268,8 @@ static void runFile(const char *path) {
 
 
 // ============================================================
-//   PRM (ProX Resource Manager) Include
+//   PRM (ProX Resource Manager) Command Dispatch
 // ============================================================
-#include "prm/prm.h"
 
 // ============================================================
 //   PRM Command Dispatch
@@ -293,8 +311,7 @@ static int dispatchPRM(int argc, const char* argv[]) {
         strcmp(sub, "doc")      == 0 || strcmp(sub, "exec")      == 0 ||
         strcmp(sub, "why")      == 0 || strcmp(sub, "create")    == 0 ||
         strcmp(sub, "test")     == 0 || strcmp(sub, "watch")     == 0 ||
-        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0 ||
-        (strcmp(sub, "build") == 0 && argc >= 3 && strcmp(argv[2], "web") == 0)
+        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0
     );
 
     // Only intercept if invoked as prm OR if it's a uniquely-PRM subcommand
@@ -365,7 +382,7 @@ static int dispatchPRM(int argc, const char* argv[]) {
                 }
                 prm_build_web(&m, outDir);
             } else {
-                bool releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+                int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
                 prm_build(&m, releaseMode);
             }
 
@@ -461,12 +478,7 @@ int main(int argc, const char *argv[]) {
   for(int i=0; i < argc; i++) {
       ObjString* arg = copyString(argv[i], (int)strlen(argv[i]));
       push(&vm, OBJ_VAL(arg));
-      if (vm.cliArgs->capacity < vm.cliArgs->count + 1) {
-          int oldCapacity = vm.cliArgs->capacity;
-          vm.cliArgs->capacity = GROW_CAPACITY(oldCapacity);
-          vm.cliArgs->items = GROW_ARRAY(Value, vm.cliArgs->items, oldCapacity, vm.cliArgs->capacity);
-      }
-      vm.cliArgs->items[vm.cliArgs->count++] = OBJ_VAL(arg);
+      appendToList(vm.cliArgs, OBJ_VAL(arg));
       pop(&vm); // arg
   }
   pop(&vm); // cliArgs
@@ -486,7 +498,8 @@ int main(int argc, const char *argv[]) {
     } else if (strcmp(command, "build") == 0) {
       printf("Build command not yet implemented\n");
       exit(1);
-    } else if (argv[1][strlen(argv[1]) - 1] == 'x' &&
+    } else if (strlen(argv[1]) >= 5 &&
+               argv[1][strlen(argv[1]) - 1] == 'x' &&
                argv[1][strlen(argv[1]) - 2] == 'o' &&
                argv[1][strlen(argv[1]) - 3] == 'r' &&
                argv[1][strlen(argv[1]) - 4] == 'p' &&
