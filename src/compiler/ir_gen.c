@@ -23,8 +23,9 @@ typedef struct {
        char* name;
        int ssaVal;
        bool isAlloca;
-    } symbols[1024];
+    } *symbols;
     int symbolCount;
+    int symbolCapacity;
 
     int nextReg;
 } IRGen;
@@ -47,7 +48,16 @@ static void emit(IRGen* gen, IRInstruction* instr) {
     gen->currentBlock->last = instr;
 }
 
-static int visitExpr(IRGen* gen, Expr* expr);
+static void addSymbol(IRGen* gen, const char* name, int ssaVal, bool isAlloca) {
+    if (gen->symbolCount >= gen->symbolCapacity) {
+        gen->symbolCapacity = gen->symbolCapacity == 0 ? 64 : gen->symbolCapacity * 2;
+        gen->symbols = realloc(gen->symbols, sizeof(*gen->symbols) * gen->symbolCapacity);
+    }
+    gen->symbols[gen->symbolCount].name = strdup(name);
+    gen->symbols[gen->symbolCount].ssaVal = ssaVal;
+    gen->symbols[gen->symbolCount].isAlloca = isAlloca;
+    gen->symbolCount++;
+}
 
 static int visitExpr(IRGen* gen, Expr* expr) {
     if (!expr) return -1;
@@ -79,7 +89,7 @@ static int visitExpr(IRGen* gen, Expr* expr) {
             else if (strcmp(expr->as.binary.operator, "==") == 0) opcode = IR_OP_CMP_EQ;
             else {
                 fprintf(stderr, "Unsupported IR operator: %s\n", expr->as.binary.operator);
-                return -1;
+                exit(1);
             }
 
             IRInstruction* instr = createIRInstruction(opcode, r);
@@ -224,10 +234,7 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
                 emit(gen, store);
             }
 
-            gen->symbols[gen->symbolCount].name = strdup(stmt->as.var_decl.name);
-            gen->symbols[gen->symbolCount].ssaVal = r;
-            gen->symbols[gen->symbolCount].isAlloca = true;
-            gen->symbolCount++;
+            addSymbol(gen, stmt->as.var_decl.name, r, true);
             break;
         }
 
@@ -333,7 +340,7 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
             // Loop body
             gen->currentBlock = loopBlock;
             visitStmt(gen, stmt->as.while_stmt.body);
-            if (!loopBlock->last || loopBlock->last->opcode != IR_OP_RETURN) {
+            if (!gen->currentBlock->last || gen->currentBlock->last->opcode != IR_OP_RETURN) {
                 IRInstruction* jl = createIRInstruction(IR_OP_JUMP, -1);
                 IROperand opBack;
                 opBack.type = OPERAND_BLOCK; opBack.as.block = condBlock;
@@ -347,8 +354,10 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
 
         case STMT_BLOCK: {
             StmtList* list = stmt->as.block.statements;
-            for (int i = 0; i < list->count; i++) {
-                visitStmt(gen, list->items[i]);
+            if (list) {
+                for (int i = 0; i < list->count; i++) {
+                    visitStmt(gen, list->items[i]);
+                }
             }
             break;
         }
@@ -375,17 +384,16 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
             // Let's just append locals. Arguments first.
             
             StringList* params = stmt->as.func_decl.params;
-            for(int i=0; i<params->count; i++) {
-                 int r = newReg(gen);
-                 // We need an instruction to 'receive' argument? Or just assume they are in registers 0..N?
-                 // For now, map param name to register i
-                 gen->symbols[gen->symbolCount].name = strdup(params->items[i]);
-                 gen->symbols[gen->symbolCount].ssaVal = r;
-                 gen->symbols[gen->symbolCount].isAlloca = false; 
-                 gen->symbolCount++;
+            if (params) {
+                for(int i=0; i<params->count; i++) {
+                     int r = newReg(gen);
+                     addSymbol(gen, params->items[i], r, false);
+                }
             }
 
-            visitStmt(gen, createBlockStmt(stmt->as.func_decl.body, 0, 0)); // Treat body as block
+            Stmt* blockStmt = createBlockStmt(stmt->as.func_decl.body, 0, 0);
+            visitStmt(gen, blockStmt); 
+            free(blockStmt);
 
             // Add to module
             if (gen->module->funcCount >= gen->module->funcCapacity) {
@@ -419,6 +427,9 @@ IRModule* generateSSA_IR(StmtList* program) {
     gen.symbolCount = 0;
     gen.nextReg = 0;
 
+    gen.symbols = malloc(sizeof(*gen.symbols) * 64);
+    gen.symbolCapacity = 64;
+
     // Add function to module
     if (gen.module->funcCount >= gen.module->funcCapacity) {
         gen.module->funcCapacity = gen.module->funcCapacity == 0 ? 8 : gen.module->funcCapacity * 2;
@@ -426,12 +437,19 @@ IRModule* generateSSA_IR(StmtList* program) {
     }
     gen.module->functions[gen.module->funcCount++] = gen.currentFunc;
 
-    for (int i = 0; i < program->count; i++) {
-        visitStmt(&gen, program->items[i]);
+    if (program) {
+        for (int i = 0; i < program->count; i++) {
+            visitStmt(&gen, program->items[i]);
+        }
     }
 
     gen.currentFunc->nextSsaVal = gen.nextReg;
     computeCFGLinks(gen.currentFunc);
+
+    for (int i = 0; i < gen.symbolCount; i++) {
+        free(gen.symbols[i].name);
+    }
+    free(gen.symbols);
 
     return gen.module;
 }
