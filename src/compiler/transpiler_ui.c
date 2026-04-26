@@ -22,7 +22,7 @@ static void escapeHtml(const char* str, FILE* out) {
         else if (*str == '>') fprintf(out, "&gt;");
         else if (*str == '&') fprintf(out, "&amp;");
         else if (*str == '"') fprintf(out, "&quot;");
-        else if (*str == '\\'') fprintf(out, "&#39;");
+        else if (*str == '\'') fprintf(out, "&#39;");
         else fputc(*str, out);
         str++;
     }
@@ -322,16 +322,16 @@ static void transpileExpr(Expr *expr, FILE *out, bool isJS) {
         case EXPR_LITERAL:
             if (IS_STRING(expr->as.literal.value)) {
                 if (isJS) {
-                    fprintf(out, "\\"");
+                    fprintf(out, "\"");
                     const char* s = AS_CSTRING(expr->as.literal.value);
                     while (*s) {
-                        if (*s == '"' || *s == '\\\\') fputc('\\\\', out);
-                        if (*s == '\\n') fprintf(out, "\\\\n");
-                        else if (*s == '\\r') fprintf(out, "\\\\r");
-                        else if (*s != '\\n' && *s != '\\r') fputc(*s, out);
+                        if (*s == '"' || *s == '\\') fputc('\\', out);
+                        if (*s == '\n') fprintf(out, "\\n");
+                        else if (*s == '\r') fprintf(out, "\\r");
+                        else if (*s != '\n' && *s != '\r') fputc(*s, out);
                         s++;
                     }
-                    fprintf(out, "\\"");
+                    fprintf(out, "\"");
                 } else {
                     escapeHtml(AS_CSTRING(expr->as.literal.value), out);
                 }
