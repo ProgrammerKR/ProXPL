@@ -1196,7 +1196,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       DISPATCH();
   }
 
-  {
+  trap: {
       runtimeError(pvm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
   }
