@@ -35,11 +35,10 @@ static Expr* foldBinary(Expr* expr) {
             else if (strcmp(op, "!=") == 0) res = BOOL_VAL(a != b);
             else folded = false;
 
-            if (folded) {
                 expr->type = EXPR_LITERAL;
                 expr->as.literal.value = res;
-                // Note: We leak the old children here, but this is a simple compiler.
-                // In a production one, we would call freeExpr(l) and freeExpr(r).
+                freeExpr(l);
+                freeExpr(r);
                 return expr;
             }
         }
@@ -80,7 +79,11 @@ static Expr* foldExpr(Expr* expr) {
         case EXPR_UNARY: return foldUnary(expr);
         case EXPR_GROUPING: 
             expr->as.grouping.expression = foldExpr(expr->as.grouping.expression);
-            if (expr->as.grouping.expression->type == EXPR_LITERAL) return expr->as.grouping.expression;
+            if (expr->as.grouping.expression->type == EXPR_LITERAL) {
+                Expr* inner = expr->as.grouping.expression;
+                free(expr);
+                return inner;
+            }
             return expr;
         case EXPR_CALL:
             expr->as.call.callee = foldExpr(expr->as.call.callee);
