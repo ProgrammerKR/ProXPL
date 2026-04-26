@@ -5,11 +5,25 @@
 //   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
 
 #include "../../include/ir.h"
+#include "../../include/value.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+static void* safe_malloc(size_t size) {
+    void* ptr = malloc(size);
+    if (!ptr) { fprintf(stderr, "Out of memory\\n"); exit(1); }
+    return ptr;
+}
+
+static void* safe_realloc(void* ptr, size_t size) {
+    void* new_ptr = realloc(ptr, size);
+    if (!new_ptr && size != 0) { fprintf(stderr, "Out of memory\\n"); exit(1); }
+    return new_ptr;
+}
 
 IRModule* createIRModule() {
-    IRModule* module = (IRModule*)malloc(sizeof(IRModule));
+    IRModule* module = (IRModule*)safe_malloc(sizeof(IRModule));
     module->functions = NULL;
     module->funcCount = 0;
     module->funcCapacity = 0;
@@ -17,7 +31,7 @@ IRModule* createIRModule() {
 }
 
 IRFunction* createIRFunction(const char* name, bool isAsync) {
-    IRFunction* func = (IRFunction*)malloc(sizeof(IRFunction));
+    IRFunction* func = (IRFunction*)safe_malloc(sizeof(IRFunction));
     func->name = strdup(name);
     func->entry = NULL;
     func->blocks = NULL;
@@ -29,7 +43,7 @@ IRFunction* createIRFunction(const char* name, bool isAsync) {
 }
 
 IRBasicBlock* createIRBasicBlock(IRFunction* func) {
-    IRBasicBlock* block = (IRBasicBlock*)malloc(sizeof(IRBasicBlock));
+    IRBasicBlock* block = (IRBasicBlock*)safe_malloc(sizeof(IRBasicBlock));
     block->id = func->blockCount;
     block->first = NULL;
     block->last = NULL;
@@ -44,7 +58,7 @@ IRBasicBlock* createIRBasicBlock(IRFunction* func) {
     // Add to function
     if (func->blockCount >= func->blockCapacity) {
         func->blockCapacity = func->blockCapacity == 0 ? 8 : func->blockCapacity * 2;
-        func->blocks = (IRBasicBlock**)realloc(func->blocks, sizeof(IRBasicBlock*) * func->blockCapacity);
+        func->blocks = (IRBasicBlock**)safe_realloc(func->blocks, sizeof(IRBasicBlock*) * func->blockCapacity);
     }
     func->blocks[func->blockCount++] = block;
 
@@ -54,7 +68,7 @@ IRBasicBlock* createIRBasicBlock(IRFunction* func) {
 }
 
 IRInstruction* createIRInstruction(IROpcode opcode, int result) {
-    IRInstruction* instr = (IRInstruction*)malloc(sizeof(IRInstruction));
+    IRInstruction* instr = (IRInstruction*)safe_malloc(sizeof(IRInstruction));
     instr->opcode = opcode;
     instr->result = result;
     instr->operands = NULL;
@@ -65,7 +79,7 @@ IRInstruction* createIRInstruction(IROpcode opcode, int result) {
 }
 
 void addOperand(IRInstruction* instr, IROperand op) {
-    instr->operands = (IROperand*)realloc(instr->operands, sizeof(IROperand) * (instr->operandCount + 1));
+    instr->operands = (IROperand*)safe_realloc(instr->operands, sizeof(IROperand) * (instr->operandCount + 1));
     instr->operands[instr->operandCount++] = op;
 }
 
@@ -102,7 +116,7 @@ static void addEdge(IRBasicBlock* from, IRBasicBlock* to) {
     for (int i = 0; i < from->succCount; i++) if (from->successors[i] == to) return; // Already linked
     if (from->succCount >= from->succCapacity) {
         from->succCapacity = from->succCapacity == 0 ? 4 : from->succCapacity * 2;
-        from->successors = (IRBasicBlock**)realloc(from->successors, sizeof(IRBasicBlock*) * from->succCapacity);
+        from->successors = (IRBasicBlock**)safe_realloc(from->successors, sizeof(IRBasicBlock*) * from->succCapacity);
     }
     from->successors[from->succCount++] = to;
 
@@ -110,7 +124,7 @@ static void addEdge(IRBasicBlock* from, IRBasicBlock* to) {
     for (int i = 0; i < to->predCount; i++) if (to->predecessors[i] == from) return;
     if (to->predCount >= to->predCapacity) {
         to->predCapacity = to->predCapacity == 0 ? 4 : to->predCapacity * 2;
-        to->predecessors = (IRBasicBlock**)realloc(to->predecessors, sizeof(IRBasicBlock*) * to->predCapacity);
+        to->predecessors = (IRBasicBlock**)safe_realloc(to->predecessors, sizeof(IRBasicBlock*) * to->predCapacity);
     }
     to->predecessors[to->predCount++] = from;
 }
