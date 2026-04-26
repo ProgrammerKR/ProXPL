@@ -1,6 +1,6 @@
 {
     "name": "proxpl-language-server",
-    "version": "1.3.1",
+    "version": "1.3.2",
     "description": "Language Server for ProXPL",
     "main": "out/server.js",
     "scripts": {
