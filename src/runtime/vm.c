@@ -1196,10 +1196,12 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       DISPATCH();
   }
 
+#ifdef __GNUC__
   trap: {
       runtimeError(pvm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
   }
+#endif
 
   // End of opcodes
 #ifndef __GNUC__
