@@ -28,11 +28,14 @@ void initImporter(Importer *importer) {
 }
 
 void addSearchPath(Importer *importer, const char *path) {
-    importer->searchPaths = (char**)realloc(importer->searchPaths, sizeof(char*) * (importer->pathCount + 1));
+    char** newPaths = (char**)realloc(importer->searchPaths, sizeof(char*) * (importer->pathCount + 1));
+    if (!newPaths) return;
+    importer->searchPaths = newPaths;
     
     // Duplicate string
     size_t len = strlen(path);
     char* pathCopy = (char*)malloc(len + 1);
+    if (!pathCopy) return;
     strcpy(pathCopy, path);
     
     importer->searchPaths[importer->pathCount++] = pathCopy;
@@ -46,9 +49,11 @@ bool loadModule(Importer *importer, const char *moduleName, void** result) {
     // 2. Check Cache
     Value cached;
     if (tableGet(&importer->modules, nameObj, &cached)) {
-        *result = AS_MODULE(cached);
-        pop(&vm); // nameObj
-        return true;
+        if (IS_MODULE(cached)) {
+            *result = AS_MODULE(cached);
+            pop(&vm); // nameObj
+            return true;
+        }
     }
     
     // 3. Create new module (Stub for now, or real logic)
