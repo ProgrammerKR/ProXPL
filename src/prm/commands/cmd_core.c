@@ -23,11 +23,11 @@ static int isValidPrmArg(const char* arg) {
 }
 
 void prm_version() {
-    printf("prm v1.3.1 (ProXPL v1.3.1)\n");
+    printf("prm v1.3.2 (ProXPL v1.3.2)\n");
 }
 
 void prm_help() {
-    printf("ProX Resource Manager (prm) v1.3.1\n");
+    printf("ProX Resource Manager (prm) v1.3.2\n");
     printf("Usage: prm <command> [options]\n\n");
 
     printf("Core Commands:\n");
