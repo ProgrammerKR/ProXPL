@@ -1196,7 +1196,6 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       DISPATCH();
   }
 
-trap:
   {
       runtimeError(pvm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
@@ -1285,12 +1284,12 @@ InterpretResult interpret(VM* pvm, const char* source) {
   return result;
 }
 
-void defineNative(VM* vm, const char* name, NativeFn function) {
-  push(vm, OBJ_VAL(copyString(name, (int)strlen(name))));
-  push(vm, OBJ_VAL(newNative(function)));
-  tableSet(&vm->globals, AS_STRING(vm->stackTop[-2]), vm->stackTop[-1]);
-  pop(vm);
-  pop(vm);
+void defineNative(VM* pvm, const char* name, NativeFn function) {
+  push(pvm, OBJ_VAL(copyString(name, (int)strlen(name))));
+  push(pvm, OBJ_VAL(newNative(function)));
+  tableSet(&pvm->globals, AS_STRING(pvm->stackTop[-2]), pvm->stackTop[-1]);
+  pop(pvm);
+  pop(pvm);
 }
 
 InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {

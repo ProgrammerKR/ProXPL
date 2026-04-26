@@ -42,6 +42,8 @@ extern void register_io_globals(VM* vm);
 
 // Exposed natives
 extern Value native_clock(int argCount, Value* args);
+extern Value nativeLoadConfig(int argCount, Value *args);
+
 
 static Value native_len(int argCount, Value* args) {
     if (argCount < 1) return NUMBER_VAL(0);
@@ -53,11 +55,11 @@ static Value native_len(int argCount, Value* args) {
     return NUMBER_VAL(0);
 }
 
-static ObjModule* create_empty_module(VM* vm, const char* name) {
+static ObjModule* create_empty_module(VM* pVM, const char* name) {
     ObjString* nameStr = copyString(name, (int)strlen(name));
-    push(vm, OBJ_VAL(nameStr));
+    push(pVM, OBJ_VAL(nameStr));
     ObjModule* module = newModule(nameStr);
-    pop(vm);
+    pop(pVM);
     return module;
 }
 
@@ -265,7 +267,6 @@ void registerStdLib(VM* pVM) {
     defineNative(pVM, "pop", native_pop);   
     defineNative(pVM, "substr", native_substr);
     
-    extern Value nativeLoadConfig(int argCount, Value *args);
     defineNative(pVM, "loadConfig", nativeLoadConfig);
 
     register_math_globals(pVM);
