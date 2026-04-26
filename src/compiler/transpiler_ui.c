@@ -16,6 +16,18 @@
 static void transpileStmt(Stmt *stmt, FILE *html, FILE *js, int indent);
 static void transpileExpr(Expr *expr, FILE *out, bool isJS);
 
+static void escapeHtml(const char* str, FILE* out) {
+    while (*str) {
+        if (*str == '<') fprintf(out, "&lt;");
+        else if (*str == '>') fprintf(out, "&gt;");
+        else if (*str == '&') fprintf(out, "&amp;");
+        else if (*str == '"') fprintf(out, "&quot;");
+        else if (*str == '\\'') fprintf(out, "&#39;");
+        else fputc(*str, out);
+        str++;
+    }
+}
+
 static void printIndent(FILE *out, int level) {
     for (int i = 0; i < level; i++) fprintf(out, "  ");
 }
@@ -309,7 +321,20 @@ static void transpileExpr(Expr *expr, FILE *out, bool isJS) {
     switch (expr->type) {
         case EXPR_LITERAL:
             if (IS_STRING(expr->as.literal.value)) {
-                fprintf(out, "%s", AS_CSTRING(expr->as.literal.value));
+                if (isJS) {
+                    fprintf(out, "\\"");
+                    const char* s = AS_CSTRING(expr->as.literal.value);
+                    while (*s) {
+                        if (*s == '"' || *s == '\\\\') fputc('\\\\', out);
+                        if (*s == '\\n') fprintf(out, "\\\\n");
+                        else if (*s == '\\r') fprintf(out, "\\\\r");
+                        else if (*s != '\\n' && *s != '\\r') fputc(*s, out);
+                        s++;
+                    }
+                    fprintf(out, "\\"");
+                } else {
+                    escapeHtml(AS_CSTRING(expr->as.literal.value), out);
+                }
             } else if (IS_NUMBER(expr->as.literal.value)) {
                 double n = AS_NUMBER(expr->as.literal.value);
                 if (n == (long long)n) {
