@@ -26,7 +26,13 @@ static char* readFile(const char* path) {
     }
 
     fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
+    long ftellSize = ftell(file);
+    if (ftellSize < 0) {
+        fprintf(stderr, "Could not determine size of file \"%s\".\n", path);
+        fclose(file);
+        return NULL;
+    }
+    size_t fileSize = (size_t)ftellSize;
     rewind(file);
 
     char* buffer = (char*)malloc(fileSize + 1);
@@ -50,24 +56,26 @@ static char* readFile(const char* path) {
 }
 
 void proxpl_vm_init(VM *pvm) {
-    // Standard CLOX uses a global VM instance, so we ignore the pointer for now
-    // or assume 'vm' points to the global one.
+    if (pvm == NULL) return;
+    // Note: ProXPL maintains local VM state in the provided pointer.
     initVM(pvm); 
 }
 
 void proxpl_vm_free(VM *pvm) {
+    if (pvm == NULL) return;
     freeVM(pvm);
 }
 
 InterpretResult proxpl_interpret_chunk(VM *pvm, const Chunk *chunk) {
     (void)pvm; (void)chunk;
-    // ERROR: The standard VM interprets Source Code strings, not raw Chunks.
-    // To support this, you would need to expose the internal run() function.
+    // Interpreting raw chunks requires bypassing the compiler pipeline.
+    // This is currently unsupported as it skips essential optimization and safety passes.
     fprintf(stderr, "API Error: interpreting raw chunks is not supported in this version.\n");
     return INTERPRET_RUNTIME_ERROR;
 }
 
 InterpretResult proxpl_interpret_file(VM *pvm, const char *path) {
+    if (pvm == NULL || path == NULL) return INTERPRET_RUNTIME_ERROR;
     char* source = readFile(path);
     if (source == NULL) return INTERPRET_COMPILE_ERROR;
 
