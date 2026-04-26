@@ -254,6 +254,7 @@ static void runFile(const char *path) {
   }
 
   // --- Pipeline Step 4: Bytecode Gen & Execution ---
+  InterpretResult result = interpretAST(&vm, statements);
   freeTypeChecker(&checker);
 
   if (result != INTERPRET_OK) {
