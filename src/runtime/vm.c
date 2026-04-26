@@ -53,6 +53,7 @@ void freeVM(VM *pvm) {
   freeTable(&pvm->globals);
   freeTable(&pvm->strings);
   freeImporter(&pvm->importer);
+  pvm->initString = NULL; // CRITICAL: Prevent use-after-free
   freeObjects(pvm);
 }
 
@@ -63,6 +64,12 @@ void runtimeError(VM* pvm, const char* format, ...) {
   va_start(args, format);
   vsnprintf(message, sizeof(message), format, args);
   va_end(args);
+
+  if (pvm->frameCount == 0) {
+    fprintf(stderr, "%s\n", message);
+    resetStack(pvm);
+    return;
+  }
 
   CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
   ObjFunction* function = frame->closure->function;
@@ -91,13 +98,17 @@ void push(VM* pvm, Value value) {
       // NOTE: Most stack checks now happen via the PUSH macro in run()
       // to allow recoverable errors. This function remains for external use.
       fprintf(stderr, "Fatal Runtime Error: Value stack overflow in push().\n");
-      // exit(1); // Keep as safety for non-VM thread usage if any
+      exit(1); // CRITICAL: Prevent memory corruption
   }
   *pvm->stackTop = value;
   pvm->stackTop++;
 }
 
 Value pop(VM* pvm) {
+  if (pvm->stackTop <= pvm->stack) {
+      fprintf(stderr, "Fatal Runtime Error: Value stack underflow in pop().\n");
+      exit(1);
+  }
   pvm->stackTop--;
   return *pvm->stackTop;
 }
@@ -143,7 +154,15 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b->data[i]; break;
             case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b->data[i]; break;
             case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b->data[i]; break;
-            case '/': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b->data[i]; break;
+            case '/': 
+                for (int i = 0; i < a->size; i++) {
+                    if (b->data[i] == 0) {
+                        runtimeError(pvm, "Tensor division by zero.");
+                        return true;
+                    }
+                    res->data[i] = a->data[i] / b->data[i];
+                }
+                break;
         }
         
         Value resVal = pop(pvm);
@@ -165,7 +184,13 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b; break;
             case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b; break;
             case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b; break;
-            case '/': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b; break;
+            case '/': 
+                if (b == 0) {
+                    runtimeError(pvm, "Division by zero.");
+                    return true;
+                }
+                for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b; 
+                break;
         }
         Value resVal = pop(pvm);
         pop(pvm); pop(pvm); push(pvm, resVal);
@@ -184,7 +209,15 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < b->size; i++) res->data[i] = a + b->data[i]; break;
             case '-': for (int i = 0; i < b->size; i++) res->data[i] = a - b->data[i]; break;
             case '*': for (int i = 0; i < b->size; i++) res->data[i] = a * b->data[i]; break;
-            case '/': for (int i = 0; i < b->size; i++) res->data[i] = a / b->data[i]; break;
+            case '/': 
+                for (int i = 0; i < b->size; i++) {
+                    if (b->data[i] == 0) {
+                        runtimeError(pvm, "Division by zero.");
+                        return true;
+                    }
+                    res->data[i] = a / b->data[i]; 
+                }
+                break;
         }
         Value resVal = pop(pvm);
         pop(pvm); pop(pvm); push(pvm, resVal);
@@ -219,7 +252,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
         // Iterating Table manually as we don't have a tableIterator helper
         for (int j = 0; j < context->layers.capacity; j++) {
             Entry* entry = &context->layers.entries[j];
-            if (entry->key == NULL || IS_BOOL(entry->value)) continue; // Skip empty/tombstone
+            if (entry->key == NULL) continue;
+            if (IS_BOOL(entry->value)) continue; // Tombstone
             
             ObjLayer* layer = AS_LAYER(entry->value);
             if (tableGet(&layer->methods, name, result)) {
@@ -387,6 +421,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
               list->items[i] = peek(vm, 1 + (count - 1 - i));
           }
           Value listVal = peek(vm, 0);
+          if (vm->stackTop - (count + 1) < vm->stack) {
+              runtimeError(vm, "Stack underflow building list.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
           vm->stackTop -= (count + 1);
           PUSH(listVal);
       }
@@ -529,11 +567,12 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_SET_GLOBAL) {
       ObjString* name = READ_STRING();
-      if (tableSet(&vm->globals, name, peek(vm, 0))) {
-        tableDelete(&vm->globals, name);
+      Value value;
+      if (!tableGet(&vm->globals, name, &value)) {
         runtimeError(vm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
       }
+      tableSet(&vm->globals, name, peek(vm, 0));
       DISPATCH();
   }
   
@@ -605,7 +644,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_EQUAL) {
       Value b = pop(vm);
       Value a = pop(vm);
-      if (IS_STRING(a) && IS_STRING(b)) {
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          // IEEE 754 semantics: NaN != NaN
+          PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
+      } else if (IS_STRING(a) && IS_STRING(b)) {
           ObjString* s1 = AS_STRING(a);
           ObjString* s2 = AS_STRING(b);
           PUSH(BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
@@ -616,6 +658,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_GREATER) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+        runtimeError(vm, "Operands must be numbers.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       PUSH(BOOL_VAL(a > b));
@@ -623,6 +669,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_LESS) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+        runtimeError(vm, "Operands must be numbers.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       PUSH(BOOL_VAL(a < b));
@@ -693,6 +743,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_DIVIDE) {
       if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
           double b = AS_NUMBER(pop(vm));
+          if (b == 0) {
+              runtimeError(vm, "Division by zero.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
           double a = AS_NUMBER(pop(vm));
           PUSH(NUMBER_VAL(a / b));
       } else if (performTensorArithmetic(vm, '/')) { 
@@ -795,7 +849,6 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           runtimeError(vm, "Can only call functions, classes, and foreign functions.");
           return INTERPRET_RUNTIME_ERROR;
       }
-      DISPATCH();
   }
   
   CASE_OP(OP_INVOKE) {
@@ -867,7 +920,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       }
       ObjClass* subclass = AS_CLASS(peek(vm, 0));
       tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
-      pop(vm); pop(vm);
+      pop(vm); // Pop subclass, keep superclass
       DISPATCH();
   }
   
@@ -883,6 +936,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           runtimeError(vm, "Could not find module '%s'.", name->chars);
           return INTERPRET_RUNTIME_ERROR;
       }
+      PUSH(moduleVal);
       DISPATCH();
   }
   
@@ -913,6 +967,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_MAKE_FOREIGN) {
+      if (!IS_STRING(peek(vm, 0)) || !IS_STRING(peek(vm, 1))) {
+          runtimeError(vm, "Foreign symbol and library name must be strings.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       ObjString* symbol = AS_STRING(pop(vm));
       ObjString* libName = AS_STRING(pop(vm));
       ObjForeign* foreign = loadForeign(libName, symbol);
@@ -925,13 +983,25 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_MODULO) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+        runtimeError(vm, "Operands must be numbers.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
+      if (b == 0) {
+          runtimeError(vm, "Modulo by zero.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       double a = AS_NUMBER(pop(vm));
       PUSH(NUMBER_VAL(fmod(a, b)));
       DISPATCH();
   }
   
   CASE_OP(OP_BIT_AND) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int b = (int)AS_NUMBER(pop(vm));
       int a = (int)AS_NUMBER(pop(vm));
       PUSH(NUMBER_VAL((double)(a & b)));
@@ -939,6 +1009,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_BIT_OR) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int b = (int)AS_NUMBER(pop(vm));
       int a = (int)AS_NUMBER(pop(vm));
       PUSH(NUMBER_VAL((double)(a | b)));
@@ -946,6 +1020,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_BIT_XOR) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int b = (int)AS_NUMBER(pop(vm));
       int a = (int)AS_NUMBER(pop(vm));
       PUSH(NUMBER_VAL((double)(a ^ b)));
@@ -963,16 +1041,32 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_LEFT_SHIFT) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int b = (int)AS_NUMBER(pop(vm));
+      if (b < 0 || b >= 32) {
+          runtimeError(vm, "Shift amount must be between 0 and 31.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int a = (int)AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL((double)(a << b)));
+      PUSH(NUMBER_VAL((double)((uint32_t)a << b)));
       DISPATCH();
   }
   
   CASE_OP(OP_RIGHT_SHIFT) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+          runtimeError(vm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int b = (int)AS_NUMBER(pop(vm));
+      if (b < 0 || b >= 32) {
+          runtimeError(vm, "Shift amount must be between 0 and 31.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
       int a = (int)AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL((double)(a >> b)));
+      PUSH(NUMBER_VAL((double)((uint32_t)a >> b)));
       DISPATCH();
   }
   
@@ -1018,23 +1112,42 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_MAKE_TENSOR) {
       int dimCount = READ_BYTE();
+      // dimCount is uint8_t, so it's always <= 255. No extra check needed.
       uint32_t elementCount = 0;
-      elementCount |= (*frame->ip++);
-      elementCount |= (*frame->ip++ << 8);
-      elementCount |= (*frame->ip++ << 16);
-      elementCount |= (*frame->ip++ << 24);
-      int dims[16];
+      elementCount |= ((uint32_t)*frame->ip++);
+      elementCount |= ((uint32_t)*frame->ip++ << 8);
+      elementCount |= ((uint32_t)*frame->ip++ << 16);
+      elementCount |= ((uint32_t)*frame->ip++ << 24);
+      int dims[256]; // Increased from 16 to handle max dimCount
       int totalSize = 1;
       for (int i = 0; i < dimCount; i++) {
            uint32_t d = 0;
-           d |= (*frame->ip++); d |= (*frame->ip++ << 8);
-           d |= (*frame->ip++ << 16); d |= (*frame->ip++ << 24);
+           d |= ((uint32_t)*frame->ip++); 
+           d |= ((uint32_t)*frame->ip++ << 8);
+           d |= ((uint32_t)*frame->ip++ << 16); 
+           d |= ((uint32_t)*frame->ip++ << 24);
            dims[i] = (int)d;
-           totalSize *= dims[i];
+           
+           // Safety check for dimension size and total size to prevent overflow/OOM
+           if (dims[i] < 0 || dims[i] > 1000000) {
+               runtimeError(vm, "Tensor dimension too large.");
+               return INTERPRET_RUNTIME_ERROR;
+           }
+           
+           long long newSize = (long long)totalSize * dims[i];
+           if (newSize > 100000000) { // Max 100M elements
+               runtimeError(vm, "Tensor total size exceeds limit.");
+               return INTERPRET_RUNTIME_ERROR;
+           }
+           totalSize = (int)newSize;
       }
       ObjTensor *tensor = newTensor(dimCount, dims, NULL);
       PUSH(OBJ_VAL(tensor)); 
       if (elementCount == (uint32_t)totalSize) {
+          if (vm->stackTop - totalSize < vm->stack) {
+              runtimeError(vm, "Stack underflow building tensor.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
           for (int i = totalSize - 1; i >= 0; i--) {
               Value val = peek(vm, 1 + (totalSize - 1 - i));
               tensor->data[i] = IS_NUMBER(val) ? AS_NUMBER(val) : 0;
@@ -1203,10 +1316,21 @@ InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {
     frame->ip = function->chunk.code;
     frame->slots = pvm->stack;
     
+    // Disable GC during raw chunk execution to prevent freeing transient objects
+    size_t oldNextGC = pvm->nextGC;
+    pvm->nextGC = (size_t)-1;
+    
     InterpretResult result = run(pvm);
     
-    // Prevent double free of chunk code/constants by function destructor
-    // if main.c manages them.
+    // Restore GC
+    pvm->nextGC = oldNextGC;
+    
+    // CRITICAL: Prevent double-free of chunk code/constants.
+    // The ObjFunction 'function' now points to the same memory as the input 'chunk'.
+    // When 'function' is eventually GC'd, it would try to free this memory.
+    // By zeroing it out here, we ensure 'function' doesn't own the buffers.
+    // This is safe because 'run' has finished and the closure/function are 
+    // about to be unreachable or are owned by the caller's stack management.
     initChunk(&function->chunk);
     
     return result;
