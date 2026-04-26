@@ -87,6 +87,7 @@ static void endScope(TypeChecker* checker) {
             Symbol* next = sym->next;
             // Free members of TypeInfo recursively
             freeTypeInfoMembers(sym->type);
+            free(sym->name);
             free(sym);
             sym = next;
         }
@@ -108,7 +109,7 @@ static void defineSymbol(TypeChecker* checker, const char* name, TypeInfo type) 
     unsigned int idx = hash(name);
     
     Symbol* sym = (Symbol*)malloc(sizeof(Symbol));
-    sym->name = (char*)name; // Weak reference
+    sym->name = strdup(name);
     sym->type = duplicateType(type);
     sym->next = scope->table[idx];
     scope->table[idx] = sym;
@@ -123,18 +124,15 @@ static void updateSymbol(TypeChecker* checker, const char* name, TypeInfo type) 
         Symbol* sym = scope->table[idx];
         while (sym) {
             if (strcmp(sym->name, name) == 0) {
-                // Free old type members before replacing
                 if (sym->type.name) free(sym->type.name);
                 if (sym->type.paramTypes) {
                     for(int j=0; j<sym->type.paramCount; j++) {
-                        // Deep free if needed? For now we only have 1 level of paramTypes as simple array
-                        // but let's be consistent.
+                        freeTypeInfoMembers(sym->type.paramTypes[j]);
                     }
                     free(sym->type.paramTypes);
                 }
                 if (sym->type.returnType) {
-                    // Recursive free would be better, but let's just free the pointer for now
-                    // as we don't have a full freeTypeInfo yet.
+                    freeTypeInfoMembers(*sym->type.returnType);
                     free(sym->type.returnType);
                 }
 
