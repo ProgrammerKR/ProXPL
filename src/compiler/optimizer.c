@@ -1,6 +1,9 @@
 #include "../include/optimizer.h"
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
+extern void freeExpr(Expr* expr);
 
 static Expr* foldExpr(Expr* expr);
 
@@ -35,6 +38,7 @@ static Expr* foldBinary(Expr* expr) {
             else if (strcmp(op, "!=") == 0) res = BOOL_VAL(a != b);
             else folded = false;
 
+            if (folded) {
                 expr->type = EXPR_LITERAL;
                 expr->as.literal.value = res;
                 freeExpr(l);
