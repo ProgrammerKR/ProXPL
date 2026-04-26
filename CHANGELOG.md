@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.2] - 2026-04-26
+
+### Fixed
+- **VM Safety**: Comprehensive fix of 15 bugs in `vm.c` including stack overflow/underflow, tensor dimension handling, and use-after-free in `freeVM`.
+- **Semantics**: Corrected module application in `OP_USE`, inheritance stack behavior in `OP_INHERIT`, and NaN equality semantics in `OP_EQUAL`.
+- **Type Checking**: Added numeric type guards to arithmetic and bitwise opcodes to ensure runtime type safety.
+- **Tensors**: Implemented division-by-zero checks for tensor operations and fixed sign extension issues in bytecode reading.
+
 ## [1.3.1] - 2026-04-22
 
 ### Fixed
@@ -62,7 +70,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Exception Handling**: Introduced `try`/`catch` blocks for robust error management and runtime safety.
 
 ### Changed
-- **Versioning**: Synchronized project version to 1.1.0 across the core VM, CLI, VS Code extension, and installer scripts.
+- **Versioning**: Synchronized project version to 1.3.2 across the core VM, CLI, VS Code extension, and installer scripts.
 - **Roadmap**: Marked v1.1.0 features as completed and released in the main documentation.
 
 ## [1.0.0] - 2026-01-06
@@ -412,6 +420,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 1.3.0
-**Last Updated**: January 27, 2026
-**Next Release**: 1.3.0 (Q1 2026)
+**Current Version**: 1.3.2
+**Last Updated**: April 26, 2026
+**Next Release**: 1.4.0 (Q2 2026)
