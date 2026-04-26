@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.3.1-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.3.2-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -591,7 +591,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
   - **Keywords**: `class`, `new`, `this`, `extends`, `interface`. ✅
   - **Runtime**: Optimized VM with Object Support. ✅
 - **v1.3.0 (Current)**:
-- **v1.2.0**:
+- **v1.3.2**:
   - **The 10 Operational Pillars**: Full frontend implementation of Intent-Oriented, Context-Aware, ASR, Intrinsic Security, Chrono-Native, Event-Concurreny, AI-Native, Quantum-Ready, Hardware-Math, and Zero-Trust features. ✅
   - **Frontend Feature Complete**: Lexer, Parser, AST, and Type Checker support all 10 pillars. ✅
 
@@ -600,7 +600,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - ✅ **AI-Native Primitives**: Native `tensor` type support with multi-dimensional declaration (e.g., `tensor<float, 2x2>`).
 - ✅ **Syntax**: Enhanced parser for tensor literals and dimension syntax.
 
-### v1.2.0
+### v1.3.2
 **Status**: Released (Frontend)
 - ✅ **10 Pillars Implementation**: Correctly parsing and semantically validating all revolutionary syntax constructs.
 - ✅ **AI & Quantum**: `model`, `train`, `quantum`, `qubit` primitives.
