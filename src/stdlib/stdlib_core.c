@@ -30,6 +30,9 @@ extern ObjModule* create_std_net_module();
 extern ObjModule* create_std_collections_module();
 extern ObjModule* create_std_reflect_module();
 extern ObjModule* create_std_gc_module();
+extern ObjModule* create_std_buffer_module();
+extern ObjModule* create_std_process_module();
+extern ObjModule* create_std_path_module();
 
 // Legacy
 extern void register_math_natives(VM* vm);
@@ -167,6 +170,18 @@ void registerStdLib(VM* pVM) {
     ObjModule* reflectMod = create_std_reflect_module();
     registerModule(pVM, "std.native.reflect", reflectMod);
     registerModule(pVM, "std.reflect", reflectMod);
+
+    ObjModule* bufMod = create_std_buffer_module();
+    registerModule(pVM, "std.native.buffer", bufMod);
+    registerModule(pVM, "std.buffer", bufMod);
+
+    ObjModule* procMod = create_std_process_module();
+    registerModule(pVM, "std.native.process", procMod);
+    registerModule(pVM, "std.process", procMod);
+
+    ObjModule* pathMod = create_std_path_module();
+    registerModule(pVM, "std.native.path", pathMod);
+    registerModule(pVM, "std.path", pathMod);
 
     registerModule(pVM, "std.core", create_std_core_module());
     
