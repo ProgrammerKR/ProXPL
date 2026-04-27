@@ -11,23 +11,64 @@ OBJDIR = obj
 
 # All source files
 SOURCES = main.c \
-          lexer/scanner.c \
-          parser/parser.c \
-          parser/ast.c \
-          parser/type_checker.c \
-          runtime/vm.c \
+          compiler/lexer/scanner.c \
+          compiler/parser/ast.c \
+          compiler/parser/parser.c \
+          compiler/bytecode_gen.c \
+          compiler/importer.c \
+          compiler/ir.c \
+          compiler/ir_gen.c \
+          compiler/ir_opt.c \
+          compiler/optimizer.c \
+          compiler/transpiler_ui.c \
+          compiler/type_checker.c \
+          prm/builder.c \
+          prm/manifest.c \
+          prm/commands/cmd_core.c \
+          protos/vm_register.c \
+          proxpl_api.c \
           runtime/chunk.c \
           runtime/compiler.c \
-          runtime/value.c \
-          runtime/object.c \
-          runtime/memory.c \
           runtime/debug.c \
-          stdlib/stdlib_core.c \
-          stdlib/io_native.c \
-          stdlib/math_native.c \
-          stdlib/string_native.c \
+          runtime/ffi_bridge.c \
+          runtime/gc.c \
+          runtime/llvm_runtime.c \
+          runtime/memory.c \
+          runtime/object.c \
+          runtime/scheduler.c \
+          runtime/supervisor.c \
+          runtime/table.c \
+          runtime/value.c \
+          runtime/vm.c \
+          runtime/vm_helpers.c \
+          stdlib/collections_native.c \
           stdlib/convert_native.c \
-          stdlib/system_native.c
+          stdlib/core_native.c \
+          stdlib/fs_native.c \
+          stdlib/gc_native.c \
+          stdlib/hash_native.c \
+          stdlib/io_native.c \
+          stdlib/json_native.c \
+          stdlib/math_native.c \
+          stdlib/net_native.c \
+          stdlib/os_native.c \
+          stdlib/reflect_native.c \
+          stdlib/stdlib_core.c \
+          stdlib/string_native.c \
+          stdlib/system_native.c \
+          stdlib/sys_native.c \
+          stdlib/time_native.c \
+          utils/error_report.c \
+          utils/md5.c \
+          utils/pxcf.c \
+          utils/sha256.c \
+          utils/file_utils.c \
+          vm/bytecode.c \
+          vm/disasm.c \
+          vm/instr_handlers_template.c \
+          vm/vm_core_opt.c \
+          vm/vm_dispatch.c \
+          vm/vm_v2.c
 
 # Object files
 OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(SOURCES))
@@ -38,10 +79,14 @@ all: $(TARGET)
 # Create object directory structure
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
-	@mkdir -p $(OBJDIR)/lexer
-	@mkdir -p $(OBJDIR)/parser
+	@mkdir -p $(OBJDIR)/compiler/lexer
+	@mkdir -p $(OBJDIR)/compiler/parser
+	@mkdir -p $(OBJDIR)/prm/commands
+	@mkdir -p $(OBJDIR)/protos
 	@mkdir -p $(OBJDIR)/runtime
 	@mkdir -p $(OBJDIR)/stdlib
+	@mkdir -p $(OBJDIR)/utils
+	@mkdir -p $(OBJDIR)/vm
 
 # Link the executable
 $(TARGET): $(OBJDIR) $(OBJECTS)
