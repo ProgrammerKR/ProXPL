@@ -1,0 +1,13 @@
+use std.native.buffer;
+
+class Buffer {
+    static func alloc(size) { return native.buffer.alloc(size); }
+    static func writeByte(buf, byte) { return native.buffer.write_byte(buf, byte); }
+    static func readByte(buf, index) { return native.buffer.read_byte(buf, index); }
+    static func size(buf) { return native.buffer.size(buf); }
+    static func writeString(buf, str) { return native.buffer.write_string(buf, str); }
+    static func toString(buf) { return native.buffer.to_string(buf); }
+    static func hexDump(buf) { return native.buffer.hex_dump(buf); }
+    static func clear(buf) { return native.buffer.clear(buf); }
+    static func slice(buf, start, length) { return native.buffer.slice(buf, start, length); }
+}
