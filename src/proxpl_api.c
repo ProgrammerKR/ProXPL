@@ -16,44 +16,7 @@
 #include "../include/vm.h"
 #include "../include/bytecode.h"
 #include "../include/common.h"
-
-// Helper to read a file into a string
-static char* readFile(const char* path) {
-    FILE* file = fopen(path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Could not open file \"%s\".\n", path);
-        return NULL;
-    }
-
-    fseek(file, 0L, SEEK_END);
-    long ftellSize = ftell(file);
-    if (ftellSize < 0) {
-        fprintf(stderr, "Could not determine size of file \"%s\".\n", path);
-        fclose(file);
-        return NULL;
-    }
-    size_t fileSize = (size_t)ftellSize;
-    rewind(file);
-
-    char* buffer = (char*)malloc(fileSize + 1);
-    if (buffer == NULL) {
-        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
-        fclose(file);
-        return NULL;
-    }
-
-    size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-    if (bytesRead < fileSize) {
-        fprintf(stderr, "Could not read file \"%s\".\n", path);
-        free(buffer);
-        fclose(file);
-        return NULL;
-    }
-
-    buffer[bytesRead] = '\0';
-    fclose(file);
-    return buffer;
-}
+#include "../include/file_utils.h"
 
 void proxpl_vm_init(VM *pvm) {
     if (pvm == NULL) return;
@@ -82,7 +45,7 @@ InterpretResult proxpl_interpret_file(VM *pvm, const char *path) {
     // Pass the source string to interpret
     InterpretResult result = interpret(pvm, source);
     
-    free(source);
+    trackSource(pvm, source);
     return result;
 }
 
