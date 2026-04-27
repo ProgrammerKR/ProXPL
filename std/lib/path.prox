@@ -1,0 +1,13 @@
+use std.native.path;
+
+class Path {
+    static func join(a, b) { return native.path.join(a, b); }
+    static func dirname(p) { return native.path.dirname(p); }
+    static func basename(p) { return native.path.basename(p); }
+    static func extname(p) { return native.path.extname(p); }
+    static func isAbsolute(p) { return native.path.is_absolute(p); }
+    static func exists(p) { return native.path.exists(p); }
+    static func isFile(p) { return native.path.is_file(p); }
+    static func isDir(p) { return native.path.is_dir(p); }
+    static func normalize(p) { return native.path.normalize(p); }
+}
