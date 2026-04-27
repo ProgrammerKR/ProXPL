@@ -43,6 +43,9 @@ void initVM(VM *pvm) {
     initTable(&pvm->globals);
     initTable(&pvm->strings);
     pvm->source = NULL;
+    pvm->sourceFiles = NULL;
+    pvm->sourceCount = 0;
+    pvm->sourceCapacity = 0;
     initImporter(&pvm->importer);
     pvm->initString = copyString("init", 4);
     pvm->cliArgs = newList(); 
@@ -55,6 +58,25 @@ void freeVM(VM *pvm) {
   freeImporter(&pvm->importer);
   pvm->initString = NULL; // CRITICAL: Prevent use-after-free
   freeObjects(pvm);
+  
+  if (pvm->sourceFiles != NULL) {
+      for (int i = 0; i < pvm->sourceCount; i++) {
+          free(pvm->sourceFiles[i]);
+      }
+      free(pvm->sourceFiles);
+      pvm->sourceFiles = NULL;
+      pvm->sourceCount = 0;
+      pvm->sourceCapacity = 0;
+  }
+}
+
+void trackSource(VM* pvm, char* source) {
+    if (pvm->sourceCount + 1 > pvm->sourceCapacity) {
+        int oldCapacity = pvm->sourceCapacity;
+        pvm->sourceCapacity = oldCapacity < 8 ? 8 : oldCapacity * 2;
+        pvm->sourceFiles = (char**)realloc(pvm->sourceFiles, sizeof(char*) * pvm->sourceCapacity);
+    }
+    pvm->sourceFiles[pvm->sourceCount++] = source;
 }
 
 // Runtime Error Helper

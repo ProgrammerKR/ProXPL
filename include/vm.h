@@ -36,6 +36,12 @@ struct VM {
   size_t nextGC;
 
   const char* source;
+  
+  // Track all allocated source files for proper cleanup
+  char** sourceFiles;
+  int sourceCount;
+  int sourceCapacity;
+
   Importer importer;
   struct ObjList* cliArgs;
   struct ObjString* initString;
@@ -55,6 +61,7 @@ extern PROX_API VM vm;
 
 void initVM(VM* vm);
 void freeVM(VM* vm);
+void trackSource(VM* vm, char* source);
 InterpretResult interpret(VM* vm, const char* source);
 InterpretResult interpretChunk(VM* vm, Chunk* chunk);
 InterpretResult interpretAST(VM* vm, StmtList* statements);
