@@ -358,6 +358,10 @@ void prm_doc() {
 }
 
 void prm_exec(const char* command) {
+    if (!isValidPrmArg(command)) {
+        fprintf(stderr, "Error: Invalid characters in command.\n");
+        return;
+    }
     printf("Executing '%s' in project context...\n", command);
 }
 
