@@ -1,3 +1,8 @@
+Title: ProXPL Bug Fix Log 2026-04
+Version: 1.0
+Date: 2025-12-11 
+Author: ProgrammerKR
+
 # ProXPL VM Bug Fix Log - April 2026
 
 This document details the comprehensive audit and subsequent fixes applied to the ProXPL Virtual Machine (`src/runtime/vm.c`) to improve memory safety, runtime stability, and semantic correctness.

@@ -112,21 +112,39 @@ static const char* irOpName(IROpcode op) {
 }
 
 static void addEdge(IRBasicBlock* from, IRBasicBlock* to) {
+    if (!from || !to) return;
+
     // Add to successors
-    for (int i = 0; i < from->succCount; i++) if (from->successors[i] == to) return; // Already linked
-    if (from->succCount >= from->succCapacity) {
-        from->succCapacity = from->succCapacity == 0 ? 4 : from->succCapacity * 2;
-        from->successors = (IRBasicBlock**)safe_realloc(from->successors, sizeof(IRBasicBlock*) * from->succCapacity);
+    bool found_succ = false;
+    for (int i = 0; i < from->succCount; i++) {
+        if (from->successors[i] == to) {
+            found_succ = true;
+            break;
+        }
     }
-    from->successors[from->succCount++] = to;
+    if (!found_succ) {
+        if (from->succCount >= from->succCapacity) {
+            from->succCapacity = from->succCapacity == 0 ? 4 : from->succCapacity * 2;
+            from->successors = (IRBasicBlock**)safe_realloc(from->successors, sizeof(IRBasicBlock*) * from->succCapacity);
+        }
+        from->successors[from->succCount++] = to;
+    }
 
     // Add to predecessors
-    for (int i = 0; i < to->predCount; i++) if (to->predecessors[i] == from) return;
-    if (to->predCount >= to->predCapacity) {
-        to->predCapacity = to->predCapacity == 0 ? 4 : to->predCapacity * 2;
-        to->predecessors = (IRBasicBlock**)safe_realloc(to->predecessors, sizeof(IRBasicBlock*) * to->predCapacity);
+    bool found_pred = false;
+    for (int i = 0; i < to->predCount; i++) {
+        if (to->predecessors[i] == from) {
+            found_pred = true;
+            break;
+        }
     }
-    to->predecessors[to->predCount++] = from;
+    if (!found_pred) {
+        if (to->predCount >= to->predCapacity) {
+            to->predCapacity = to->predCapacity == 0 ? 4 : to->predCapacity * 2;
+            to->predecessors = (IRBasicBlock**)safe_realloc(to->predecessors, sizeof(IRBasicBlock*) * to->predCapacity);
+        }
+        to->predecessors[to->predCount++] = from;
+    }
 }
 
 void computeCFGLinks(IRFunction* func) {
@@ -144,6 +162,9 @@ void computeCFGLinks(IRFunction* func) {
                 addEdge(block, instr->operands[0].as.block);
             } else if (instr->opcode == IR_OP_JUMP_IF) {
                 addEdge(block, instr->operands[1].as.block);
+                if (instr->operandCount > 2 && instr->operands[2].type == OPERAND_BLOCK) {
+                    addEdge(block, instr->operands[2].as.block);
+                }
             }
             instr = instr->next;
         }

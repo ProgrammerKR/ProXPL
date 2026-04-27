@@ -267,6 +267,10 @@ public:
                     llvm::PHINode* phi = llvm::cast<llvm::PHINode>(ssaValues[instr->result]);
                     for (int k = 0; k < instr->operandCount; k += 2) {
                         llvm::Value* val = getOperand(instr->operands[k]);
+                        if (!val) {
+                            uint64_t nilVal = 0x7ffc000000000001;
+                            val = llvm::ConstantInt::get(*Context, llvm::APInt(64, nilVal, false));
+                        }
                         llvm::BasicBlock* incomingBB = blockMap[instr->operands[k+1].as.block];
                         if (val && incomingBB) {
                             phi->addIncoming(val, incomingBB);

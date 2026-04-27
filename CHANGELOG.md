@@ -1,3 +1,8 @@
+Title: ProXPL Changelog
+Version: 1.0
+Date: 2025-12-11 
+Author: ProgrammerKR
+
 # ProXPL Changelog
 
 All notable changes to the ProXPL project are documented in this file.
@@ -6,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [1.3.2] - 2026-04-26
+## [1.3.3] - 2026-04-26
 
 ### Fixed
 - **VM Safety**: Comprehensive fix of 15 bugs in `vm.c` including stack overflow/underflow, tensor dimension handling, and use-after-free in `freeVM`.
@@ -70,7 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Exception Handling**: Introduced `try`/`catch` blocks for robust error management and runtime safety.
 
 ### Changed
-- **Versioning**: Synchronized project version to 1.3.2 across the core VM, CLI, VS Code extension, and installer scripts.
+- **Versioning**: Synchronized project version to 1.3.3 across the core VM, CLI, VS Code extension, and installer scripts.
 - **Roadmap**: Marked v1.1.0 features as completed and released in the main documentation.
 
 ## [1.0.0] - 2026-01-06
@@ -420,6 +425,6 @@ This project is licensed under the MIT License.
 
 ---
 
-**Current Version**: 1.3.2
+**Current Version**: 1.3.3
 **Last Updated**: April 26, 2026
 **Next Release**: 1.4.0 (Q2 2026)

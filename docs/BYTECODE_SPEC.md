@@ -1,6 +1,7 @@
 Title: ProXPL Bytecode Specification
 Version: 1.0
-Date: 2025-12-11
+Date: 2025-12-11 
+Author: ProgrammerKR
 
 Overview
 - Purpose: Define a compact, extensible, and fast binary bytecode format and runtime instruction semantics for the ProXPL language.

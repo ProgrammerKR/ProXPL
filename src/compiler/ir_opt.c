@@ -166,14 +166,11 @@ static void renameRecursive(IRFunction* func, IRBasicBlock* block, int* idom, in
             IRInstruction* phi = phiList[succ->id][a];
             if (phi) {
                 int currentVersion = (infos[a].stackTop > 0) ? infos[a].stack[infos[a].stackTop - 1] : -1;
-                // Even if -1, we might need to add something? Let's use -1 or nil.
-                if (currentVersion != -1) {
-                    IROperand opVal, opBlock;
-                    opVal.type = OPERAND_VAL; opVal.as.ssaVal = currentVersion;
-                    opBlock.type = OPERAND_BLOCK; opBlock.as.block = block;
-                    addOperand(phi, opVal);
-                    addOperand(phi, opBlock);
-                }
+                IROperand opVal, opBlock;
+                opVal.type = OPERAND_VAL; opVal.as.ssaVal = currentVersion;
+                opBlock.type = OPERAND_BLOCK; opBlock.as.block = block;
+                addOperand(phi, opVal);
+                addOperand(phi, opBlock);
             }
         }
     }
@@ -205,7 +202,8 @@ void constantFold(IRFunction* func) {
                 maxReg = instr->result + 256;
                 values = (Value*)realloc(values, sizeof(Value) * maxReg);
                 isConst = (bool*)realloc(isConst, sizeof(bool) * maxReg);
-                for (int j = oldMax; j < maxReg; j++) isConst[j] = false;
+                if (!values || !isConst) { fprintf(stderr, "OOM\n"); exit(1); }
+                memset(&isConst[oldMax], 0, sizeof(bool) * (maxReg - oldMax));
             }
             if (instr->opcode == IR_OP_CONST) {
                 isConst[instr->result] = true;
@@ -296,17 +294,26 @@ void promoteMemoryToRegisters(IRFunction* func) {
     computeDominanceFrontiers(func, dominators, df);
 
     // Identify Allocas and their definitions
-    int* allocas = (int*)malloc(sizeof(int) * 1024);
+    int allocaCap = 1024;
+    int* allocas = (int*)malloc(sizeof(int) * allocaCap);
     int allocaCount = 0;
-    int** defs = (int**)malloc(sizeof(int*) * 1024); // alloca_idx -> block bitset
+    int** defs = (int**)malloc(sizeof(int*) * allocaCap); // alloca_idx -> block bitset
 
-    for (int i = 0; i < 1024; i++) defs[i] = (int*)calloc(n, sizeof(int));
+    for (int i = 0; i < allocaCap; i++) defs[i] = (int*)calloc(n, sizeof(int));
 
     for (int i = 0; i < n; i++) {
         IRBasicBlock* block = func->blocks[i];
         IRInstruction* instr = block->first;
         while (instr) {
             if (instr->opcode == IR_OP_ALLOCA) {
+                if (allocaCount >= allocaCap) {
+                    int oldCap = allocaCap;
+                    allocaCap *= 2;
+                    allocas = (int*)realloc(allocas, sizeof(int) * allocaCap);
+                    defs = (int**)realloc(defs, sizeof(int*) * allocaCap);
+                    if (!allocas || !defs) { fprintf(stderr, "OOM\n"); exit(1); }
+                    for(int j=oldCap; j<allocaCap; j++) defs[j] = (int*)calloc(n, sizeof(int));
+                }
                 allocas[allocaCount++] = instr->result;
                 // Note: we don't NOP yet because we need to know the mapping
             } else if (instr->opcode == IR_OP_STORE_VAR) {
@@ -424,7 +431,7 @@ void promoteMemoryToRegisters(IRFunction* func) {
     for (int i = 0; i < allocaCount; i++) {
         free(infos[i].stack);
     }
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < allocaCap; i++) {
         free(defs[i]);
     }
     free(infos);

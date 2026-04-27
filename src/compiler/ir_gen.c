@@ -142,6 +142,26 @@ static int visitExpr(IRGen* gen, Expr* expr) {
             return -1;
         }
 
+        case EXPR_CALL: {
+            int callee = visitExpr(gen, expr->as.call.callee);
+            int r = newReg(gen);
+            IRInstruction* instr = createIRInstruction(IR_OP_CALL, r);
+            IROperand opCallee;
+            opCallee.type = OPERAND_VAL; opCallee.as.ssaVal = callee;
+            addOperand(instr, opCallee);
+            
+            if (expr->as.call.arguments) {
+                for (int i = 0; i < expr->as.call.arguments->count; i++) {
+                    int argVal = visitExpr(gen, expr->as.call.arguments->items[i]);
+                    IROperand opArg;
+                    opArg.type = OPERAND_VAL; opArg.as.ssaVal = argVal;
+                    addOperand(instr, opArg);
+                }
+            }
+            emit(gen, instr);
+            return r;
+        }
+
         case EXPR_AWAIT: {
              int val = visitExpr(gen, expr->as.await_expr.expression);
              int r = newReg(gen);
@@ -266,19 +286,14 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
 
             // Conditional jump
             IRInstruction* ji = createIRInstruction(IR_OP_JUMP_IF, -1);
-            IROperand opCond, opThen;
+            IROperand opCond, opThen, opElse;
             opCond.type = OPERAND_VAL; opCond.as.ssaVal = condReg;
             opThen.type = OPERAND_BLOCK; opThen.as.block = thenBlock;
+            opElse.type = OPERAND_BLOCK; opElse.as.block = elseBlock ? elseBlock : mergeBlock;
             addOperand(ji, opCond);
             addOperand(ji, opThen);
+            addOperand(ji, opElse);
             emit(gen, ji);
-
-            // Unconditional jump to else or merge
-            IRInstruction* j = createIRInstruction(IR_OP_JUMP, -1);
-            IROperand opAlt;
-            opAlt.type = OPERAND_BLOCK; opAlt.as.block = elseBlock ? elseBlock : mergeBlock;
-            addOperand(j, opAlt);
-            emit(gen, j);
 
             // 'then' branch
             gen->currentBlock = thenBlock;
@@ -324,18 +339,14 @@ static void visitStmt(IRGen* gen, Stmt* stmt) {
             gen->currentBlock = condBlock;
             int condReg = visitExpr(gen, stmt->as.while_stmt.condition);
             IRInstruction* ji = createIRInstruction(IR_OP_JUMP_IF, -1);
-            IROperand opCond, opLoop;
+            IROperand opCond, opLoop, opElse;
             opCond.type = OPERAND_VAL; opCond.as.ssaVal = condReg;
             opLoop.type = OPERAND_BLOCK; opLoop.as.block = loopBlock;
+            opElse.type = OPERAND_BLOCK; opElse.as.block = afterBlock;
             addOperand(ji, opCond);
             addOperand(ji, opLoop);
+            addOperand(ji, opElse);
             emit(gen, ji);
-
-            IRInstruction* ja = createIRInstruction(IR_OP_JUMP, -1);
-            IROperand opAfter;
-            opAfter.type = OPERAND_BLOCK; opAfter.as.block = afterBlock;
-            addOperand(ja, opAfter);
-            emit(gen, ja);
 
             // Loop body
             gen->currentBlock = loopBlock;
