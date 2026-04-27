@@ -32,11 +32,13 @@
 #include "memory.h"
 #include "type_checker.h"
 #include "optimizer.h"
+#include "file_utils.h"
 #include "prm/prm.h"
 
 void registerStdLib(VM* vm);
 
-// Declare global VM instance - already in vm.c
+// Declare global VM instance
+extern VM vm;
 
 static void repl() {
   char line[1024];
@@ -52,13 +54,14 @@ static void repl() {
       break;
     }
 
+    // Remove newline
+    line[strcspn(line, "\r")] = 0;
+    line[strcspn(line, "\n")] = 0;
+
     // Check for exit command
-    if (strcmp(line, "exit\n") == 0) {
+    if (strcmp(line, "exit") == 0) {
       break;
     }
-
-    // Remove newline
-    line[strcspn(line, "\n")] = 0;
 
     // Skip empty lines
     if (strlen(line) == 0)
@@ -111,6 +114,11 @@ static void repl() {
     optimizeAST(statements);
 
     ObjFunction* function = newFunction();
+    if (function == NULL) {
+        fprintf(stderr, "Out of memory\n");
+        freeStmtList(statements);
+        continue;
+    }
     push(&vm, OBJ_VAL(function));
     
     if (!generateBytecode(statements, function)) {
@@ -127,47 +135,12 @@ static void repl() {
   }
 }
 
-static char *readFile(const char *path) {
-  FILE *file = fopen(path, "rb");
-  if (file == NULL) {
-    fprintf(stderr, "Could not open file \"%s\".\n", path);
-    return NULL;
-  }
 
-  fseek(file, 0L, SEEK_END);
-  long ftellSize = ftell(file);
-  if (ftellSize < 0) {
-      fprintf(stderr, "Could not determine size of file \"%s\".\n", path);
-      fclose(file);
-      return NULL;
-  }
-  size_t fileSize = (size_t)ftellSize;
-  rewind(file);
-
-  char *buffer = (char *)malloc(fileSize + 1);
-  if (buffer == NULL) {
-    fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
-    fclose(file);
-    return NULL;
-  }
-
-  size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-  if (bytesRead < fileSize) {
-    fprintf(stderr, "Could not read file \"%s\".\n", path);
-    free(buffer);
-    fclose(file);
-    return NULL;
-  }
-
-  buffer[bytesRead] = '\0';
-
-  fclose(file);
-  return buffer;
-}
 
 static void runFile(const char *path) {
   char *source = readFile(path);
   if (source == NULL) {
+    freeVM(&vm);
     exit(74);
   }
 
@@ -213,7 +186,8 @@ static void runFile(const char *path) {
   }
 
   if (scanError) {
-    free(source);
+    trackSource(&vm, source);
+    freeVM(&vm);
     exit(65);
   }
 
@@ -225,7 +199,8 @@ static void runFile(const char *path) {
   if (statements == NULL || statements->count == 0) {
     fprintf(stderr, "Parse error\n");
     if (statements != NULL) freeStmtList(statements);
-    free(source);
+    trackSource(&vm, source);
+    freeVM(&vm);
     exit(65);
   }
 
@@ -240,16 +215,24 @@ static void runFile(const char *path) {
       fprintf(stderr, "Type Checking Failed with %d errors.\n", checker.errorCount);
       freeTypeChecker(&checker);
       freeStmtList(statements);
-      free(source);
+      trackSource(&vm, source);
+      freeVM(&vm);
       exit(65);
   }
   // --- Pipeline Step 3: UI Transpilation (if applicable) ---
   for (int i = 0; i < statements->count; i++) {
       if (statements->items[i]->type == STMT_UI_APP) {
-          char outputDir[512];
-          snprintf(outputDir, sizeof(outputDir), "dist_%s", statements->items[i]->as.ui_app.name);
-          printf("[UI] Transpiling App '%s' to %s...\n", statements->items[i]->as.ui_app.name, outputDir);
+          const char* appName = statements->items[i]->as.ui_app.name;
+          size_t nameLen = strlen(appName);
+          char* outputDir = (char*)malloc(nameLen + 6);
+          if (outputDir == NULL) {
+              fprintf(stderr, "Out of memory allocating output dir for UI app\n");
+              continue;
+          }
+          sprintf(outputDir, "dist_%s", appName);
+          printf("[UI] Transpiling App '%s' to %s...\n", appName, outputDir);
           transpileUIApp(statements->items[i], outputDir);
+          free(outputDir);
       }
   }
 
@@ -257,14 +240,14 @@ static void runFile(const char *path) {
   InterpretResult result = interpretAST(&vm, statements);
   freeTypeChecker(&checker);
 
+  trackSource(&vm, source);
   if (result != INTERPRET_OK) {
       freeStmtList(statements);
-      free(source);
+      freeVM(&vm);
       exit(70);
   }
 
   freeStmtList(statements);
-  free(source);
 }
 
 
@@ -498,20 +481,11 @@ int main(int argc, const char *argv[]) {
       runFile(argv[2]);
     } else if (strcmp(command, "build") == 0) {
       printf("Build command not yet implemented\n");
+      freeVM(&vm);
       exit(1);
-    } else if (strlen(argv[1]) >= 5 &&
-               argv[1][strlen(argv[1]) - 1] == 'x' &&
-               argv[1][strlen(argv[1]) - 2] == 'o' &&
-               argv[1][strlen(argv[1]) - 3] == 'r' &&
-               argv[1][strlen(argv[1]) - 4] == 'p' &&
-               argv[1][strlen(argv[1]) - 5] == '.') {
-      // File with .prox extension
-      runFile(argv[1]);
     } else {
-      fprintf(stderr, "Usage: proxpl [path]\n");
-      fprintf(stderr, "       proxpl run [path]\n");
-      fprintf(stderr, "       proxpl          (REPL mode)\n");
-      exit(64);
+      // Treat as file execution
+      runFile(argv[1]);
     }
   }
 
