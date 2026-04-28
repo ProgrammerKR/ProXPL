@@ -37,6 +37,7 @@ ObjFunction *newFunction() {
   function->access = ACCESS_PUBLIC;
   function->isStatic = false;
   function->isAbstract = false;
+  function->cache = NULL;
   initChunk(&function->chunk); // Requires chunk.h
   return function;
 }
