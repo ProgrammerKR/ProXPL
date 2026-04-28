@@ -104,6 +104,7 @@ struct ObjFunction {
   bool isStatic;
   bool isAbstract;
   struct ObjClass *ownerClass;
+  void* cache;
 };
 
 
