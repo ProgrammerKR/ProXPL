@@ -25,6 +25,7 @@ void computeDominators(IRFunction* func, int** dominators) {
         for (int i = 1; i < n; i++) { // Skip entry block
             IRBasicBlock* block = func->blocks[i];
             int* new_dom = (int*)malloc(sizeof(int) * n);
+            if (!new_dom) { fprintf(stderr, "OOM\\n"); exit(1); }
             for (int j = 0; j < n; j++) new_dom[j] = 1;
 
             for (int p = 0; p < block->predCount; p++) {
@@ -59,12 +60,10 @@ void computeDominanceFrontiers(IRFunction* func, int** dominators, int** df) {
                 bool is_idom = true;
                 for (int other_d = 0; other_d < n; other_d++) {
                     if (dominators[i][other_d] && i != other_d && d != other_d) {
-                        if (dominators[other_d][d]) { 
-                            // other_d is further away than d (entry -> ... -> d -> other_d -> i)
-                            // wait, no: if other_d dominates d, then d is closer to i.
-                            // entry -> d -> other_d -> i
-                        } else if (dominators[d][other_d]) {
-                            // d is further away than other_d
+                        if (dominators[other_d][d]) {
+                            // d dominates other_d, and other_d dominates i
+                            // This means other_d is strictly between d and i.
+                            // Therefore d cannot be the immediate dominator.
                             is_idom = false;
                             break;
                         }
@@ -124,7 +123,8 @@ static void renameRecursive(IRFunction* func, IRBasicBlock* block, int* idom, in
         } else if (instr->opcode == IR_OP_STORE_VAR) {
             int target = instr->operands[0].as.ssaVal;
             int val = instr->operands[1].as.ssaVal;
-            while (val >= 0 && reachingDefs[val] != -1) val = reachingDefs[val];
+            int cycle = 0;
+            while (val >= 0 && reachingDefs[val] != -1 && cycle < 10000) { val = reachingDefs[val]; cycle++; }
 
             for (int i = 0; i < allocaCount; i++) {
                 if (allocas[i] == target) {
@@ -150,7 +150,8 @@ static void renameRecursive(IRFunction* func, IRBasicBlock* block, int* idom, in
             for (int i = 0; i < instr->operandCount; i++) {
                 if (instr->operands[i].type == OPERAND_VAL) {
                     int s = instr->operands[i].as.ssaVal;
-                    while (s >= 0 && reachingDefs[s] != -1) s = reachingDefs[s];
+                    int cycle = 0;
+                    while (s >= 0 && reachingDefs[s] != -1 && cycle < 10000) { s = reachingDefs[s]; cycle++; }
                     instr->operands[i].as.ssaVal = s;
                 }
             }
@@ -165,14 +166,11 @@ static void renameRecursive(IRFunction* func, IRBasicBlock* block, int* idom, in
             IRInstruction* phi = phiList[succ->id][a];
             if (phi) {
                 int currentVersion = (infos[a].stackTop > 0) ? infos[a].stack[infos[a].stackTop - 1] : -1;
-                // Even if -1, we might need to add something? Let's use -1 or nil.
-                if (currentVersion != -1) {
-                    IROperand opVal, opBlock;
-                    opVal.type = OPERAND_VAL; opVal.as.ssaVal = currentVersion;
-                    opBlock.type = OPERAND_BLOCK; opBlock.as.block = block;
-                    addOperand(phi, opVal);
-                    addOperand(phi, opBlock);
-                }
+                IROperand opVal, opBlock;
+                opVal.type = OPERAND_VAL; opVal.as.ssaVal = currentVersion;
+                opBlock.type = OPERAND_BLOCK; opBlock.as.block = block;
+                addOperand(phi, opVal);
+                addOperand(phi, opBlock);
             }
         }
     }
@@ -191,7 +189,7 @@ static void renameRecursive(IRFunction* func, IRBasicBlock* block, int* idom, in
 
 void constantFold(IRFunction* func) {
     // Map register index -> Value
-    int maxReg = func->nextSsaVal + 1024;
+    int maxReg = func->nextSsaVal + 1;
     Value* values = (Value*)malloc(sizeof(Value) * maxReg);
     bool* isConst = (bool*)calloc(maxReg, sizeof(bool));
 
@@ -199,6 +197,14 @@ void constantFold(IRFunction* func) {
         IRBasicBlock* block = func->blocks[i];
         IRInstruction* instr = block->first;
         while (instr) {
+            if (instr->result >= maxReg) {
+                int oldMax = maxReg;
+                maxReg = instr->result + 256;
+                values = (Value*)realloc(values, sizeof(Value) * maxReg);
+                isConst = (bool*)realloc(isConst, sizeof(bool) * maxReg);
+                if (!values || !isConst) { fprintf(stderr, "OOM\n"); exit(1); }
+                memset(&isConst[oldMax], 0, sizeof(bool) * (maxReg - oldMax));
+            }
             if (instr->opcode == IR_OP_CONST) {
                 isConst[instr->result] = true;
                 values[instr->result] = instr->operands[0].as.constant;
@@ -288,17 +294,26 @@ void promoteMemoryToRegisters(IRFunction* func) {
     computeDominanceFrontiers(func, dominators, df);
 
     // Identify Allocas and their definitions
-    int* allocas = (int*)malloc(sizeof(int) * 1024);
+    int allocaCap = 1024;
+    int* allocas = (int*)malloc(sizeof(int) * allocaCap);
     int allocaCount = 0;
-    int** defs = (int**)malloc(sizeof(int*) * 1024); // alloca_idx -> block bitset
+    int** defs = (int**)malloc(sizeof(int*) * allocaCap); // alloca_idx -> block bitset
 
-    for (int i = 0; i < 1024; i++) defs[i] = (int*)calloc(n, sizeof(int));
+    for (int i = 0; i < allocaCap; i++) defs[i] = (int*)calloc(n, sizeof(int));
 
     for (int i = 0; i < n; i++) {
         IRBasicBlock* block = func->blocks[i];
         IRInstruction* instr = block->first;
         while (instr) {
             if (instr->opcode == IR_OP_ALLOCA) {
+                if (allocaCount >= allocaCap) {
+                    int oldCap = allocaCap;
+                    allocaCap *= 2;
+                    allocas = (int*)realloc(allocas, sizeof(int) * allocaCap);
+                    defs = (int**)realloc(defs, sizeof(int*) * allocaCap);
+                    if (!allocas || !defs) { fprintf(stderr, "OOM\n"); exit(1); }
+                    for(int j=oldCap; j<allocaCap; j++) defs[j] = (int*)calloc(n, sizeof(int));
+                }
                 allocas[allocaCount++] = instr->result;
                 // Note: we don't NOP yet because we need to know the mapping
             } else if (instr->opcode == IR_OP_STORE_VAR) {
@@ -323,7 +338,8 @@ void promoteMemoryToRegisters(IRFunction* func) {
     }
 
     for (int a = 0; a < allocaCount; a++) {
-        int* worklist = (int*)malloc(sizeof(int) * n);
+        int worklistCap = n * 2;
+        int* worklist = (int*)malloc(sizeof(int) * worklistCap);
         int wlCount = 0;
         int* hasPhi = (int*)calloc(n, sizeof(int));
 
@@ -344,7 +360,13 @@ void promoteMemoryToRegisters(IRFunction* func) {
                     hasPhi[f] = 1;
                     bool inWl = false;
                     for (int j = 0; j < wlCount; j++) if (worklist[j] == f) { inWl = true; break; }
-                    if (!inWl) worklist[wlCount++] = f;
+                    if (!inWl) {
+                        if (wlCount >= worklistCap) {
+                            worklistCap *= 2;
+                            worklist = (int*)realloc(worklist, sizeof(int) * worklistCap);
+                        }
+                        worklist[wlCount++] = f;
+                    }
                 }
             }
         }
@@ -377,8 +399,9 @@ void promoteMemoryToRegisters(IRFunction* func) {
     }
 
     AllocaInfo* infos = (AllocaInfo*)calloc(allocaCount, sizeof(AllocaInfo));
-    int* reachingDefs = (int*)malloc(sizeof(int) * (func->nextSsaVal + 1024));
-    for (int i = 0; i < func->nextSsaVal + 1024; i++) reachingDefs[i] = -1;
+    int maxSsa = func->nextSsaVal + 1;
+    int* reachingDefs = (int*)malloc(sizeof(int) * maxSsa);
+    for (int i = 0; i < maxSsa; i++) reachingDefs[i] = -1;
 
     renameRecursive(func, func->entry, idom, domChildren, childCount, infos, allocaCount, allocas, reachingDefs, phiList);
 
@@ -407,6 +430,8 @@ void promoteMemoryToRegisters(IRFunction* func) {
     free(reachingDefs);
     for (int i = 0; i < allocaCount; i++) {
         free(infos[i].stack);
+    }
+    for (int i = 0; i < allocaCap; i++) {
         free(defs[i]);
     }
     free(infos);

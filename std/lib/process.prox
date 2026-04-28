@@ -1,0 +1,11 @@
+use std.native.process;
+
+class Process {
+    static func envGet(name) { return native.process.env_get(name); }
+    static func envSet(name, value) { return native.process.env_set(name, value); }
+    static func cwd() { return native.process.cwd(); }
+    static func pid() { return native.process.pid(); }
+    static func cpuCount() { return native.process.cpu_count(); }
+    static func memoryUsage() { return native.process.memory_usage(); }
+    static func exit(code) { return native.process.exit(code); }
+}

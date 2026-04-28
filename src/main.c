@@ -9,6 +9,17 @@
  * Handles REPL mode, file execution, and PRM (Package Manager) commands
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
+
 #include "bytecode.h"
 #include "common.h"
 #include "compiler.h"
@@ -19,22 +30,15 @@
 #include "transpiler_ui.h"
 #include "object.h"
 #include "memory.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "type_checker.h"
 #include "optimizer.h"
-
-#ifdef _WIN32
-#include <process.h>
-#else
-#include <unistd.h>
-#include <sys/wait.h>
-#endif
+#include "file_utils.h"
+#include "prm/prm.h"
 
 void registerStdLib(VM* vm);
 
-// Declare global VM instance - already in vm.c
+// Declare global VM instance
+extern VM vm;
 
 static void repl() {
   char line[1024];
@@ -50,13 +54,14 @@ static void repl() {
       break;
     }
 
+    // Remove newline
+    line[strcspn(line, "\r")] = 0;
+    line[strcspn(line, "\n")] = 0;
+
     // Check for exit command
-    if (strcmp(line, "exit\n") == 0) {
+    if (strcmp(line, "exit") == 0) {
       break;
     }
-
-    // Remove newline
-    line[strcspn(line, "\n")] = 0;
 
     // Skip empty lines
     if (strlen(line) == 0)
@@ -70,24 +75,27 @@ static void repl() {
     Token tokens[256];
     int tokenCount = 0;
 
+    bool scanError = false;
     for (;;) {
       Token token = scanToken(&scanner);
+      if (tokenCount >= 256) {
+        fprintf(stderr, "Error: Too many tokens\n");
+        scanError = true;
+        break;
+      }
       tokens[tokenCount++] = token;
 
       if (token.type == TOKEN_ERROR) {
         fprintf(stderr, "Error: %.*s\n", token.length, token.start);
+        scanError = true;
         break;
       }
 
       if (token.type == TOKEN_EOF)
         break;
-      if (tokenCount >= 256) {
-        fprintf(stderr, "Error: Too many tokens\n");
-        break;
-      }
     }
 
-    if (tokens[tokenCount - 1].type == TOKEN_ERROR) {
+    if (scanError) {
       continue;
     }
 
@@ -98,6 +106,7 @@ static void repl() {
 
     if (statements == NULL || statements->count == 0) {
       fprintf(stderr, "Parse error\n");
+      if (statements != NULL) freeStmtList(statements);
       continue;
     }
 
@@ -105,6 +114,11 @@ static void repl() {
     optimizeAST(statements);
 
     ObjFunction* function = newFunction();
+    if (function == NULL) {
+        fprintf(stderr, "Out of memory\n");
+        freeStmtList(statements);
+        continue;
+    }
     push(&vm, OBJ_VAL(function));
     
     if (!generateBytecode(statements, function)) {
@@ -121,41 +135,12 @@ static void repl() {
   }
 }
 
-static char *readFile(const char *path) {
-  FILE *file = fopen(path, "rb");
-  if (file == NULL) {
-    fprintf(stderr, "Could not open file \"%s\".\n", path);
-    return NULL;
-  }
 
-  fseek(file, 0L, SEEK_END);
-  size_t fileSize = ftell(file);
-  rewind(file);
-
-  char *buffer = (char *)malloc(fileSize + 1);
-  if (buffer == NULL) {
-    fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
-    fclose(file);
-    return NULL;
-  }
-
-  size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-  if (bytesRead < fileSize) {
-    fprintf(stderr, "Could not read file \"%s\".\n", path);
-    free(buffer);
-    fclose(file);
-    return NULL;
-  }
-
-  buffer[bytesRead] = '\0';
-
-  fclose(file);
-  return buffer;
-}
 
 static void runFile(const char *path) {
   char *source = readFile(path);
   if (source == NULL) {
+    freeVM(&vm);
     exit(74);
   }
 
@@ -166,8 +151,14 @@ static void runFile(const char *path) {
   Token tokens[4096];
   int tokenCount = 0;
 
+  bool scanError = false;
   for (;;) {
     Token token = scanToken(&scanner);
+    if (tokenCount >= 4096) {
+      fprintf(stderr, "Error: Too many tokens\n");
+      scanError = true;
+      break;
+    }
     tokens[tokenCount++] = token;
 
     if (token.type == TOKEN_ERROR) {
@@ -186,17 +177,18 @@ static void runFile(const char *path) {
       for(int i=1; i < token.column; i++) fprintf(stderr, " ");
       fprintf(stderr, "^\n");
       
-      free(source);
-      exit(65);
+      scanError = true;
+      break;
     }
 
     if (token.type == TOKEN_EOF)
       break;
-    if (tokenCount >= 4096) {
-      fprintf(stderr, "Error: Too many tokens\n");
-      free(source);
-      exit(65);
-    }
+  }
+
+  if (scanError) {
+    trackSource(&vm, source);
+    freeVM(&vm);
+    exit(65);
   }
 
   // Parse
@@ -206,7 +198,9 @@ static void runFile(const char *path) {
 
   if (statements == NULL || statements->count == 0) {
     fprintf(stderr, "Parse error\n");
-    free(source);
+    if (statements != NULL) freeStmtList(statements);
+    trackSource(&vm, source);
+    freeVM(&vm);
     exit(65);
   }
 
@@ -221,37 +215,45 @@ static void runFile(const char *path) {
       fprintf(stderr, "Type Checking Failed with %d errors.\n", checker.errorCount);
       freeTypeChecker(&checker);
       freeStmtList(statements);
-      free(source);
+      trackSource(&vm, source);
+      freeVM(&vm);
       exit(65);
   }
   // --- Pipeline Step 3: UI Transpilation (if applicable) ---
   for (int i = 0; i < statements->count; i++) {
       if (statements->items[i]->type == STMT_UI_APP) {
-          char outputDir[512];
-          sprintf(outputDir, "dist_%s", statements->items[i]->as.ui_app.name);
-          printf("[UI] Transpiling App '%s' to %s...\n", statements->items[i]->as.ui_app.name, outputDir);
+          const char* appName = statements->items[i]->as.ui_app.name;
+          size_t nameLen = strlen(appName);
+          char* outputDir = (char*)malloc(nameLen + 6);
+          if (outputDir == NULL) {
+              fprintf(stderr, "Out of memory allocating output dir for UI app\n");
+              continue;
+          }
+          sprintf(outputDir, "dist_%s", appName);
+          printf("[UI] Transpiling App '%s' to %s...\n", appName, outputDir);
           transpileUIApp(statements->items[i], outputDir);
+          free(outputDir);
       }
   }
 
   // --- Pipeline Step 4: Bytecode Gen & Execution ---
   InterpretResult result = interpretAST(&vm, statements);
-    
   freeTypeChecker(&checker);
 
+  trackSource(&vm, source);
   if (result != INTERPRET_OK) {
+      freeStmtList(statements);
+      freeVM(&vm);
       exit(70);
   }
 
   freeStmtList(statements);
-  free(source);
 }
 
 
 // ============================================================
-//   PRM (ProX Resource Manager) Include
+//   PRM (ProX Resource Manager) Command Dispatch
 // ============================================================
-#include "prm/prm.h"
 
 // ============================================================
 //   PRM Command Dispatch
@@ -293,8 +295,7 @@ static int dispatchPRM(int argc, const char* argv[]) {
         strcmp(sub, "doc")      == 0 || strcmp(sub, "exec")      == 0 ||
         strcmp(sub, "why")      == 0 || strcmp(sub, "create")    == 0 ||
         strcmp(sub, "test")     == 0 || strcmp(sub, "watch")     == 0 ||
-        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0 ||
-        (strcmp(sub, "build") == 0 && argc >= 3 && strcmp(argv[2], "web") == 0)
+        strcmp(sub, "run")      == 0 || strcmp(sub, "build")     == 0
     );
 
     // Only intercept if invoked as prm OR if it's a uniquely-PRM subcommand
@@ -365,7 +366,7 @@ static int dispatchPRM(int argc, const char* argv[]) {
                 }
                 prm_build_web(&m, outDir);
             } else {
-                bool releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
+                int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
                 prm_build(&m, releaseMode);
             }
 
@@ -461,12 +462,7 @@ int main(int argc, const char *argv[]) {
   for(int i=0; i < argc; i++) {
       ObjString* arg = copyString(argv[i], (int)strlen(argv[i]));
       push(&vm, OBJ_VAL(arg));
-      if (vm.cliArgs->capacity < vm.cliArgs->count + 1) {
-          int oldCapacity = vm.cliArgs->capacity;
-          vm.cliArgs->capacity = GROW_CAPACITY(oldCapacity);
-          vm.cliArgs->items = GROW_ARRAY(Value, vm.cliArgs->items, oldCapacity, vm.cliArgs->capacity);
-      }
-      vm.cliArgs->items[vm.cliArgs->count++] = OBJ_VAL(arg);
+      appendToList(vm.cliArgs, OBJ_VAL(arg));
       pop(&vm); // arg
   }
   pop(&vm); // cliArgs
@@ -485,19 +481,11 @@ int main(int argc, const char *argv[]) {
       runFile(argv[2]);
     } else if (strcmp(command, "build") == 0) {
       printf("Build command not yet implemented\n");
+      freeVM(&vm);
       exit(1);
-    } else if (argv[1][strlen(argv[1]) - 1] == 'x' &&
-               argv[1][strlen(argv[1]) - 2] == 'o' &&
-               argv[1][strlen(argv[1]) - 3] == 'r' &&
-               argv[1][strlen(argv[1]) - 4] == 'p' &&
-               argv[1][strlen(argv[1]) - 5] == '.') {
-      // File with .prox extension
-      runFile(argv[1]);
     } else {
-      fprintf(stderr, "Usage: proxpl [path]\n");
-      fprintf(stderr, "       proxpl run [path]\n");
-      fprintf(stderr, "       proxpl          (REPL mode)\n");
-      exit(64);
+      // Treat as file execution
+      runFile(argv[1]);
     }
   }
 

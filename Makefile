@@ -2,7 +2,7 @@
 # Complete build system for the C-based ProXPL interpreter
 
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -O2 -I../include
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wpedantic -std=c99 -O2 -I../include
 LDFLAGS = -lm
 TARGET = prox
 SRCDIR = .
@@ -28,7 +28,8 @@ SOURCES = main.c \
           stdlib/math_native.c \
           stdlib/string_native.c \
           stdlib/convert_native.c \
-          stdlib/system_native.c
+          stdlib/system_native.c \
+          src/proxpl_api.c
 
 # Object files
 OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(SOURCES))
@@ -43,9 +44,11 @@ $(OBJDIR):
 	@mkdir -p $(OBJDIR)/parser
 	@mkdir -p $(OBJDIR)/runtime
 	@mkdir -p $(OBJDIR)/stdlib
+	@mkdir -p $(OBJDIR)/src
+	@touch $(OBJDIR)/.stamp
 
 # Link the executable
-$(TARGET): $(OBJDIR) $(OBJECTS)
+$(TARGET): $(OBJDIR) $(OBJDIR)/.stamp $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 	@echo "Build complete: $(TARGET)"
 
@@ -68,7 +71,12 @@ repl: $(TARGET)
 
 # Run a test file
 test: $(TARGET)
-	./$(TARGET) ../examples/hello.prox
+	@if [ -f ../examples/hello.prox ]; then \
+		./$(TARGET) ../examples/hello.prox; \
+	else \
+		echo "Error: ../examples/hello.prox not found. Please ensure examples are present."; \
+		exit 1; \
+	fi
 
 # Show help
 help:

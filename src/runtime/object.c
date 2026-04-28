@@ -291,4 +291,3 @@ ObjLayer *newLayer(ObjString *name) {
   initTable(&layer->methods);
   return layer;
 }
-

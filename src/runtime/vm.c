@@ -43,6 +43,9 @@ void initVM(VM *pvm) {
     initTable(&pvm->globals);
     initTable(&pvm->strings);
     pvm->source = NULL;
+    pvm->sourceFiles = NULL;
+    pvm->sourceCount = 0;
+    pvm->sourceCapacity = 0;
     initImporter(&pvm->importer);
     pvm->initString = copyString("init", 4);
     pvm->cliArgs = newList(); 
@@ -53,7 +56,27 @@ void freeVM(VM *pvm) {
   freeTable(&pvm->globals);
   freeTable(&pvm->strings);
   freeImporter(&pvm->importer);
+  pvm->initString = NULL; // CRITICAL: Prevent use-after-free
   freeObjects(pvm);
+  
+  if (pvm->sourceFiles != NULL) {
+      for (int i = 0; i < pvm->sourceCount; i++) {
+          free(pvm->sourceFiles[i]);
+      }
+      free(pvm->sourceFiles);
+      pvm->sourceFiles = NULL;
+      pvm->sourceCount = 0;
+      pvm->sourceCapacity = 0;
+  }
+}
+
+void trackSource(VM* pvm, char* source) {
+    if (pvm->sourceCount + 1 > pvm->sourceCapacity) {
+        int oldCapacity = pvm->sourceCapacity;
+        pvm->sourceCapacity = oldCapacity < 8 ? 8 : oldCapacity * 2;
+        pvm->sourceFiles = (char**)realloc(pvm->sourceFiles, sizeof(char*) * pvm->sourceCapacity);
+    }
+    pvm->sourceFiles[pvm->sourceCount++] = source;
 }
 
 // Runtime Error Helper
@@ -63,6 +86,12 @@ void runtimeError(VM* pvm, const char* format, ...) {
   va_start(args, format);
   vsnprintf(message, sizeof(message), format, args);
   va_end(args);
+
+  if (pvm->frameCount == 0) {
+    fprintf(stderr, "%s\n", message);
+    resetStack(pvm);
+    return;
+  }
 
   CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
   ObjFunction* function = frame->closure->function;
@@ -91,13 +120,17 @@ void push(VM* pvm, Value value) {
       // NOTE: Most stack checks now happen via the PUSH macro in run()
       // to allow recoverable errors. This function remains for external use.
       fprintf(stderr, "Fatal Runtime Error: Value stack overflow in push().\n");
-      // exit(1); // Keep as safety for non-VM thread usage if any
+      exit(1); // CRITICAL: Prevent memory corruption
   }
   *pvm->stackTop = value;
   pvm->stackTop++;
 }
 
 Value pop(VM* pvm) {
+  if (pvm->stackTop <= pvm->stack) {
+      fprintf(stderr, "Fatal Runtime Error: Value stack underflow in pop().\n");
+      exit(1);
+  }
   pvm->stackTop--;
   return *pvm->stackTop;
 }
@@ -143,7 +176,15 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b->data[i]; break;
             case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b->data[i]; break;
             case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b->data[i]; break;
-            case '/': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b->data[i]; break;
+            case '/': 
+                for (int i = 0; i < a->size; i++) {
+                    if (b->data[i] == 0) {
+                        runtimeError(pvm, "Tensor division by zero.");
+                        return true;
+                    }
+                    res->data[i] = a->data[i] / b->data[i];
+                }
+                break;
         }
         
         Value resVal = pop(pvm);
@@ -165,7 +206,13 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b; break;
             case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b; break;
             case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b; break;
-            case '/': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b; break;
+            case '/': 
+                if (b == 0) {
+                    runtimeError(pvm, "Division by zero.");
+                    return true;
+                }
+                for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] / b; 
+                break;
         }
         Value resVal = pop(pvm);
         pop(pvm); pop(pvm); push(pvm, resVal);
@@ -184,7 +231,15 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < b->size; i++) res->data[i] = a + b->data[i]; break;
             case '-': for (int i = 0; i < b->size; i++) res->data[i] = a - b->data[i]; break;
             case '*': for (int i = 0; i < b->size; i++) res->data[i] = a * b->data[i]; break;
-            case '/': for (int i = 0; i < b->size; i++) res->data[i] = a / b->data[i]; break;
+            case '/': 
+                for (int i = 0; i < b->size; i++) {
+                    if (b->data[i] == 0) {
+                        runtimeError(pvm, "Division by zero.");
+                        return true;
+                    }
+                    res->data[i] = a / b->data[i]; 
+                }
+                break;
         }
         Value resVal = pop(pvm);
         pop(pvm); pop(pvm); push(pvm, resVal);
@@ -219,7 +274,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
         // Iterating Table manually as we don't have a tableIterator helper
         for (int j = 0; j < context->layers.capacity; j++) {
             Entry* entry = &context->layers.entries[j];
-            if (entry->key == NULL || IS_BOOL(entry->value)) continue; // Skip empty/tombstone
+            if (entry->key == NULL) continue;
+            if (IS_BOOL(entry->value)) continue; // Tombstone
             
             ObjLayer* layer = AS_LAYER(entry->value);
             if (tableGet(&layer->methods, name, result)) {
@@ -395,6 +451,14 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           list->items = ALLOCATE(Value, count);
           list->capacity = count;
           list->count = count;
+          
+          /* Safety check from incoming branch adapted for Register Caching */
+          if (stackTop - (count + 1) < pvm->stack) {
+              STORE_FRAME();
+              runtimeError(pvm, "Stack underflow building list.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+
           for (int i = count - 1; i >= 0; i--) {
               list->items[i] = stackTop[-2 - (count - 1 - i)];
           }
@@ -577,6 +641,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_SET_GLOBAL) {
       ObjString* name = READ_STRING();
+      /* Optimized set-if-exists check from HEAD */
       if (tableSet(&pvm->globals, name, stackTop[-1])) {
         tableDelete(&pvm->globals, name);
         STORE_FRAME();
@@ -657,7 +722,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_EQUAL) {
       Value b = pop(vm);
       Value a = pop(vm);
-      if (IS_STRING(a) && IS_STRING(b)) {
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          // IEEE 754 semantics: NaN != NaN
+          PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
+      } else if (IS_STRING(a) && IS_STRING(b)) {
           ObjString* s1 = AS_STRING(a);
           ObjString* s2 = AS_STRING(b);
           PUSH(BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
@@ -668,6 +736,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_GREATER) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+        runtimeError(vm, "Operands must be numbers.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       PUSH(BOOL_VAL(a > b));
@@ -675,6 +747,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_LESS) {
+      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
+        runtimeError(vm, "Operands must be numbers.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
       double b = AS_NUMBER(pop(vm));
       double a = AS_NUMBER(pop(vm));
       PUSH(BOOL_VAL(a < b));
@@ -723,63 +799,72 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_SUBTRACT) {
-      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          double b = AS_NUMBER(pop(vm));
-          double a = AS_NUMBER(pop(vm));
+      if (IS_NUMBER(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
+          double b = AS_NUMBER(*(--stackTop));
+          double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a - b));
-      } else if (performTensorArithmetic(vm, '-')) { 
-          DISPATCH(); 
       } else {
-          runtimeError(vm, "Operands must be numbers.");
+          STORE_FRAME();
+          if (performTensorArithmetic(pvm, '-')) { LOAD_FRAME(); DISPATCH(); }
+          runtimeError(pvm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
   }
   
   CASE_OP(OP_MULTIPLY) {
-      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          double b = AS_NUMBER(pop(vm));
-          double a = AS_NUMBER(pop(vm));
+      if (IS_NUMBER(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
+          double b = AS_NUMBER(*(--stackTop));
+          double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a * b));
-      } else if (performTensorArithmetic(vm, '*')) { 
-          DISPATCH(); 
       } else {
-          runtimeError(vm, "Operands must be numbers.");
+          STORE_FRAME();
+          if (performTensorArithmetic(pvm, '*')) { LOAD_FRAME(); DISPATCH(); }
+          runtimeError(pvm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
   }
   
   CASE_OP(OP_DIVIDE) {
-      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          double b = AS_NUMBER(pop(vm));
-          double a = AS_NUMBER(pop(vm));
+      if (IS_NUMBER(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
+          double b = AS_NUMBER(*(--stackTop));
+          if (b == 0) {
+              STORE_FRAME();
+              runtimeError(pvm, "Division by zero.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a / b));
-      } else if (performTensorArithmetic(vm, '/')) { 
-          DISPATCH(); 
       } else {
-          runtimeError(vm, "Operands must be numbers.");
+          STORE_FRAME();
+          if (performTensorArithmetic(pvm, '/')) { LOAD_FRAME(); DISPATCH(); }
+          runtimeError(pvm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
   }
   
   CASE_OP(OP_NOT) {
-      PUSH(BOOL_VAL(isFalsey(pop(vm))));
+      Value val = *(--stackTop);
+      PUSH(BOOL_VAL(isFalsey(val)));
       DISPATCH();
   }
   
   CASE_OP(OP_NEGATE) {
-      if (!IS_NUMBER(peek(vm, 0))) {
-        runtimeError(vm, "Operand must be a number.");
+      if (!IS_NUMBER(stackTop[-1])) {
+        STORE_FRAME();
+        runtimeError(pvm, "Operand must be a number.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      PUSH(NUMBER_VAL(-AS_NUMBER(pop(vm))));
+      stackTop[-1] = NUMBER_VAL(-AS_NUMBER(stackTop[-1]));
       DISPATCH();
   }
   
   CASE_OP(OP_PRINT) {
-      printValue(pop(vm));
+      Value val = *(--stackTop);
+      STORE_FRAME();
+      printValue(val);
       printf("\n");
       fflush(stdout);
       DISPATCH();
@@ -793,7 +878,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_JUMP_IF_FALSE) {
       uint16_t offset = READ_SHORT();
-      if (isFalsey(peek(vm, 0))) frame->ip += offset;
+      if (isFalsey(stackTop[-1])) ip += offset;
       DISPATCH();
   }
   
@@ -864,27 +949,29 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           runtimeError(pvm, "Can only call functions, classes, and foreign functions.");
           return INTERPRET_RUNTIME_ERROR;
       }
-      DISPATCH();
   }
   
   CASE_OP(OP_INVOKE) {
       ObjString* method = READ_STRING();
       int argCount = READ_BYTE();
-      if (!invoke(method, argCount, vm)) {
+      STORE_FRAME();
+      if (!invoke(method, argCount, pvm)) {
           return INTERPRET_RUNTIME_ERROR;
       }
-      frame = &vm->frames[vm->frameCount - 1];
+      LOAD_FRAME();
       DISPATCH();
   }
   
   CASE_OP(OP_SUPER_INVOKE) {
       ObjString* method = READ_STRING();
       int argCount = READ_BYTE();
-      ObjClass* superclass = AS_CLASS(pop(vm));
-      if (!invokeFromClass(superclass, method, argCount, vm)) {
+      Value superVal = *(--stackTop);
+      ObjClass* superclass = AS_CLASS(superVal);
+      STORE_FRAME();
+      if (!invokeFromClass(superclass, method, argCount, pvm)) {
           return INTERPRET_RUNTIME_ERROR;
       }
-      frame = &vm->frames[vm->frameCount - 1];
+      LOAD_FRAME();
       DISPATCH();
   }
   
@@ -896,7 +983,9 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           uint8_t isLocal = READ_BYTE();
           uint8_t index = READ_BYTE();
           if (isLocal) {
-              closure->upvalues[i] = captureUpvalue(frame->slots + index, vm);
+              STORE_FRAME();
+              closure->upvalues[i] = captureUpvalue(frame->slots + index, pvm);
+              LOAD_FRAME();
           } else {
               closure->upvalues[i] = frame->closure->upvalues[index];
           }
@@ -905,8 +994,9 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_CLOSE_UPVALUE) {
-      closeUpvalues(vm, vm->stackTop - 1);
-      pop(vm);
+      STORE_FRAME();
+      closeUpvalues(pvm, stackTop - 1);
+      stackTop--;
       DISPATCH();
   }
   
@@ -928,31 +1018,35 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       PUSH(OBJ_VAL(newClass(READ_STRING())));
       DISPATCH();
   }
-  
-  CASE_OP(OP_INHERIT) {
-      Value superclass = peek(vm, 1);
+    CASE_OP(OP_INHERIT) {
+      Value superclass = stackTop[-2];
       if (!IS_CLASS(superclass)) {
-        runtimeError(vm, "Superclass must be a class.");
+        STORE_FRAME();
+        runtimeError(pvm, "Superclass must be a class.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      ObjClass* subclass = AS_CLASS(peek(vm, 0));
+      ObjClass* subclass = AS_CLASS(stackTop[-1]);
       tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
-      pop(vm); pop(vm);
+      stackTop--; // Pop subclass, keep superclass
       DISPATCH();
   }
   
   CASE_OP(OP_METHOD) {
-      defineMethod(READ_STRING(), vm);
+      STORE_FRAME();
+      defineMethod(READ_STRING(), pvm);
+      LOAD_FRAME();
       DISPATCH();
   }
   
   CASE_OP(OP_USE) {
       ObjString* name = READ_STRING();
       Value moduleVal;
-      if (!tableGet(&vm->importer.modules, name, &moduleVal)) {
-          runtimeError(vm, "Could not find module '%s'.", name->chars);
+      if (!tableGet(&pvm->importer.modules, name, &moduleVal)) {
+          STORE_FRAME();
+          runtimeError(pvm, "Could not find module '%s'.", name->chars);
           return INTERPRET_RUNTIME_ERROR;
       }
+      PUSH(moduleVal);
       DISPATCH();
   }
   
@@ -963,10 +1057,11 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_IMPLEMENT) {
-      Value interfaceVal = pop(vm);
-      Value classVal = peek(vm, 0);
+      Value interfaceVal = *(--stackTop);
+      Value classVal = stackTop[-1];
       if (!IS_INTERFACE(interfaceVal) || !IS_CLASS(classVal)) {
-          runtimeError(vm, "Expected interface and class.");
+          STORE_FRAME();
+          runtimeError(pvm, "Expected interface and class.");
           return INTERPRET_RUNTIME_ERROR;
       }
       ObjClass* klass = AS_CLASS(classVal);
@@ -983,11 +1078,17 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_MAKE_FOREIGN) {
-      ObjString* symbol = AS_STRING(pop(vm));
-      ObjString* libName = AS_STRING(pop(vm));
+      if (!IS_STRING(stackTop[-1]) || !IS_STRING(stackTop[-2])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Foreign symbol and library name must be strings.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      ObjString* symbol = AS_STRING(*(--stackTop));
+      ObjString* libName = AS_STRING(*(--stackTop));
       ObjForeign* foreign = loadForeign(libName, symbol);
       if (foreign == NULL) {
-          runtimeError(vm, "Failed to load foreign symbol '%s' from '%s'.", symbol->chars, libName->chars);
+          STORE_FRAME();
+          runtimeError(pvm, "Failed to load foreign symbol '%s' from '%s'.", symbol->chars, libName->chars);
           return INTERPRET_RUNTIME_ERROR;
       }
       PUSH(OBJ_VAL(foreign));
@@ -995,74 +1096,122 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_MODULO) {
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+        STORE_FRAME();
+        runtimeError(pvm, "Operands must be numbers.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      double b = AS_NUMBER(*(--stackTop));
+      if (b == 0) {
+          STORE_FRAME();
+          runtimeError(pvm, "Modulo by zero.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      double a = AS_NUMBER(*(--stackTop));
       PUSH(NUMBER_VAL(fmod(a, b)));
       DISPATCH();
   }
   
   CASE_OP(OP_BIT_AND) {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int b = (int)AS_NUMBER(*(--stackTop));
+      int a = (int)AS_NUMBER(*(--stackTop));
       PUSH(NUMBER_VAL((double)(a & b)));
       DISPATCH();
   }
   
   CASE_OP(OP_BIT_OR) {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int b = (int)AS_NUMBER(*(--stackTop));
+      int a = (int)AS_NUMBER(*(--stackTop));
       PUSH(NUMBER_VAL((double)(a | b)));
       DISPATCH();
   }
   
   CASE_OP(OP_BIT_XOR) {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int b = (int)AS_NUMBER(*(--stackTop));
+      int a = (int)AS_NUMBER(*(--stackTop));
       PUSH(NUMBER_VAL((double)(a ^ b)));
       DISPATCH();
   }
   
   CASE_OP(OP_BIT_NOT) {
-      if (!IS_NUMBER(peek(vm, 0))) {
-          runtimeError(vm, "Operand must be a number.");
+      if (!IS_NUMBER(stackTop[-1])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operand must be a number.");
           return INTERPRET_RUNTIME_ERROR;
       }
-      int a = (int)AS_NUMBER(pop(vm));
+      int a = (int)AS_NUMBER(*(--stackTop));
       PUSH(NUMBER_VAL((double)(~a)));
       DISPATCH();
   }
   
   CASE_OP(OP_LEFT_SHIFT) {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL((double)(a << b)));
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int b = (int)AS_NUMBER(*(--stackTop));
+      if (b < 0 || b >= 32) {
+          STORE_FRAME();
+          runtimeError(pvm, "Shift amount must be between 0 and 31.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int a = (int)AS_NUMBER(*(--stackTop));
+      PUSH(NUMBER_VAL((double)((uint32_t)a << b)));
       DISPATCH();
   }
   
   CASE_OP(OP_RIGHT_SHIFT) {
-      int b = (int)AS_NUMBER(pop(vm));
-      int a = (int)AS_NUMBER(pop(vm));
-      PUSH(NUMBER_VAL((double)(a >> b)));
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int b = (int)AS_NUMBER(*(--stackTop));
+      if (b < 0 || b >= 32) {
+          STORE_FRAME();
+          runtimeError(pvm, "Shift amount must be between 0 and 31.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      int a = (int)AS_NUMBER(*(--stackTop));
+      PUSH(NUMBER_VAL((double)((uint32_t)a >> b)));
       DISPATCH();
   }
   
   CASE_OP(OP_MAT_MUL) {
-      Value bVal = peek(vm, 0);
-      Value aVal = peek(vm, 1);
+      Value bVal = stackTop[-1];
+      Value aVal = stackTop[-2];
       if (!IS_TENSOR(aVal) || !IS_TENSOR(bVal)) {
-          runtimeError(vm, "Operands for '@' must be Tensors.");
+          STORE_FRAME();
+          runtimeError(pvm, "Operands for '@' must be Tensors.");
           return INTERPRET_RUNTIME_ERROR;
       }
       ObjTensor *a = AS_TENSOR(aVal);
       ObjTensor *b = AS_TENSOR(bVal);
       if (a->dimCount == 1 && b->dimCount == 1) {
           if (a->dims[0] != b->dims[0]) {
-              runtimeError(vm, "Vector length mismatch.");
+              STORE_FRAME();
+              runtimeError(pvm, "Vector length mismatch.");
               return INTERPRET_RUNTIME_ERROR;
           }
           double dot = 0;
           for (int i = 0; i < a->dims[0]; i++) dot += a->data[i] * b->data[i];
-          pop(vm); pop(vm);
+          stackTop -= 2;
           PUSH(NUMBER_VAL(dot));
           DISPATCH();
       }
@@ -1081,7 +1230,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
               }
           }
       }
-      Value resVal = pop(vm); pop(vm); pop(vm);
+      Value resVal = *(--stackTop);
+      stackTop -= 2;
       PUSH(resVal);
       DISPATCH();
   }
@@ -1089,28 +1239,48 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_MAKE_TENSOR) {
       int dimCount = READ_BYTE();
       uint32_t elementCount = 0;
-      elementCount |= (*frame->ip++);
-      elementCount |= (*frame->ip++ << 8);
-      elementCount |= (*frame->ip++ << 16);
-      elementCount |= (*frame->ip++ << 24);
-      int dims[16];
+      elementCount |= ((uint32_t)*ip++);
+      elementCount |= ((uint32_t)*ip++ << 8);
+      elementCount |= ((uint32_t)*ip++ << 16);
+      elementCount |= ((uint32_t)*ip++ << 24);
+      int dims[256]; 
       int totalSize = 1;
       for (int i = 0; i < dimCount; i++) {
            uint32_t d = 0;
-           d |= (*frame->ip++); d |= (*frame->ip++ << 8);
-           d |= (*frame->ip++ << 16); d |= (*frame->ip++ << 24);
+           d |= ((uint32_t)*ip++); 
+           d |= ((uint32_t)*ip++ << 8);
+           d |= ((uint32_t)*ip++ << 16); 
+           d |= ((uint32_t)*ip++ << 24);
            dims[i] = (int)d;
-           totalSize *= dims[i];
+           
+           if (dims[i] < 0 || dims[i] > 1000000) {
+               STORE_FRAME();
+               runtimeError(pvm, "Tensor dimension too large.");
+               return INTERPRET_RUNTIME_ERROR;
+           }
+           
+           long long newSize = (long long)totalSize * dims[i];
+           if (newSize > 100000000) { 
+               STORE_FRAME();
+               runtimeError(pvm, "Tensor total size exceeds limit.");
+               return INTERPRET_RUNTIME_ERROR;
+           }
+           totalSize = (int)newSize;
       }
       ObjTensor *tensor = newTensor(dimCount, dims, NULL);
       PUSH(OBJ_VAL(tensor)); 
       if (elementCount == (uint32_t)totalSize) {
+          if (stackTop - totalSize < pvm->stack) {
+              STORE_FRAME();
+              runtimeError(pvm, "Stack underflow building tensor.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
           for (int i = totalSize - 1; i >= 0; i--) {
-              Value val = peek(vm, 1 + (totalSize - 1 - i));
+              Value val = stackTop[-2 - (totalSize - 1 - i)];
               tensor->data[i] = IS_NUMBER(val) ? AS_NUMBER(val) : 0;
           }
-          Value res = pop(vm);
-          vm->stackTop -= totalSize;
+          Value res = *(--stackTop);
+          stackTop -= totalSize;
           PUSH(res);
       } else {
           memset(tensor->data, 0, totalSize * sizeof(double));
@@ -1135,29 +1305,32 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_ACTIVATE) {
-      Value contextVal = pop(vm);
+      Value contextVal = *(--stackTop);
       if (!IS_CONTEXT(contextVal)) {
-          runtimeError(vm, "Can only activate contexts.");
+          STORE_FRAME();
+          runtimeError(pvm, "Can only activate contexts.");
           return INTERPRET_RUNTIME_ERROR;
       }
-      if (vm->activeContextCount >= 64) {
-          runtimeError(vm, "Context overflow.");
+      if (pvm->activeContextCount >= 64) {
+          STORE_FRAME();
+          runtimeError(pvm, "Context overflow.");
           return INTERPRET_RUNTIME_ERROR;
       }
-      vm->activeContextStack[vm->activeContextCount++] = AS_CONTEXT(contextVal);
+      pvm->activeContextStack[pvm->activeContextCount++] = AS_CONTEXT(contextVal);
       DISPATCH();
   }
   
   CASE_OP(OP_END_ACTIVATE) {
-      if (vm->activeContextCount > 0) vm->activeContextCount--;
+      if (pvm->activeContextCount > 0) pvm->activeContextCount--;
       DISPATCH();
   }
 
-trap:
-  {
+#ifdef __GNUC__
+  trap: {
       runtimeError(pvm, "Unknown opcode %d.", frame->ip[-1]);
       return INTERPRET_RUNTIME_ERROR;
   }
+#endif
 
   // End of opcodes
 #ifndef __GNUC__
@@ -1242,12 +1415,12 @@ InterpretResult interpret(VM* pvm, const char* source) {
   return result;
 }
 
-void defineNative(VM* vm, const char* name, NativeFn function) {
-  push(vm, OBJ_VAL(copyString(name, (int)strlen(name))));
-  push(vm, OBJ_VAL(newNative(function)));
-  tableSet(&vm->globals, AS_STRING(vm->stackTop[-2]), vm->stackTop[-1]);
-  pop(vm);
-  pop(vm);
+void defineNative(VM* pvm, const char* name, NativeFn function) {
+  push(pvm, OBJ_VAL(copyString(name, (int)strlen(name))));
+  push(pvm, OBJ_VAL(newNative(function)));
+  tableSet(&pvm->globals, AS_STRING(pvm->stackTop[-2]), pvm->stackTop[-1]);
+  pop(pvm);
+  pop(pvm);
 }
 
 InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {
@@ -1273,10 +1446,21 @@ InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {
     frame->ip = function->chunk.code;
     frame->slots = pvm->stack;
     
+    // Disable GC during raw chunk execution to prevent freeing transient objects
+    size_t oldNextGC = pvm->nextGC;
+    pvm->nextGC = (size_t)-1;
+    
     InterpretResult result = run(pvm);
     
-    // Prevent double free of chunk code/constants by function destructor
-    // if main.c manages them.
+    // Restore GC
+    pvm->nextGC = oldNextGC;
+    
+    // CRITICAL: Prevent double-free of chunk code/constants.
+    // The ObjFunction 'function' now points to the same memory as the input 'chunk'.
+    // When 'function' is eventually GC'd, it would try to free this memory.
+    // By zeroing it out here, we ensure 'function' doesn't own the buffers.
+    // This is safe because 'run' has finished and the closure/function are 
+    // about to be unreachable or are owned by the caller's stack management.
     initChunk(&function->chunk);
     
     return result;

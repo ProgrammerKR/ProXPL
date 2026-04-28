@@ -128,7 +128,7 @@ yarn-error.log
 package-lock.json
 
 # ============================================
-# Project-Specific
+# Project-Specific & UI Transpiler
 # ============================================
 .internal_ignore
 *.prox.bak
@@ -138,6 +138,8 @@ logs/
 tests/bin/
 tests/temp_src/
 build/obj/
+dist_*/
+.prm-cache/
 
 # ============================================
 # Preprocessed / Build Artifacts

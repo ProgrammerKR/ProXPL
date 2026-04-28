@@ -23,11 +23,11 @@ static int isValidPrmArg(const char* arg) {
 }
 
 void prm_version() {
-    printf("prm v1.3.1 (ProXPL v1.3.1)\n");
+    printf("prm v1.3.3 (ProXPL v1.3.3)\n");
 }
 
 void prm_help() {
-    printf("ProX Resource Manager (prm) v1.3.1\n");
+    printf("ProX Resource Manager (prm) v1.3.3\n");
     printf("Usage: prm <command> [options]\n\n");
 
     printf("Core Commands:\n");
@@ -229,31 +229,101 @@ void prm_audit() {
 
 // --- Registry ---
 
+#define REGISTRY_URL "https://proxpl.in"
+#define CONFIG_FILE ".prmconfig"
+
+static void save_token(const char* token) {
+    FILE* f = fopen(CONFIG_FILE, "w");
+    if (f) {
+        fprintf(f, "token: %s\n", token);
+        fclose(f);
+    }
+}
+
+static char* load_token() {
+    FILE* f = fopen(CONFIG_FILE, "r");
+    if (!f) return NULL;
+    char line[256];
+    static char token[128];
+    while (fgets(line, sizeof(line), f)) {
+        if (sscanf(line, "token: %127s", token) == 1) {
+            fclose(f);
+            return token;
+        }
+    }
+    fclose(f);
+    return NULL;
+}
+
 void prm_publish() {
-    printf("Publishing package to registry...\n");
-    printf("Error: Authentication required. Run 'prm login' first.\n");
+    Manifest manifest;
+    if (!prm_load_manifest(&manifest)) {
+        printf("Error: No project.pxcf found in current directory.\n");
+        return;
+    }
+
+    char* token = load_token();
+    if (!token) {
+        printf("Error: Not logged in. Run 'prm login' first.\n");
+        return;
+    }
+
+    printf("Publishing %s@%s to registry...\n", manifest.name, manifest.version);
+
+    // Construct curl command
+    // Using simple JSON payload
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd), 
+        "curl -X POST %s/api/registry/publish "
+        "-H \"Content-Type: application/json\" "
+        "-H \"Authorization: Bearer %s\" "
+        "-d \"{\\\"name\\\":\\\"%s\\\",\\\"version\\\":\\\"%s\\\",\\\"entryPoint\\\":\\\"%s\\\"}\"",
+        REGISTRY_URL, token, manifest.name, manifest.version, manifest.entryPoint
+    );
+
+    int result = system(cmd);
+    if (result == 0) {
+        printf("\nSuccessfully published %s@%s\n", manifest.name, manifest.version);
+    } else {
+        printf("\nFailed to publish package. Check your connection or token.\n");
+    }
 }
 
 void prm_login() {
-    printf("Logging in to registry.proxpl.org...\n");
-    printf("Username: ProgrammerKR\n");
-    printf("Password: [hidden]\n");
-    printf("Logged in successfully.\n");
+    char token[128];
+    printf("Logging in to %s\n", REGISTRY_URL);
+    printf("Please enter your API token (from your dashboard): ");
+    if (scanf("%127s", token) == 1) {
+        save_token(token);
+        printf("Logged in successfully.\n");
+    }
 }
 
 void prm_logout() {
+    remove(CONFIG_FILE);
     printf("Logged out.\n");
 }
 
 void prm_search(const char* query) {
-    printf("Searching for '%s'...\n", query);
-    printf("Found 0 packages.\n");
+    if (!query) return;
+    printf("Searching %s for '%s'...\n", REGISTRY_URL, query);
+    
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd), "curl -s \"%s/api/registry/search?q=%s\"", REGISTRY_URL, query);
+    
+    system(cmd);
+    printf("\n");
 }
 
 void prm_info(const char* packageName) {
-    printf("Package: %s\n", packageName);
-    printf("Version: 1.0.0\n");
-    printf("Description: A cool ProXPL package.\n");
+    if (!packageName) return;
+    printf("Package Info: %s\n", packageName);
+    
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd), "curl -s \"%s/api/registry/package/%s\"", REGISTRY_URL, packageName);
+    
+    system(cmd);
+    printf("\n");
 }
 
 // --- Misc ---
@@ -288,6 +358,10 @@ void prm_doc() {
 }
 
 void prm_exec(const char* command) {
+    if (!isValidPrmArg(command)) {
+        fprintf(stderr, "Error: Invalid characters in command.\n");
+        return;
+    }
     printf("Executing '%s' in project context...\n", command);
 }
 

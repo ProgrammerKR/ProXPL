@@ -590,7 +590,7 @@ static Stmt *useDecl(Parser *p) {
 
   do {
     // Parse module path like "utils/io"
-    if (!check(p, TOKEN_IDENTIFIER)) {
+    if (!check(p, TOKEN_IDENTIFIER) && !check(p, TOKEN_NATIVE)) {
       parserError(p, "Expect module name.");
       break;
     }
@@ -603,7 +603,12 @@ static Stmt *useDecl(Parser *p) {
     free(partStr);
 
     while (match(p, 1, TOKEN_SLASH) || match(p, 1, TOKEN_DOT)) {
-      part = consume(p, TOKEN_IDENTIFIER, "Expect module part after separator.");
+      if (check(p, TOKEN_IDENTIFIER) || check(p, TOKEN_NATIVE)) {
+          part = advance(p);
+      } else {
+          parserError(p, "Expect module part after separator.");
+          break;
+      }
       strcat(path, "."); // Normalize to dot internally? Or keep as is? 
       // The user uses dots (std.io). PROX might use dots or slashes.
       // Let's standardise to dots for internal representation if that's what `vm` expects?

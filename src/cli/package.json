@@ -1,6 +1,6 @@
 {
     "name": "proxpl-cli",
-    "version": "1.3.1",
+    "version": "1.3.3",
     "description": "Professional CLI tool for ProXPL",
     "main": "index.js",
     "bin": {

@@ -14,6 +14,7 @@
 #include "vm.h"
 #include "value.h"
 #include "object.h"
+#include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -147,45 +148,64 @@ static Value native_trim(int argCount, Value* args) {
     return OBJ_VAL(copyString(str + start, newLen));
 }
 
-// split(str, delimiter) - Split string by delimiter
+// split(str, delimiter) - Split string by delimiter -> ObjList
 static Value native_split(int argCount, Value* args) {
     if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) {
         return NIL_VAL;
     }
-    
-    // Only support single-char delimiter for SIMD example
+
     ObjString* strObj = AS_STRING(args[0]);
     ObjString* delObj = AS_STRING(args[1]);
-    
-    if (delObj->length != 1) {
-         // Fallback to non-SIMD or generic implementation
-         // For now return original string as single element list (stub)
-         return args[0]; 
-    }
-    
-    char delimiter = delObj->chars[0];
-    const char* str = strObj->chars;
-    int len = strObj->length;
-    
-    // In a real impl, we'd build a List/Array object.
-    // Here we just count tokens to demonstrate scanning speed.
-    int count = 0;
-    int pos = 0;
-    while (pos < len) {
-        // Find next delimiter relative to current pos
-        int offset = find_char_simd(str + pos, len - pos, delimiter);
-        if (offset == -1) {
-            count++;
-            break;
+    const char* str   = strObj->chars;
+    int  len   = strObj->length;
+    const char* del   = delObj->chars;
+    int  delLen= delObj->length;
+
+    ObjList* list = newList();
+    push(&vm, OBJ_VAL(list));
+
+    if (delLen == 0) {
+        // Split into individual characters
+        for (int i = 0; i < len; i++) {
+            Value ch = OBJ_VAL(copyString(str + i, 1));
+            push(&vm, ch);
+            if (list->capacity < list->count + 1) {
+                int old = list->capacity;
+                list->capacity = GROW_CAPACITY(old);
+                list->items = GROW_ARRAY(Value, list->items, old, list->capacity);
+            }
+            list->items[list->count++] = pop(&vm);
         }
-        count++;
-        pos += offset + 1;
+        return pop(&vm);
     }
-    
-    // Return the count as a basic proof of scanning
-    // (Until ObjList is fully exposed to C api)
-    // printf("SIMD Split found %d tokens\n", count);
-    return NUMBER_VAL(count);
+
+    int pos = 0;
+    while (pos <= len) {
+        // For single-char delimiter use SIMD, otherwise strstr
+        int next;
+        if (delLen == 1) {
+            int off = find_char_simd(str + pos, len - pos, del[0]);
+            next = (off == -1) ? -1 : pos + off;
+        } else {
+            const char* found = strstr(str + pos, del);
+            next = found ? (int)(found - str) : -1;
+        }
+
+        int tokenLen = (next == -1) ? (len - pos) : (next - pos);
+        Value token = OBJ_VAL(copyString(str + pos, tokenLen));
+        push(&vm, token);
+        if (list->capacity < list->count + 1) {
+            int old = list->capacity;
+            list->capacity = GROW_CAPACITY(old);
+            list->items = GROW_ARRAY(Value, list->items, old, list->capacity);
+        }
+        list->items[list->count++] = pop(&vm);
+
+        if (next == -1) break;
+        pos = next + delLen;
+    }
+
+    return pop(&vm);
 }
 
 // replace(str, old, new) - Replace occurrences
@@ -299,6 +319,114 @@ static Value native_substr(int argCount, Value* args) {
     return OBJ_VAL(copyString(str + start, length));
 }
 
+// repeat(str, n) - Repeat string n times
+static Value native_repeat(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_NUMBER(args[1])) return NIL_VAL;
+    ObjString* s = AS_STRING(args[0]);
+    int n = (int)AS_NUMBER(args[1]);
+    if (n <= 0) return OBJ_VAL(copyString("", 0));
+    int totalLen = s->length * n;
+    char* buf = (char*)malloc(totalLen + 1);
+    for (int i = 0; i < n; i++) memcpy(buf + i * s->length, s->chars, s->length);
+    buf[totalLen] = '\0';
+    Value result = OBJ_VAL(copyString(buf, totalLen));
+    free(buf);
+    return result;
+}
+
+// pad_left(str, width, padChar) - Left-pad string to width
+static Value native_pad_left(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_NUMBER(args[1])) return args[0];
+    ObjString* s = AS_STRING(args[0]);
+    int width = (int)AS_NUMBER(args[1]);
+    char padCh = (argCount >= 3 && IS_STRING(args[2]) && AS_STRING(args[2])->length > 0)
+                 ? AS_STRING(args[2])->chars[0] : ' ';
+    if (s->length >= width) return args[0];
+    int pad = width - s->length;
+    char* buf = (char*)malloc(width + 1);
+    memset(buf, padCh, pad);
+    memcpy(buf + pad, s->chars, s->length);
+    buf[width] = '\0';
+    Value result = OBJ_VAL(copyString(buf, width));
+    free(buf);
+    return result;
+}
+
+// pad_right(str, width, padChar) - Right-pad string to width
+static Value native_pad_right(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_NUMBER(args[1])) return args[0];
+    ObjString* s = AS_STRING(args[0]);
+    int width = (int)AS_NUMBER(args[1]);
+    char padCh = (argCount >= 3 && IS_STRING(args[2]) && AS_STRING(args[2])->length > 0)
+                 ? AS_STRING(args[2])->chars[0] : ' ';
+    if (s->length >= width) return args[0];
+    int pad = width - s->length;
+    char* buf = (char*)malloc(width + 1);
+    memcpy(buf, s->chars, s->length);
+    memset(buf + s->length, padCh, pad);
+    buf[width] = '\0';
+    Value result = OBJ_VAL(copyString(buf, width));
+    free(buf);
+    return result;
+}
+
+// count_occurrences(str, sub) -> number
+static Value native_count_occurrences(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return NUMBER_VAL(0);
+    const char* str = AS_CSTRING(args[0]);
+    const char* sub = AS_CSTRING(args[1]);
+    int subLen = AS_STRING(args[1])->length;
+    if (subLen == 0) return NUMBER_VAL(0);
+    int count = 0;
+    const char* p = str;
+    while ((p = strstr(p, sub)) != NULL) { count++; p += subLen; }
+    return NUMBER_VAL((double)count);
+}
+
+// str_reverse(str) -> string
+static Value native_str_reverse(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    ObjString* s = AS_STRING(args[0]);
+    char* buf = (char*)malloc(s->length + 1);
+    for (int i = 0; i < s->length; i++) buf[i] = s->chars[s->length - 1 - i];
+    buf[s->length] = '\0';
+    Value result = OBJ_VAL(copyString(buf, s->length));
+    free(buf);
+    return result;
+}
+
+// index_of(str, sub, from) -> number  (-1 if not found)
+static Value native_index_of(int argCount, Value* args) {
+    if (argCount < 2 || !IS_STRING(args[0]) || !IS_STRING(args[1])) return NUMBER_VAL(-1);
+    const char* str = AS_CSTRING(args[0]);
+    const char* sub = AS_CSTRING(args[1]);
+    int from = (argCount >= 3 && IS_NUMBER(args[2])) ? (int)AS_NUMBER(args[2]) : 0;
+    int len  = AS_STRING(args[0])->length;
+    if (from < 0) from = 0;
+    if (from >= len) return NUMBER_VAL(-1);
+    const char* found = strstr(str + from, sub);
+    return found ? NUMBER_VAL((double)(found - str)) : NUMBER_VAL(-1);
+}
+
+// trim_left(str) / trim_right(str)
+static Value native_trim_left(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    const char* str = AS_CSTRING(args[0]);
+    int len = AS_STRING(args[0])->length;
+    int start = 0;
+    while (start < len && isspace((unsigned char)str[start])) start++;
+    return OBJ_VAL(copyString(str + start, len - start));
+}
+
+static Value native_trim_right(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    const char* str = AS_CSTRING(args[0]);
+    int len = AS_STRING(args[0])->length;
+    int end = len - 1;
+    while (end >= 0 && isspace((unsigned char)str[end])) end--;
+    return OBJ_VAL(copyString(str, end + 1));
+}
+
 ObjModule* create_std_str_module() {
     ObjString* name = copyString("std.native.str", 14);
     push(&vm, OBJ_VAL(name));
@@ -313,7 +441,15 @@ ObjModule* create_std_str_module() {
     defineModuleFn(module, "contains", native_contains);
     defineModuleFn(module, "startswith", native_startswith);
     defineModuleFn(module, "endswith", native_endswith);
-    defineModuleFn(module, "substr", native_substr);
+    defineModuleFn(module, "substr",             native_substr);
+    defineModuleFn(module, "repeat",             native_repeat);
+    defineModuleFn(module, "pad_left",           native_pad_left);
+    defineModuleFn(module, "pad_right",          native_pad_right);
+    defineModuleFn(module, "count_occurrences",  native_count_occurrences);
+    defineModuleFn(module, "reverse",            native_str_reverse);
+    defineModuleFn(module, "index_of",           native_index_of);
+    defineModuleFn(module, "trim_left",          native_trim_left);
+    defineModuleFn(module, "trim_right",         native_trim_right);
 
     pop(&vm);
     pop(&vm);
@@ -322,14 +458,20 @@ ObjModule* create_std_str_module() {
 
 // Register string functions as globals
 void register_string_globals(VM* pVM) {
-    defineNative(pVM, "upper", native_upper);
-    defineNative(pVM, "lower", native_lower);
-    defineNative(pVM, "trim", native_trim);
-    defineNative(pVM, "split", native_split);
-    defineNative(pVM, "replace", native_replace);
-    defineNative(pVM, "contains", native_contains);
-    defineNative(pVM, "startswith", native_startswith);
-    defineNative(pVM, "endswith", native_endswith);
-    // substr is already registered in stdlib_core.c, but no harm re-registering or skipping.
-    // stdlib_core.c handles substr separately for some reason.
+    defineNative(pVM, "upper",            native_upper);
+    defineNative(pVM, "lower",            native_lower);
+    defineNative(pVM, "trim",             native_trim);
+    defineNative(pVM, "trim_left",        native_trim_left);
+    defineNative(pVM, "trim_right",       native_trim_right);
+    defineNative(pVM, "split",            native_split);
+    defineNative(pVM, "replace",          native_replace);
+    defineNative(pVM, "contains",         native_contains);
+    defineNative(pVM, "startswith",       native_startswith);
+    defineNative(pVM, "endswith",         native_endswith);
+    defineNative(pVM, "repeat",           native_repeat);
+    defineNative(pVM, "pad_left",         native_pad_left);
+    defineNative(pVM, "pad_right",        native_pad_right);
+    defineNative(pVM, "count_occurrences",native_count_occurrences);
+    defineNative(pVM, "str_reverse",      native_str_reverse);
+    defineNative(pVM, "index_of",         native_index_of);
 }

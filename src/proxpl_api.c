@@ -16,65 +16,36 @@
 #include "../include/vm.h"
 #include "../include/bytecode.h"
 #include "../include/common.h"
-
-// Helper to read a file into a string
-static char* readFile(const char* path) {
-    FILE* file = fopen(path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Could not open file \"%s\".\n", path);
-        return NULL;
-    }
-
-    fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
-    rewind(file);
-
-    char* buffer = (char*)malloc(fileSize + 1);
-    if (buffer == NULL) {
-        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
-        fclose(file);
-        return NULL;
-    }
-
-    size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-    if (bytesRead < fileSize) {
-        fprintf(stderr, "Could not read file \"%s\".\n", path);
-        free(buffer);
-        fclose(file);
-        return NULL;
-    }
-
-    buffer[bytesRead] = '\0';
-    fclose(file);
-    return buffer;
-}
+#include "../include/file_utils.h"
 
 void proxpl_vm_init(VM *pvm) {
-    // Standard CLOX uses a global VM instance, so we ignore the pointer for now
-    // or assume 'vm' points to the global one.
+    if (pvm == NULL) return;
+    // Note: ProXPL maintains local VM state in the provided pointer.
     initVM(pvm); 
 }
 
 void proxpl_vm_free(VM *pvm) {
+    if (pvm == NULL) return;
     freeVM(pvm);
 }
 
 InterpretResult proxpl_interpret_chunk(VM *pvm, const Chunk *chunk) {
     (void)pvm; (void)chunk;
-    // ERROR: The standard VM interprets Source Code strings, not raw Chunks.
-    // To support this, you would need to expose the internal run() function.
+    // Interpreting raw chunks requires bypassing the compiler pipeline.
+    // This is currently unsupported as it skips essential optimization and safety passes.
     fprintf(stderr, "API Error: interpreting raw chunks is not supported in this version.\n");
     return INTERPRET_RUNTIME_ERROR;
 }
 
 InterpretResult proxpl_interpret_file(VM *pvm, const char *path) {
+    if (pvm == NULL || path == NULL) return INTERPRET_RUNTIME_ERROR;
     char* source = readFile(path);
     if (source == NULL) return INTERPRET_COMPILE_ERROR;
 
     // Pass the source string to interpret
     InterpretResult result = interpret(pvm, source);
     
-    free(source);
+    trackSource(pvm, source);
     return result;
 }
 

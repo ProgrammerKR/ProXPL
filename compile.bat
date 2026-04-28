@@ -13,6 +13,7 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT
  src/compiler/ir.c ^
  src/compiler/ir_gen.c ^
  src/compiler/ir_opt.c ^
+ src/compiler/optimizer.c ^
  src/compiler/type_checker.c ^
  src/runtime/chunk.c ^
  src/runtime/compiler.c ^
@@ -27,6 +28,7 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT
  src/runtime/vm.c ^
  src/runtime/vm_helpers.c ^
  src/utils/error_report.c ^
+ src/utils/file_utils.c ^
  src/utils/pxcf.c ^
  src/stdlib/collections_native.c ^
  src/stdlib/convert_native.c ^
@@ -39,6 +41,9 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT
  src/stdlib/math_native.c ^
  src/stdlib/net_native.c ^
  src/stdlib/os_native.c ^
+ src/stdlib/path_native.c ^
+ src/stdlib/process_native.c ^
+ src/stdlib/buffer_native.c ^
  src/stdlib/reflect_native.c ^
  src/stdlib/stdlib_core.c ^
  src/stdlib/string_native.c ^

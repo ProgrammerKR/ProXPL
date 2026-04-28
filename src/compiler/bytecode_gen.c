@@ -26,7 +26,7 @@ typedef struct Loop {
     struct Loop* enclosing;
     int startIp;
     int scopeDepth;
-    int breakJumps[16];   
+    int breakJumps[256];   
     int breakCount;
 } Loop;
 
@@ -52,6 +52,7 @@ typedef struct {
 
 static void genExpr(BytecodeGen* gen, Expr* expr);
 static void genStmt(BytecodeGen* gen, Stmt* stmt);
+static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar);
 static void emitTensorConstruction(BytecodeGen* gen, Expr* expr);
 
 // --- Helpers ---
@@ -137,7 +138,6 @@ static void emitConstant(BytecodeGen* gen, Value value, int line) {
     if (gen->hadError) return;
     int constant = addConstant(gen->chunk, value);
     if (constant > 255) {
-        writeChunk(gen->chunk, OP_CONSTANT, line); 
         fprintf(stderr, "Too many constants.\n");
         gen->hadError = true;
     } else {
@@ -208,7 +208,7 @@ static void emitTensorConstruction(BytecodeGen* gen, Expr* expr) {
 }
 
 static void genExpr(BytecodeGen* gen, Expr* expr) {
-    if (expr == NULL) return;
+    if (expr == NULL || gen->hadError) return;
 
     switch (expr->type) {
         case EXPR_LITERAL: {
@@ -485,54 +485,27 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             break;
         }
         case EXPR_THIS: {
-             // In method, 'this' is at local slot 0
-             // But valid only if inside method. Check compiler type?
-             // Assuming parser checked or runtime will error if not method?
-             // Compiler should ideally error if not in method.
-             // For now, assume it's valid: return OP_GET_LOCAL 0
-             // BUT, resolveLocal("this") is cleaner if we named it "this"?
-             // We didn't. slot 0 is unnamed.
-             writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
-             writeChunk(gen->chunk, 0, expr->line);
+             if (gen->compiler->type == COMP_FUNCTION) {
+                 writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
+                 writeChunk(gen->chunk, 0, expr->line);
+             } else {
+                 fprintf(stderr, "Cannot use 'this' outside of a method.\n");
+                 gen->hadError = true;
+             }
              break;
         }
         case EXPR_SUPER: {
-             // 1. Get 'this' (receiver)
-             writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
-             writeChunk(gen->chunk, 0, expr->line);
-             
-             // 2. Get superclass.
-             // 'super' is typically bound as an upvalue if we used closures for classes?
-             // Or we rely on looking up 'super' variable in scope?
-             // ProXPL parser logic: `match(TOKEN_EXTENDS)` defines a variable for superclass? 
-             // No.
-             // Standard way: store 'super' in a known local/upvalue.
-             // For simplify: let's assume 'super' is resolved by name lookup if we named the superclass?
-             // Actually, `OP_GET_SUPER` usually needs the superclass object.
-             // If we are in a method of class Sub, superclass is Sub.superclass.
-             // But we don't have reference to Sub easily in validation?
-             // Actually, we can look up "super" if we define it in scope.
-             // Since we didn't add "super" to locals in `visitClassDecl`, we can't look it up yet.
-             // Proposed shortcut: Emit OP_GET_SUPER with name constant.
-             // VM will pop receiver("this"), and need to find method on superclass...
-             // BUT VM needs to know WHICH class is super.
-             // Common trick: OP_GET_SUPER takes an operand index for the method name.
-             // Expects Stack: [Receiver, SuperClass].
-             // So we must push SuperClass.
-             // WE NEED TO RESOLVE SUPERCLASS.
-             // Hack for v1.0.0 Alpha: 
-             // If we are in `class B extends A`, `A` is available by name `A`?
-             // If so, look up `A`? But we don't know the name `A` easily here.
-             
-             // Let's defer full implementation of SUPER to next iteration?
-             // Step 184 said: "Runtime/VM: OpCodes... OP_GET_SUPER...".
-             // We have OP_GET_SUPER in bytecode.h line 37.
-             // Let's implement correct structure:
-             // We need to resolve "super" as a local variable.
-             // In `genFunction` for methods, if class has superclass, we should wrap it?
-             // Let's skip valid SUPER for this exact single tool call and fix in next one properly.
-             // Just emit OP_NIL for now to allow compiling.
-             writeChunk(gen->chunk, OP_NIL, expr->line); // Placeholder
+             if (gen->compiler->type == COMP_FUNCTION) {
+                 writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
+                 writeChunk(gen->chunk, 0, expr->line);
+                 Value nameVal = OBJ_VAL(copyString(expr->as.super_expr.method, strlen(expr->as.super_expr.method)));
+                 int nameConst = addConstant(gen->chunk, nameVal);
+                 writeChunk(gen->chunk, OP_GET_SUPER, expr->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, expr->line);
+             } else {
+                 fprintf(stderr, "Cannot use 'super' outside of a method.\n");
+                 gen->hadError = true;
+             }
              break;
         }
         case EXPR_NEW: {
@@ -627,7 +600,7 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
 }
 
 static void genStmt(BytecodeGen* gen, Stmt* stmt) {
-    if (stmt == NULL) return;
+    if (stmt == NULL || gen->hadError) return;
     
     switch (stmt->type) {
 
@@ -891,7 +864,7 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 writeChunk(gen->chunk, OP_JUMP, 0);
                 writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
                 int jump = gen->chunk->count - 2;
-                if (gen->compiler->loop->breakCount < 16) {
+                if (gen->compiler->loop->breakCount < 256) {
                     gen->compiler->loop->breakJumps[gen->compiler->loop->breakCount++] = jump;
                 }
             }
@@ -964,23 +937,40 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             break;
         }
         case STMT_TRY_CATCH: {
-            // Not implemented (stubs/runtime error handled in VM)
-            // But we should emit opcodes if defined.
-            // For now, skip to avoid compilation errors if opcodes not available?
-            // "OP_TRY", "OP_CATCH" not in bytecode.h yet?
-            // OP_TRY is in bytecode.h in snippet I saw earlier? 
-            // lines 56-58: OP_TRY, OP_CATCH, OP_END_TRY. Yes.
+            writeChunk(gen->chunk, OP_TRY, stmt->line);
+            writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+            int catchJump = gen->chunk->count - 2;
             
-            // Try block
-            // OP_TRY catch_offset
-            // block
-            // OP_END_TRY (pops handler)
-            // OP_JUMP end
-            // catch:
-            // OP_CATCH (pushes exception? invalidates try stack?)
-            // define catch_var
-            // block
-            // end:
+            if (stmt->as.try_catch.try_block) {
+                for (int i=0; i < stmt->as.try_catch.try_block->count; i++) {
+                    genStmt(gen, stmt->as.try_catch.try_block->items[i]);
+                }
+            }
+            writeChunk(gen->chunk, OP_END_TRY, stmt->line);
+            
+            writeChunk(gen->chunk, OP_JUMP, stmt->line);
+            writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+            int endJump = gen->chunk->count - 2;
+            
+            int patchCatch = gen->chunk->count - catchJump - 2;
+            gen->chunk->code[catchJump] = (patchCatch >> 8) & 0xff;
+            gen->chunk->code[catchJump+1] = patchCatch & 0xff;
+            
+            writeChunk(gen->chunk, OP_CATCH, stmt->line);
+            beginScope(gen);
+            if (stmt->as.try_catch.catch_var) {
+                addLocal(gen, stmt->as.try_catch.catch_var);
+            }
+            if (stmt->as.try_catch.catch_block) {
+                for (int i=0; i < stmt->as.try_catch.catch_block->count; i++) {
+                    genStmt(gen, stmt->as.try_catch.catch_block->items[i]);
+                }
+            }
+            endScope(gen);
+            
+            int patchEnd = gen->chunk->count - endJump - 2;
+            gen->chunk->code[endJump] = (patchEnd >> 8) & 0xff;
+            gen->chunk->code[endJump+1] = patchEnd & 0xff;
             break; 
         }
         case STMT_USE_DECL: {
@@ -1071,8 +1061,10 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             
             // Generate layers
             StmtList* layers = stmt->as.context_decl.layers;
-            for (int i = 0; i < layers->count; i++) {
-                genStmt(gen, layers->items[i]);
+            if (layers) {
+                for (int i = 0; i < layers->count; i++) {
+                    genStmt(gen, layers->items[i]);
+                }
             }
             
             // Define context
@@ -1092,13 +1084,15 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             
             // Generate methods
             StmtList* methods = stmt->as.layer_decl.methods;
-            for (int i = 0; i < methods->count; i++) {
-                genFunction(gen, methods->items[i], false);
-                Stmt* methodStmt = methods->items[i];
-                Value mNameVal = OBJ_VAL(copyString(methodStmt->as.func_decl.name, strlen(methodStmt->as.func_decl.name)));
-                int mNameConst = addConstant(gen->chunk, mNameVal);
-                writeChunk(gen->chunk, OP_METHOD, methodStmt->line);
-                writeChunk(gen->chunk, (uint8_t)mNameConst, methodStmt->line);
+            if (methods) {
+                for (int i = 0; i < methods->count; i++) {
+                    genFunction(gen, methods->items[i], false);
+                    Stmt* methodStmt = methods->items[i];
+                    Value mNameVal = OBJ_VAL(copyString(methodStmt->as.func_decl.name, strlen(methodStmt->as.func_decl.name)));
+                    int mNameConst = addConstant(gen->chunk, mNameVal);
+                    writeChunk(gen->chunk, OP_METHOD, methodStmt->line);
+                    writeChunk(gen->chunk, (uint8_t)mNameConst, methodStmt->line);
+                }
             }
             
             // Pop layer (Context already has it if OP_LAYER adds it)
