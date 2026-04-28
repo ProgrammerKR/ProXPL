@@ -15,6 +15,14 @@
 #define FRAMES_MAX 1024
 #define STACK_MAX (FRAMES_MAX * 256)
 
+/* Global Inline Cache Entry:
+ * Storing the table's entries pointer allows us to detect rehashes.
+ * If vm->globals.entries == cache->entries, then cache->entry is valid. */
+typedef struct {
+    Entry* entries; 
+    Entry* entry;
+} GICEntry;
+
 // CallFrame is now defined in common.h
 
 struct VM {
