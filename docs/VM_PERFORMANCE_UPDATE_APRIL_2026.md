@@ -1,3 +1,10 @@
+<!--
+  Project: ProX Programming Language (ProXPL)
+  Author:  ProgrammerKR
+  Created: 2026-04-28
+  Copyright © 2026. ProXentix India Pvt. Ltd. All rights reserved.
+-->
+
 # ProXPL VM Performance Milestone (April 2026)
 
 This document outlines the major architectural optimizations implemented to accelerate the ProXPL Virtual Machine. These changes represent a transition from a baseline interpreter to a high-performance threaded runtime.
