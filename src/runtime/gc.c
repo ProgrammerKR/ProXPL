@@ -311,6 +311,9 @@ static void freeObject(Obj* object) {
         }
         case OBJ_FUNCTION: {
             ObjFunction* function = (ObjFunction*)object;
+            if (function->cache != NULL) {
+                reallocate(function->cache, sizeof(GICEntry) * function->chunk.count, 0);
+            }
             freeChunk(&function->chunk);
             FREE(ObjFunction, object);
             break;
