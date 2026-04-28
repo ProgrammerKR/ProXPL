@@ -233,25 +233,37 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
 // Helper functions moved to vm_helpers.c to avoid duplication
 
 static InterpretResult run(VM* pvm) {
-#define vm pvm
-  CallFrame* frame = &vm->frames[vm->frameCount - 1];
+  CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
+  
+  /* REGISTER CACHING: Keep the most accessed pointers in local variables.
+   * This is a massive ROI optimization as it avoids dereferencing pvm->stackTop
+   * and frame->ip for every single push/pop/read operation. */
+  register uint8_t* ip = frame->ip;
+  register Value* stackTop = pvm->stackTop;
 
-#define READ_BYTE() (*frame->ip++)
-#define READ_SHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
+#define READ_BYTE() (*ip++)
+#define READ_SHORT() (ip += 2, (uint16_t)((ip[-2] << 8) | ip[-1]))
 #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 
 #define PUSH(value) \
     do { \
-        if (vm->stackTop >= vm->stack + STACK_MAX) { \
-            runtimeError(vm, "Stack overflow."); \
+        if (stackTop >= pvm->stack + STACK_MAX) { \
+            pvm->stackTop = stackTop; frame->ip = ip; \
+            runtimeError(pvm, "Stack overflow."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        *vm->stackTop++ = (value); \
+        *stackTop++ = (value); \
     } while (false)
 
+/* Sync local registers back to the VM structure (call before calling C functions) */
+#define STORE_FRAME() (frame->ip = ip, pvm->stackTop = stackTop)
+/* Load local registers from the VM structure (call after returning from C functions) */
+#define LOAD_FRAME()  (frame = &pvm->frames[pvm->frameCount - 1], \
+                       ip = frame->ip, stackTop = pvm->stackTop)
+
 #ifdef __GNUC__
-  #define DISPATCH() goto *dispatch_table[*frame->ip++]
+  #define DISPATCH() goto *dispatch_table[*ip++]
   
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Woverride-init"
@@ -366,12 +378,12 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_POP) {
-      pop(vm);
+      stackTop--;
       DISPATCH();
   }
   
   CASE_OP(OP_DUP) {
-      PUSH(peek(vm, 0));
+      PUSH(stackTop[-1]);
       DISPATCH();
   }
   
@@ -384,10 +396,10 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           list->capacity = count;
           list->count = count;
           for (int i = count - 1; i >= 0; i--) {
-              list->items[i] = peek(vm, 1 + (count - 1 - i));
+              list->items[i] = stackTop[-2 - (count - 1 - i)];
           }
-          Value listVal = peek(vm, 0);
-          vm->stackTop -= (count + 1);
+          Value listVal = stackTop[-1];
+          stackTop -= (count + 1);
           PUSH(listVal);
       }
       DISPATCH();
@@ -398,38 +410,42 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       ObjDictionary* dict = newDictionary();
       PUSH(OBJ_VAL(dict)); 
       for (int i = 0; i < count; i++) {
-          Value val = peek(vm, 1);
-          Value key = peek(vm, 2);
+          Value val = stackTop[-2];
+          Value key = stackTop[-3];
           if (!IS_STRING(key)) {
-              runtimeError(vm, "Dictionary key must be a string.");
+              STORE_FRAME();
+              runtimeError(pvm, "Dictionary key must be a string.");
               return INTERPRET_RUNTIME_ERROR;
           }
           tableSet(&dict->items, AS_STRING(key), val);
-          Value dictVal = pop(vm);
-          pop(vm); pop(vm); 
+          Value dictVal = stackTop[-1];
+          stackTop -= 3;
           PUSH(dictVal);
       }
       DISPATCH();
   }
   
   CASE_OP(OP_GET_INDEX) {
-      Value indexVal = pop(vm);
-      Value targetVal = pop(vm);
+      Value indexVal = *(--stackTop);
+      Value targetVal = *(--stackTop);
       if (IS_LIST(targetVal)) {
           if (!IS_NUMBER(indexVal)) {
-              runtimeError(vm, "List index must be a number.");
+              STORE_FRAME();
+              runtimeError(pvm, "List index must be a number.");
               return INTERPRET_RUNTIME_ERROR;
           }
           ObjList* list = AS_LIST(targetVal);
           int index = (int)AS_NUMBER(indexVal);
           if (index < 0 || index >= list->count) {
-              runtimeError(vm, "List index out of bounds.");
+              STORE_FRAME();
+              runtimeError(pvm, "List index out of bounds.");
               return INTERPRET_RUNTIME_ERROR;
           }
           PUSH(list->items[index]);
       } else if (IS_DICTIONARY(targetVal)) {
           if (!IS_STRING(indexVal)) {
-              runtimeError(vm, "Dictionary key must be a string.");
+              STORE_FRAME();
+              runtimeError(pvm, "Dictionary key must be a string.");
               return INTERPRET_RUNTIME_ERROR;
           }
           ObjDictionary* dict = AS_DICTIONARY(targetVal);
@@ -437,44 +453,49 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           if (tableGet(&dict->items, AS_STRING(indexVal), &val)) {
               PUSH(val);
           } else {
-              PUSH(NIL_VAL); 
+              PUSH(NULL_VAL); 
           }
       } else {
-          runtimeError(vm, "Can only index lists and dictionaries.");
+          STORE_FRAME();
+          runtimeError(pvm, "Can only index lists and dictionaries.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
   }
   
   CASE_OP(OP_SET_INDEX) {
-      Value value = peek(vm, 0);
-      Value indexVal = peek(vm, 1);
-      Value targetVal = peek(vm, 2);
+      Value value = stackTop[-1];
+      Value indexVal = stackTop[-2];
+      Value targetVal = stackTop[-3];
       if (IS_LIST(targetVal)) {
           if (!IS_NUMBER(indexVal)) {
-              runtimeError(vm, "List index must be a number.");
+              STORE_FRAME();
+              runtimeError(pvm, "List index must be a number.");
               return INTERPRET_RUNTIME_ERROR;
           }
           ObjList* list = AS_LIST(targetVal);
           int index = (int)AS_NUMBER(indexVal);
           if (index < 0 || index >= list->count) {
-              runtimeError(vm, "List index out of bounds.");
+              STORE_FRAME();
+              runtimeError(pvm, "List index out of bounds.");
               return INTERPRET_RUNTIME_ERROR;
           }
           list->items[index] = value;
-          pop(vm); pop(vm); pop(vm);
+          stackTop -= 3;
           PUSH(value);
       } else if (IS_DICTIONARY(targetVal)) {
           if (!IS_STRING(indexVal)) {
-              runtimeError(vm, "Dictionary key must be a string.");
+              STORE_FRAME();
+              runtimeError(pvm, "Dictionary key must be a string.");
               return INTERPRET_RUNTIME_ERROR;
           }
           ObjDictionary* dict = AS_DICTIONARY(targetVal);
           tableSet(&dict->items, AS_STRING(indexVal), value);
-          pop(vm); pop(vm); pop(vm);
+          stackTop -= 3;
           PUSH(value);
       } else {
-          runtimeError(vm, "Can only index lists and dictionaries.");
+          STORE_FRAME();
+          runtimeError(pvm, "Can only index lists and dictionaries.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -493,45 +514,73 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
 
   CASE_OP(OP_SET_LOCAL) {
       uint8_t slot = READ_BYTE();
-      frame->slots[slot] = peek(vm, 0);
+      frame->slots[slot] = stackTop[-1];
       DISPATCH();
   }
 
-  CASE_OP(OP_SET_LOCAL_0) { frame->slots[0] = peek(vm, 0); DISPATCH(); }
-  CASE_OP(OP_SET_LOCAL_1) { frame->slots[1] = peek(vm, 0); DISPATCH(); }
-  CASE_OP(OP_SET_LOCAL_2) { frame->slots[2] = peek(vm, 0); DISPATCH(); }
-  CASE_OP(OP_SET_LOCAL_3) { frame->slots[3] = peek(vm, 0); DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_0) { frame->slots[0] = stackTop[-1]; DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_1) { frame->slots[1] = stackTop[-1]; DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_2) { frame->slots[2] = stackTop[-1]; DISPATCH(); }
+  CASE_OP(OP_SET_LOCAL_3) { frame->slots[3] = stackTop[-1]; DISPATCH(); }
 
   
   CASE_OP(OP_GET_GLOBAL) {
       ObjString* name = READ_STRING();
+      ObjFunction* func = frame->closure->function;
+
+      /* GIC FAST PATH: If we have a valid entry cached for this table state, use it. */
+      if (func->cache != NULL) {
+          GICEntry* cache = &((GICEntry*)func->cache)[(size_t)(ip - 1 - func->chunk.code)];
+          if (cache->entries == pvm->globals.entries && cache->entry->key == name) {
+              PUSH(cache->entry->value);
+              DISPATCH();
+          }
+      }
+
       Value value;
-      if (vm->activeContextCount > 0) {
-          if (resolveContextualMethod(vm, name, &value)) {
+      if (pvm->activeContextCount > 0) {
+          STORE_FRAME();
+          if (resolveContextualMethod(pvm, name, &value)) {
               PUSH(value);
               DISPATCH();
           }
       }
-      if (!tableGet(&vm->globals, name, &value)) {
-        runtimeError(vm, "Undefined variable '%s'.", name->chars);
+
+      // tableGet SLOW PATH
+      Entry* entry = tableGetEntry(&pvm->globals, name);
+      if (entry == NULL) {
+        STORE_FRAME();
+        runtimeError(pvm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
       }
-      PUSH(value);
+      
+      /* Populate/Update Cache */
+      if (func->cache == NULL) {
+          size_t cacheSize = sizeof(GICEntry) * func->chunk.count;
+          func->cache = reallocate(NULL, 0, cacheSize);
+          memset(func->cache, 0, cacheSize);
+      }
+      GICEntry* cache = &((GICEntry*)func->cache)[(size_t)(ip - 1 - func->chunk.code)];
+      cache->entries = pvm->globals.entries;
+      cache->entry = entry;
+
+      PUSH(entry->value);
       DISPATCH();
   }
   
   CASE_OP(OP_DEFINE_GLOBAL) {
       ObjString* name = READ_STRING();
-      tableSet(&vm->globals, name, peek(vm, 0));
-      pop(vm);
+      tableSet(&pvm->globals, name, stackTop[-1]);
+      stackTop--;
       DISPATCH();
   }
   
   CASE_OP(OP_SET_GLOBAL) {
       ObjString* name = READ_STRING();
-      if (tableSet(&vm->globals, name, peek(vm, 0))) {
-        tableDelete(&vm->globals, name);
-        runtimeError(vm, "Undefined variable '%s'.", name->chars);
+      if (tableSet(&pvm->globals, name, stackTop[-1])) {
+        tableDelete(&pvm->globals, name);
+        STORE_FRAME();
+        runtimeError(pvm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -550,45 +599,48 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_GET_PROPERTY) {
-      Value target = peek(vm, 0);
+      Value target = stackTop[-1];
       ObjString* name = READ_STRING();
       if (IS_INSTANCE(target)) {
           ObjInstance* instance = AS_INSTANCE(target);
           Value value;
           if (tableGet(&instance->fields, name, &value)) {
-              pop(vm); 
-              PUSH(value);
+              stackTop[-1] = value;
               DISPATCH();
           }
-          if (!bindMethod(instance->klass, name, vm)) {
+          STORE_FRAME();
+          if (!bindMethod(instance->klass, name, pvm)) {
               return INTERPRET_RUNTIME_ERROR;
           }
+          LOAD_FRAME();
       } else if (IS_MODULE(target)) {
           ObjModule* module = AS_MODULE(target);
           Value value;
           if (tableGet(&module->exports, name, &value)) {
-              pop(vm); 
-              PUSH(value);
+              stackTop[-1] = value;
               DISPATCH();
           }
-          runtimeError(vm, "Undefined property '%s' in module '%s'.", name->chars, module->name->chars);
+          STORE_FRAME();
+          runtimeError(pvm, "Undefined property '%s' in module '%s'.", name->chars, module->name->chars);
           return INTERPRET_RUNTIME_ERROR;
       } else {
-          runtimeError(vm, "Only instances and modules have properties.");
+          STORE_FRAME();
+          runtimeError(pvm, "Only instances and modules have properties.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
   }
   
   CASE_OP(OP_SET_PROPERTY) {
-      if (!IS_INSTANCE(peek(vm, 1))) {
-        runtimeError(vm, "Only instances have fields.");
+      if (!IS_INSTANCE(stackTop[-2])) {
+        STORE_FRAME();
+        runtimeError(pvm, "Only instances have fields.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      ObjInstance* instance = AS_INSTANCE(peek(vm, 1));
-      tableSet(&instance->fields, READ_STRING(), peek(vm, 0));
-      Value value = pop(vm);
-      pop(vm);
+      ObjInstance* instance = AS_INSTANCE(stackTop[-2]);
+      tableSet(&instance->fields, READ_STRING(), stackTop[-1]);
+      Value value = stackTop[-1];
+      stackTop -= 2;
       PUSH(value);
       DISPATCH();
   }
@@ -630,33 +682,41 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_ADD) {
-      if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          double b = AS_NUMBER(pop(vm));
-          double a = AS_NUMBER(pop(vm));
+      if (IS_NUMBER(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
+          double b = AS_NUMBER(*(--stackTop));
+          double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a + b));
-      } else if (IS_TENSOR(peek(vm, 0)) || IS_TENSOR(peek(vm, 1))) {
-          if (performTensorArithmetic(vm, '+')) { DISPATCH(); }
-      } else if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
-          concatenate(vm);
-      } else if (IS_NUMBER(peek(vm, 0)) && IS_STRING(peek(vm, 1))) {
-          Value numVal = peek(vm, 0);
+      } else if (IS_TENSOR(stackTop[-1]) || IS_TENSOR(stackTop[-2])) {
+          STORE_FRAME();
+          if (performTensorArithmetic(pvm, '+')) { LOAD_FRAME(); DISPATCH(); }
+      } else if (IS_STRING(stackTop[-1]) && IS_STRING(stackTop[-2])) {
+          STORE_FRAME();
+          concatenate(pvm);
+          LOAD_FRAME();
+      } else if (IS_NUMBER(stackTop[-1]) && IS_STRING(stackTop[-2])) {
+          STORE_FRAME();
+          Value numVal = stackTop[-1];
           char buffer[32];
           snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
           PUSH(OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
-          vm->stackTop[-2] = vm->stackTop[-1];
-          pop(vm);
-          concatenate(vm);
-      } else if (IS_STRING(peek(vm, 0)) && IS_NUMBER(peek(vm, 1))) {
-          Value numVal = peek(vm, 1);
+          stackTop[-2] = stackTop[-1];
+          stackTop--;
+          concatenate(pvm);
+          LOAD_FRAME();
+      } else if (IS_STRING(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
+          STORE_FRAME();
+          Value numVal = stackTop[-2];
           char buffer[32];
           snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
           Value newA = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
           PUSH(newA);
-          vm->stackTop[-3] = vm->stackTop[-1];
-          pop(vm);
-          concatenate(vm);
+          stackTop[-3] = stackTop[-1];
+          stackTop--;
+          concatenate(pvm);
+          LOAD_FRAME();
       } else {
-          runtimeError(vm, "Operands must be numbers or strings.");
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers or strings.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -745,54 +805,63 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_CALL) {
       int argCount = READ_BYTE();
-      Value callee = peek(vm, argCount);
+      Value callee = stackTop[-argCount - 1];
       if (IS_CLOSURE(callee)) {
           ObjClosure* closure = AS_CLOSURE(callee);
           if (argCount != closure->function->arity) {
-              runtimeError(vm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
+              STORE_FRAME();
+              runtimeError(pvm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
               return INTERPRET_RUNTIME_ERROR;
           }
-          if (vm->frameCount == FRAMES_MAX) {
-              runtimeError(vm, "Stack overflow.");
+          if (pvm->frameCount == FRAMES_MAX) {
+              STORE_FRAME();
+              runtimeError(pvm, "Stack overflow.");
               return INTERPRET_RUNTIME_ERROR;
           }
-          frame = &vm->frames[vm->frameCount++];
+          frame->ip = ip; // Save current IP before frame switch
+          frame = &pvm->frames[pvm->frameCount++];
           frame->closure = closure;
           frame->ip = closure->function->chunk.code;
-          frame->slots = vm->stackTop - argCount - 1;
+          frame->slots = stackTop - argCount - 1;
+          ip = frame->ip; // Load new IP
           DISPATCH();
       } else if (IS_NATIVE(callee)) {
           NativeFn native = AS_NATIVE(callee);
-          Value result = native(argCount, vm->stackTop - argCount);
-          vm->stackTop -= argCount + 1;
+          Value result = native(argCount, stackTop - argCount);
+          stackTop -= argCount + 1;
           PUSH(result);
           DISPATCH();
       } else if (IS_FOREIGN(callee)) {
           ObjForeign* foreign = AS_FOREIGN(callee);
-          Value result = callForeign(foreign, argCount, vm->stackTop - argCount);
-          vm->stackTop -= argCount + 1;
+          Value result = callForeign(foreign, argCount, stackTop - argCount);
+          stackTop -= argCount + 1;
           PUSH(result);
           DISPATCH();
       } else if (IS_CLASS(callee)) {
-          if (!callValue(callee, argCount, vm)) {
+          STORE_FRAME();
+          if (!callValue(callee, argCount, pvm)) {
               return INTERPRET_RUNTIME_ERROR;
           }
-          frame = &vm->frames[vm->frameCount - 1]; 
+          LOAD_FRAME();
           DISPATCH();
       } else if (IS_BOUND_METHOD(callee)) {
           ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
-          vm->stackTop[-argCount - 1] = bound->receiver;
-          if (vm->frameCount == FRAMES_MAX) {
-               runtimeError(vm, "Stack overflow.");
+          stackTop[-argCount - 1] = bound->receiver;
+          if (pvm->frameCount == FRAMES_MAX) {
+               STORE_FRAME();
+               runtimeError(pvm, "Stack overflow.");
                return INTERPRET_RUNTIME_ERROR;
           }
-          frame = &vm->frames[vm->frameCount++];
+          frame->ip = ip;
+          frame = &pvm->frames[pvm->frameCount++];
           frame->closure = bound->method;
           frame->ip = bound->method->function->chunk.code;
-          frame->slots = vm->stackTop - argCount - 1;
+          frame->slots = stackTop - argCount - 1;
+          ip = frame->ip;
           DISPATCH();
       } else {
-          runtimeError(vm, "Can only call functions, classes, and foreign functions.");
+          STORE_FRAME();
+          runtimeError(pvm, "Can only call functions, classes, and foreign functions.");
           return INTERPRET_RUNTIME_ERROR;
       }
       DISPATCH();
@@ -842,15 +911,16 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_RETURN) {
-      Value result = pop(vm);
-      vm->frameCount--;
-      if (vm->frameCount == 0) {
-        pop(vm);
+      Value result = *(--stackTop);
+      pvm->frameCount--;
+      if (pvm->frameCount == 0) {
+        pvm->stackTop = stackTop;
         return INTERPRET_OK;
       }
-      vm->stackTop = frame->slots;
+      stackTop = frame->slots;
       PUSH(result);
-      frame = &vm->frames[vm->frameCount - 1];
+      frame = &pvm->frames[pvm->frameCount - 1];
+      ip = frame->ip;
       DISPATCH();
   }
   
