@@ -459,7 +459,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           /* Safety check */
           if (stackTop - (count + 1) < pvm->stack) {
               STORE_FRAME();
-              runtimeError(pvm, "Stack underflow building list.");
+              runtimeError(pvm, "Stack underflow building list. Count: %d, Stack depth: %d", 
+                           count, (int)(stackTop - pvm->stack));
               return INTERPRET_RUNTIME_ERROR;
           }
 
@@ -650,11 +651,9 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_SET_GLOBAL) {
       ObjString* name = READ_STRING();
-      /* Optimized set-if-exists check from HEAD */
       STORE_FRAME();
       if (tableSet(&pvm->globals, name, stackTop[-1])) {
         tableDelete(&pvm->globals, name);
-        STORE_FRAME();
         runtimeError(pvm, "Undefined variable '%s'.", name->chars);
         return INTERPRET_RUNTIME_ERROR;
       }
@@ -674,8 +673,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_GET_PROPERTY) {
-      Value target = stackTop[-1];
       ObjString* name = READ_STRING();
+      Value target = stackTop[-1];
       if (IS_INSTANCE(target)) {
           ObjInstance* instance = AS_INSTANCE(target);
           Value value;
@@ -707,13 +706,14 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_SET_PROPERTY) {
+      ObjString* name = READ_STRING();
       if (!IS_INSTANCE(stackTop[-2])) {
         STORE_FRAME();
         runtimeError(pvm, "Only instances have fields.");
         return INTERPRET_RUNTIME_ERROR;
       }
       ObjInstance* instance = AS_INSTANCE(stackTop[-2]);
-      tableSet(&instance->fields, READ_STRING(), stackTop[-1]);
+      tableSet(&instance->fields, name, stackTop[-1]);
       Value value = stackTop[-1];
       stackTop -= 2;
       PUSH(value);
@@ -1053,17 +1053,18 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_METHOD) {
+      ObjString* name = READ_STRING();
       STORE_FRAME();
-      defineMethod(READ_STRING(), pvm);
+      defineMethod(name, pvm);
       LOAD_FRAME();
       DISPATCH();
   }
   
   CASE_OP(OP_USE) {
       ObjString* name = READ_STRING();
+      STORE_FRAME();
       Value moduleVal;
       if (!tableGet(&pvm->importer.modules, name, &moduleVal)) {
-          STORE_FRAME();
           runtimeError(pvm, "Could not find module '%s'.", name->chars);
           return INTERPRET_RUNTIME_ERROR;
       }
