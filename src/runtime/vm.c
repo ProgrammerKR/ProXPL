@@ -445,16 +445,18 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_BUILD_LIST) {
       int count = READ_BYTE();
-      STORE_FRAME();
+      STORE_FRAME();         /* sync stackTop so GC sees live values during allocation */
       ObjList* list = newList();
+      LOAD_FRAME();
       PUSH(OBJ_VAL(list)); 
       if (count > 0) {
           STORE_FRAME();
           list->items = ALLOCATE(Value, count);
+          LOAD_FRAME();
           list->capacity = count;
           list->count = count;
           
-          /* Safety check from incoming branch adapted for Register Caching */
+          /* Safety check */
           if (stackTop - (count + 1) < pvm->stack) {
               STORE_FRAME();
               runtimeError(pvm, "Stack underflow building list.");
@@ -473,8 +475,9 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_BUILD_MAP) {
       int count = READ_BYTE();
-      STORE_FRAME();
+      STORE_FRAME();          /* sync stackTop so GC is safe during dictionary allocation */
       ObjDictionary* dict = newDictionary();
+      LOAD_FRAME();
       PUSH(OBJ_VAL(dict)); 
       for (int i = 0; i < count; i++) {
           Value val = stackTop[-2];
@@ -719,7 +722,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_GET_SUPER) {
       ObjString* name = READ_STRING();
-      ObjClass* superclass = AS_CLASS((*(--stackTop)));
+      ObjClass* superclass = AS_CLASS(*(--stackTop));
       STORE_FRAME();
       if (!bindMethod(superclass, name, pvm)) {
         return INTERPRET_RUNTIME_ERROR;
@@ -729,8 +732,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_EQUAL) {
-      Value b = (*(--stackTop));
-      Value a = (*(--stackTop));
+      Value b = *(--stackTop);
+      Value a = *(--stackTop);
       if (IS_NUMBER(a) && IS_NUMBER(b)) {
           // IEEE 754 semantics: NaN != NaN
           PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
@@ -750,8 +753,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
         runtimeError(pvm, "Operands must be numbers.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      double b = AS_NUMBER((*(--stackTop)));
-      double a = AS_NUMBER((*(--stackTop)));
+      double b = AS_NUMBER(*(--stackTop));
+      double a = AS_NUMBER(*(--stackTop));
       PUSH(BOOL_VAL(a > b));
       DISPATCH();
   }
@@ -762,8 +765,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
         runtimeError(pvm, "Operands must be numbers.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      double b = AS_NUMBER((*(--stackTop)));
-      double a = AS_NUMBER((*(--stackTop)));
+      double b = AS_NUMBER(*(--stackTop));
+      double a = AS_NUMBER(*(--stackTop));
       PUSH(BOOL_VAL(a < b));
       DISPATCH();
   }
@@ -885,7 +888,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_JUMP) {
       uint16_t offset = READ_SHORT();
-      frame->ip += offset;
+      ip += offset;
       DISPATCH();
   }
   
@@ -897,7 +900,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_LOOP) {
       uint16_t offset = READ_SHORT();
-      frame->ip -= offset;
+      ip -= offset;
       DISPATCH();
   }
   
@@ -925,6 +928,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           DISPATCH();
       } else if (IS_NATIVE(callee)) {
           NativeFn native = AS_NATIVE(callee);
+          pvm->stackTop = stackTop;  /* sync so GC inside native sees live roots */
           Value result = native(argCount, stackTop - argCount);
           stackTop -= argCount + 1;
           PUSH(result);
