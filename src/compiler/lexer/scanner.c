@@ -46,10 +46,11 @@ static bool match(Scanner *scanner, char expected) {
   if (*scanner->current != expected)
     return false;
   scanner->current++;
+  scanner->currentColumn++;
   return true;
 }
 
-static void skipWhitespace(Scanner *scanner) {
+static bool skipWhitespace(Scanner *scanner) {
   for (;;) {
     char c = peek(scanner);
     switch (c) {
@@ -60,8 +61,8 @@ static void skipWhitespace(Scanner *scanner) {
       break;
     case '\n':
       scanner->line++;
-      scanner->currentColumn = 1;
       advance(scanner);
+      scanner->currentColumn = 1;
       break;
     case '/':
       if (peekNext(scanner) == '/') {
@@ -84,12 +85,13 @@ static void skipWhitespace(Scanner *scanner) {
           }
           advance(scanner);
         }
+        if (isAtEnd(scanner)) return true;
       } else {
-        return;
+        return false;
       }
       break;
     default:
-      return;
+      return false;
     }
   }
 }
@@ -528,9 +530,9 @@ static PxTokenType identifierType(Scanner *scanner) {
           break;
       case 'u':
           if (scanner->current - scanner->start > 2 && scanner->start[2] == 'p') {
-              if (scanner->current - scanner->start > 5 && scanner->start[5] == 'p')
-                  return checkKeyword(scanner, 6, 3, "ose", TOKEN_SUPERPOSE);
-              return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
+              int len = (int)(scanner->current - scanner->start);
+              if (len == 9) return checkKeyword(scanner, 2, 7, "perpose", TOKEN_SUPERPOSE);
+              if (len == 5) return checkKeyword(scanner, 2, 3, "per", TOKEN_SUPER);
           }
           break;
       case 'y': return checkKeyword(scanner, 2, 2, "nc", TOKEN_SYNC);
@@ -591,12 +593,13 @@ static PxTokenType identifierType(Scanner *scanner) {
         }
         break;
       case 'a': return checkKeyword(scanner, 2, 3, "ble", TOKEN_UI_TABLE);
-      case 'h':
-        if (scanner->current - scanner->start > 2) {
-            if (scanner->start[2] == 'e' && scanner->current - scanner->start > 3 && scanner->start[3] == 'a' && scanner->start[4] == 'd')
-                return checkKeyword(scanner, 5, 0, "", TOKEN_UI_THEAD);
-        }
-        return checkKeyword(scanner, 2, 0, "", TOKEN_UI_TH);
+      case 'h': {
+        int len = (int)(scanner->current - scanner->start);
+        if (len == 5 && scanner->start[2] == 'e' && scanner->start[3] == 'a' && scanner->start[4] == 'd')
+            return TOKEN_UI_THEAD;
+        if (len == 2) return TOKEN_UI_TH;
+        return TOKEN_IDENTIFIER;
+      }
       case 'b': return checkKeyword(scanner, 2, 3, "ody", TOKEN_UI_TBODY);
       case 'r': return checkKeyword(scanner, 2, 0, "", TOKEN_UI_TR);
       case 'd': return checkKeyword(scanner, 2, 0, "", TOKEN_UI_TD);
@@ -627,7 +630,7 @@ static Token identifier(Scanner *scanner) {
 }
 
 Token scanToken(Scanner *scanner) {
-  skipWhitespace(scanner);
+  if (skipWhitespace(scanner)) return errorToken(scanner, "Unterminated block comment.");
   scanner->start = scanner->current;
   scanner->startColumn = scanner->currentColumn;
 
