@@ -14,13 +14,18 @@ class Body {
 class NBodySystem {
     init() {
         this.bodies = [];
+        let solar_mass = 1.98892 * 1000000000000000000000000000000.0;
         // Sun
-        list_push(this.bodies, Body(0, 0, 0, 0, 0, 0, 1.98892 * 1000000000000000000000000000000.0)); 
-        // Jupiter
-        list_push(this.bodies, Body(4.84143144246472090, -1.16032004402742839, -0.103622044471123109,
-                                    1.66007664274403694 * 0.001 * 365.24, 7.69901118419740425 * 0.001 * 365.24, -6.90460016972063023 * 0.00001 * 365.24,
-                                    9.54791938424326609 * 0.0001 * 1.98892 * 1000000000000000000000000000000.0));
-        // Additional bodies can be added...
+        list_push(this.bodies, Body(0, 0, 0, 0, 0, 0, solar_mass));
+        // Jupiter - precompute args to avoid multi-line call parser bug
+        let jx = 4.84143144246472090;
+        let jy = -1.16032004402742839;
+        let jz = -0.103622044471123109;
+        let jvx = 1.66007664274403694 * 0.001 * 365.24;
+        let jvy = 7.69901118419740425 * 0.001 * 365.24;
+        let jvz = -6.90460016972063023 * 0.00001 * 365.24;
+        let jmass = 9.54791938424326609 * 0.0001 * solar_mass;
+        list_push(this.bodies, Body(jx, jy, jz, jvx, jvy, jvz, jmass));
     }
 
     offset_momentum() {
