@@ -29,7 +29,7 @@ void initImporter(Importer *importer);
 bool loadModule(Importer *importer, const char *moduleName, void** result);
 
 // Add a directory to the module search path
-void addSearchPath(Importer *importer, const char *path);
+bool addSearchPath(Importer *importer, const char *path);
 
 // Free importer resources
 void freeImporter(Importer *importer);

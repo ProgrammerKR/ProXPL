@@ -27,18 +27,19 @@ void initImporter(Importer *importer) {
   addSearchPath(importer, ".");
 }
 
-void addSearchPath(Importer *importer, const char *path) {
+bool addSearchPath(Importer *importer, const char *path) {
     char** newPaths = (char**)realloc(importer->searchPaths, sizeof(char*) * (importer->pathCount + 1));
-    if (!newPaths) return;
+    if (!newPaths) return false;
     importer->searchPaths = newPaths;
     
     // Duplicate string
     size_t len = strlen(path);
     char* pathCopy = (char*)malloc(len + 1);
-    if (!pathCopy) return;
+    if (!pathCopy) return false;
     strcpy(pathCopy, path);
     
     importer->searchPaths[importer->pathCount++] = pathCopy;
+    return true;
 }
 
 bool loadModule(Importer *importer, const char *moduleName, void** result) {
