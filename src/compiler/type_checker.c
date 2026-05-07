@@ -615,7 +615,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             } else {
                 retType = createType(TYPE_VOID);
             }
-            (void)retType; // Suppress unused variable warning until TODOs are implemented
+            PROXPL_UNUSED(retType); // Suppress unused variable warning until TODOs are implemented
             // TODO: Match validity against current function return type
             break;
         }
@@ -784,7 +784,7 @@ void initTypeChecker(TypeChecker *checker) {
     // len(str) -> Float
     TypeInfo lenType = createType(TYPE_FUNCTION);
     lenType.returnType = (TypeInfo*)malloc(sizeof(TypeInfo));
-    *lenType.returnType = createType(TYPE_FLOAT);
+    *lenType.returnType = createType(TYPE_INT);
     defineSymbol(checker, "len", lenType);
 }
 
