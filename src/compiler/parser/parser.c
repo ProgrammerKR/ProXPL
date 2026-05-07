@@ -213,6 +213,7 @@ static Token consume(Parser *p, PxTokenType type, const char *message) {
 static char *tokenToString(Token token) {
   int len = token.length;
   char *str = (char *)malloc(len + 1);
+  if (!str) { fprintf(stderr, "Fatal: OOM in tokenToString\n"); exit(1); }
   memcpy(str, token.start, len);
   str[len] = '\0';
   return str;
