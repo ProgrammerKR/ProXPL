@@ -131,7 +131,6 @@ public:
         llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, func->name, ModuleOb.get());
 
         ssaValues.clear();
-        ssaValues.resize(func->nextSsaVal + 2048, nullptr);
         blockMap.clear();
 
         // Pass 1: Create all blocks
@@ -307,6 +306,9 @@ public:
     }
 
     void emitInstruction(IRInstruction* instr, llvm::Value* CoroHdl = nullptr) {
+        if (instr->result >= 0 && instr->result >= (int)ssaValues.size()) {
+            ssaValues.resize(instr->result + 256, nullptr);
+        }
         switch (instr->opcode) {
             case IR_OP_CONST: {
                 llvm::Value* v = nullptr;
