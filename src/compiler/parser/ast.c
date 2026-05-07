@@ -875,12 +875,7 @@ void freeStmt(Stmt *stmt) {
     break;
   case STMT_CLASS_DECL:
     free(stmt->as.class_decl.name);
-    // superclass is a VariableExpr, not a separate malloc (it's in parsing context, but here referenced. Wait, VariableExpr created by createVariableExpr IS allocated. But who frees it? ClassDeclStmt stores pointer. We should probably free it if we own it. Original code didn't? "superclass is a VariableExpr, not a separate malloc" comment suggests confusion or shared ownership. Actually AST nodes usually own children. I will assume we should NOT free superclass if it wasn't freed before? Or fix it?
-    // Let's stick to existing pattern for superclass logic, just add interfaces free.
-    // Wait, original: `// superclass is a VariableExpr, not a separate malloc`
-    // Actually `createVariableExpr` does ALLOCATE. So it definitely IS a separate malloc.
-    // Maybe parser manages it? Or maybe this comment is wrong. 
-    // I'll leave superclass alone to avoid regression, just add interfaces.
+    if (stmt->as.class_decl.superclass) freeExpr(stmt->as.class_decl.superclass);
     freeStringList(stmt->as.class_decl.interfaces);
     freeStmtList(stmt->as.class_decl.methods);
     break;
