@@ -445,9 +445,11 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_BUILD_LIST) {
       int count = READ_BYTE();
+      STORE_FRAME();
       ObjList* list = newList();
       PUSH(OBJ_VAL(list)); 
       if (count > 0) {
+          STORE_FRAME();
           list->items = ALLOCATE(Value, count);
           list->capacity = count;
           list->count = count;
@@ -471,6 +473,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_BUILD_MAP) {
       int count = READ_BYTE();
+      STORE_FRAME();
       ObjDictionary* dict = newDictionary();
       PUSH(OBJ_VAL(dict)); 
       for (int i = 0; i < count; i++) {
@@ -781,6 +784,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           PUSH(OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
           stackTop[-2] = stackTop[-1];
           stackTop--;
+          STORE_FRAME();
           concatenate(pvm);
           LOAD_FRAME();
       } else if (IS_STRING(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
@@ -792,6 +796,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           PUSH(newA);
           stackTop[-3] = stackTop[-1];
           stackTop--;
+          STORE_FRAME();
           concatenate(pvm);
           LOAD_FRAME();
       } else {
@@ -1301,6 +1306,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_LAYER) {
       ObjString* name = READ_STRING();
+      STORE_FRAME();
       ObjLayer* layer = newLayer(name);
       PUSH(OBJ_VAL(layer));
       Value contextVal = stackTop[-2];
