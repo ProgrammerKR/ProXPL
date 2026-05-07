@@ -659,7 +659,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_SET_UPVALUE) {
       uint8_t slot = READ_BYTE();
-      *frame->closure->upvalues[slot]->location = peek(vm, 0);
+      *frame->closure->upvalues[slot]->location = stackTop[-1];
       DISPATCH();
   }
   
@@ -712,16 +712,18 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_GET_SUPER) {
       ObjString* name = READ_STRING();
-      ObjClass* superclass = AS_CLASS(pop(vm));
-      if (!bindMethod(superclass, name, vm)) {
+      ObjClass* superclass = AS_CLASS((*(--stackTop)));
+      STORE_FRAME();
+      if (!bindMethod(superclass, name, pvm)) {
         return INTERPRET_RUNTIME_ERROR;
       }
+      LOAD_FRAME();
       DISPATCH();
   }
   
   CASE_OP(OP_EQUAL) {
-      Value b = pop(vm);
-      Value a = pop(vm);
+      Value b = (*(--stackTop));
+      Value a = (*(--stackTop));
       if (IS_NUMBER(a) && IS_NUMBER(b)) {
           // IEEE 754 semantics: NaN != NaN
           PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
@@ -736,23 +738,25 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_GREATER) {
-      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
-        runtimeError(vm, "Operands must be numbers.");
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+        STORE_FRAME();
+        runtimeError(pvm, "Operands must be numbers.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
+      double b = AS_NUMBER((*(--stackTop)));
+      double a = AS_NUMBER((*(--stackTop)));
       PUSH(BOOL_VAL(a > b));
       DISPATCH();
   }
   
   CASE_OP(OP_LESS) {
-      if (!IS_NUMBER(peek(vm, 0)) || !IS_NUMBER(peek(vm, 1))) {
-        runtimeError(vm, "Operands must be numbers.");
+      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
+        STORE_FRAME();
+        runtimeError(pvm, "Operands must be numbers.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      double b = AS_NUMBER(pop(vm));
-      double a = AS_NUMBER(pop(vm));
+      double b = AS_NUMBER((*(--stackTop)));
+      double a = AS_NUMBER((*(--stackTop)));
       PUSH(BOOL_VAL(a < b));
       DISPATCH();
   }
@@ -1073,7 +1077,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_TRY)
   CASE_OP(OP_CATCH)
   CASE_OP(OP_END_TRY) {
-      runtimeError(vm, "Exception handling not yet implemented.");
+      STORE_FRAME();
+      runtimeError(pvm, "Exception handling not yet implemented.");
       return INTERPRET_RUNTIME_ERROR;
   }
   
@@ -1216,7 +1221,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           DISPATCH();
       }
       if (a->dimCount != 2 || b->dimCount != 2 || a->dims[1] != b->dims[0]) {
-          runtimeError(vm, "Incompatible tensor dimensions for '@'.");
+          STORE_FRAME();
+          runtimeError(pvm, "Incompatible tensor dimensions for '@'.");
           return INTERPRET_RUNTIME_ERROR;
       }
       int outDims[] = {a->dims[0], b->dims[1]};
@@ -1297,7 +1303,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       ObjString* name = READ_STRING();
       ObjLayer* layer = newLayer(name);
       PUSH(OBJ_VAL(layer));
-      Value contextVal = peek(vm, 1);
+      Value contextVal = stackTop[-2];
       if (IS_CONTEXT(contextVal)) {
           tableSet(&AS_CONTEXT(contextVal)->layers, name, OBJ_VAL(layer));
       }
@@ -1340,7 +1346,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
     }
   }
 #endif
-#undef vm
+
 
 #undef READ_BYTE
 #undef READ_SHORT

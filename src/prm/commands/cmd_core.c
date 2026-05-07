@@ -311,7 +311,8 @@ void prm_search(const char* query) {
     char cmd[1024];
     snprintf(cmd, sizeof(cmd), "curl -s \"%s/api/registry/search?q=%s\"", REGISTRY_URL, query);
     
-    system(cmd);
+    int ret = system(cmd);
+    (void)ret;
     printf("\n");
 }
 
@@ -322,7 +323,8 @@ void prm_info(const char* packageName) {
     char cmd[1024];
     snprintf(cmd, sizeof(cmd), "curl -s \"%s/api/registry/package/%s\"", REGISTRY_URL, packageName);
     
-    system(cmd);
+    int ret = system(cmd);
+    (void)ret;
     printf("\n");
 }
 
