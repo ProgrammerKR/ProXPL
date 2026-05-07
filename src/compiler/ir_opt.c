@@ -20,12 +20,12 @@ void computeDominators(IRFunction* func, int** dominators) {
     }
 
     bool changed = true;
+    int* new_dom = (int*)malloc(sizeof(int) * n);
+    if (!new_dom) { fprintf(stderr, "OOM\n"); exit(1); }
     while (changed) {
         changed = false;
         for (int i = 1; i < n; i++) { // Skip entry block
             IRBasicBlock* block = func->blocks[i];
-            int* new_dom = (int*)malloc(sizeof(int) * n);
-            if (!new_dom) { fprintf(stderr, "OOM\\n"); exit(1); }
             for (int j = 0; j < n; j++) new_dom[j] = 1;
 
             for (int p = 0; p < block->predCount; p++) {
@@ -42,12 +42,12 @@ void computeDominators(IRFunction* func, int** dominators) {
                     changed = true;
                 }
             }
-            free(new_dom);
         }
     }
+    free(new_dom);
 }
 
-void computeDominanceFrontiers(IRFunction* func, int** dominators, int** df) {
+int* computeImmediateDominators(IRFunction* func, int** dominators) {
     int n = func->blockCount;
     int* idom = (int*)malloc(sizeof(int) * n);
     for (int i = 0; i < n; i++) idom[i] = -1;
@@ -61,9 +61,6 @@ void computeDominanceFrontiers(IRFunction* func, int** dominators, int** df) {
                 for (int other_d = 0; other_d < n; other_d++) {
                     if (dominators[i][other_d] && i != other_d && d != other_d) {
                         if (dominators[other_d][d]) {
-                            // d dominates other_d, and other_d dominates i
-                            // This means other_d is strictly between d and i.
-                            // Therefore d cannot be the immediate dominator.
                             is_idom = false;
                             break;
                         }
@@ -73,6 +70,11 @@ void computeDominanceFrontiers(IRFunction* func, int** dominators, int** df) {
             }
         }
     }
+    return idom;
+}
+
+void computeDominanceFrontiers(IRFunction* func, int** dominators, int* idom, int** df) {
+    int n = func->blockCount;
 
     // Compute DF
     for (int i = 0; i < n; i++) {
@@ -88,7 +90,6 @@ void computeDominanceFrontiers(IRFunction* func, int** dominators, int** df) {
             }
         }
     }
-    free(idom);
 }
 
 typedef struct {
@@ -291,7 +292,8 @@ void promoteMemoryToRegisters(IRFunction* func) {
     for (int i = 0; i < n; i++) df[i] = (int*)calloc(n, sizeof(int));
 
     computeDominators(func, dominators);
-    computeDominanceFrontiers(func, dominators, df);
+    int* idom = computeImmediateDominators(func, dominators);
+    computeDominanceFrontiers(func, dominators, idom, df);
 
     // Identify Allocas and their definitions
     int allocaCap = 1024;
@@ -375,21 +377,6 @@ void promoteMemoryToRegisters(IRFunction* func) {
     }
 
     // 4. Renaming
-    int* idom = (int*)malloc(sizeof(int) * n);
-    for (int i = 0; i < n; i++) idom[i] = -1;
-    for (int i = 1; i < n; i++) {
-        for (int d = 0; d < n; d++) {
-            if (dominators[i][d] && i != d) {
-                bool is_idom = true;
-                for (int other_d = 0; other_d < n; other_d++) {
-                    if (dominators[i][other_d] && i != other_d && d != other_d && dominators[other_d][d]) {
-                        is_idom = false; break;
-                    }
-                }
-                if (is_idom) idom[i] = d;
-            }
-        }
-    }
 
     int** domChildren = (int**)malloc(sizeof(int*) * n);
     int* childCount = (int*)calloc(n, sizeof(int));
