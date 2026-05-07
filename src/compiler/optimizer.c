@@ -39,6 +39,7 @@ static Expr* foldBinary(Expr* expr) {
             else folded = false;
 
             if (folded) {
+                free(expr->as.binary.operator);
                 expr->type = EXPR_LITERAL;
                 expr->as.literal.value = res;
                 freeExpr(l);
@@ -60,14 +61,18 @@ static Expr* foldUnary(Expr* expr) {
         const char* op = expr->as.unary.operator;
 
         if (strcmp(op, "-") == 0 && IS_NUMBER(rv)) {
+            free(expr->as.unary.operator);
             expr->type = EXPR_LITERAL;
             expr->as.literal.value = NUMBER_VAL(-AS_NUMBER(rv));
+            freeExpr(r);
             return expr;
         } else if (strcmp(op, "!") == 0) {
             // isFalsey logic
             bool res = IS_NIL(rv) || (IS_BOOL(rv) && !AS_BOOL(rv));
+            free(expr->as.unary.operator);
             expr->type = EXPR_LITERAL;
             expr->as.literal.value = BOOL_VAL(res);
+            freeExpr(r);
             return expr;
         }
     }
