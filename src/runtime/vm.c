@@ -484,6 +484,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
               runtimeError(pvm, "Dictionary key must be a string.");
               return INTERPRET_RUNTIME_ERROR;
           }
+          STORE_FRAME();
           tableSet(&dict->items, AS_STRING(key), val);
           Value dictVal = stackTop[-1];
           stackTop -= 3;
@@ -557,6 +558,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
               return INTERPRET_RUNTIME_ERROR;
           }
           ObjDictionary* dict = AS_DICTIONARY(targetVal);
+          STORE_FRAME();
           tableSet(&dict->items, AS_STRING(indexVal), value);
           stackTop -= 3;
           PUSH(value);
@@ -637,6 +639,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_DEFINE_GLOBAL) {
       ObjString* name = READ_STRING();
+      STORE_FRAME();
       tableSet(&pvm->globals, name, stackTop[-1]);
       stackTop--;
       DISPATCH();
@@ -645,6 +648,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_SET_GLOBAL) {
       ObjString* name = READ_STRING();
       /* Optimized set-if-exists check from HEAD */
+      STORE_FRAME();
       if (tableSet(&pvm->globals, name, stackTop[-1])) {
         tableDelete(&pvm->globals, name);
         STORE_FRAME();
@@ -986,6 +990,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_CLOSURE) {
       ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
+      STORE_FRAME();
       ObjClosure* closure = newClosure(function);
       PUSH(OBJ_VAL(closure));
       for (int i = 0; i < closure->upvalueCount; i++) {
@@ -1024,7 +1029,9 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_CLASS) {
-      PUSH(OBJ_VAL(newClass(READ_STRING())));
+      ObjString* name = READ_STRING();
+      STORE_FRAME();
+      PUSH(OBJ_VAL(newClass(name)));
       DISPATCH();
   }
     CASE_OP(OP_INHERIT) {
@@ -1035,6 +1042,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
         return INTERPRET_RUNTIME_ERROR;
       }
       ObjClass* subclass = AS_CLASS(stackTop[-1]);
+      STORE_FRAME();
       tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
       stackTop--; // Pop subclass, keep superclass
       DISPATCH();
@@ -1061,6 +1069,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_INTERFACE) {
       ObjString* name = AS_STRING(READ_CONSTANT());
+      STORE_FRAME();
       PUSH(OBJ_VAL(newInterface(name)));
       DISPATCH();
   }
@@ -1095,6 +1104,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       }
       ObjString* symbol = AS_STRING(*(--stackTop));
       ObjString* libName = AS_STRING(*(--stackTop));
+      STORE_FRAME();
       ObjForeign* foreign = loadForeign(libName, symbol);
       if (foreign == NULL) {
           STORE_FRAME();
@@ -1231,6 +1241,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           return INTERPRET_RUNTIME_ERROR;
       }
       int outDims[] = {a->dims[0], b->dims[1]};
+      STORE_FRAME();
       ObjTensor *res = newTensor(2, outDims, NULL);
       PUSH(OBJ_VAL(res));
       for (int i = 0; i < a->dims[0]; i++) {
@@ -1278,6 +1289,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
            }
            totalSize = (int)newSize;
       }
+      STORE_FRAME();
       ObjTensor *tensor = newTensor(dimCount, dims, NULL);
       PUSH(OBJ_VAL(tensor)); 
       if (elementCount == (uint32_t)totalSize) {
@@ -1300,7 +1312,9 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_CONTEXT) {
-      PUSH(OBJ_VAL(newContext(READ_STRING())));
+      ObjString* name = READ_STRING();
+      STORE_FRAME();
+      PUSH(OBJ_VAL(newContext(name)));
       DISPATCH();
   }
   
@@ -1311,6 +1325,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       PUSH(OBJ_VAL(layer));
       Value contextVal = stackTop[-2];
       if (IS_CONTEXT(contextVal)) {
+          STORE_FRAME();
           tableSet(&AS_CONTEXT(contextVal)->layers, name, OBJ_VAL(layer));
       }
       DISPATCH();
