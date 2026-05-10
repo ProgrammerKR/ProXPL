@@ -325,10 +325,13 @@ static void transpileExpr(Expr *expr, FILE *out, bool isJS) {
                     fprintf(out, "\"");
                     const char* s = AS_CSTRING(expr->as.literal.value);
                     while (*s) {
-                        if (*s == '"' || *s == '\\') fputc('\\', out);
-                        if (*s == '\n') fprintf(out, "\\n");
-                        else if (*s == '\r') fprintf(out, "\\r");
-                        else if (*s != '\n' && *s != '\r') fputc(*s, out);
+                        switch (*s) {
+                            case '"':  fprintf(out, "\\\""); break;
+                            case '\\': fprintf(out, "\\\\"); break;
+                            case '\n': fprintf(out, "\\n");  break;
+                            case '\r': fprintf(out, "\\r");  break;
+                            default:   fputc(*s, out);       break;
+                        }
                         s++;
                     }
                     fprintf(out, "\"");
@@ -464,9 +467,9 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
     MKDIR(outputDir);
 
     char htmlPath[512], cssPath[512], jsPath[512];
-    sprintf(htmlPath, "%s/index.html", outputDir);
-    sprintf(cssPath,  "%s/style.css",  outputDir);
-    sprintf(jsPath,   "%s/app.js",     outputDir);
+    snprintf(htmlPath, sizeof(htmlPath), "%s/index.html", outputDir);
+    snprintf(cssPath, sizeof(cssPath), "%s/style.css",  outputDir);
+    snprintf(jsPath, sizeof(jsPath), "%s/app.js",     outputDir);
 
     FILE *html = fopen(htmlPath, "w");
     FILE *css  = fopen(cssPath,  "w");
@@ -481,7 +484,9 @@ void transpileUIApp(Stmt *appStmt, const char *outputDir) {
     fprintf(html, "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
     fprintf(html, "  <meta charset=\"UTF-8\">\n");
     fprintf(html, "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
-    fprintf(html, "  <title>%s</title>\n", appStmt->as.ui_app.name);
+    fprintf(html, "  <title>");
+    escapeHtml(appStmt->as.ui_app.name, html);
+    fprintf(html, "</title>\n");
     fprintf(html, "  <link rel=\"stylesheet\" href=\"style.css\">\n");
     fprintf(html, "  <script src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\" defer></script>\n");
     fprintf(html, "</head>\n<body x-data=\"app()\">\n");
@@ -534,9 +539,9 @@ void transpileUIAppWeb(Stmt *appStmt, const char *outputDir) {
     MKDIR(outputDir);
 
     char htmlPath[512], cssPath[512], jsPath[512];
-    sprintf(htmlPath, "%s/index.html", outputDir);
-    sprintf(cssPath,  "%s/style.css",  outputDir);
-    sprintf(jsPath,   "%s/app.js",     outputDir);
+    snprintf(htmlPath, sizeof(htmlPath), "%s/index.html", outputDir);
+    snprintf(cssPath, sizeof(cssPath), "%s/style.css",  outputDir);
+    snprintf(jsPath, sizeof(jsPath), "%s/app.js",     outputDir);
 
     FILE *html = fopen(htmlPath, "w");
     FILE *css  = fopen(cssPath,  "w");
@@ -558,9 +563,13 @@ void transpileUIAppWeb(Stmt *appStmt, const char *outputDir) {
     fprintf(html, "<head>\n");
     fprintf(html, "  <meta charset=\"UTF-8\">\n");
     fprintf(html, "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
-    fprintf(html, "  <meta name=\"description\" content=\"%s — built with ProXPL UI\">\n", appName);
+    fprintf(html, "  <meta name=\"description\" content=\"");
+    escapeHtml(appName, html);
+    fprintf(html, " — built with ProXPL UI\">\n");
     fprintf(html, "  <meta name=\"generator\" content=\"ProXPL prm build web\">\n");
-    fprintf(html, "  <title>%s</title>\n", appName);
+    fprintf(html, "  <title>");
+    escapeHtml(appName, html);
+    fprintf(html, "</title>\n");
     fprintf(html, "\n");
     fprintf(html, "  <!-- ProXPL Web Build: Google Fonts -->\n");
     fprintf(html, "  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n");

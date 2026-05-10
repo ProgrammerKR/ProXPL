@@ -12,13 +12,13 @@
 
 static void* safe_malloc(size_t size) {
     void* ptr = malloc(size);
-    if (!ptr) { fprintf(stderr, "Out of memory\\n"); exit(1); }
+    if (!ptr) { fprintf(stderr, "Out of memory\n"); exit(1); }
     return ptr;
 }
 
 static void* safe_realloc(void* ptr, size_t size) {
     void* new_ptr = realloc(ptr, size);
-    if (!new_ptr && size != 0) { fprintf(stderr, "Out of memory\\n"); exit(1); }
+    if (!new_ptr && size != 0) { fprintf(stderr, "Out of memory\n"); exit(1); }
     return new_ptr;
 }
 

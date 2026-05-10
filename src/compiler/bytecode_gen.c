@@ -25,9 +25,12 @@ typedef enum {
 typedef struct Loop {
     struct Loop* enclosing;
     int startIp;
+    int continueIp;
     int scopeDepth;
-    int breakJumps[256];   
+    int localCountAtEntry;
+    int* breakJumps;
     int breakCount;
+    int breakCapacity;
 } Loop;
 
 typedef struct Compiler {
@@ -138,8 +141,10 @@ static void emitConstant(BytecodeGen* gen, Value value, int line) {
     if (gen->hadError) return;
     int constant = addConstant(gen->chunk, value);
     if (constant > 255) {
-        fprintf(stderr, "Too many constants.\n");
-        gen->hadError = true;
+        writeChunk(gen->chunk, OP_CONSTANT_LONG, line);
+        writeChunk(gen->chunk, constant & 0xff, line);
+        writeChunk(gen->chunk, (constant >> 8) & 0xff, line);
+        writeChunk(gen->chunk, (constant >> 16) & 0xff, line);
     } else {
         writeChunk(gen->chunk, OP_CONSTANT, line);
         writeChunk(gen->chunk, (uint8_t)constant, line);
@@ -743,9 +748,13 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             // Push loop scope
             Loop loop;
             loop.startIp = loopStart;
+            loop.continueIp = loopStart;
             loop.scopeDepth = gen->compiler->scopeDepth;
+            loop.localCountAtEntry = gen->compiler->localCount;
             loop.enclosing = gen->compiler->loop;
             loop.breakCount = 0;
+            loop.breakCapacity = 8;
+            loop.breakJumps = (int*)malloc(sizeof(int) * loop.breakCapacity);
             gen->compiler->loop = &loop;
             
             genExpr(gen, stmt->as.while_stmt.condition);
@@ -776,6 +785,7 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 gen->chunk->code[breakJump] = (dist >> 8) & 0xff;
                 gen->chunk->code[breakJump+1] = dist & 0xff;
             }
+            free(loop.breakJumps);
             
             gen->compiler->loop = loop.enclosing; // Pop loop
             break;
@@ -804,13 +814,42 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 exitJump = gen->chunk->count - 2;
                 writeChunk(gen->chunk, OP_POP, stmt->line); // Pop condition
             }
-            
-            genStmt(gen, stmt->as.for_stmt.body);
-            
+
+            int incrementStart = loopStart;
             if (stmt->as.for_stmt.increment) {
+                writeChunk(gen->chunk, OP_JUMP, 0);
+                writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+                int bodyJump = gen->chunk->count - 2;
+                
+                incrementStart = gen->chunk->count;
                 genExpr(gen, stmt->as.for_stmt.increment);
                 writeChunk(gen->chunk, OP_POP, stmt->line);
+                
+                writeChunk(gen->chunk, OP_LOOP, stmt->line);
+                int offset = gen->chunk->count - loopStart + 2;
+                writeChunk(gen->chunk, (offset >> 8) & 0xff, 0);
+                writeChunk(gen->chunk, offset & 0xff, 0);
+                
+                loopStart = incrementStart;
+                
+                int patchBody = gen->chunk->count - bodyJump - 2;
+                gen->chunk->code[bodyJump] = (patchBody >> 8) & 0xff;
+                gen->chunk->code[bodyJump+1] = patchBody & 0xff;
             }
+            
+            // Push loop
+            Loop loop;
+            loop.startIp = loopStart;
+            loop.continueIp = incrementStart;
+            loop.scopeDepth = gen->compiler->scopeDepth;
+            loop.localCountAtEntry = gen->compiler->localCount;
+            loop.enclosing = gen->compiler->loop;
+            loop.breakCount = 0;
+            loop.breakCapacity = 8;
+            loop.breakJumps = (int*)malloc(sizeof(int) * loop.breakCapacity);
+            gen->compiler->loop = &loop;
+
+            genStmt(gen, stmt->as.for_stmt.body);
             
             writeChunk(gen->chunk, OP_LOOP, stmt->line);
             int offset = gen->chunk->count - loopStart + 2;
@@ -825,12 +864,13 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             }
             
             // Patch breaks
-             for (int i = 0; i < loop.breakCount; i++) {
+            for (int i = 0; i < loop.breakCount; i++) {
                 int breakJump = loop.breakJumps[i];
                 int dist = gen->chunk->count - breakJump - 2;
                 gen->chunk->code[breakJump] = (dist >> 8) & 0xff;
                 gen->chunk->code[breakJump+1] = dist & 0xff;
             }
+            free(loop.breakJumps);
             
             gen->compiler->loop = loop.enclosing;
             endScope(gen);
@@ -838,44 +878,34 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
         }
         case STMT_BREAK: {
             if (gen->compiler->loop == NULL) {
-               // Error: 'break' outside of loop
+               fprintf(stderr, "Error: 'break' outside of loop at line %d\n", stmt->line);
+               gen->hadError = true;
             } else {
-                // Drop locals
-                // NOTE: In for loops, vars are in a scope ABOVE the loop scope if declared in init?
-                // Actually they are inside the scope started by STMT_FOR.
-                // We need to unwind to loop->scopeDepth.
-                // Drop locals
-                // NOTE: In for loops, vars are in a scope ABOVE the loop scope if declared in init?
-                // Actually they are inside the scope started by STMT_FOR.
-                // We need to unwind to loop->scopeDepth.
-                // Bytecode Gen usually emits pops for locals going out of scope.
-                // BUT break jumps OUT. The locals on stack need to be popped.
-                // We can't easily emit static POPs if we don't know how many locals are on stack relative to loop start.
-                // Usually languages use OP_CLOSE_UPVALUE or dynamic stack adjustment if complex.
-                // For now, let's assume we just jump and the scope end logic at target handles it?
-                // NO. The target is AFTER the loop. The locals inside loop must be popped.
-                // Since we don't have local-tracking loop logic here fully, we'll skip POPS for now (BUG?)
-                // Correct fix: emit POPs for all locals > loop->scopeDepth.
-                // But we don't can't iterate locals easily to count them here without scan.
-                // However, we can use the difference in localCount?
-                // Let's postpone POP generation for break/continue to "Comprehensive Fix Round 2" if needed.
-                // Just emit jump.
+                for (int i = gen->compiler->localCount - 1; i >= gen->compiler->loop->localCountAtEntry; i--) {
+                    writeChunk(gen->chunk, OP_POP, stmt->line);
+                }
                 
                 writeChunk(gen->chunk, OP_JUMP, 0);
                 writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
                 int jump = gen->chunk->count - 2;
-                if (gen->compiler->loop->breakCount < 256) {
-                    gen->compiler->loop->breakJumps[gen->compiler->loop->breakCount++] = jump;
+                if (gen->compiler->loop->breakCount == gen->compiler->loop->breakCapacity) {
+                    gen->compiler->loop->breakCapacity *= 2;
+                    gen->compiler->loop->breakJumps = (int*)realloc(gen->compiler->loop->breakJumps, sizeof(int) * gen->compiler->loop->breakCapacity);
                 }
+                gen->compiler->loop->breakJumps[gen->compiler->loop->breakCount++] = jump;
             }
             break;
         }
         case STMT_CONTINUE: {
             if (gen->compiler->loop == NULL) {
-               // Error
+               fprintf(stderr, "Error: 'continue' outside of loop at line %d\n", stmt->line);
+               gen->hadError = true;
             } else {
+                for (int i = gen->compiler->localCount - 1; i >= gen->compiler->loop->localCountAtEntry; i--) {
+                    writeChunk(gen->chunk, OP_POP, stmt->line);
+                }
                 writeChunk(gen->chunk, OP_LOOP, stmt->line);
-                int offset = gen->chunk->count - gen->compiler->loop->startIp + 2;
+                int offset = gen->chunk->count - gen->compiler->loop->continueIp + 2;
                 writeChunk(gen->chunk, (offset >> 8) & 0xff, 0);
                 writeChunk(gen->chunk, offset & 0xff, 0);
             }

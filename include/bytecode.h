@@ -19,6 +19,7 @@
 // OpCodes
 typedef enum {
   OP_CONSTANT,
+  OP_CONSTANT_LONG,
   OP_NOP,
   OP_NIL,
   OP_TRUE,
