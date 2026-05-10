@@ -798,14 +798,6 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             
             int loopStart = gen->chunk->count;
             
-            // Push loop
-            Loop loop;
-            loop.startIp = loopStart;
-            loop.scopeDepth = gen->compiler->scopeDepth;
-            loop.enclosing = gen->compiler->loop;
-            loop.breakCount = 0;
-            gen->compiler->loop = &loop;
-            
             int exitJump = -1;
             if (stmt->as.for_stmt.condition) {
                 genExpr(gen, stmt->as.for_stmt.condition);
