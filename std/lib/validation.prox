@@ -1,0 +1,769 @@
+// Validation Library for ProXPL
+// Provides schema-based data validation with chainable rules
+// and structured error reporting.
+//
+// Usage:
+//   use std.lib.validation;
+//
+//   let schema = Schema.define({
+//       name: Validator.string().minLength(2).required(),
+//       age:  Validator.number().min(0).max(120).required()
+//   });
+//   let result = schema.validate({ name: "Alice", age: 25 });
+//   print(result.valid);   // true
+
+
+// ─────────────────────────────────────────────
+// ValidationResult
+// Returned by every .validate() call.
+// ─────────────────────────────────────────────
+class ValidationResult {
+    var valid;
+    var errors;
+    var data;
+
+    func init(valid, errors, data) {
+        this.valid  = valid;
+        this.errors = errors;
+        this.data   = data;
+    }
+
+    // Number of errors collected.
+    func errorCount() {
+        return len(this.errors);
+    }
+
+    // Returns true if the named field has at least one error.
+    func hasError(field) {
+        for (let i = 0; i < len(this.errors); i = i + 1) {
+            if (this.errors[i]["field"] == field) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Returns the first error message for a field, or null.
+    func getError(field) {
+        for (let i = 0; i < len(this.errors); i = i + 1) {
+            if (this.errors[i]["field"] == field) {
+                return this.errors[i]["message"];
+            }
+        }
+        return null;
+    }
+
+    // Human-readable summary of all errors.
+    func summary() {
+        if (this.valid) {
+            return "Validation passed.";
+        }
+        let out = "Validation failed (" + to_string(len(this.errors)) + " error(s)):\n";
+        for (let i = 0; i < len(this.errors); i = i + 1) {
+            out = out + "  - " + this.errors[i]["field"] +
+                  ": " + this.errors[i]["message"] + "\n";
+        }
+        return out;
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// StringValidator
+// Chainable rule builder for string fields.
+// ─────────────────────────────────────────────
+class StringValidator {
+    var _required;
+    var _minLen;
+    var _maxLen;
+    var _exactLen;
+    var _mustContain;
+    var _emailCheck;
+    var _urlCheck;
+    var _alphanumCheck;
+    var _noWhitespace;
+    var _oneOf;
+    var _customMsg;
+
+    func init() {
+        this._required     = false;
+        this._minLen       = -1;
+        this._maxLen       = -1;
+        this._exactLen     = -1;
+        this._mustContain  = null;
+        this._emailCheck   = false;
+        this._urlCheck     = false;
+        this._alphanumCheck = false;
+        this._noWhitespace = false;
+        this._oneOf        = null;
+        this._customMsg    = null;
+    }
+
+    func required() {
+        this._required = true;
+        return this;
+    }
+
+    func optional() {
+        this._required = false;
+        return this;
+    }
+
+    func minLength(n) {
+        this._minLen = n;
+        return this;
+    }
+
+    func maxLength(n) {
+        this._maxLen = n;
+        return this;
+    }
+
+    func length(n) {
+        this._exactLen = n;
+        return this;
+    }
+
+    func pattern(str) {
+        this._mustContain = str;
+        return this;
+    }
+
+    func email() {
+        this._emailCheck = true;
+        return this;
+    }
+
+    func url() {
+        this._urlCheck = true;
+        return this;
+    }
+
+    func alphanumeric() {
+        this._alphanumCheck = true;
+        return this;
+    }
+
+    func noWhitespace() {
+        this._noWhitespace = true;
+        return this;
+    }
+
+    func oneOf(list) {
+        this._oneOf = list;
+        return this;
+    }
+
+    func withMessage(msg) {
+        this._customMsg = msg;
+        return this;
+    }
+
+    // Internal: run all rules against a value, push errors into list.
+    func _validate(field, value, errors) {
+        // Absence check
+        if (value == null) {
+            if (this._required) {
+                let msg = this._customMsg != null ?
+                    this._customMsg : "field is required";
+                list_push(errors, { "field": field, "message": msg });
+            }
+            return;
+        }
+
+        let s = to_string(value);
+
+        // Exact length
+        if (this._exactLen != -1 && len(s) != this._exactLen) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be exactly " + to_string(this._exactLen) + " characters";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // Min length
+        if (this._minLen != -1 && len(s) < this._minLen) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be at least " + to_string(this._minLen) + " characters";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // Max length
+        if (this._maxLen != -1 && len(s) > this._maxLen) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be at most " + to_string(this._maxLen) + " characters";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // Substring pattern
+        if (this._mustContain != null && !contains(s, this._mustContain)) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must contain '" + this._mustContain + "'";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // Email — must have exactly one '@' and a '.' after it
+        if (this._emailCheck) {
+            let atPos = -1;
+            for (let i = 0; i < len(s); i = i + 1) {
+                if (substr(s, i, 1) == "@") {
+                    atPos = i;
+                }
+            }
+            let valid = false;
+            if (atPos > 0 && atPos < len(s) - 2) {
+                let domain = substr(s, atPos + 1, len(s) - atPos - 1);
+                if (contains(domain, ".")) {
+                    valid = true;
+                }
+            }
+            if (!valid) {
+                let msg = this._customMsg != null ? this._customMsg :
+                    "must be a valid email address";
+                list_push(errors, { "field": field, "message": msg });
+            }
+        }
+
+        // URL — must start with http:// or https://
+        if (this._urlCheck) {
+            if (!startswith(s, "http://") && !startswith(s, "https://")) {
+                let msg = this._customMsg != null ? this._customMsg :
+                    "must be a valid URL (http:// or https://)";
+                list_push(errors, { "field": field, "message": msg });
+            }
+        }
+
+        // Alphanumeric
+        if (this._alphanumCheck) {
+            let validChars =
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            let ok = true;
+            for (let i = 0; i < len(s); i = i + 1) {
+                if (!contains(validChars, substr(s, i, 1))) {
+                    ok = false;
+                }
+            }
+            if (!ok) {
+                let msg = this._customMsg != null ? this._customMsg :
+                    "must contain only letters and digits";
+                list_push(errors, { "field": field, "message": msg });
+            }
+        }
+
+        // No whitespace
+        if (this._noWhitespace && contains(s, " ")) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must not contain spaces";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // oneOf
+        if (this._oneOf != null) {
+            let found = false;
+            for (let i = 0; i < len(this._oneOf); i = i + 1) {
+                if (s == to_string(this._oneOf[i])) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                // Build allowed list for error message
+                let allowed = "";
+                for (let i = 0; i < len(this._oneOf); i = i + 1) {
+                    if (i > 0) {
+                        allowed = allowed + ", ";
+                    }
+                    allowed = allowed + to_string(this._oneOf[i]);
+                }
+                let msg = this._customMsg != null ? this._customMsg :
+                    "must be one of: " + allowed;
+                list_push(errors, { "field": field, "message": msg });
+            }
+        }
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// NumberValidator
+// Chainable rule builder for numeric fields.
+// ─────────────────────────────────────────────
+class NumberValidator {
+    var _required;
+    var _min;
+    var _max;
+    var _isIntOnly;
+    var _positiveOnly;
+    var _negativeOnly;
+    var _oneOf;
+    var _customMsg;
+
+    func init() {
+        this._required     = false;
+        this._min          = null;
+        this._max          = null;
+        this._isIntOnly  = false;
+        this._positiveOnly = false;
+        this._negativeOnly = false;
+        this._oneOf        = null;
+        this._customMsg    = null;
+    }
+
+    func required() {
+        this._required = true;
+        return this;
+    }
+
+    func optional() {
+        this._required = false;
+        return this;
+    }
+
+    func min(n) {
+        this._min = n;
+        return this;
+    }
+
+    func max(n) {
+        this._max = n;
+        return this;
+    }
+
+    func between(minVal, maxVal) {
+        this._min = minVal;
+        this._max = maxVal;
+        return this;
+    }
+
+    func isInt() {
+        this._isIntOnly = true;
+        return this;
+    }
+
+    func positive() {
+        this._positiveOnly = true;
+        return this;
+    }
+
+    func negative() {
+        this._negativeOnly = true;
+        return this;
+    }
+
+    func oneOf(list) {
+        this._oneOf = list;
+        return this;
+    }
+
+    func withMessage(msg) {
+        this._customMsg = msg;
+        return this;
+    }
+
+    func _validate(field, value, errors) {
+        if (value == null) {
+            if (this._required) {
+                let msg = this._customMsg != null ?
+                    this._customMsg : "field is required";
+                list_push(errors, { "field": field, "message": msg });
+            }
+            return;
+        }
+
+        let n = to_number(value);
+
+        if (this._min != null && n < this._min) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be at least " + to_string(this._min);
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        if (this._max != null && n > this._max) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be at most " + to_string(this._max);
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // Integer check: no fractional part
+        if (this._isIntOnly && floor(n) != n) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be a whole number";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        if (this._positiveOnly && n <= 0) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be a positive number";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        if (this._negativeOnly && n >= 0) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be a negative number";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        if (this._oneOf != null) {
+            let found = false;
+            for (let i = 0; i < len(this._oneOf); i = i + 1) {
+                if (n == to_number(this._oneOf[i])) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                let allowed = "";
+                for (let i = 0; i < len(this._oneOf); i = i + 1) {
+                    if (i > 0) {
+                        allowed = allowed + ", ";
+                    }
+                    allowed = allowed + to_string(this._oneOf[i]);
+                }
+                let msg = this._customMsg != null ? this._customMsg :
+                    "must be one of: " + allowed;
+                list_push(errors, { "field": field, "message": msg });
+            }
+        }
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// BoolValidator
+// Chainable rule builder for boolean fields.
+// ─────────────────────────────────────────────
+class BoolValidator {
+    var _required;
+    var _mustBeTrue;
+    var _mustBeFalse;
+    var _customMsg;
+
+    func init() {
+        this._required    = false;
+        this._mustBeTrue  = false;
+        this._mustBeFalse = false;
+        this._customMsg   = null;
+    }
+
+    func required() {
+        this._required = true;
+        return this;
+    }
+
+    func optional() {
+        this._required = false;
+        return this;
+    }
+
+    func isTrue() {
+        this._mustBeTrue = true;
+        return this;
+    }
+
+    func isFalse() {
+        this._mustBeFalse = true;
+        return this;
+    }
+
+    func withMessage(msg) {
+        this._customMsg = msg;
+        return this;
+    }
+
+    func _validate(field, value, errors) {
+        if (value == null) {
+            if (this._required) {
+                let msg = this._customMsg != null ?
+                    this._customMsg : "field is required";
+                list_push(errors, { "field": field, "message": msg });
+            }
+            return;
+        }
+
+        if (this._mustBeTrue && value != true) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be true";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        if (this._mustBeFalse && value != false) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must be false";
+            list_push(errors, { "field": field, "message": msg });
+        }
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// ListValidator
+// Chainable rule builder for list fields.
+// ─────────────────────────────────────────────
+class ListValidator {
+    var _required;
+    var _minItems;
+    var _maxItems;
+    var _itemValidator;
+    var _customMsg;
+
+    func init() {
+        this._required      = false;
+        this._minItems      = -1;
+        this._maxItems      = -1;
+        this._itemValidator = null;
+        this._customMsg     = null;
+    }
+
+    func required() {
+        this._required = true;
+        return this;
+    }
+
+    func optional() {
+        this._required = false;
+        return this;
+    }
+
+    func minItems(n) {
+        this._minItems = n;
+        return this;
+    }
+
+    func maxItems(n) {
+        this._maxItems = n;
+        return this;
+    }
+
+    // Pass any validator (StringValidator, NumberValidator, etc.)
+    // to validate every item in the list.
+    func items(validator) {
+        this._itemValidator = validator;
+        return this;
+    }
+
+    func withMessage(msg) {
+        this._customMsg = msg;
+        return this;
+    }
+
+    func _validate(field, value, errors) {
+        if (value == null) {
+            if (this._required) {
+                let msg = this._customMsg != null ?
+                    this._customMsg : "field is required";
+                list_push(errors, { "field": field, "message": msg });
+            }
+            return;
+        }
+
+        let count = len(value);
+
+        if (this._minItems != -1 && count < this._minItems) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must have at least " + to_string(this._minItems) + " item(s)";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        if (this._maxItems != -1 && count > this._maxItems) {
+            let msg = this._customMsg != null ? this._customMsg :
+                "must have at most " + to_string(this._maxItems) + " item(s)";
+            list_push(errors, { "field": field, "message": msg });
+        }
+
+        // Validate each item individually, report as field[index]
+        if (this._itemValidator != null) {
+            for (let i = 0; i < count; i = i + 1) {
+                let itemField = field + "[" + to_string(i) + "]";
+                this._itemValidator._validate(itemField, value[i], errors);
+            }
+        }
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// AnyValidator
+// Accepts any non-null value when required.
+// ─────────────────────────────────────────────
+class AnyValidator {
+    var _required;
+    var _customMsg;
+
+    func init() {
+        this._required  = false;
+        this._customMsg = null;
+    }
+
+    func required() {
+        this._required = true;
+        return this;
+    }
+
+    func optional() {
+        this._required = false;
+        return this;
+    }
+
+    func withMessage(msg) {
+        this._customMsg = msg;
+        return this;
+    }
+
+    func _validate(field, value, errors) {
+        if (value == null && this._required) {
+            let msg = this._customMsg != null ?
+                this._customMsg : "field is required";
+            list_push(errors, { "field": field, "message": msg });
+        }
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// Validator
+// Entry point — create typed validators.
+// ─────────────────────────────────────────────
+class Validator {
+    static func string() {
+        return StringValidator();
+    }
+
+    static func number() {
+        return NumberValidator();
+    }
+
+    static func bool() {
+        return BoolValidator();
+    }
+
+    static func list() {
+        return ListValidator();
+    }
+
+    static func any() {
+        return AnyValidator();
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// Schema
+// Validates a full dictionary against a set
+// of named field validators.
+// ─────────────────────────────────────────────
+class Schema {
+    var _fields;
+
+    func init(fields) {
+        this._fields = fields;
+    }
+
+    // Define a schema from a dictionary of { fieldName: validator }.
+    static func define(fields) {
+        return Schema(fields);
+    }
+
+    // Validate data against all declared field rules.
+    // Returns a ValidationResult.
+    func validate(data) {
+        let errors = [];
+        let fieldNames = keys(this._fields);
+
+        for (let i = 0; i < len(fieldNames); i = i + 1) {
+            let field     = fieldNames[i];
+            let validator = this._fields[field];
+            let value     = data != null ? data[field] : null;
+
+            validator._validate(field, value, errors);
+        }
+
+        let isValid = len(errors) == 0;
+        return ValidationResult(isValid, errors, data);
+    }
+}
+
+
+// ─────────────────────────────────────────────
+// Validate
+// Standalone one-off helper functions.
+// No schema needed for quick inline checks.
+// ─────────────────────────────────────────────
+class Validate {
+    // Returns true if value looks like a valid email address.
+    static func isEmail(value) {
+        let s = to_string(value);
+        let atPos = -1;
+        for (let i = 0; i < len(s); i = i + 1) {
+            if (substr(s, i, 1) == "@") {
+                atPos = i;
+            }
+        }
+        if (atPos <= 0 || atPos >= len(s) - 2) {
+            return false;
+        }
+        let domain = substr(s, atPos + 1, len(s) - atPos - 1);
+        return contains(domain, ".");
+    }
+
+    // Returns true if value starts with http:// or https://.
+    static func isURL(value) {
+        let s = to_string(value);
+        return startswith(s, "http://") || startswith(s, "https://");
+    }
+
+    // Returns true if value is non-null and non-empty string.
+    static func isNotEmpty(value) {
+        if (value == null) return false;
+        return len(to_string(value)) > 0;
+    }
+
+    // Returns true if value is a whole number.
+    static func isInteger(value) {
+        let n = to_number(value);
+        return floor(n) == n;
+    }
+
+    // Returns true if value is strictly greater than zero.
+    static func isPositive(value) {
+        return to_number(value) > 0;
+    }
+
+    // Returns true if value is strictly less than zero.
+    static func isNegative(value) {
+        return to_number(value) < 0;
+    }
+
+    // Returns true if minVal <= value <= maxVal.
+    static func isInRange(value, minVal, maxVal) {
+        let n = to_number(value);
+        return n >= minVal && n <= maxVal;
+    }
+
+    // Returns true if value is present in the allowed list.
+    static func isOneOf(value, list) {
+        let s = to_string(value);
+        for (let i = 0; i < len(list); i = i + 1) {
+            if (s == to_string(list[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Returns true if string length is between minLen and maxLen (inclusive).
+    static func matchesLength(value, minLen, maxLen) {
+        let l = len(to_string(value));
+        return l >= minLen && l <= maxLen;
+    }
+
+    // Returns true if string contains only letters and digits.
+    static func isAlphanumeric(value) {
+        let s     = to_string(value);
+        let valid =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        if (len(s) == 0) return false;
+        for (let i = 0; i < len(s); i = i + 1) {
+            if (!contains(valid, substr(s, i, 1))) {
+                return false;
+            }
+        }
+        return true;
+    }
+}

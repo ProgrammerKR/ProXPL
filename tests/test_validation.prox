@@ -1,0 +1,520 @@
+// Test suite for std.lib.validation
+// Run: proxpl tests/test_validation.prox
+
+use std.lib.validation;
+
+let passed = 0;
+let failed = 0;
+
+func assert_true(label, value) {
+    if (value) {
+        print("  [PASS] " + label);
+        passed = passed + 1;
+    } else {
+        print("  [FAIL] " + label);
+        failed = failed + 1;
+    }
+}
+
+func assert_false(label, value) {
+    assert_true(label, !value);
+}
+
+func assert_eq(label, a, b) {
+    assert_true(label, a == b);
+}
+
+
+// ─────────────────────────────────────────────
+print("=== ValidationResult ===");
+// ─────────────────────────────────────────────
+
+let r_ok   = ValidationResult(true, [], { "name": "Alice" });
+let r_fail = ValidationResult(false, [
+    { "field": "name", "message": "field is required" },
+    { "field": "age",  "message": "must be at least 0" }
+], null);
+
+assert_true("result.valid is true when no errors",   r_ok.valid);
+assert_false("result.valid is false when errors",    r_fail.valid);
+assert_eq("errorCount() returns 0 on pass",          r_ok.errorCount(), 0);
+assert_eq("errorCount() returns 2 on fail",          r_fail.errorCount(), 2);
+assert_true("hasError() finds existing field",       r_fail.hasError("name"));
+assert_false("hasError() misses absent field",       r_fail.hasError("email"));
+assert_eq("getError() returns message",
+    r_fail.getError("age"), "must be at least 0");
+assert_true("getError() returns null for unknown",   r_fail.getError("phone") == null);
+assert_true("summary() contains error fields",
+    contains(r_fail.summary(), "name") && contains(r_fail.summary(), "age"));
+
+
+// ─────────────────────────────────────────────
+print("\n=== StringValidator ===");
+// ─────────────────────────────────────────────
+
+// required
+let sv_req = Validator.string().required();
+let e1 = [];
+sv_req._validate("name", null, e1);
+assert_eq("required: null adds error",    len(e1), 1);
+
+let e2 = [];
+sv_req._validate("name", "Alice", e2);
+assert_eq("required: value passes",       len(e2), 0);
+
+// optional (default)
+let sv_opt = Validator.string().optional();
+let e3 = [];
+sv_opt._validate("name", null, e3);
+assert_eq("optional: null adds no error", len(e3), 0);
+
+// minLength
+let sv_min = Validator.string().minLength(3);
+let e4 = [];
+sv_min._validate("f", "ab", e4);
+assert_eq("minLength: short value fails", len(e4), 1);
+
+let e5 = [];
+sv_min._validate("f", "abc", e5);
+assert_eq("minLength: exact length passes", len(e5), 0);
+
+// maxLength
+let sv_max = Validator.string().maxLength(5);
+let e6 = [];
+sv_max._validate("f", "toolong", e6);
+assert_eq("maxLength: long value fails", len(e6), 1);
+
+let e7 = [];
+sv_max._validate("f", "hi", e7);
+assert_eq("maxLength: short value passes", len(e7), 0);
+
+// exact length
+let sv_len = Validator.string().length(4);
+let e8 = [];
+sv_len._validate("f", "abc", e8);
+assert_eq("length: wrong length fails", len(e8), 1);
+
+let e9 = [];
+sv_len._validate("f", "abcd", e9);
+assert_eq("length: exact length passes", len(e9), 0);
+
+// email
+let sv_email = Validator.string().email();
+let e10 = [];
+sv_email._validate("email", "invalid", e10);
+assert_eq("email: plain string fails", len(e10), 1);
+
+let e11 = [];
+sv_email._validate("email", "user@example.com", e11);
+assert_eq("email: valid email passes", len(e11), 0);
+
+let e12 = [];
+sv_email._validate("email", "@nodomain", e12);
+assert_eq("email: missing local part fails", len(e12), 1);
+
+// url
+let sv_url = Validator.string().url();
+let e13 = [];
+sv_url._validate("url", "ftp://nope.com", e13);
+assert_eq("url: ftp scheme fails", len(e13), 1);
+
+let e14 = [];
+sv_url._validate("url", "https://example.com", e14);
+assert_eq("url: https passes", len(e14), 0);
+
+let e15 = [];
+sv_url._validate("url", "http://example.com", e15);
+assert_eq("url: http passes", len(e15), 0);
+
+// alphanumeric
+let sv_alnum = Validator.string().alphanumeric();
+let e16 = [];
+sv_alnum._validate("f", "hello world", e16);
+assert_eq("alphanumeric: space fails", len(e16), 1);
+
+let e17 = [];
+sv_alnum._validate("f", "Hello123", e17);
+assert_eq("alphanumeric: letters+digits passes", len(e17), 0);
+
+// noWhitespace
+let sv_nows = Validator.string().noWhitespace();
+let e18 = [];
+sv_nows._validate("f", "no spaces", e18);
+assert_eq("noWhitespace: space fails", len(e18), 1);
+
+let e19 = [];
+sv_nows._validate("f", "nospaces", e19);
+assert_eq("noWhitespace: no space passes", len(e19), 0);
+
+// oneOf
+let sv_one = Validator.string().oneOf(["red", "green", "blue"]);
+let e20 = [];
+sv_one._validate("color", "yellow", e20);
+assert_eq("oneOf: unlisted value fails", len(e20), 1);
+
+let e21 = [];
+sv_one._validate("color", "red", e21);
+assert_eq("oneOf: listed value passes", len(e21), 0);
+
+// withMessage
+let sv_msg = Validator.string().required().withMessage("name is mandatory");
+let e22 = [];
+sv_msg._validate("name", null, e22);
+assert_eq("withMessage: custom message used",
+    e22[0]["message"], "name is mandatory");
+
+// chaining
+let sv_chain = Validator.string().required().minLength(2).maxLength(10).email();
+let e23 = [];
+sv_chain._validate("email", "a@b.c", e23);
+assert_eq("chaining: valid value passes all rules", len(e23), 0);
+
+
+// ─────────────────────────────────────────────
+print("\n=== NumberValidator ===");
+// ─────────────────────────────────────────────
+
+let nv_req = Validator.number().required();
+let ne1 = [];
+nv_req._validate("age", null, ne1);
+assert_eq("required: null adds error", len(ne1), 1);
+
+let nv_min = Validator.number().min(0);
+let ne2 = [];
+nv_min._validate("age", -1, ne2);
+assert_eq("min: below min fails", len(ne2), 1);
+
+let ne3 = [];
+nv_min._validate("age", 0, ne3);
+assert_eq("min: exact min passes", len(ne3), 0);
+
+let nv_max = Validator.number().max(100);
+let ne4 = [];
+nv_max._validate("score", 101, ne4);
+assert_eq("max: above max fails", len(ne4), 1);
+
+let ne5 = [];
+nv_max._validate("score", 100, ne5);
+assert_eq("max: exact max passes", len(ne5), 0);
+
+let nv_between = Validator.number().between(1, 10);
+let ne6 = [];
+nv_between._validate("n", 0, ne6);
+assert_eq("between: below range fails", len(ne6), 1);
+
+let ne7 = [];
+nv_between._validate("n", 5, ne7);
+assert_eq("between: in range passes", len(ne7), 0);
+
+let nv_int = Validator.number().isInt();
+let ne8 = [];
+nv_int._validate("n", 3.5, ne8);
+assert_eq("integer: float fails", len(ne8), 1);
+
+let ne9 = [];
+nv_int._validate("n", 3, ne9);
+assert_eq("integer: whole number passes", len(ne9), 0);
+
+let nv_pos = Validator.number().positive();
+let ne10 = [];
+nv_pos._validate("n", 0, ne10);
+assert_eq("positive: zero fails", len(ne10), 1);
+
+let ne11 = [];
+nv_pos._validate("n", 1, ne11);
+assert_eq("positive: 1 passes", len(ne11), 0);
+
+let nv_neg = Validator.number().negative();
+let ne12 = [];
+nv_neg._validate("n", 0, ne12);
+assert_eq("negative: zero fails", len(ne12), 1);
+
+let ne13 = [];
+nv_neg._validate("n", -5, ne13);
+assert_eq("negative: -5 passes", len(ne13), 0);
+
+let nv_one = Validator.number().oneOf([1, 2, 3]);
+let ne14 = [];
+nv_one._validate("n", 5, ne14);
+assert_eq("oneOf: unlisted value fails", len(ne14), 1);
+
+let ne15 = [];
+nv_one._validate("n", 2, ne15);
+assert_eq("oneOf: listed value passes", len(ne15), 0);
+
+
+// ─────────────────────────────────────────────
+print("\n=== BoolValidator ===");
+// ─────────────────────────────────────────────
+
+let bv_req = Validator.bool().required();
+let be1 = [];
+bv_req._validate("active", null, be1);
+assert_eq("required: null adds error", len(be1), 1);
+
+let bv_true = Validator.bool().isTrue();
+let be2 = [];
+bv_true._validate("agreed", false, be2);
+assert_eq("isTrue: false fails", len(be2), 1);
+
+let be3 = [];
+bv_true._validate("agreed", true, be3);
+assert_eq("isTrue: true passes", len(be3), 0);
+
+let bv_false = Validator.bool().isFalse();
+let be4 = [];
+bv_false._validate("disabled", true, be4);
+assert_eq("isFalse: true fails", len(be4), 1);
+
+let be5 = [];
+bv_false._validate("disabled", false, be5);
+assert_eq("isFalse: false passes", len(be5), 0);
+
+
+// ─────────────────────────────────────────────
+print("\n=== ListValidator ===");
+// ─────────────────────────────────────────────
+
+let lv_req = Validator.list().required();
+let le1 = [];
+lv_req._validate("tags", null, le1);
+assert_eq("required: null adds error", len(le1), 1);
+
+let lv_min = Validator.list().minItems(2);
+let le2 = [];
+lv_min._validate("tags", ["a"], le2);
+assert_eq("minItems: too few fails", len(le2), 1);
+
+let le3 = [];
+lv_min._validate("tags", ["a", "b"], le3);
+assert_eq("minItems: exact count passes", len(le3), 0);
+
+let lv_max = Validator.list().maxItems(3);
+let le4 = [];
+lv_max._validate("tags", ["a", "b", "c", "d"], le4);
+assert_eq("maxItems: too many fails", len(le4), 1);
+
+let le5 = [];
+lv_max._validate("tags", ["a", "b"], le5);
+assert_eq("maxItems: within limit passes", len(le5), 0);
+
+// items validator — each item must be a number between 0 and 100
+let lv_items = Validator.list().items(Validator.number().min(0).max(100));
+let le6 = [];
+lv_items._validate("scores", [50, 150, 75], le6);
+assert_eq("items: invalid item adds error with index", len(le6), 1);
+assert_true("items: error field includes index",
+    contains(le6[0]["field"], "[1]"));
+
+let le7 = [];
+lv_items._validate("scores", [50, 75, 99], le7);
+assert_eq("items: all valid passes", len(le7), 0);
+
+
+// ─────────────────────────────────────────────
+print("\n=== AnyValidator ===");
+// ─────────────────────────────────────────────
+
+let av_req = Validator.any().required();
+let ae1 = [];
+av_req._validate("data", null, ae1);
+assert_eq("required: null adds error", len(ae1), 1);
+
+let ae2 = [];
+av_req._validate("data", 42, ae2);
+assert_eq("required: any value passes", len(ae2), 0);
+
+let ae3 = [];
+av_req._validate("data", "hello", ae3);
+assert_eq("required: string value passes", len(ae3), 0);
+
+let av_opt = Validator.any().optional();
+let ae4 = [];
+av_opt._validate("data", null, ae4);
+assert_eq("optional: null passes", len(ae4), 0);
+
+
+// ─────────────────────────────────────────────
+print("\n=== Schema ===");
+// ─────────────────────────────────────────────
+
+let userSchema = Schema.define({
+    "name":    Validator.string().minLength(2).maxLength(50).required(),
+    "age":     Validator.number().min(0).max(120).isInt().required(),
+    "email":   Validator.string().email().required(),
+    "website": Validator.string().url().optional(),
+    "role":    Validator.string().oneOf(["admin", "user", "guest"]).optional()
+});
+
+// Valid data — all required fields present and correct
+let valid_user = {
+    "name":  "Alice",
+    "age":   25,
+    "email": "alice@example.com"
+};
+let sr1 = userSchema.validate(valid_user);
+assert_true("schema: valid data passes",    sr1.valid);
+assert_eq("schema: zero errors on pass",    sr1.errorCount(), 0);
+
+// Missing required fields
+let missing_fields = { "name": "Bob" };
+let sr2 = userSchema.validate(missing_fields);
+assert_false("schema: missing required fields fails", sr2.valid);
+assert_true("schema: age error reported",   sr2.hasError("age"));
+assert_true("schema: email error reported", sr2.hasError("email"));
+
+// Multiple rule violations
+let bad_data = {
+    "name":  "A",
+    "age":   -5,
+    "email": "notanemail",
+    "role":  "superadmin"
+};
+let sr3 = userSchema.validate(bad_data);
+assert_false("schema: multiple violations fails", sr3.valid);
+assert_true("schema: name error reported",   sr3.hasError("name"));
+assert_true("schema: age error reported",    sr3.hasError("age"));
+assert_true("schema: email error reported",  sr3.hasError("email"));
+assert_true("schema: role error reported",   sr3.hasError("role"));
+
+// Optional field with valid value
+let with_optional = {
+    "name":    "Carol",
+    "age":     30,
+    "email":   "carol@example.com",
+    "website": "https://carol.dev",
+    "role":    "admin"
+};
+let sr4 = userSchema.validate(with_optional);
+assert_true("schema: optional valid fields pass", sr4.valid);
+
+// result.data holds the original input
+assert_eq("schema: result.data is original input",
+    sr1.data["name"], "Alice");
+
+
+// ─────────────────────────────────────────────
+print("\n=== Validate (standalone helpers) ===");
+// ─────────────────────────────────────────────
+
+assert_true("isEmail: valid",               Validate.isEmail("user@example.com"));
+assert_false("isEmail: no @",               Validate.isEmail("userexample.com"));
+assert_false("isEmail: no domain dot",      Validate.isEmail("user@nodot"));
+assert_false("isEmail: empty local",        Validate.isEmail("@example.com"));
+
+assert_true("isURL: https",                 Validate.isURL("https://example.com"));
+assert_true("isURL: http",                  Validate.isURL("http://example.com"));
+assert_false("isURL: ftp",                  Validate.isURL("ftp://example.com"));
+assert_false("isURL: bare domain",          Validate.isURL("example.com"));
+
+assert_true("isNotEmpty: non-empty",        Validate.isNotEmpty("hello"));
+assert_false("isNotEmpty: empty string",    Validate.isNotEmpty(""));
+assert_false("isNotEmpty: null",            Validate.isNotEmpty(null));
+
+assert_true("isInteger: whole number",      Validate.isInteger(42));
+assert_false("isInteger: float",            Validate.isInteger(3.14));
+
+assert_true("isPositive: 1",                Validate.isPositive(1));
+assert_false("isPositive: 0",              Validate.isPositive(0));
+assert_false("isPositive: -1",             Validate.isPositive(-1));
+
+assert_true("isNegative: -1",              Validate.isNegative(-1));
+assert_false("isNegative: 0",             Validate.isNegative(0));
+
+assert_true("isInRange: in range",          Validate.isInRange(5, 1, 10));
+assert_true("isInRange: at min",            Validate.isInRange(1, 1, 10));
+assert_true("isInRange: at max",            Validate.isInRange(10, 1, 10));
+assert_false("isInRange: below min",        Validate.isInRange(0, 1, 10));
+assert_false("isInRange: above max",        Validate.isInRange(11, 1, 10));
+
+assert_true("isOneOf: in list",             Validate.isOneOf("b", ["a", "b", "c"]));
+assert_false("isOneOf: not in list",        Validate.isOneOf("d", ["a", "b", "c"]));
+
+assert_true("matchesLength: in range",      Validate.matchesLength("hello", 3, 10));
+assert_false("matchesLength: too short",    Validate.matchesLength("hi", 3, 10));
+assert_false("matchesLength: too long",     Validate.matchesLength("toolongstring", 3, 10));
+
+assert_true("isAlphanumeric: letters+nums", Validate.isAlphanumeric("Hello123"));
+assert_false("isAlphanumeric: space",       Validate.isAlphanumeric("Hello 123"));
+assert_false("isAlphanumeric: empty",       Validate.isAlphanumeric(""));
+
+
+// ─────────────────────────────────────────────
+print("\n=== Real-world Integration Tests ===");
+// ─────────────────────────────────────────────
+
+// Registration form
+let registerSchema = Schema.define({
+    "username": Validator.string().minLength(3).maxLength(20)
+                    .alphanumeric().required(),
+    "password": Validator.string().minLength(8).required(),
+    "email":    Validator.string().email().required(),
+    "age":      Validator.number().min(13).isInt().required()
+});
+
+let valid_reg = {
+    "username": "alice99",
+    "password": "supersecret",
+    "email":    "alice@example.com",
+    "age":      20
+};
+let rr1 = registerSchema.validate(valid_reg);
+assert_true("registration: valid form passes", rr1.valid);
+
+let underage_reg = {
+    "username": "bob",
+    "password": "password1",
+    "email":    "bob@example.com",
+    "age":      10
+};
+let rr2 = registerSchema.validate(underage_reg);
+assert_false("registration: underage fails",    rr2.valid);
+assert_true("registration: age error shown",    rr2.hasError("age"));
+
+// Config file schema
+let configSchema = Schema.define({
+    "host":      Validator.string().required(),
+    "port":      Validator.number().min(1).max(65535).isInt().required(),
+    "debug":     Validator.bool().optional(),
+    "logLevel":  Validator.string().oneOf(["info", "warn", "error"]).optional()
+});
+
+let valid_config = { "host": "localhost", "port": 8080 };
+let cr1 = configSchema.validate(valid_config);
+assert_true("config: minimal valid config passes", cr1.valid);
+
+let bad_config = { "host": "localhost", "port": 99999, "logLevel": "verbose" };
+let cr2 = configSchema.validate(bad_config);
+assert_false("config: invalid port and logLevel fails", cr2.valid);
+assert_true("config: port error shown",     cr2.hasError("port"));
+assert_true("config: logLevel error shown", cr2.hasError("logLevel"));
+
+// List of scores schema
+let gameSchema = Schema.define({
+    "playerName": Validator.string().minLength(1).required(),
+    "scores":     Validator.list().minItems(1).maxItems(10)
+                      .items(Validator.number().min(0).max(100))
+                      .required()
+});
+
+let valid_game = { "playerName": "Dave", "scores": [80, 90, 75] };
+let gr1 = gameSchema.validate(valid_game);
+assert_true("game: valid scores pass", gr1.valid);
+
+let bad_game = { "playerName": "Eve", "scores": [80, 110, 75] };
+let gr2 = gameSchema.validate(bad_game);
+assert_false("game: out-of-range score fails", gr2.valid);
+assert_true("game: scores[1] error shown",
+    gr2.hasError("scores[1]"));
+
+
+// ─────────────────────────────────────────────
+print("\n=== Results ===");
+print("Passed: " + to_string(passed));
+print("Failed: " + to_string(failed));
+print("Total:  " + to_string(passed + failed));
+if (failed == 0) {
+    print("All tests passed!");
+} else {
+    print(to_string(failed) + " test(s) failed.");
+}

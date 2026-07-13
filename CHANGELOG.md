@@ -11,6 +11,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Standard Library**: Added `std/lib/validation.prox` — a schema-based data validation library.
+  - `Validator` entry point with typed builders: `string()`, `number()`, `bool()`, `list()`, `any()`
+  - Chainable rule methods: `required`, `optional`, `minLength`, `maxLength`, `email`, `url`, `alphanumeric`, `min`, `max`, `integer`, `positive`, `oneOf`, `items`, and more
+  - `Schema.define()` for validating full dictionaries — collects all errors at once
+  - `ValidationResult` with `.valid`, `.errors`, `.hasError()`, `.getError()`, `.summary()`
+  - `Validate` class with standalone helpers: `isEmail`, `isURL`, `isNotEmpty`, `isInteger`, `isInRange`, `isOneOf`, `isAlphanumeric`, and more
+  - Full test suite in `tests/test_validation.prox`
+  - API documentation in `docs/stdlib/validation.md`
+  - Contributed by Astitva Bhardwaj (@bastitva0-blip)
+
 ## [1.3.3] - 2026-04-26
 
 ### Fixed

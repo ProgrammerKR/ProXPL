@@ -126,6 +126,29 @@ let slug = TextUtils.slugify("Hello World!");   // "hello-world"
 let truncated = TextUtils.truncate("Long text...", 10, "...");
 ```
 
+#### `validation.prox` - Schema & Data Validation
+Schema-based validation with chainable rules and structured error reporting:
+- **Validator**: `string()`, `number()`, `bool()`, `list()`, `any()` — typed rule builders
+- **StringValidator**: required, minLength, maxLength, length, pattern, email, url, alphanumeric, noWhitespace, oneOf
+- **NumberValidator**: required, min, max, between, integer, positive, negative, oneOf
+- **BoolValidator**: required, isTrue, isFalse
+- **ListValidator**: required, minItems, maxItems, items (per-item validation with index errors)
+- **Schema**: define schemas, validate dictionaries, collect all errors at once
+- **ValidationResult**: valid, errors, errorCount, hasError, getError, summary
+- **Validate**: standalone helpers — isEmail, isURL, isNotEmpty, isInteger, isPositive, isInRange, isOneOf, matchesLength, isAlphanumeric
+
+```prox
+let schema = Schema.define({
+    name:  Validator.string().minLength(2).required(),
+    age:   Validator.number().min(0).max(120).integer().required(),
+    email: Validator.string().email().required()
+});
+
+let result = schema.validate({ name: "Alice", age: 25, email: "a@b.com" });
+print(result.valid);    // true
+print(bad.summary());   // lists all errors at once
+```
+
 ### Existing Libraries
 
 #### `io.prox` - Input/Output
