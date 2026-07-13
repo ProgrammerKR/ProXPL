@@ -358,8 +358,9 @@ static PxTokenType identifierType(Scanner *scanner) {
       switch (scanner->start[1]) {
       case 'f': return checkKeyword(scanner, 2, 0, "", TOKEN_IF);
       case 'm':
-        if (scanner->current - scanner->start > 2 && scanner->start[2] == 'l')
-            return checkKeyword(scanner, 4, 7, "ements", TOKEN_IMPLEMENTS);
+        if (scanner->current - scanner->start > 3 &&
+            scanner->start[2] == 'p' && scanner->start[3] == 'l')
+            return checkKeyword(scanner, 4, 6, "ements", TOKEN_IMPLEMENTS);
         break;
       case 'n':
         if (scanner->current - scanner->start > 2) {
@@ -744,4 +745,3 @@ Token scanToken(Scanner *scanner) {
 
   return errorToken(scanner, "Unexpected character.");
 }
-
