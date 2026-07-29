@@ -71,7 +71,6 @@ jobs:
           Write-Host "LLVM_ROOT is: $env:LLVM_ROOT"
           Write-Host "CMAKE_PREFIX_PATH is: $env:CMAKE_PREFIX_PATH"
           cmake -S . -B build `
-             -G "Visual Studio 17 2022" -A x64 `
              -DLLVM_DIR="$env:LLVM_DIR" `
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT" `
              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
@@ -93,6 +92,9 @@ jobs:
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             EXE_PATH="build/Release/proxpl.exe"
+            if [ ! -f "$EXE_PATH" ]; then
+              EXE_PATH="build/proxpl.exe"
+            fi
           else
             EXE_PATH="build/proxpl"
           fi
@@ -106,11 +108,10 @@ jobs:
         run: |
           choco install innosetup -y
           New-Item -ItemType Directory -Force -Path bin
-          # Visual Studio puts Release binaries in build/Release/
-          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
-          Copy-Item "build/Release/prm.exe" -Destination "bin/"
-          # Copy any DLLs produced by the build (e.g. LLVM shared libs)
-          Get-ChildItem "build/Release/*.dll" -ErrorAction SilentlyContinue | Copy-Item -Destination "bin/"
+          $binDir = if (Test-Path "build/Release/proxpl.exe") { "build/Release" } else { "build" }
+          Copy-Item "$binDir/proxpl.exe" -Destination "bin/"
+          Copy-Item "$binDir/prm.exe" -Destination "bin/"
+          Get-ChildItem "$binDir/*.dll" -ErrorAction SilentlyContinue | Copy-Item -Destination "bin/"
           iscc setup.iss
 
       - name: Upload Artifact

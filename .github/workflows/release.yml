@@ -62,7 +62,6 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build `
-             -G "Visual Studio 17 2022" -A x64 `
              -DCMAKE_BUILD_TYPE=Release `
              -DLLVM_DIR="$env:LLVM_DIR" `
              -DCMAKE_PREFIX_PATH="$env:LLVM_ROOT"
@@ -74,13 +73,22 @@ jobs:
       - name: Verify Build (Check Binary Exists)
         shell: bash
         run: |
-          if [ -f "${{ matrix.binary_path }}" ]; then
-            echo "Binary found at ${{ matrix.binary_path }}"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            if [ -f "build/Release/proxpl.exe" ] || [ -f "build/proxpl.exe" ]; then
+              echo "Windows binary found"
+            else
+              echo "Windows binary NOT found"
+              ls -R build
+              exit 1
+            fi
           else
-            echo "Binary NOT found at ${{ matrix.binary_path }}"
-            # List directory for debugging
-            ls -R build
-            exit 1
+            if [ -f "${{ matrix.binary_path }}" ]; then
+              echo "Binary found at ${{ matrix.binary_path }}"
+            else
+              echo "Binary NOT found at ${{ matrix.binary_path }}"
+              ls -R build
+              exit 1
+            fi
           fi
 
       - name: Build Installer (Windows)
@@ -89,10 +97,11 @@ jobs:
         run: |
           choco install innosetup -y
           New-Item -ItemType Directory -Force -Path bin
-          Copy-Item "build/Release/proxpl.exe" -Destination "bin/"
-          Copy-Item "build/Release/prm.exe" -Destination "bin/"
-          if (Test-Path "build/Release/proxpl_lib.dll") {
-            Copy-Item "build/Release/proxpl_lib.dll" -Destination "bin/"
+          $binDir = if (Test-Path "build/Release/proxpl.exe") { "build/Release" } else { "build" }
+          Copy-Item "$binDir/proxpl.exe" -Destination "bin/"
+          Copy-Item "$binDir/prm.exe" -Destination "bin/"
+          if (Test-Path "$binDir/proxpl_lib.dll") {
+            Copy-Item "$binDir/proxpl_lib.dll" -Destination "bin/"
           }
           ISCC setup.iss
           Get-ChildItem -Path build
@@ -101,7 +110,11 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-             cp "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
+             if [ -f "build/Release/proxpl.exe" ]; then
+               cp "build/Release/proxpl.exe" ${{ matrix.asset_name }}
+             else
+               cp "build/proxpl.exe" ${{ matrix.asset_name }}
+             fi
           else
              mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
           fi
