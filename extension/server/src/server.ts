@@ -7,7 +7,6 @@ import {
 	CompletionItem,
 	CompletionItemKind,
 	TextDocumentPositionParams,
-	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
 	Location
@@ -173,7 +172,7 @@ connection.onDefinition(
 				params.textDocument.uri,
 				{
 					start: document.positionAt(defMatch.index),
-					end: document.positionAt(defMatch.index + match[0].length + 5)
+					end: document.positionAt(defMatch.index + defMatch[0].length)
 				}
 			);
 		}
@@ -183,7 +182,7 @@ connection.onDefinition(
 				params.textDocument.uri,
 				{
 					start: document.positionAt(defMatch.index),
-					end: document.positionAt(defMatch.index + match[0].length + 6)
+					end: document.positionAt(defMatch.index + defMatch[0].length)
 				}
 			);
 		}

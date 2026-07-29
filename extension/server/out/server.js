@@ -25,7 +25,8 @@ connection.onInitialize((params) => {
             // Tell the client that this server supports code completion.
             completionProvider: {
                 resolveProvider: true
-            }
+            },
+            definitionProvider: true
         }
     };
     if (hasWorkspaceFolderCapability) {
@@ -97,6 +98,46 @@ connection.onCompletionResolve((item) => {
         item.documentation = 'A built-in function or type.';
     }
     return item;
+});
+connection.onDefinition((params) => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document)
+        return null;
+    const position = params.position;
+    const offset = document.offsetAt(position);
+    const text = document.getText();
+    // Simple word extraction
+    const wordRegex = /[a-zA-Z0-9_]+/g;
+    let match;
+    let word = "";
+    while ((match = wordRegex.exec(text)) !== null) {
+        if (offset >= match.index && offset <= match.index + match[0].length) {
+            word = match[0];
+            break;
+        }
+    }
+    if (!word)
+        return null;
+    // Regex to find definition
+    // func <word> or class <word>
+    const funcRegex = new RegExp(`func\\s+${word}\\s*\\(`, 'g');
+    const classRegex = new RegExp(`class\\s+${word}\\s*\\{`, 'g');
+    let defMatch;
+    // Check functions
+    while ((defMatch = funcRegex.exec(text)) !== null) {
+        return node_1.Location.create(params.textDocument.uri, {
+            start: document.positionAt(defMatch.index),
+            end: document.positionAt(defMatch.index + defMatch[0].length)
+        });
+    }
+    // Check classes
+    while ((defMatch = classRegex.exec(text)) !== null) {
+        return node_1.Location.create(params.textDocument.uri, {
+            start: document.positionAt(defMatch.index),
+            end: document.positionAt(defMatch.index + defMatch[0].length)
+        });
+    }
+    return null;
 });
 // Make the text document manager listen on the connection
 // for open, change and close text document events

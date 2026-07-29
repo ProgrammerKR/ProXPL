@@ -66,7 +66,7 @@ function activate(context) {
     client = new node_1.LanguageClient('proxplLanguageServer', 'ProXPL Language Server', serverOptions, clientOptions);
     client.start();
     // 1. Code Runner Command
-    let runCommand = vscode.commands.registerCommand('proxpl.run', () => {
+    const runCommand = vscode.commands.registerCommand('proxpl.run', () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
