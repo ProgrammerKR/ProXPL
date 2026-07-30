@@ -1133,7 +1133,11 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           return INTERPRET_RUNTIME_ERROR;
       }
       double a = AS_NUMBER(*(--stackTop));
-      PUSH(NUMBER_VAL(fmod(a, b)));
+      if (a == (int64_t)a && b == (int64_t)b) {
+          PUSH(NUMBER_VAL((double)((int64_t)a % (int64_t)b)));
+      } else {
+          PUSH(NUMBER_VAL(fmod(a, b)));
+      }
       DISPATCH();
   }
   
