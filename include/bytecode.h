@@ -94,12 +94,25 @@ typedef enum {
   OP_HALT = 0xFF
 } OpCode;
 
+typedef struct {
+    size_t start_ip;
+    size_t end_ip;
+    size_t handler_ip;
+} ExceptionHandler;
+
+typedef struct {
+    ExceptionHandler *handlers;
+    int count;
+    int capacity;
+} ExceptionHandlerTable;
+
 struct Chunk {
   int count;
   int capacity;
   uint8_t *code;
   int *lines;
   ValueArray constants;
+  ExceptionHandlerTable exceptionHandlers;
 };
 
 void initChunk(Chunk *chunk);
@@ -107,6 +120,7 @@ void freeChunk(Chunk *chunk);
 void writeChunk(Chunk *chunk, uint8_t byte, int line);
 int addConstant(Chunk *chunk, Value value);
 Value consttable_get(const Chunk *chunk, size_t idx);
+void addExceptionHandler(Chunk *chunk, size_t start, size_t end, size_t handler);
 
 // File serialization
 int write_chunk_to_file(const char *path, const Chunk *chunk);
