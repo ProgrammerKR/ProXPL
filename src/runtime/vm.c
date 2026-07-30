@@ -786,9 +786,28 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       } else if (IS_NUMBER(stackTop[-1]) && IS_STRING(stackTop[-2])) {
           STORE_FRAME();
           Value numVal = stackTop[-1];
-          char buffer[32];
-          snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
-          PUSH(OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          char buffer[64];
+          double num = AS_NUMBER(numVal);
+          if (num == (int64_t)num) {
+              int64_t n = (int64_t)num;
+              char* ptr = buffer + sizeof(buffer) - 1;
+              *ptr = '\0';
+              bool isNeg = n < 0;
+              if (isNeg) n = -n;
+              if (n == 0) {
+                  *--ptr = '0';
+              } else {
+                  while (n > 0) {
+                      *--ptr = '0' + (n % 10);
+                      n /= 10;
+                  }
+                  if (isNeg) *--ptr = '-';
+              }
+              PUSH(OBJ_VAL(copyString(ptr, (int)(buffer + sizeof(buffer) - 1 - ptr))));
+          } else {
+              snprintf(buffer, sizeof(buffer), "%.14g", num);
+              PUSH(OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
+          }
           stackTop[-2] = stackTop[-1];
           stackTop--;
           STORE_FRAME();
@@ -797,9 +816,29 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       } else if (IS_STRING(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
           STORE_FRAME();
           Value numVal = stackTop[-2];
-          char buffer[32];
-          snprintf(buffer, sizeof(buffer), "%.14g", AS_NUMBER(numVal));
-          Value newA = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+          char buffer[64];
+          double num = AS_NUMBER(numVal);
+          Value newA;
+          if (num == (int64_t)num) {
+              int64_t n = (int64_t)num;
+              char* ptr = buffer + sizeof(buffer) - 1;
+              *ptr = '\0';
+              bool isNeg = n < 0;
+              if (isNeg) n = -n;
+              if (n == 0) {
+                  *--ptr = '0';
+              } else {
+                  while (n > 0) {
+                      *--ptr = '0' + (n % 10);
+                      n /= 10;
+                  }
+                  if (isNeg) *--ptr = '-';
+              }
+              newA = OBJ_VAL(copyString(ptr, (int)(buffer + sizeof(buffer) - 1 - ptr)));
+          } else {
+              snprintf(buffer, sizeof(buffer), "%.14g", num);
+              newA = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+          }
           PUSH(newA);
           stackTop[-3] = stackTop[-1];
           stackTop--;
@@ -1133,11 +1172,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           return INTERPRET_RUNTIME_ERROR;
       }
       double a = AS_NUMBER(*(--stackTop));
-      if (a == (int64_t)a && b == (int64_t)b) {
-          PUSH(NUMBER_VAL((double)((int64_t)a % (int64_t)b)));
-      } else {
-          PUSH(NUMBER_VAL(fmod(a, b)));
-      }
+      PUSH(NUMBER_VAL(fmod(a, b)));
       DISPATCH();
   }
   

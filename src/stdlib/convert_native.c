@@ -62,7 +62,26 @@ static Value native_to_string(int argCount, Value* args) {
     char buffer[256];
     
     if (IS_NUMBER(args[0])) {
-        snprintf(buffer, sizeof(buffer), "%.15g", AS_NUMBER(args[0]));
+        double num = AS_NUMBER(args[0]);
+        if (num == (int64_t)num) {
+            int64_t n = (int64_t)num;
+            char* ptr = buffer + sizeof(buffer) - 1;
+            *ptr = '\0';
+            bool isNeg = n < 0;
+            if (isNeg) n = -n;
+            if (n == 0) {
+                *--ptr = '0';
+            } else {
+                while (n > 0) {
+                    *--ptr = '0' + (n % 10);
+                    n /= 10;
+                }
+                if (isNeg) *--ptr = '-';
+            }
+            return OBJ_VAL(copyString(ptr, (int)(buffer + sizeof(buffer) - 1 - ptr)));
+        } else {
+            snprintf(buffer, sizeof(buffer), "%.15g", num);
+        }
     } else if (IS_BOOL(args[0])) {
         snprintf(buffer, sizeof(buffer), "%s", AS_BOOL(args[0]) ? "true" : "false");
     } else if (IS_NIL(args[0])) { 
