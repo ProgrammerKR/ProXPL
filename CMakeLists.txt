@@ -171,6 +171,20 @@ endif()
 # Export symbols for Windows DLL
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+# --- Mimalloc Configuration ---
+include(FetchContent)
+FetchContent_Declare(
+  mimalloc
+  GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+  GIT_TAG        v2.1.2
+)
+set(MI_BUILD_TESTS OFF CACHE INTERNAL "")
+set(MI_BUILD_SHARED OFF CACHE INTERNAL "")
+set(MI_BUILD_STATIC ON CACHE INTERNAL "")
+set(MI_BUILD_OBJECT OFF CACHE INTERNAL "")
+set(MI_OVERRIDE OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(mimalloc)
+
 # --- Include Directories ---
 include_directories(include)
 include_directories(src)
@@ -213,7 +227,7 @@ if (LIBFFI_FOUND)
 endif()
 
 # Link mimalloc
-target_link_libraries(prox_core PUBLIC mimalloc)
+target_link_libraries(prox_core PUBLIC mimalloc-static)
 
 # Aggressive optimizations for GCC/Clang in Release mode
 if(NOT MSVC)
