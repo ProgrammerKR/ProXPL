@@ -52,6 +52,9 @@ static bool is_in_nursery(void* ptr) {
 }
 
 static void* nursery_alloc(size_t size) {
+    // Align size to 16 bytes for safe SIMD/AVX and pointer alignment
+    size = (size + 15) & ~15;
+    
     if (nursery.current + size > nursery.end) {
         return NULL; // Nursery full
     }

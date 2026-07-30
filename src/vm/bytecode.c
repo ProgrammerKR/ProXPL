@@ -260,7 +260,7 @@ int read_chunk_from_file(const char *path, Chunk *out) {
     uint32_t code_len = read_u32_le(f);
     chunk_init(out);
     if (code_len) {
-        out->code = malloc(code_len);
+        out->code = ALLOCATE(uint8_t, code_len);
         if (!out->code) { fclose(f); return -1; }
         if (fread(out->code,1,code_len,f) != code_len) { fclose(f); return -1; }
         out->count = code_len;
@@ -307,9 +307,9 @@ int read_chunk_from_file(const char *path, Chunk *out) {
                 if (!(byte & 0x80)) break;
                 shift += 7;
             }
-            char *chars = malloc((size_t)len + 1);
+            char *chars = ALLOCATE(char, (size_t)len + 1);
             if (len) {
-                if (fread(chars,1,len,f) != len) { free(chars); fclose(f); return -1; }
+                if (fread(chars,1,len,f) != len) { FREE_ARRAY(char, chars, (size_t)len + 1); fclose(f); return -1; }
             }
             chars[len] = '\0';
             v = OBJ_VAL(takeString(chars, (int)len));
