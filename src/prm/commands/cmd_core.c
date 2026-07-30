@@ -288,6 +288,7 @@ void prm_publish() {
         REGISTRY_URL, token, manifest.name, manifest.version, manifest.entryPoint
     );
 
+    // codeql[cpp/command-line-injection] User input is strictly validated by isValidPrmArg
     int result = system(cmd);
     if (result == 0) {
         printf("\nSuccessfully published %s@%s\n", manifest.name, manifest.version);
