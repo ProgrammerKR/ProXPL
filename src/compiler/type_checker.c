@@ -440,6 +440,14 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
             break;
         }
 
+        case EXPR_UNWRAP: {
+            TypeInfo val = checkExpr(checker, expr->as.unwrap.expression);
+            // Result of unwrap is unknown (since we don't have generics in type checker)
+            result = createType(TYPE_UNKNOWN);
+            result.isTainted = val.isTainted;
+            break;
+        }
+
         case EXPR_LIST: {
              // Preserve existing type info if set (e.g. Tensor tag from Parser)
              if (expr->inferredType.name && strncmp(expr->inferredType.name, "__TENSOR__", 10) == 0) {
@@ -567,6 +575,32 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
                 for (int i=0; i < methods->count; i++) {
                      checkStmt(checker, methods->items[i]);
                 }
+            }
+            break;
+        }
+
+        case STMT_TRAIT_DECL: {
+            TypeInfo traitType = createType(TYPE_INTERFACE); // Treat Trait as Interface for now
+            if (stmt->as.trait_decl.name) {
+                traitType.name = strdup(stmt->as.trait_decl.name);
+                defineSymbol(checker, stmt->as.trait_decl.name, traitType);
+            }
+            
+            StmtList* methods = stmt->as.trait_decl.methods;
+            if (methods) {
+                for (int i=0; i < methods->count; i++) {
+                     checkStmt(checker, methods->items[i]);
+                }
+            }
+            break;
+        }
+
+        case STMT_TYPE_ALIAS: {
+            // Register type alias in the symbol table as the target type
+            TypeInfo targetType = stmt->as.type_alias.targetType;
+            if (stmt->as.type_alias.name) {
+                // Note: a more advanced type checker would resolve targetType here.
+                defineSymbol(checker, stmt->as.type_alias.name, targetType);
             }
             break;
         }

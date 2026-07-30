@@ -18,6 +18,8 @@ static Stmt *statement(Parser *p);
 static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition);
 static Stmt *classDecl(Parser *p);
 static Stmt *interfaceDecl(Parser *p);
+static Stmt *traitDecl(Parser *p);
+static Stmt *typeAliasDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
 static Stmt *intentDecl(Parser *p);
 static Stmt *resolverDecl(Parser *p);
@@ -75,6 +77,7 @@ static Expr *primary(Parser *p);
 // Helper functions
 static bool isAtEnd(Parser *p);
 static Token peek(Parser *p);
+static Token peekNext(Parser *p);
 static Token previous(Parser *p);
 static Token advance(Parser *p);
 static bool check(Parser *p, PxTokenType type);
@@ -169,6 +172,11 @@ static void synchronize(Parser *p) {
 static bool isAtEnd(Parser *p) { return peek(p).type == TOKEN_EOF; }
 
 static Token peek(Parser *p) { return p->tokens[p->current]; }
+
+static Token peekNext(Parser *p) {
+    if (isAtEnd(p)) return p->tokens[p->current];
+    return p->tokens[p->current + 1];
+}
 
 static Token previous(Parser *p) { return p->tokens[p->current - 1]; }
 
@@ -384,10 +392,14 @@ static Stmt *declaration(Parser *p) {
     return externDecl(p);
   if (match(p, 1, TOKEN_INTERFACE))
     return interfaceDecl(p);
+  if (match(p, 1, TOKEN_TRAIT))
+    return traitDecl(p);
   if (match(p, 1, TOKEN_USE))
     return useDecl(p);
   if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR))
     return varDecl(p);
+  if (match(p, 1, TOKEN_TYPE))
+    return typeAliasDecl(p);
   if (match(p, 1, TOKEN_INTENT))
     return intentDecl(p);
   if (match(p, 1, TOKEN_RESOLVER))
@@ -542,6 +554,53 @@ static Stmt *interfaceDecl(Parser *p) {
     consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
     
     Stmt *stmt = createInterfaceDeclStmt(name, methods, nameToken.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *traitDecl(Parser *p) {
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect trait name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    
+    StmtList *methods = createStmtList();
+    while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+        bool isAsync = false;
+        if (match(p, 1, TOKEN_ASYNC)) isAsync = true;
+        
+        // Traits can have default implementations, so we don't force isAbstract
+        // We can look ahead to see if there's a '{' or ';' after parameters
+        // For now we'll just parse it as a normal method and if it lacks a body we'll treat it as abstract.
+        // `funcDecl` handles missing bodies when `isAbstract` is true, but since we don't know yet,
+        // wait, funcDecl requires `isAbstract=true` to allow a missing body. Let's just pass `true` for isAbstract
+        // and if a body exists, it'll still parse. Actually `funcDecl` logic:
+        // if (isAbstract && match(TOKEN_SEMICOLON)) { ... } else { consume(TOKEN_LEFT_BRACE); body = block(); }
+        // So passing `true` for isAbstract perfectly allows BOTH abstract and concrete methods!
+        Stmt *method = funcDecl(p, "method", isAsync, ACCESS_PUBLIC, false, true, NULL);
+        appendStmt(methods, method);
+    }
+    
+    consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
+    
+    Stmt *stmt = createTraitDeclStmt(name, methods, nameToken.line, 0);
+    free(name);
+    return stmt;
+}
+
+static Stmt *typeAliasDecl(Parser *p) {
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect type alias name.");
+    char *name = tokenToString(nameToken);
+
+    consume(p, TOKEN_EQUAL, "Expect '=' after type alias name.");
+
+    // Simple type parsing for now
+    Token targetToken = consume(p, TOKEN_IDENTIFIER, "Expect target type name.");
+    TypeInfo targetType = {TYPE_UNKNOWN, tokenToString(targetToken), NULL, NULL, 0, false};
+
+    consume(p, TOKEN_SEMICOLON, "Expect ';' after type alias declaration.");
+
+    Stmt *stmt = createTypeAliasDeclStmt(name, targetType, nameToken.line, 0);
     free(name);
     return stmt;
 }
@@ -1185,6 +1244,47 @@ static Expr *call(Parser *p) {
       Expr *index = expression(p);
       consume(p, TOKEN_RIGHT_BRACKET, "Expect ']'.");
       expr = createIndexExpr(expr, index, previous(p).line, 0);
+    } else if (check(p, TOKEN_QUESTION)) {
+      Token next = peekNext(p);
+      bool isUnwrap = false;
+      switch (next.type) {
+          case TOKEN_SEMICOLON:
+          case TOKEN_RIGHT_PAREN:
+          case TOKEN_RIGHT_BRACE:
+          case TOKEN_RIGHT_BRACKET:
+          case TOKEN_COMMA:
+          case TOKEN_DOT:
+          case TOKEN_PLUS:
+          case TOKEN_MINUS:
+          case TOKEN_STAR:
+          case TOKEN_SLASH:
+          case TOKEN_PERCENT:
+          case TOKEN_EQUAL_EQUAL:
+          case TOKEN_BANG_EQUAL:
+          case TOKEN_GREATER:
+          case TOKEN_GREATER_EQUAL:
+          case TOKEN_LESS:
+          case TOKEN_LESS_EQUAL:
+          case TOKEN_PIPE:
+          case TOKEN_PIPE_PIPE:
+          case TOKEN_AMPERSAND:
+          case TOKEN_AMPERSAND_AMPERSAND:
+          case TOKEN_CARET:
+          case TOKEN_QUESTION_DOT:
+          case TOKEN_QUESTION_QUESTION:
+          case TOKEN_EOF:
+              isUnwrap = true;
+              break;
+          default:
+              isUnwrap = false;
+      }
+      
+      if (isUnwrap) {
+          advance(p);
+          expr = createUnwrapExpr(expr, previous(p).line, 0);
+      } else {
+          break;
+      }
     } else {
       break;
     }

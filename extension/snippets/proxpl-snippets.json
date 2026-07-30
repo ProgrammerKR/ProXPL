@@ -138,5 +138,32 @@
             "print(${2:result});"
         ],
         "description": "Standard Tensor Math operations"
+    },
+    "Type Alias": {
+        "prefix": "type",
+        "body": [
+            "type ${1:AliasName} = ${2:OriginalType};"
+        ],
+        "description": "Create a type alias"
+    },
+    "Result Match": {
+        "prefix": "matchresult",
+        "body": [
+            "match (${1:result}) {",
+            "\tcase Result.Ok(val) => ${2:print(val)};",
+            "\tcase Result.Err(err) => ${3:print(err)};",
+            "}"
+        ],
+        "description": "Match a Result enum"
+    },
+    "Option Match": {
+        "prefix": "matchoption",
+        "body": [
+            "match (${1:option}) {",
+            "\tcase Option.Some(val) => ${2:print(val)};",
+            "\tcase Option.None => ${3:print(\"none\")};",
+            "}"
+        ],
+        "description": "Match an Option enum"
     }
 }

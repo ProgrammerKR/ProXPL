@@ -371,6 +371,15 @@ Expr *createCryptoExpr(Expr *val, bool isEncrypt, int line, int column) {
   return expr;
 }
 
+Expr *createUnwrapExpr(Expr *expression, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_UNWRAP;
+  expr->line = line;
+  expr->column = column;
+  expr->as.unwrap.expression = expression;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -850,6 +859,9 @@ void freeExpr(Expr *expr) {
     break;
   case EXPR_CRYPTO:
     freeExpr(expr->as.crypto.value);
+    break;
+  case EXPR_UNWRAP:
+    freeExpr(expr->as.unwrap.expression);
     break;
   }
 

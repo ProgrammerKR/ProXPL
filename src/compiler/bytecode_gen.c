@@ -467,6 +467,11 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
              gen->chunk->code[endJump+1] = patchEnd & 0xff;
              break;
         }
+        case EXPR_UNWRAP: {
+             genExpr(gen, expr->as.unwrap.expression);
+             writeChunk(gen->chunk, OP_UNWRAP, expr->line);
+             break;
+        }
         case EXPR_LAMBDA: {
             Compiler funcCompiler;
             initCompiler(gen, &funcCompiler, COMP_FUNCTION);

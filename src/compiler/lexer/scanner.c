@@ -574,12 +574,26 @@ static PxTokenType identifierType(Scanner *scanner) {
         if (scanner->current - scanner->start > 2) {
           switch (scanner->start[2]) {
           case 'u': return checkKeyword(scanner, 3, 1, "e", TOKEN_TRUE);
-          case 'a': return checkKeyword(scanner, 3, 2, "in", TOKEN_TRAIN);
+          case 'a':
+              if (scanner->current - scanner->start > 3 && scanner->start[3] == 'i') {
+                  if (scanner->current - scanner->start > 4) {
+                      if (scanner->start[4] == 'n') return checkKeyword(scanner, 5, 0, "", TOKEN_TRAIN);
+                      if (scanner->start[4] == 't') return checkKeyword(scanner, 5, 0, "", TOKEN_TRAIT);
+                  }
+              }
+              break;
           case 'y': return checkKeyword(scanner, 3, 0, "", TOKEN_TRY);
           }
         }
         break;
-      case 'y': return checkKeyword(scanner, 2, 4, "peof", TOKEN_TYPEOF);
+      case 'y':
+          if (scanner->current - scanner->start > 2 && scanner->start[2] == 'p') {
+              if (scanner->current - scanner->start > 3 && scanner->start[3] == 'e') {
+                  if (scanner->current - scanner->start == 4) return TOKEN_TYPE;
+                  return checkKeyword(scanner, 4, 2, "of", TOKEN_TYPEOF);
+              }
+          }
+          break;
       }
     }
     break;

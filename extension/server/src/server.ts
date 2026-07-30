@@ -94,11 +94,16 @@ connection.onCompletion(
 		// info and always provide the same completion items.
 
 		const keywords = [
-			'func', 'class', 'if', 'else', 'while', 'for', 'return', 'print',
-			'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export',
-			'prox', 'loop', 'from', 'as', 'try', 'catch', 'throw', 'async', 'await'
+			'func', 'class', 'struct', 'interface', 'enum', 'if', 'else', 'while', 'for', 'return', 'break', 'continue',
+			'switch', 'case', 'default', 'print', 'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export', 'import',
+			'prox', 'loop', 'from', 'as', 'try', 'catch', 'finally', 'throw', 'async', 'await', 'defer',
+			'resilient', 'recovery', 'verify', 'identity', 'train', 'predict',
+			'context', 'layer', 'App', 'State', 'Action', 'tensor', 'intent', 'resolver', 'model', 'type', 'trait'
 		];
-		const builtins = ['len', 'str', 'clock', 'input', 'type'];
+		const builtins = [
+			'len', 'str', 'clock', 'input', 'void', 'int', 'float', 'string', 'bool', 'any',
+			'List', 'Dict', 'Set', 'Result', 'Option'
+		];
 
 		const items: CompletionItem[] = [];
 

@@ -164,6 +164,8 @@ typedef enum {
   TOKEN_VAR,
   TOKEN_LAYER,
   TOKEN_ACTIVATE,
+  TOKEN_TYPE,
+  TOKEN_TRAIT,
 
   // UI/Frontend Keywords
   TOKEN_UI_APP,

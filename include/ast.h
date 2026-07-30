@@ -42,7 +42,8 @@ typedef enum {
 
   EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW,
   EXPR_SANITIZE,
-  EXPR_CRYPTO // Encrypt/Decrypt
+  EXPR_CRYPTO, // Encrypt/Decrypt
+  EXPR_UNWRAP
 } ExprType;
 
 typedef enum {
@@ -73,7 +74,10 @@ typedef enum {
   STMT_UI_WINDOW,
   STMT_UI_COMPONENT,
   STMT_UI_STATE,
-  STMT_UI_ACTION
+  STMT_UI_ACTION,
+
+  STMT_TYPE_ALIAS,
+  STMT_TRAIT_DECL
 } StmtType;
 
 // --- List Structures ---
@@ -140,6 +144,7 @@ typedef struct { Expr *expression; } AwaitExpr;
 typedef struct { int dummy; } ThisExpr;
 typedef struct { char *method; } SuperExpr; 
 typedef struct { Expr *clazz; ExprList *args; } NewExpr;
+typedef struct { Expr *expression; } UnwrapExpr;
 
 struct Expr {
   ExprType type;
@@ -158,6 +163,7 @@ struct Expr {
     IndexExpr index; SetIndexExpr set_index; ListExpr list; DictionaryExpr dictionary;
     TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
     ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
+    UnwrapExpr unwrap;
   } as;
 };
 
@@ -206,6 +212,9 @@ typedef struct { char *tag; DictPairList *props; StmtList *children; } UICompone
 typedef struct { char *name; Expr *initializer; } UIStateStmt;
 typedef struct { char *name; StmtList *body; } UIActionStmt;
 
+typedef struct { char *name; TypeInfo targetType; } TypeAliasDeclStmt;
+typedef struct { char *name; StmtList *methods; } TraitDeclStmt;
+
 struct Stmt {
   StmtType type;
   int line;
@@ -239,6 +248,8 @@ struct Stmt {
     UIComponentStmt ui_component;
     UIStateStmt ui_state;
     UIActionStmt ui_action;
+    TypeAliasDeclStmt type_alias;
+    TraitDeclStmt trait_decl;
   } as;
 };
 
@@ -265,6 +276,7 @@ Expr *createSuperExpr(const char *method, int line, int column);
 Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column);
 Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
 Expr *createCryptoExpr(Expr *val, bool isEncrypt, int line, int column);
+Expr *createUnwrapExpr(Expr *expression, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemporal, int ttl, int line, int column);
@@ -305,6 +317,9 @@ Stmt *createUIWindowStmt(const char *name, StmtList *body, int line, int column)
 Stmt *createUIComponentStmt(const char *tag, DictPairList *props, StmtList *children, int line, int column);
 Stmt *createUIStateStmt(const char *name, Expr *initializer, int line, int column);
 Stmt *createUIActionStmt(const char *name, StmtList *body, int line, int column);
+
+Stmt *createTypeAliasDeclStmt(const char *name, TypeInfo targetType, int line, int column);
+Stmt *createTraitDeclStmt(const char *name, StmtList *methods, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);

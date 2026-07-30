@@ -1,0 +1,45 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2026-07-30
+// --------------------------------------------------
+
+class Result {
+    let isOk;
+    let value;
+    let error;
+
+    static func Ok(val) {
+        let res = new Result();
+        res.isOk = true;
+        res.value = val;
+        res.error = null;
+        return res;
+    }
+
+    static func Err(err) {
+        let res = new Result();
+        res.isOk = false;
+        res.value = null;
+        res.error = err;
+        return res;
+    }
+
+    func unwrap() {
+        if (!this.isOk) {
+            throw this.error;
+        }
+        return this.value;
+    }
+
+    func unwrapOr(defaultVal) {
+        if (!this.isOk) {
+            return defaultVal;
+        }
+        return this.value;
+    }
+
+    func isError() {
+        return !this.isOk;
+    }
+}

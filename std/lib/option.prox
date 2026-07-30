@@ -1,0 +1,46 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Author:  ProgrammerKR
+//   Created: 2026-07-30
+// --------------------------------------------------
+
+class Option {
+    let hasValue;
+    let value;
+
+    static func Some(val) {
+        let opt = new Option();
+        opt.hasValue = true;
+        opt.value = val;
+        return opt;
+    }
+
+    static func None() {
+        let opt = new Option();
+        opt.hasValue = false;
+        opt.value = null;
+        return opt;
+    }
+
+    func unwrap() {
+        if (!this.hasValue) {
+            throw "Called unwrap on a None Option";
+        }
+        return this.value;
+    }
+
+    func unwrapOr(defaultVal) {
+        if (!this.hasValue) {
+            return defaultVal;
+        }
+        return this.value;
+    }
+
+    func isNone() {
+        return !this.hasValue;
+    }
+
+    func isSome() {
+        return this.hasValue;
+    }
+}

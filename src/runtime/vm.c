@@ -417,6 +417,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       [OP_RIGHT_SHIFT] = &&DO_OP_RIGHT_SHIFT,
       [OP_MAT_MUL] = &&DO_OP_MAT_MUL,
       [OP_MAKE_TENSOR] = &&DO_OP_MAKE_TENSOR,
+      [OP_UNWRAP] = &&DO_OP_UNWRAP,
       [OP_CONTEXT] = &&DO_OP_CONTEXT,
       [OP_LAYER] = &&DO_OP_LAYER,
       [OP_ACTIVATE] = &&DO_OP_ACTIVATE,
@@ -1378,6 +1379,46 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           memset(tensor->data, 0, totalSize * sizeof(double));
       }
       DISPATCH();
+  }
+
+  CASE_OP(OP_UNWRAP) {
+      Value val = PEEK(0);
+      if (IS_INSTANCE(val)) {
+          ObjInstance* instance = AS_INSTANCE(val);
+          Value isOkVal;
+          ObjString* isOkStr = copyString("isOk", 4);
+          if (tableGet(&instance->fields, OBJ_VAL(isOkStr), &isOkVal)) {
+              if (IS_BOOL(isOkVal) && !AS_BOOL(isOkVal)) {
+                  closeUpvalues(pvm, frame->slots);
+                  goto DO_OP_RETURN;
+              } else {
+                  Value okVal;
+                  ObjString* valStr = copyString("value", 5);
+                  tableGet(&instance->fields, OBJ_VAL(valStr), &okVal);
+                  *(--stackTop); // POP
+                  PUSH(okVal);
+                  DISPATCH();
+              }
+          }
+          
+          Value hasValueVal;
+          ObjString* hasValueStr = copyString("hasValue", 8);
+          if (tableGet(&instance->fields, OBJ_VAL(hasValueStr), &hasValueVal)) {
+              if (IS_BOOL(hasValueVal) && !AS_BOOL(hasValueVal)) {
+                  closeUpvalues(pvm, frame->slots);
+                  goto DO_OP_RETURN;
+              } else {
+                  Value someVal;
+                  ObjString* valStr = copyString("value", 5);
+                  tableGet(&instance->fields, OBJ_VAL(valStr), &someVal);
+                  *(--stackTop); // POP
+                  PUSH(someVal);
+                  DISPATCH();
+              }
+          }
+      }
+      runtimeError(pvm, "Attempted to use '?' operator on a value that is neither Result nor Option.");
+      return INTERPRET_RUNTIME_ERROR;
   }
   
   CASE_OP(OP_CONTEXT) {
