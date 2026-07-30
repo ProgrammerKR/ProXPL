@@ -5,6 +5,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/IR/Intrinsics.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/raw_ostream.h>
 #include <vector>
 #include <map>
@@ -122,6 +123,23 @@ public:
         for (int i = 0; i < module->funcCount; i++) {
             emitFunction(module->functions[i]);
         }
+
+        // Add Optimization passes
+        llvm::LoopAnalysisManager LAM;
+        llvm::FunctionAnalysisManager FAM;
+        llvm::CGSCCAnalysisManager CGAM;
+        llvm::ModuleAnalysisManager MAM;
+        
+        llvm::PassBuilder PB;
+        PB.registerModuleAnalyses(MAM);
+        PB.registerCGSCCAnalyses(CGAM);
+        PB.registerFunctionAnalyses(FAM);
+        PB.registerLoopAnalyses(LAM);
+        PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+        
+        llvm::ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+        MPM.run(*ModuleOb, MAM);
+
         ModuleOb->print(llvm::outs(), nullptr);
     }
 
@@ -457,6 +475,25 @@ public:
                 } else {
                     Builder->CreateRet(V);
                 }
+                break;
+            }
+            case IR_OP_CALL: {
+                llvm::Value* Callee = getOperand(instr->operands[0]);
+                std::vector<llvm::Value*> Args;
+                std::vector<llvm::Type*> ArgTypes;
+                for (int i = 1; i < instr->operandCount; i++) {
+                    llvm::Value* Arg = getOperand(instr->operands[i]);
+                    if (Arg) {
+                        Args.push_back(Arg);
+                        ArgTypes.push_back(Arg->getType());
+                    }
+                }
+                
+                llvm::FunctionType *FT = llvm::FunctionType::get(Builder->getInt64Ty(), ArgTypes, false);
+                llvm::CallInst* Call = Builder->CreateCall(FT, Callee, Args, "calltmp");
+                Call->setTailCall(true); // Mandatory TCO
+                
+                ssaValues[instr->result] = Call;
                 break;
             }
             default:
