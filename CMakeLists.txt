@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(ProXPL VERSION 1.3.6 LANGUAGES C CXX)
+project(ProXPL VERSION 1.4.0 LANGUAGES C CXX)
 
 # Enable C and C++
 enable_language(C CXX)
@@ -211,6 +211,9 @@ endif()
 if (LIBFFI_FOUND)
     target_link_libraries(prox_core PUBLIC ${LIBFFI_LIBRARIES})
 endif()
+
+# Link mimalloc
+target_link_libraries(prox_core PUBLIC mimalloc)
 
 # Aggressive optimizations for GCC/Clang in Release mode
 if(NOT MSVC)
