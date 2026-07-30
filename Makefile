@@ -3,7 +3,7 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wpedantic -std=c99 -O2 -I../include
-LDFLAGS = -lm
+LDFLAGS = -lm -lmimalloc
 TARGET = prox
 SRCDIR = .
 INCDIR = ../include
