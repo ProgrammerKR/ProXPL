@@ -628,6 +628,14 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
 - 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
 
+## 📝 Recent Changes (v1.4.0)
+
+- **Memory Management**: Integrated `mimalloc` memory allocator for optimized runtime performance.
+- **Dictionary Optimizations**: SwissTable-style Dictionary optimizations using `ctrl` bytes for linear probing.
+- **ASR Refinement**: Zero-cost stack unwinding for `resilient` blocks using `ExceptionHandlerTable`.
+- **LLVM Backend**: LLVM PassManager configured for O3 (Vectorization and Inlining) and Tail-Call Optimization (TCO).
+- See the full [CHANGELOG.md](CHANGELOG.md) for more details.
+
 ## 🛠️ Contributing
 
 We warmly welcome contributions! ProXPL is an excellent project for learning compiler design, language implementation, and systems programming.
