@@ -19,6 +19,7 @@ struct Table {
   int count;
   int capacity;
   Entry *entries;
+  uint8_t *ctrl;
 };
 
 void initTable(Table *table);
