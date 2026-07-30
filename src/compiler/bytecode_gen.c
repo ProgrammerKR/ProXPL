@@ -958,6 +958,42 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             }
             break;
         }
+        case STMT_RESILIENT: {
+            int startIp = gen->chunk->count;
+            
+            // Push scope if it has declarations
+            beginScope(gen);
+            
+            if (stmt->as.resilient.body) {
+                for (int i=0; i < stmt->as.resilient.body->count; i++) {
+                    genStmt(gen, stmt->as.resilient.body->items[i]);
+                }
+            }
+            
+            endScope(gen);
+            
+            writeChunk(gen->chunk, OP_JUMP, stmt->line);
+            writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
+            int skipRecoveryJump = gen->chunk->count - 2;
+
+            int endIp = gen->chunk->count;
+            int handlerIp = gen->chunk->count;
+
+            beginScope(gen);
+            if (stmt->as.resilient.recoveryBody) {
+                for (int i=0; i < stmt->as.resilient.recoveryBody->count; i++) {
+                    genStmt(gen, stmt->as.resilient.recoveryBody->items[i]);
+                }
+            }
+            endScope(gen);
+            
+            int patchSkip = gen->chunk->count - skipRecoveryJump - 2;
+            gen->chunk->code[skipRecoveryJump] = (patchSkip >> 8) & 0xff;
+            gen->chunk->code[skipRecoveryJump+1] = patchSkip & 0xff;
+
+            addExceptionHandler(gen->chunk, startIp, endIp, handlerIp);
+            break;
+        }
         case STMT_TRY_CATCH: {
             writeChunk(gen->chunk, OP_TRY, stmt->line);
             writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
