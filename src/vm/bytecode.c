@@ -13,6 +13,7 @@
 #include "../../include/bytecode.h"
 #include "../../include/value.h"
 #include "../../include/object.h"
+#include "../../include/memory.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
