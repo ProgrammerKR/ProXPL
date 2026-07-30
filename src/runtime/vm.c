@@ -87,6 +87,31 @@ void runtimeError(VM* pvm, const char* format, ...) {
   vsnprintf(message, sizeof(message), format, args);
   va_end(args);
 
+  // Search for an exception handler in the call stack
+  for (int i = pvm->frameCount - 1; i >= 0; i--) {
+      CallFrame* frame = &pvm->frames[i];
+      ObjFunction* function = frame->closure->function;
+      size_t instruction = frame->ip - function->chunk.code - 1;
+
+      // Check if instruction falls in any handler range
+      for (int h = 0; h < function->chunk.exceptionHandlers.count; h++) {
+          ExceptionHandler* handler = &function->chunk.exceptionHandlers.handlers[h];
+          if (instruction >= handler->start_ip && instruction < handler->end_ip) {
+              // Found a handler! Unwind stack to this frame.
+              pvm->frameCount = i + 1;
+              pvm->stackTop = frame->slots + function->arity; // Approximate stack reset
+              
+              // Set IP to handler
+              frame->ip = function->chunk.code + handler->handler_ip;
+              
+              // Push error message as a string
+              push(pvm, OBJ_VAL(copyString(message, strlen(message))));
+              return;
+          }
+      }
+  }
+
+  // No handler found, print trace
   if (pvm->frameCount == 0) {
     fprintf(stderr, "%s\n", message);
     resetStack(pvm);
