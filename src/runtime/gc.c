@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <mimalloc.h>
 #include "../include/gc.h"
 #include "../include/object.h"
 #include "../include/compiler.h"
@@ -35,7 +36,7 @@ static Nursery nursery;
 static bool nursery_initialized = false;
 
 void initNursery() {
-    nursery.start = (uint8_t*)malloc(NURSERY_SIZE);
+    nursery.start = (uint8_t*)mi_malloc(NURSERY_SIZE);
     if (!nursery.start) {
         fprintf(stderr, "Fatal: Could not allocate GC Nursery.\n");
         exit(1);
@@ -107,7 +108,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
             // No-op free for nursery objects (bulk freed/reset)
             return NULL;
         }
-        free(pointer);
+        mi_free(pointer);
         return NULL;
     }
 
@@ -124,7 +125,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
         // Reallocation
         if (is_in_nursery(pointer)) {
             // Moving out of nursery (Promote to Heap)
-            void* newMem = malloc(newSize);
+            void* newMem = mi_malloc(newSize);
             if (!newMem) exit(1);
             // Copy old data
             // We don't know exact valid size to copy if oldSize is loose, 
@@ -141,7 +142,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
         }
     }
 
-    void* result = realloc(pointer, newSize);
+    void* result = mi_realloc(pointer, newSize);
     if (result == NULL) exit(1);
     return result;
 }
@@ -160,7 +161,7 @@ void markObject(Obj* object) {
 
     if (vm.grayCapacity < vm.grayCount + 1) {
         vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
-        vm.grayStack = (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
+        vm.grayStack = (Obj**)mi_realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
         if (vm.grayStack == NULL) {
             fprintf(stderr, "Fatal: Out of memory for gray stack.\n");
             exit(1); 
@@ -456,10 +457,10 @@ void freeObjects(VM* vm_ptr) {
         object = next;
     }
     
-    free(vm.grayStack);
+    mi_free(vm.grayStack);
     vm.grayStack = NULL;
     
     if (nursery_initialized) {
-        free(nursery.start);
+        mi_free(nursery.start);
     }
 }
