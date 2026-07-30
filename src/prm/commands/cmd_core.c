@@ -16,7 +16,7 @@
 static int isValidPrmArg(const char* arg) {
     if (!arg) return 0;
     while (*arg) {
-        if (strchr("&|;><`$\\", *arg)) return 0;
+        if (strchr("&|;><`$\\\"'", *arg)) return 0;
         arg++;
     }
     return 1;
@@ -259,6 +259,13 @@ void prm_publish() {
     Manifest manifest;
     if (!prm_load_manifest(&manifest)) {
         printf("Error: No project.pxcf found in current directory.\n");
+        return;
+    }
+
+    if (!isValidPrmArg(manifest.name) || 
+        !isValidPrmArg(manifest.version) || 
+        !isValidPrmArg(manifest.entryPoint)) {
+        printf("Error: Invalid characters in manifest properties. Avoid quotes and shell metacharacters.\n");
         return;
     }
 
