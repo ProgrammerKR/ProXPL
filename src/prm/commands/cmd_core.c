@@ -277,19 +277,30 @@ void prm_publish() {
 
     printf("Publishing %s@%s to registry...\n", manifest.name, manifest.version);
 
-    // Construct curl command
-    // Using simple JSON payload
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd), 
-        "curl -X POST %s/api/registry/publish "
-        "-H \"Content-Type: application/json\" "
-        "-H \"Authorization: Bearer %s\" "
-        "-d \"{\\\"name\\\":\\\"%s\\\",\\\"version\\\":\\\"%s\\\",\\\"entryPoint\\\":\\\"%s\\\"}\"",
-        REGISTRY_URL, token, manifest.name, manifest.version, manifest.entryPoint
-    );
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/api/registry/publish", REGISTRY_URL);
 
-    // codeql[cpp/command-line-injection] User input is strictly validated by isValidPrmArg
-    int result = system(cmd);
+    char auth_header[256];
+    snprintf(auth_header, sizeof(auth_header), "Authorization: Bearer %s", token);
+
+    char payload[1024];
+    snprintf(payload, sizeof(payload), "{\"name\":\"%s\",\"version\":\"%s\",\"entryPoint\":\"%s\"}", 
+             manifest.name, manifest.version, manifest.entryPoint);
+
+    int result = -1;
+    #ifdef _WIN32
+    result = _spawnlp(_P_WAIT, "curl", "curl", "-X", "POST", url, "-H", "Content-Type: application/json", "-H", auth_header, "-d", payload, NULL);
+    #else
+    pid_t pid = fork();
+    if (pid == 0) {
+        execlp("curl", "curl", "-X", "POST", url, "-H", "Content-Type: application/json", "-H", auth_header, "-d", payload, (char*)NULL);
+        exit(1);
+    } else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) result = WEXITSTATUS(status);
+    }
+    #endif
     if (result == 0) {
         printf("\nSuccessfully published %s@%s\n", manifest.name, manifest.version);
     } else {
@@ -316,10 +327,23 @@ void prm_search(const char* query) {
     if (!query) return;
     printf("Searching %s for '%s'...\n", REGISTRY_URL, query);
     
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd), "curl -s \"%s/api/registry/search?q=%s\"", REGISTRY_URL, query);
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/api/registry/search?q=%s", REGISTRY_URL, query);
     
-    int ret = system(cmd);
+    int ret = -1;
+    #ifdef _WIN32
+    ret = _spawnlp(_P_WAIT, "curl", "curl", "-s", url, NULL);
+    #else
+    pid_t pid = fork();
+    if (pid == 0) {
+        execlp("curl", "curl", "-s", url, (char*)NULL);
+        exit(1);
+    } else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) ret = WEXITSTATUS(status);
+    }
+    #endif
     (void)ret;
     printf("\n");
 }
@@ -328,10 +352,23 @@ void prm_info(const char* packageName) {
     if (!packageName) return;
     printf("Package Info: %s\n", packageName);
     
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd), "curl -s \"%s/api/registry/package/%s\"", REGISTRY_URL, packageName);
+    char url[1024];
+    snprintf(url, sizeof(url), "%s/api/registry/package/%s", REGISTRY_URL, packageName);
     
-    int ret = system(cmd);
+    int ret = -1;
+    #ifdef _WIN32
+    ret = _spawnlp(_P_WAIT, "curl", "curl", "-s", url, NULL);
+    #else
+    pid_t pid = fork();
+    if (pid == 0) {
+        execlp("curl", "curl", "-s", url, (char*)NULL);
+        exit(1);
+    } else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) ret = WEXITSTATUS(status);
+    }
+    #endif
     (void)ret;
     printf("\n");
 }
