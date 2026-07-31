@@ -1137,12 +1137,19 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       DISPATCH();
   }
   
-  CASE_OP(OP_INTERFACE) {
-      ObjString* name = AS_STRING(READ_CONSTANT());
-      STORE_FRAME();
-      PUSH(OBJ_VAL(newInterface(name)));
-      DISPATCH();
-  }
+    CASE_OP(OP_INTERFACE) {
+        ObjString* name = AS_STRING(READ_CONSTANT());
+        STORE_FRAME();
+        PUSH(OBJ_VAL(newInterface(name)));
+        DISPATCH();
+    }
+    
+    CASE_OP(OP_TRAIT) {
+        ObjString* name = AS_STRING(READ_CONSTANT());
+        STORE_FRAME();
+        PUSH(OBJ_VAL(newInterface(name)));
+        DISPATCH();
+    }
   
   CASE_OP(OP_IMPLEMENT) {
       Value interfaceVal = *(--stackTop);
