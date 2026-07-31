@@ -398,7 +398,7 @@ static Stmt *declaration(Parser *p) {
     return useDecl(p);
   if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR))
     return varDecl(p);
-  if (match(p, 1, TOKEN_TYPE))
+  if (match(p, 1, TOKEN_TYPE_KW))
     return typeAliasDecl(p);
   if (match(p, 1, TOKEN_INTENT))
     return intentDecl(p);
