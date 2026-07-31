@@ -644,7 +644,7 @@ static Stmt *typeAliasDecl(Parser *p) {
 
     // Simple type parsing for now
     Token targetToken = consume(p, TOKEN_IDENTIFIER, "Expect target type name.");
-    TypeInfo targetType = {TYPE_UNKNOWN, tokenToString(targetToken), NULL, NULL, 0, false};
+    TypeInfo targetType = {TYPE_UNKNOWN, tokenToString(targetToken), NULL, NULL, 0, false, NULL};
 
     consume(p, TOKEN_SEMICOLON, "Expect ';' after type alias declaration.");
 
@@ -789,7 +789,7 @@ static Stmt *intentDecl(Parser *p) {
     }
     consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
 
-    TypeInfo returnType = {TYPE_UNKNOWN, NULL, NULL, NULL, 0, false};
+    TypeInfo returnType = {TYPE_UNKNOWN, NULL, NULL, NULL, 0, false, NULL};
     if (match(p, 1, TOKEN_ARROW)) {
          Token typeTok = consume(p, TOKEN_IDENTIFIER, "Expect return type.");
          returnType.name = tokenToString(typeTok);
