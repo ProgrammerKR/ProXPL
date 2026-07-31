@@ -1,24 +1,19 @@
 @echo off
+echo [ProXPL] Building and running tests via CMake...
 if not exist build mkdir build
-if not exist build\obj mkdir build\obj
-
-clang -o build/bytecode_tests.exe -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
- tests/bytecode_tests.c ^
- src/vm/bytecode.c ^
- src/vm/disasm.c ^
- src/vm/vm_dispatch.c ^
- src/runtime/value.c ^
- src/runtime/object.c ^
- src/runtime/memory.c ^
- src/runtime/table.c ^
- src/runtime/chunk.c ^
- src/compiler/parser/ast.c ^
- src/runtime/vm_helpers.c
-
-if %errorlevel% equ 0 (
-    move /y *.obj build\obj\ >nul 2>&1
-    move /y *.exp build\obj\ >nul 2>&1
-    move /y *.lib build\obj\ >nul 2>&1
-    move /y *.pdb build\obj\ >nul 2>&1
-    echo Build complete.
+cmake -S . -B build -DBUILD_TESTS=ON
+if %errorlevel% neq 0 (
+    echo [ProXPL] CMake configuration failed.
+    exit /b %errorlevel%
 )
+
+cmake --build build --config Release
+if %errorlevel% neq 0 (
+    echo [ProXPL] CMake build failed.
+    exit /b %errorlevel%
+)
+
+echo [ProXPL] Running test suite...
+cd build
+ctest -C Release --output-on-failure
+cd ..
