@@ -38,6 +38,7 @@ static ProxBuffer* buf_new(int capacity) {
     return b;
 }
 
+static void buf_free_cb(void* ptr) __attribute__((unused));
 static void buf_free_cb(void* ptr) {
     if (!ptr) return;
     ProxBuffer* b = (ProxBuffer*)ptr;
