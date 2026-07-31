@@ -329,12 +329,13 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
 
 #define PUSH(value) \
     do { \
+        Value _v = (value); \
         if (stackTop >= pvm->stack + STACK_MAX) { \
             pvm->stackTop = stackTop; frame->ip = ip; \
             runtimeError(pvm, "Stack overflow."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        *stackTop++ = (value); \
+        *stackTop++ = _v; \
     } while (false)
 
 /* Sync local registers back to the VM structure (call before calling C functions) */
@@ -1413,7 +1414,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
                   Value okVal;
                   ObjString* valStr = copyString("value", 5);
                   tableGet(&instance->fields, valStr, &okVal);
-                  *(--stackTop); // POP
+                  stackTop--; // POP
                   PUSH(okVal);
                   DISPATCH();
               }
@@ -1439,7 +1440,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
                   Value someVal;
                   ObjString* valStr = copyString("value", 5);
                   tableGet(&instance->fields, valStr, &someVal);
-                  *(--stackTop); // POP
+                  stackTop--; // POP
                   PUSH(someVal);
                   DISPATCH();
               }
