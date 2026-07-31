@@ -63,7 +63,7 @@ static void* nursery_alloc(size_t size) {
     return result;
 }
 
-static void reset_nursery(void) __attribute__((unused));
+#if 0
 static void reset_nursery() {
     // In a real generational GC, we would evacuate survivors here.
     // For this MVP, we treat Nursery as a "scratchpad" that gets fully collected
@@ -76,6 +76,7 @@ static void reset_nursery() {
     
     // nursery.current = nursery.start; 
 }
+#endif
 
 // ----------------------------------------------------------------------------
 
