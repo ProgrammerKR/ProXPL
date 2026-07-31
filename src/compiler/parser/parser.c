@@ -439,6 +439,30 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
   char *name = tokenToString(nameToken);
 
+  StringList *genericParams = NULL;
+  StringList *genericBounds = NULL;
+  if (match(p, 1, TOKEN_LESS)) {
+      genericParams = createStringList();
+      genericBounds = createStringList();
+      if (!check(p, TOKEN_GREATER)) {
+          do {
+              Token typeVar = consume(p, TOKEN_IDENTIFIER, "Expect generic parameter name.");
+              char *tvName = tokenToString(typeVar);
+              appendString(genericParams, tvName);
+              free(tvName);
+              if (match(p, 1, TOKEN_COLON)) {
+                  Token boundToken = consume(p, TOKEN_IDENTIFIER, "Expect trait bound.");
+                  char *bName = tokenToString(boundToken);
+                  appendString(genericBounds, bName);
+                  free(bName);
+              } else {
+                  appendString(genericBounds, ""); // Empty string for no bound
+              }
+          } while (match(p, 1, TOKEN_COMMA));
+      }
+      consume(p, TOKEN_GREATER, "Expect '>' after generic parameters.");
+  }
+
   consume(p, TOKEN_LEFT_PAREN, "Expect '(' after name.");
 
   StringList *params = createStringList();
@@ -462,7 +486,7 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
       body = block(p);
   }
 
-  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, access, isStatic, isAbstract, contextCondition, nameToken.line, 0);
+  Stmt *stmt = createFuncDeclStmt(name, params, body, isAsync, access, isStatic, isAbstract, contextCondition, genericParams, genericBounds, nameToken.line, 0);
   free(name);
   return stmt;
 }
@@ -470,6 +494,30 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
 static Stmt *classDecl(Parser *p) {
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect class name.");
   char *name = tokenToString(nameToken);
+
+  StringList *genericParams = NULL;
+  StringList *genericBounds = NULL;
+  if (match(p, 1, TOKEN_LESS)) {
+      genericParams = createStringList();
+      genericBounds = createStringList();
+      if (!check(p, TOKEN_GREATER)) {
+          do {
+              Token typeVar = consume(p, TOKEN_IDENTIFIER, "Expect generic parameter name.");
+              char *tvName = tokenToString(typeVar);
+              appendString(genericParams, tvName);
+              free(tvName);
+              if (match(p, 1, TOKEN_COLON)) {
+                  Token boundToken = consume(p, TOKEN_IDENTIFIER, "Expect trait bound.");
+                  char *bName = tokenToString(boundToken);
+                  appendString(genericBounds, bName);
+                  free(bName);
+              } else {
+                  appendString(genericBounds, ""); // Empty string for no bound
+              }
+          } while (match(p, 1, TOKEN_COMMA));
+      }
+      consume(p, TOKEN_GREATER, "Expect '>' after generic parameters.");
+  }
 
   Expr *superclass = NULL;
   if (match(p, 1, TOKEN_EXTENDS)) {
@@ -529,7 +577,7 @@ static Stmt *classDecl(Parser *p) {
   consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
 
   Stmt *stmt =
-      createClassDeclStmt(name, superclass, interfaces, methods, nameToken.line, 0);
+      createClassDeclStmt(name, superclass, interfaces, methods, genericParams, genericBounds, nameToken.line, 0);
   free(name);
   return stmt;
 }
