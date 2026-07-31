@@ -38,13 +38,14 @@ static ProxBuffer* buf_new(int capacity) {
     return b;
 }
 
-static void buf_free_cb(void* ptr) __attribute__((unused));
+#if 0
 static void buf_free_cb(void* ptr) {
     if (!ptr) return;
     ProxBuffer* b = (ProxBuffer*)ptr;
     free(b->data);
     free(b);
 }
+#endif
 
 static void defineModuleFn(ObjModule* module, const char* name, NativeFn fn) {
     ObjString* nameObj = copyString(name, (int)strlen(name));
