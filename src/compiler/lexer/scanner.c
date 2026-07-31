@@ -589,7 +589,7 @@ static PxTokenType identifierType(Scanner *scanner) {
       case 'y':
           if (scanner->current - scanner->start > 2 && scanner->start[2] == 'p') {
               if (scanner->current - scanner->start > 3 && scanner->start[3] == 'e') {
-                  if (scanner->current - scanner->start == 4) return TOKEN_TYPE;
+                  if (scanner->current - scanner->start == 4) return TOKEN_TYPE_KW;
                   return checkKeyword(scanner, 4, 2, "of", TOKEN_TYPEOF);
               }
           }
