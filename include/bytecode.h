@@ -79,7 +79,8 @@ typedef enum {
   OP_END_ACTIVATE,
 
   OP_END_TRY,
-  OP_INTERFACE,
+  OP_INTERFACE, // Deprecated, keep for backward compatibility
+  OP_TRAIT,
   OP_IMPLEMENT,
   OP_MAKE_FOREIGN,
   OP_MODULO,
