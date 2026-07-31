@@ -406,7 +406,7 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemp
 }
 
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
-                         bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition, int line, int column) {
+                         bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition, StringList *genericParams, StringList *genericBounds, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_FUNC_DECL;
   stmt->line = line;
@@ -419,11 +419,13 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   stmt->as.func_decl.isStatic = isStatic;
   stmt->as.func_decl.isAbstract = isAbstract;
   stmt->as.func_decl.contextCondition = contextCondition;
+  stmt->as.func_decl.genericParams = genericParams;
+  stmt->as.func_decl.genericBounds = genericBounds;
   return stmt;
 }
 
 Stmt *createClassDeclStmt(const char *name, Expr *super,
-                          StringList *interfaces, StmtList *methods, int line, int column) {
+                          StringList *interfaces, StmtList *methods, StringList *genericParams, StringList *genericBounds, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
   stmt->type = STMT_CLASS_DECL;
   stmt->line = line;
@@ -432,6 +434,8 @@ Stmt *createClassDeclStmt(const char *name, Expr *super,
   stmt->as.class_decl.superclass = super;
   stmt->as.class_decl.interfaces = interfaces;
   stmt->as.class_decl.methods = methods;
+  stmt->as.class_decl.genericParams = genericParams;
+  stmt->as.class_decl.genericBounds = genericBounds;
   return stmt;
 }
 
