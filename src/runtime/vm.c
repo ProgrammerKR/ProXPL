@@ -406,6 +406,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       [OP_CATCH] = &&DO_OP_CATCH,
       [OP_END_TRY] = &&DO_OP_END_TRY,
       [OP_INTERFACE] = &&DO_OP_INTERFACE,
+      [OP_TRAIT] = &&DO_OP_TRAIT,
       [OP_IMPLEMENT] = &&DO_OP_IMPLEMENT,
       [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN,
       [OP_MODULO] = &&DO_OP_MODULO,
@@ -1389,19 +1390,19 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
 
   CASE_OP(OP_UNWRAP) {
-      Value val = PEEK(0);
+      Value val = stackTop[-1];
       if (IS_INSTANCE(val)) {
           ObjInstance* instance = AS_INSTANCE(val);
           Value isOkVal;
           ObjString* isOkStr = copyString("isOk", 4);
-          if (tableGet(&instance->fields, OBJ_VAL(isOkStr), &isOkVal)) {
+          if (tableGet(&instance->fields, isOkStr, &isOkVal)) {
               if (IS_BOOL(isOkVal) && !AS_BOOL(isOkVal)) {
                   closeUpvalues(pvm, frame->slots);
                   goto DO_OP_RETURN;
               } else {
                   Value okVal;
                   ObjString* valStr = copyString("value", 5);
-                  tableGet(&instance->fields, OBJ_VAL(valStr), &okVal);
+                  tableGet(&instance->fields, valStr, &okVal);
                   *(--stackTop); // POP
                   PUSH(okVal);
                   DISPATCH();
@@ -1410,14 +1411,14 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           
           Value hasValueVal;
           ObjString* hasValueStr = copyString("hasValue", 8);
-          if (tableGet(&instance->fields, OBJ_VAL(hasValueStr), &hasValueVal)) {
+          if (tableGet(&instance->fields, hasValueStr, &hasValueVal)) {
               if (IS_BOOL(hasValueVal) && !AS_BOOL(hasValueVal)) {
                   closeUpvalues(pvm, frame->slots);
                   goto DO_OP_RETURN;
               } else {
                   Value someVal;
                   ObjString* valStr = copyString("value", 5);
-                  tableGet(&instance->fields, OBJ_VAL(valStr), &someVal);
+                  tableGet(&instance->fields, valStr, &someVal);
                   *(--stackTop); // POP
                   PUSH(someVal);
                   DISPATCH();
