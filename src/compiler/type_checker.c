@@ -535,6 +535,26 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
              // Define function symbol in CURRENT scope (before entering body)
              defineSymbol(checker, stmt->as.func_decl.name, funcType);
              
+             // Check trait bounds for generic parameters
+             if (stmt->as.func_decl.genericBounds) {
+                 StringList* bounds = stmt->as.func_decl.genericBounds;
+                 for (int i=0; i < bounds->count; i++) {
+                     const char* boundName = bounds->items[i];
+                     if (boundName && strlen(boundName) > 0) {
+                         TypeInfo traitInfo = resolveVariableType(checker, boundName);
+                         if (traitInfo.kind == TYPE_UNKNOWN) {
+                             char msg[128];
+                             snprintf(msg, sizeof(msg), "Unknown trait '%s' in generic bound.", boundName);
+                             error(checker, stmt->line, msg);
+                         } else if (traitInfo.kind != TYPE_INTERFACE) {
+                             char msg[128];
+                             snprintf(msg, sizeof(msg), "'%s' is not a trait/interface.", boundName);
+                             error(checker, stmt->line, msg);
+                         }
+                     }
+                 }
+             }
+
              // Enter Body Scope
              beginScope(checker);
              
@@ -564,7 +584,24 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             TypeInfo classType = createType(TYPE_CLASS);
             if (stmt->as.class_decl.name) {
                 classType.name = strdup(stmt->as.class_decl.name);
+                classType.methods = stmt->as.class_decl.methods;
                 defineSymbol(checker, stmt->as.class_decl.name, classType);
+            }
+            
+            // Check generic bounds
+            if (stmt->as.class_decl.genericBounds) {
+                StringList* bounds = stmt->as.class_decl.genericBounds;
+                for (int i=0; i < bounds->count; i++) {
+                    const char* boundName = bounds->items[i];
+                    if (boundName && strlen(boundName) > 0) {
+                        TypeInfo traitInfo = resolveVariableType(checker, boundName);
+                        if (traitInfo.kind != TYPE_INTERFACE) {
+                            char msg[128];
+                            snprintf(msg, sizeof(msg), "'%s' is not a valid trait for bound.", boundName);
+                            error(checker, stmt->line, msg);
+                        }
+                    }
+                }
             }
             
             // Methods
@@ -576,6 +613,47 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
                      checkStmt(checker, methods->items[i]);
                 }
             }
+            
+            // Interface/Trait Resolution
+            StringList* interfaces = stmt->as.class_decl.interfaces;
+            if (interfaces) {
+                for (int i=0; i < interfaces->count; i++) {
+                    const char* traitName = interfaces->items[i];
+                    TypeInfo traitInfo = resolveVariableType(checker, traitName);
+                    if (traitInfo.kind == TYPE_INTERFACE) {
+                        StmtList* traitMethods = traitInfo.methods;
+                        if (traitMethods) {
+                            for (int t=0; t < traitMethods->count; t++) {
+                                Stmt* tm = traitMethods->items[t];
+                                if (tm->type == STMT_FUNC_DECL) {
+                                    const char* reqName = tm->as.func_decl.name;
+                                    bool found = false;
+                                    if (methods) {
+                                        for (int c=0; c < methods->count; c++) {
+                                            Stmt* cm = methods->items[c];
+                                            if (cm->type == STMT_FUNC_DECL && strcmp(cm->as.func_decl.name, reqName) == 0) {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!found) {
+                                        char msg[256];
+                                        snprintf(msg, sizeof(msg), "Class '%s' does not implement required trait method '%s' from trait '%s'.", stmt->as.class_decl.name, reqName, traitName);
+                                        error(checker, stmt->line, msg);
+                                    }
+                                }
+                            }
+                        }
+                    } else if (traitInfo.kind != TYPE_UNKNOWN) {
+                         error(checker, stmt->line, "Implements clause must refer to a trait/interface.");
+                    } else {
+                         char msg[128];
+                         snprintf(msg, sizeof(msg), "Unknown trait '%s' in implements clause.", traitName);
+                         error(checker, stmt->line, msg);
+                    }
+                }
+            }
             break;
         }
 
@@ -583,6 +661,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             TypeInfo traitType = createType(TYPE_INTERFACE); // Treat Trait as Interface for now
             if (stmt->as.trait_decl.name) {
                 traitType.name = strdup(stmt->as.trait_decl.name);
+                traitType.methods = stmt->as.trait_decl.methods;
                 defineSymbol(checker, stmt->as.trait_decl.name, traitType);
             }
             
