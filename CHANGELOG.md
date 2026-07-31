@@ -2,6 +2,13 @@
 
 All notable changes to the ProXPL programming language will be documented in this file.
 
+## [1.5.0] - 2026-07-31
+### Added
+- Added parsing for generic parameters and trait constraints in functions and classes.
+- Implemented trait resolution in the Type Checker.
+- The Type Checker now enforces that classes implement all required methods for the traits they adopt.
+- The compiler now verifies that generic trait bounds reference valid, known traits.
+
 ## [1.4.0] - 2026-07-30
 ### Added
 - Integration of `mimalloc` memory allocator for optimized runtime performance.
