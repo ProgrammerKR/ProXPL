@@ -405,6 +405,26 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemp
   return stmt;
 }
 
+Stmt *createTypeAliasDeclStmt(const char *name, TypeInfo targetType, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_TYPE_ALIAS;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.type_alias.name = strdup(name);
+  stmt->as.type_alias.targetType = targetType;
+  return stmt;
+}
+
+Stmt *createTraitDeclStmt(const char *name, StmtList *methods, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_TRAIT_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.trait_decl.name = strdup(name);
+  stmt->as.trait_decl.methods = methods;
+  return stmt;
+}
+
 Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
                          bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition, StringList *genericParams, StringList *genericBounds, int line, int column) {
   Stmt *stmt = ALLOCATE(Stmt, 1);
