@@ -1398,7 +1398,17 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           if (tableGet(&instance->fields, isOkStr, &isOkVal)) {
               if (IS_BOOL(isOkVal) && !AS_BOOL(isOkVal)) {
                   closeUpvalues(pvm, frame->slots);
-                  goto DO_OP_RETURN;
+                  Value result = *(--stackTop);
+                  pvm->frameCount--;
+                  if (pvm->frameCount == 0) {
+                    pvm->stackTop = stackTop;
+                    return INTERPRET_OK;
+                  }
+                  stackTop = frame->slots;
+                  PUSH(result);
+                  frame = &pvm->frames[pvm->frameCount - 1];
+                  ip = frame->ip;
+                  DISPATCH();
               } else {
                   Value okVal;
                   ObjString* valStr = copyString("value", 5);
@@ -1414,7 +1424,17 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           if (tableGet(&instance->fields, hasValueStr, &hasValueVal)) {
               if (IS_BOOL(hasValueVal) && !AS_BOOL(hasValueVal)) {
                   closeUpvalues(pvm, frame->slots);
-                  goto DO_OP_RETURN;
+                  Value result = *(--stackTop);
+                  pvm->frameCount--;
+                  if (pvm->frameCount == 0) {
+                    pvm->stackTop = stackTop;
+                    return INTERPRET_OK;
+                  }
+                  stackTop = frame->slots;
+                  PUSH(result);
+                  frame = &pvm->frames[pvm->frameCount - 1];
+                  ip = frame->ip;
+                  DISPATCH();
               } else {
                   Value someVal;
                   ObjString* valStr = copyString("value", 5);
