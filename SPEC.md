@@ -1,6 +1,6 @@
 # ProX Programming Language Specification
 
-**Version:** 1.0.0-alpha  
+**Version:** 1.5.1
 **Status:** Draft  
 **Date:** January 2026  
 **Author:** ProXPL Design Team  
