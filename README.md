@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.3.3-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -628,8 +628,8 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
 - 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
 
-## 📝 Recent Changes (v1.4.0)
-
+## 📝 Recent Changes (v1.5.0)
+- **Traits/Interfaces v2:** Composable behavioral contracts with default implementations. Generic bounds and constraints.
 - **Memory Management**: Integrated `mimalloc` memory allocator for optimized runtime performance.
 - **Dictionary Optimizations**: SwissTable-style Dictionary optimizations using `ctrl` bytes for linear probing.
 - **ASR Refinement**: Zero-cost stack unwinding for `resilient` blocks using `ExceptionHandlerTable`.
