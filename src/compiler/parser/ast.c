@@ -399,7 +399,7 @@ Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemp
   stmt->as.var_decl.name = strdup(name);
   stmt->as.var_decl.initializer = init;
   stmt->as.var_decl.is_const = is_const;
-  stmt->as.var_decl.type = (TypeInfo){TYPE_UNKNOWN, NULL, NULL, NULL, 0, false};
+  stmt->as.var_decl.type = (TypeInfo){TYPE_UNKNOWN, NULL, NULL, NULL, 0, false, NULL};
   stmt->as.var_decl.isTemporal = isTemporal;
   stmt->as.var_decl.ttl = ttl;
   return stmt;
@@ -877,6 +877,14 @@ void freeStmt(Stmt *stmt) {
     return;
 
   switch (stmt->type) {
+  case STMT_TYPE_ALIAS:
+    free(stmt->as.type_alias.name);
+    if (stmt->as.type_alias.targetType.name) free(stmt->as.type_alias.targetType.name);
+    break;
+  case STMT_TRAIT_DECL:
+    free(stmt->as.trait_decl.name);
+    freeStmtList(stmt->as.trait_decl.methods);
+    break;
   case STMT_EXPRESSION:
     freeExpr(stmt->as.expression.expression);
     break;
