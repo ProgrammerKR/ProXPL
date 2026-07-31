@@ -1116,6 +1116,45 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             }
             break;
         }
+        case STMT_TRAIT_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.trait_decl.name, strlen(stmt->as.trait_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            writeChunk(gen->chunk, OP_TRAIT, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            
+             // Define
+            if (gen->compiler->scopeDepth > 0) {
+                 addLocal(gen, stmt->as.trait_decl.name);
+            } else {
+                 writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            
+            // Methods
+            if (stmt->as.trait_decl.methods) {
+                // Load trait for methods
+                if (gen->compiler->scopeDepth == 0) {
+                     writeChunk(gen->chunk, OP_GET_GLOBAL, stmt->line);
+                     writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+                } else {
+                     writeChunk(gen->chunk, OP_GET_LOCAL, stmt->line);
+                     writeChunk(gen->chunk, (uint8_t)(gen->compiler->localCount - 1), stmt->line);
+                }
+                
+                for (int i=0; i < stmt->as.trait_decl.methods->count; i++) {
+                     // Pass false to not define local/global var, just leave closure on stack
+                     genFunction(gen, stmt->as.trait_decl.methods->items[i], false);
+                     
+                     Stmt* methodStmt = stmt->as.trait_decl.methods->items[i];
+                     Value mNameVal = OBJ_VAL(copyString(methodStmt->as.func_decl.name, strlen(methodStmt->as.func_decl.name)));
+                     int mNameConst = addConstant(gen->chunk, mNameVal);
+                     writeChunk(gen->chunk, OP_METHOD, stmt->line);
+                     writeChunk(gen->chunk, (uint8_t)mNameConst, stmt->line);
+                }
+                writeChunk(gen->chunk, OP_POP, stmt->line); // Pop trait
+            }
+            break;
+        }
         case STMT_CONTEXT_DECL: {
             Value nameVal = OBJ_VAL(copyString(stmt->as.context_decl.name, strlen(stmt->as.context_decl.name)));
             int nameConst = addConstant(gen->chunk, nameVal);
