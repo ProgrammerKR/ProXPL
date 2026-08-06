@@ -1,9 +1,3 @@
-// --------------------------------------------------
-//   Project: ProX Programming Language (ProXPL)
-//   Author:  ProgrammerKR
-//   Created: 2025-12-16
-//   Copyright © 2025. ProXentix India Pvt. Ltd.  All rights reserved.
-
 #include <stdlib.h>
 
 #include "../include/bytecode.h"
@@ -56,4 +50,31 @@ void addExceptionHandler(Chunk *chunk, size_t start, size_t end, size_t handler)
   chunk->exceptionHandlers.handlers[chunk->exceptionHandlers.count].end_ip = end;
   chunk->exceptionHandlers.handlers[chunk->exceptionHandlers.count].handler_ip = handler;
   chunk->exceptionHandlers.count++;
+}
+
+// Emit unsigned LEB128 for variable-length constant indices
+void emit_uleb128(Chunk *chunk, uint64_t value) {
+    do {
+        uint8_t byte = value & 0x7F;
+        value >>= 7;
+        if (value != 0) byte |= 0x80;
+        writeChunk(chunk, byte, 0);
+    } while (value != 0);
+}
+
+// Emit signed LEB128 (basic implementation)
+void emit_sleb128(Chunk *chunk, int64_t value) {
+    bool more;
+    do {
+        uint8_t byte = value & 0x7F;
+        int64_t sign_bit = byte & 0x40;
+        value >>= 7;
+        if ((value == 0 && sign_bit == 0) || (value == -1 && sign_bit != 0)) {
+            more = false;
+        } else {
+            more = true;
+            byte |= 0x80;
+        }
+        writeChunk(chunk, byte, 0);
+    } while (more);
 }
