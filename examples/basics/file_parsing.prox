@@ -1,0 +1,17 @@
+// Basic file parsing simulation
+
+func parse_csv_line(line) {
+    return split(line, ",");
+}
+
+func main() {
+    let csv = "id,name,role\n1,Alice,Admin\n2,Bob,User";
+    let lines = split(csv, "\n");
+    
+    print("Parsed CSV Data:");
+    for (let i = 0; i < length(lines); i = i + 1) {
+        let cols = parse_csv_line(lines[i]);
+        print(cols);
+    }
+}
+main();
