@@ -1,0 +1,54 @@
+// Binary Search Tree implementation
+
+class Node {
+    let value: int;
+    let left: any;
+    let right: any;
+    
+    init(val) {
+        this.value = val;
+        this.left = null;
+        this.right = null;
+    }
+}
+
+class BST {
+    let root: any;
+    
+    init() {
+        this.root = null;
+    }
+    
+    func insert(val) {
+        if (this.root == null) {
+            this.root = new Node(val);
+            return;
+        }
+        
+        let current = this.root;
+        while (true) {
+            if (val < current.value) {
+                if (current.left == null) {
+                    current.left = new Node(val);
+                    return;
+                }
+                current = current.left;
+            } else {
+                if (current.right == null) {
+                    current.right = new Node(val);
+                    return;
+                }
+                current = current.right;
+            }
+        }
+    }
+}
+
+func main() {
+    let tree = new BST();
+    tree.insert(10);
+    tree.insert(5);
+    tree.insert(15);
+    print("BST populated.");
+}
+main();
