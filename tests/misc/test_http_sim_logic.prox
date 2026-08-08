@@ -1,0 +1,56 @@
+
+class Request {
+    init(method, path) {
+        this.method = method;
+        this.path = path;
+    }
+}
+
+class Router {
+    init() {
+        this.routes = {};
+    }
+    
+    add(method, path, handler) {
+        let key = method + ":" + path;
+        this.routes[key] = handler;
+    }
+    
+    dispatch(req) {
+        let key = req.method + ":" + req.path;
+        if (this.routes[key]) {
+            return this.routes[key]();
+        }
+        return "404 Not Found";
+    }
+}
+
+func home() { return "Welcome Home"; }
+func users() { return "User List"; }
+func about() { return "About Us"; }
+
+// Test Logic
+let router = Router();
+router.add("GET", "/", home);
+router.add("GET", "/users", users);
+
+let res1 = router.dispatch(Request("GET", "/"));
+if (res1 != "Welcome Home") {
+    print("FAIL: Expected 'Welcome Home', got '" + to_string(res1) + "'");
+    exit(1);
+}
+print("PASS: / -> " + res1);
+
+let res2 = router.dispatch(Request("GET", "/users"));
+if (res2 != "User List") {
+    print("FAIL: Expected 'User List', got '" + to_string(res2) + "'");
+    exit(1);
+}
+print("PASS: /users -> " + res2);
+
+let res3 = router.dispatch(Request("GET", "/missing"));
+if (res3 != "404 Not Found") {
+    print("FAIL: Expected '404 Not Found', got '" + to_string(res3) + "'");
+    exit(1);
+}
+print("PASS: /missing -> " + res3);
