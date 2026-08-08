@@ -1,0 +1,14 @@
+// tests/test_intents_errors.prox
+
+print("--- Intents Errors Test ---");
+
+intent UnregisteredIntent(data);
+
+resilient {
+    let result = UnregisteredIntent("data");
+    print("FAIL: Should have thrown runtime error for unregistered intent.");
+}
+
+print("PASS: Unregistered intent exception caught.");
+
+print("--- Intents Errors Test Complete ---");
