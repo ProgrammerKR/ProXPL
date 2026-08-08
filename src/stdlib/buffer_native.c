@@ -38,15 +38,6 @@ static ProxBuffer* buf_new(int capacity) {
     return b;
 }
 
-#if 0
-static void buf_free_cb(void* ptr) {
-    if (!ptr) return;
-    ProxBuffer* b = (ProxBuffer*)ptr;
-    free(b->data);
-    free(b);
-}
-#endif
-
 static void defineModuleFn(ObjModule* module, const char* name, NativeFn fn) {
     ObjString* nameObj = copyString(name, (int)strlen(name));
     push(&vm, OBJ_VAL(nameObj));
@@ -76,7 +67,9 @@ static Value native_buf_write_byte(int argCount, Value* args) {
     uint8_t byte = (uint8_t)((int)AS_NUMBER(args[1]) & 0xFF);
     if (b->size >= b->capacity) {
         b->capacity *= 2;
-        b->data = (uint8_t*)realloc(b->data, b->capacity);
+        uint8_t* newData = (uint8_t*)realloc(b->data, b->capacity);
+        if (!newData) return NIL_VAL;
+        b->data = newData;
     }
     b->data[b->size++] = byte;
     return NIL_VAL;

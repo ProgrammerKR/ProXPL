@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include <mimalloc.h>
 #include "../include/gc.h"
 #include "../include/object.h"
@@ -133,15 +134,10 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
             void* newMem = mi_malloc(newSize);
             if (!newMem) exit(1);
             // Copy old data
-            // We don't know exact valid size to copy if oldSize is loose, 
+            // We don't know exact valid size to copy if oldSize is loose,
             // but reallocate api passes oldSize.
             size_t copySize = oldSize < newSize ? oldSize : newSize;
-            // memcpy(newMem, pointer, copySize); // Need string.h
-            // We can't include string.h easily without messy diff? 
-            // We can iterate.
-             uint8_t* src = (uint8_t*)pointer;
-             uint8_t* dst = (uint8_t*)newMem;
-             for (size_t i = 0; i < copySize; i++) dst[i] = src[i];
+            memcpy(newMem, pointer, copySize);
             
             return newMem;
         }

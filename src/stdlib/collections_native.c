@@ -264,6 +264,48 @@ static Value native_col_last(int argCount, Value* args) {
     return l->count > 0 ? l->items[l->count - 1] : NIL_VAL;
 }
 
+// ---------- sort(list) ----------
+static int compareValues(const void* a, const void* b) {
+    Value va = *(const Value*)a;
+    Value vb = *(const Value*)b;
+    if (IS_NUMBER(va) && IS_NUMBER(vb)) {
+        double da = AS_NUMBER(va);
+        double db = AS_NUMBER(vb);
+        return (da > db) - (da < db);
+    }
+    if (IS_STRING(va) && IS_STRING(vb)) {
+        int cmp = strcmp(AS_CSTRING(va), AS_CSTRING(vb));
+        return (cmp > 0) - (cmp < 0);
+    }
+    return 0;
+}
+
+static Value native_col_sort(int argCount, Value* args) {
+    if (argCount < 1 || !IS_LIST(args[0])) return NIL_VAL;
+    ObjList* list = AS_LIST(args[0]);
+    if (list->count > 1) {
+        qsort(list->items, list->count, sizeof(Value), compareValues);
+    }
+    return args[0];
+}
+
+// ---------- dict_keys(dict) ----------
+static Value native_col_dict_keys(int argCount, Value* args) {
+    if (argCount < 1 || !IS_DICTIONARY(args[0])) return NIL_VAL;
+    ObjDictionary* dict = AS_DICTIONARY(args[0]);
+    ObjList* result = newList();
+    push(&vm, OBJ_VAL(result));
+
+    for (int i = 0; i < dict->items.capacity; i++) {
+        Entry* entry = &dict->items.entries[i];
+        if (entry->key != NULL) {
+            list_append(result, OBJ_VAL(entry->key));
+        }
+    }
+
+    return pop(&vm);
+}
+
 // ---------- count(list, val) ----------
 static Value native_col_count(int argCount, Value* args) {
     if (argCount < 2 || !IS_LIST(args[0])) return NUMBER_VAL(0);
@@ -303,6 +345,8 @@ ObjModule* create_std_collections_module() {
     defineModuleFn(module, "first",   native_col_first);
     defineModuleFn(module, "last",    native_col_last);
     defineModuleFn(module, "count",   native_col_count);
+    defineModuleFn(module, "sort",    native_col_sort);
+    defineModuleFn(module, "dictKeys", native_col_dict_keys);
 
     pop(&vm); // module
     pop(&vm); // name

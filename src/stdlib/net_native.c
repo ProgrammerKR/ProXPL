@@ -97,6 +97,22 @@ static Value native_write(int argCount, Value* args) {
     return OBJ_VAL(task);
 }
 
+// net.http_get(url) -> String (stub)
+static Value native_http_get(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    const char* url = AS_CSTRING(args[0]);
+    printf("[Net] HTTP GET %s (stub)\n", url);
+    return OBJ_VAL(copyString("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n", 44));
+}
+
+// net.http_post(url, body) -> String (stub)
+static Value native_http_post(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
+    const char* url = AS_CSTRING(args[0]);
+    printf("[Net] HTTP POST %s (stub)\n", url);
+    return OBJ_VAL(copyString("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n", 44));
+}
+
 ObjModule* create_std_net_module() {
     ObjString* name = copyString("std.native.net", 14);
     push(&vm, OBJ_VAL(name));
@@ -107,6 +123,8 @@ ObjModule* create_std_net_module() {
     defineModuleFn(module, "accept", native_accept);
     defineModuleFn(module, "read", native_read);
     defineModuleFn(module, "write", native_write);
+    defineModuleFn(module, "http_get", native_http_get);
+    defineModuleFn(module, "http_post", native_http_post);
 
     pop(&vm);
     pop(&vm);

@@ -91,7 +91,11 @@ void runtimeError(VM* pvm, const char* format, ...) {
   for (int i = pvm->frameCount - 1; i >= 0; i--) {
       CallFrame* frame = &pvm->frames[i];
       ObjFunction* function = frame->closure->function;
-      size_t instruction = frame->ip - function->chunk.code - 1;
+      ptrdiff_t instruction = (ptrdiff_t)(frame->ip - function->chunk.code);
+
+      if (instruction < 0 || instruction >= function->chunk.count) {
+          continue;
+      }
 
       // Check if instruction falls in any handler range
       for (int h = 0; h < function->chunk.exceptionHandlers.count; h++) {
@@ -99,11 +103,11 @@ void runtimeError(VM* pvm, const char* format, ...) {
           if (instruction >= handler->start_ip && instruction < handler->end_ip) {
               // Found a handler! Unwind stack to this frame.
               pvm->frameCount = i + 1;
-              pvm->stackTop = frame->slots + function->arity; // Approximate stack reset
-              
+              pvm->stackTop = frame->slots;
+
               // Set IP to handler
               frame->ip = function->chunk.code + handler->handler_ip;
-              
+
               // Push error message as a string
               push(pvm, OBJ_VAL(copyString(message, strlen(message))));
               return;
@@ -120,16 +124,21 @@ void runtimeError(VM* pvm, const char* format, ...) {
 
   CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
   ObjFunction* function = frame->closure->function;
-  size_t instruction = frame->ip - function->chunk.code - 1;
-  int line = function->chunk.lines[instruction];
+  ptrdiff_t instruction = (ptrdiff_t)(frame->ip - function->chunk.code);
+  int line = (instruction >= 0 && instruction < function->chunk.count)
+                 ? function->chunk.lines[instruction]
+                 : 0;
 
   reportRuntimeError(pvm->source, line, message);
 
   for (int i = pvm->frameCount - 1; i >= 0; i--) {
     CallFrame* f = &pvm->frames[i];
     ObjFunction* fn = f->closure->function;
-    size_t inst = f->ip - fn->chunk.code - 1;
-    fprintf(stderr, "  [line %d] in ", fn->chunk.lines[inst]);
+    ptrdiff_t inst = (ptrdiff_t)(f->ip - fn->chunk.code);
+    int traceLine = (inst >= 0 && inst < fn->chunk.count)
+                        ? fn->chunk.lines[inst]
+                        : 0;
+    fprintf(stderr, "  [line %d] in ", traceLine);
     if (fn->name == NULL) {
       fprintf(stderr, "script\n");
     } else {
@@ -1338,30 +1347,50 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_MAKE_TENSOR) {
+      // Bounds check: ensure we have enough bytes for dimCount + elementCount + dims
+      int minRequired = 1 + 4 + 4; // 1 byte dimCount + 4 bytes elementCount + at least 4 bytes per dim
+      if (stackTop - pvm->stack < minRequired) {
+          STORE_FRAME();
+          runtimeError(pvm, "Stack underflow building tensor.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+
       int dimCount = READ_BYTE();
+      if (dimCount < 0 || dimCount > 16) {
+          STORE_FRAME();
+          runtimeError(pvm, "Tensor dimension count out of range.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+
       uint32_t elementCount = 0;
       elementCount |= ((uint32_t)*ip++);
       elementCount |= ((uint32_t)*ip++ << 8);
       elementCount |= ((uint32_t)*ip++ << 16);
       elementCount |= ((uint32_t)*ip++ << 24);
-      int dims[256]; 
+
+      int dims[16];
       int totalSize = 1;
       for (int i = 0; i < dimCount; i++) {
+           if (ip + 4 > frame->closure->function->chunk.code + frame->closure->function->chunk.count) {
+               STORE_FRAME();
+               runtimeError(pvm, "Tensor dimension data truncated.");
+               return INTERPRET_RUNTIME_ERROR;
+           }
            uint32_t d = 0;
-           d |= ((uint32_t)*ip++); 
+           d |= ((uint32_t)*ip++);
            d |= ((uint32_t)*ip++ << 8);
-           d |= ((uint32_t)*ip++ << 16); 
+           d |= ((uint32_t)*ip++ << 16);
            d |= ((uint32_t)*ip++ << 24);
-           dims[i] = (int)d;
-           
-           if (dims[i] < 0 || dims[i] > 1000000) {
+
+           if (d > 1000000) {
                STORE_FRAME();
                runtimeError(pvm, "Tensor dimension too large.");
                return INTERPRET_RUNTIME_ERROR;
            }
-           
+           dims[i] = (int)d;
+
            long long newSize = (long long)totalSize * dims[i];
-           if (newSize > 100000000) { 
+           if (newSize > 100000000) {
                STORE_FRAME();
                runtimeError(pvm, "Tensor total size exceeds limit.");
                return INTERPRET_RUNTIME_ERROR;
@@ -1370,7 +1399,7 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       }
       STORE_FRAME();
       ObjTensor *tensor = newTensor(dimCount, dims, NULL);
-      PUSH(OBJ_VAL(tensor)); 
+      PUSH(OBJ_VAL(tensor));
       if (elementCount == (uint32_t)totalSize) {
           if (stackTop - totalSize < pvm->stack) {
               STORE_FRAME();
@@ -1522,6 +1551,16 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   size_t oldNextGC = pvm->nextGC;
   pvm->nextGC = (size_t)-1; // SIZE_MAX
 
+  // Type check before bytecode generation
+  TypeChecker checker;
+  initTypeChecker(&checker);
+  if (!checkTypes(&checker, statements)) {
+      freeTypeChecker(&checker);
+      pvm->nextGC = oldNextGC;
+      return INTERPRET_COMPILE_ERROR;
+  }
+  freeTypeChecker(&checker);
+
   ObjFunction* function = newFunction();
   
   // Connect the AST-based bytecode generator
@@ -1530,15 +1569,17 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
       return INTERPRET_COMPILE_ERROR;
   }
   
-  // printf("DEBUG: Generated bytecode. Function: %p\n", function);
   if (function->chunk.code == NULL) {
       fprintf(stderr, "Fatal Error: Bytecode generation produced NULL chunk code.\n");
       pvm->nextGC = oldNextGC;
       return INTERPRET_COMPILE_ERROR;
-  } else {
-      // printf("DEBUG: Chunk code size: %d\n", function->chunk.count);
   }
 
+  // Verify bytecode before execution
+  if (!verifyChunk(&function->chunk, pvm->source)) {
+      pvm->nextGC = oldNextGC;
+      return INTERPRET_COMPILE_ERROR;
+  }
   
   // Setup for execution
   push(pvm, OBJ_VAL(function));
@@ -1554,9 +1595,7 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   frame->ip = function->chunk.code;
   frame->slots = pvm->stack;
 
-  // printf("DEBUG: Starting execution...\n");
   InterpretResult result = run(pvm);
-  // printf("DEBUG: Execution finished with result: %d\n", result);
 
   return result;
 }
@@ -1565,6 +1604,10 @@ InterpretResult interpret(VM* pvm, const char* source) {
   pvm->source = source;
   ObjFunction* function = compile(source);
   if (function == NULL) return INTERPRET_COMPILE_ERROR;
+
+  if (!verifyChunk(&function->chunk, source)) {
+      return INTERPRET_COMPILE_ERROR;
+  }
 
   push(pvm, OBJ_VAL(function));
   ObjClosure* closure = newClosure(function);

@@ -1,21 +1,31 @@
 # Security Policy
 
-## Supported Versions
+## Reporting a Vulnerability
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+If you discover a security vulnerability in ProXPL, please report it responsibly:
+
+- **Email**: security@proxentix.com
+- **Response time**: We aim to acknowledge reports within 48 hours and provide a detailed fix timeline within 7 days.
+- **Disclosure**: Please do not publicly disclose the vulnerability until we have released a patch.
+
+## Supported Versions
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 1.9.x   | :white_check_mark: |
+| 1.8.x   | :x:                |
+| < 1.8   | :x:                |
 
-## Reporting a Vulnerability
+## Security Considerations
 
-Use this section to tell people how to report a vulnerability.
+ProXPL includes several features that have inherent security implications:
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+- **FFI (`extern`)**: Allows calling arbitrary C functions. This can execute arbitrary native code. Only use `extern` with trusted libraries.
+- **`Sys.execute()` / `OS.execute()`**: Execute shell commands. Always sanitize user input before passing to these functions.
+- **Garbage Collection**: ProXPL uses a mark-and-sweep garbage collector. Do not rely on finalizers for security-critical cleanup.
+
+## Known Limitations
+
+- The standard library does not currently sandbox file system or network access.
+- The bytecode verifier is basic; malformed bytecode can cause runtime errors.
+- Random number generation is not cryptographically secure. Do not use `random()` for security-sensitive purposes.

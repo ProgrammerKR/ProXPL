@@ -59,9 +59,13 @@ ObjForeign* loadForeign(ObjString* libraryPath, ObjString* symbolName) {
 #endif
 
     if (!symbol) {
-        // Symbol not found. 
-        // We might want to close handle if we opened it, but for now we assume 
-        // libraries might be reused or it's fine to leak handle until exit.
+        if (libName) {
+#ifdef _WIN32
+            FreeLibrary((HMODULE)handle);
+#else
+            dlclose(handle);
+#endif
+        }
         return NULL;
     }
 
@@ -146,36 +150,29 @@ Value callForeign(ObjForeign* foreign, int argCount, Value* args) {
         }
     }
 
-    // Default return type: int (most common)
-    // Ideally we'd support double too.
-    // Let's use ffi_type_pointer sized return buffer and cast?
-    // ffi_type_sint is platform int.
-    
-    // We'll prepare for an 'int' return for now as 'puts' returns int.
+    // Default return type: pointer-sized integer
     // To support double return, we'd need syntax override.
     ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argCount, &ffi_type_pointer, argTypes);
-    
-    // Using pointer-sized return buffer to catch int/ptr.
-    // If it returns double, we might read garbage.
-    void* resultPtr = NULL; // storage for return
-    
+
+    // Using pointer-sized return buffer to catch int/ptr/double
+    void* resultPtr = NULL;
+
     // Actually, ffi_call writes result to the pointer provided.
     // It must effectively be sizeof(return_type).
     // Let's use a generic large buffer.
     long long retStorage = 0;
-    
-    // Temporarily forcing int return for `puts`.
-    // ffi_type_sint
-    status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argCount, &ffi_type_sint, argTypes);
-    
+
+    // Prepare for pointer-sized return to catch int/ptr/double
+    status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argCount, &ffi_type_pointer, argTypes);
+
     if (status == FFI_OK) {
         ffi_call(&cif, FFI_FN(foreign->function), &retStorage, argValues);
-        
+
         free(argTypes);
         free(argValues);
         free(storage);
-        
-        return NUMBER_VAL((double)(int)retStorage);
+
+        return NUMBER_VAL((double)retStorage);
     }
     
     free(argTypes);

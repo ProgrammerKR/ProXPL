@@ -127,6 +127,13 @@ jobs:
             ${{ matrix.asset_name }}
             build/ProXPL_Installer_*.exe
 
+      - name: Upload Windows Installer Artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: proxpl-windows-installer
+          path: build/ProXPL_Installer_*.exe
+
   release:
     name: Create Release
     needs: build-and-package
@@ -140,9 +147,8 @@ jobs:
       - name: Download Windows Installer
         uses: actions/download-artifact@v4
         with:
-          name: proxpl-windows.exe
+          name: proxpl-windows-installer
           path: .
-          pattern: ProXPL_Installer_*.exe
           merge-multiple: true
           
       - name: Download Linux Artifact

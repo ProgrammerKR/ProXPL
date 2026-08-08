@@ -44,7 +44,7 @@ jobs:
 
       - name: Snyk Code test
         run: |
-          snyk code test --sarif-file-output=snyk-code.sarif || true
+          snyk code test --sarif-file-output=snyk-code.sarif --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -65,12 +65,12 @@ jobs:
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects || true
+        run: snyk monitor --all-projects
 
         # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
         # Use || true to not fail the pipeline.
       - name: Snyk IaC test and report
-        run: snyk iac test --report || true
+        run: snyk iac test --report --severity-threshold=high
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
