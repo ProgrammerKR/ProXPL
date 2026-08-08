@@ -1,0 +1,20 @@
+// Very simple HTML template engine simulator
+
+func render(template, data) {
+    let result = template;
+    // Simulating replace loop (assuming a powerful replace function exists)
+    // For ProXPL v1.6, we'd use native string manipulation
+    let name = data["name"];
+    let title = data["title"];
+    
+    result = replace(result, "{{name}}", name);
+    result = replace(result, "{{title}}", title);
+    return result;
+}
+
+func main() {
+    let tpl = "<html><head><title>{{title}}</title></head><body><h1>Hello, {{name}}!</h1></body></html>";
+    let output = render(tpl, {"name": "Alice", "title": "Welcome Page"});
+    print(output);
+}
+main();
