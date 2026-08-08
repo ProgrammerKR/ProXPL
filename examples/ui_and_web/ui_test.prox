@@ -1,0 +1,19 @@
+use UI;
+
+App MyLibraryApp {
+    State count = 0;
+
+    Action increment {
+        count = count + 1;
+    }
+
+    Window Main {
+        Container(className: "hero") {
+            Text(value: "Welcome to ProXPL UI");
+            Button(onClick: increment) {
+                Text(value: "Click Me");
+            }
+            Text(value: count);
+        }
+    }
+}
