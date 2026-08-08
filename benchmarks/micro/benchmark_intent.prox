@@ -1,0 +1,12 @@
+// Intent Call Benchmark
+
+intent MyIntent();
+resolver MyResolver matches MyIntent { return 1; }
+
+let start = clock();
+for (let i = 0; i < 100000; i = i + 1) {
+    MyIntent();
+}
+let end = clock();
+let diff = end - start;
+print("Time: " + to_string(diff) + " s");
