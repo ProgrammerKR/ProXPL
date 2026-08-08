@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -484,44 +484,34 @@ ProXPL/
 ├── src/
 │   ├── main.c                # Entry point
 │   ├── lexer/                # Lexical analysis
-│   │   └── scanner.c
 │   ├── parser/               # Syntax analysis
-│   │   ├── parser.c
-│   │   └── ast.c
 │   ├── compiler/             # Code generation
-│   │   ├── type_checker.c
-│   │   ├── ir_gen.c
-│   │   ├── ir_opt.c
-│   │   ├── bytecode_gen.c
-│   │   └── backend_llvm.cpp
 │   ├── runtime/              # Runtime system
-│   │   ├── vm.c              # Virtual machine
-│   │   ├── gc.c              # Garbage collector
-│   │   ├── memory.c          # Memory management
-│   │   ├── chunk.c           # Bytecode storage
-│   │   └── object.c          # Runtime object system
 │   ├── stdlib/               # Standard library (native)
-│   │   ├── stdlib_core.c
-│   │   ├── stdlib_io.c
-│   │   ├── stdlib_math.c
-│   │   └── stdlib_string.c
 │   ├── prm/                  # Package manager
-│   │   ├── manifest.c
-│   │   └── builder.c
 │   └── utils/                # Utilities
-│       └── error_report.c
 ├── lib/std/                  # Standard library (ProXPL)
 ├── tools/
 │   ├── lsp/                  # Language Server Protocol
 │   ├── bench/                # Benchmarking tools
 │   └── prm_main.c            # PRM CLI entry
 ├── examples/                 # Example programs
+│   ├── advanced/             # Advanced integrations
+│   ├── algorithms/           # Algorithm examples
+│   ├── basics/               # Basic scripts
+│   └── ui_and_web/           # UI and web frameworks
 ├── tests/                    # Test suite
+│   ├── benchmarks/           # ProXPL script benchmarks
+│   ├── integration/          # E2E integration tests
+│   ├── iop/                  # Intent, Context, and ASR tests
+│   ├── language/             # Core language feature tests
+│   ├── misc/                 # Scratch files
+│   └── vm/                   # C/C++ runtime unit tests
 ├── docs/                     # Documentation
-│   ├── language-spec/        # Language specification
-│   ├── stdlib/               # Standard library docs
-│   └── architecture/         # Architecture guides
-├── benchmarks/               # Performance benchmarks
+│   ├── architecture/         # Architecture guides
+│   ├── maintenance/          # Code audits & backend fixes
+│   ├── pillars/              # Core paradigm specifications
+│   └── releases/             # Version release notes
 ├── CMakeLists.txt            # Build configuration
 ├── Makefile                  # Alternative build system
 └── README.md                 # This file
@@ -533,14 +523,15 @@ ProXPL/
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
-- **[Language Specification](docs/spec.md)**: A detailed guide to ProXPL grammar, keywords, operators, data types, and core semantics.
+- **[Language Specification](docs/language-spec.md)**: A detailed guide to ProXPL grammar, keywords, operators, data types, and core semantics.
 - **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all built-in functions and modules.
 - **[Architecture Guide](docs/architecture/)**: A deep dive into the compiler design and Virtual Machine (VM) internals.
+- **[Core Pillars](docs/pillars/)**: Detailed specifications for ProXPL's 10 paradigm pillars, including Intents, Contexts, and ASR.
 - **[IR Specification](docs/ir-spec/)**: Documentation for the SSA (Static Single Assignment) intermediate representation.
-- **[Build Guide](CONTRIBUTING.md)**: Platform-specific instructions for building ProXPL from source.
+- **[Build Guide](docs/BUILD_GUIDE.md)**: Platform-specific instructions for building ProXPL from source.
 - **[Coding Standards](CODING_STANDARD.md)**: Code style guidelines and contribution workflow.
 - **[Benchmarks](BENCHMARKS.md)**: Performance metrics, comparisons, and optimization notes.
-- **[Ecosystem Design](ECOSYSTEM_DESIGN.md)**: Overview of the Standard Library and PRM (ProX Package Manager) architecture.
+- **[Ecosystem Design](docs/architecture/ECOSYSTEM_DESIGN.md)**: Overview of the Standard Library and PRM (ProX Package Manager) architecture.
 
 ---
 
@@ -586,52 +577,30 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - **v0.5.0 (Alpha)**: Core language features (variables, functions, control flow). ✅
 - **v0.8.0**: Advanced memory management, closures, upvalues. ✅
 - **v0.9.0**: Standard Library (fs, time, gc), IO improvements. ✅
-- **v1.0.0 (Current)**:
+- **v1.0.0**:
   - **Object-Oriented Programming**: Classes, Methods, Inheritance, Properties. ✅
   - **Keywords**: `class`, `new`, `this`, `extends`, `interface`. ✅
   - **Runtime**: Optimized VM with Object Support. ✅
-- **v1.3.0 (Current)**:
-- **v1.3.3**:
-  - **The 10 Operational Pillars**: Full frontend implementation of Intent-Oriented, Context-Aware, ASR, Intrinsic Security, Chrono-Native, Event-Concurreny, AI-Native, Quantum-Ready, Hardware-Math, and Zero-Trust features. ✅
-  - **Frontend Feature Complete**: Lexer, Parser, AST, and Type Checker support all 10 pillars. ✅
 
-### Unreleased (Development)
-**Status**: In Progress
-- ✅ **AI-Native Primitives**: Native `tensor` type support with multi-dimensional declaration (e.g., `tensor<float, 2x2>`).
-- ✅ **Syntax**: Enhanced parser for tensor literals and dimension syntax.
-
-### v1.3.3
-**Status**: Released (Frontend)
-- ✅ **10 Pillars Implementation**: Correctly parsing and semantically validating all revolutionary syntax constructs.
-- ✅ **AI & Quantum**: `model`, `train`, `quantum`, `qubit` primitives.
-- ✅ **Security**: `policy`, `tainted`, `encrypt`, `verify` support.
-- ✅ **Distributed**: `distributed type`, `node` declarations.
-
-### v1.1.0
-**Status**: Released
-- ✅ **Class-based OOP**: First-class support for Classes, Objects, Inheritance, and Interfaces.
-- ✅ **Runtime Architecture**: Enhanced VM with Class, Instance, and BoundMethod support.
-- ✅ **New Keywords**: `class`, `new`, `this`, `extends`, `interface`, `static`.
-- ✅ **Inheritance**: Single inheritance model with superclass method lookup.
-- ✅ **Access Control**: `pub`/`priv` visibility enforcement.
-- ✅ **Constructors**: `init` constructor method.
-- ✅ **Exception Handling**: `try`/`catch` blocks.
-- ✅ **Verification**: Verified via `tests/oop_v1.0.0.prox`.
+- **v1.6.0 (Current)**:
+  - **Intent-Oriented Programming**: Full VM support for `intent` and `resolver` dynamic dispatch. ✅
+  - **Context-Aware Polymorphism**: Dynamic behavioral overrides via `context`, `layer`, and `activate`. ✅
+  - **Autonomic Self-Healing (ASR)**: Zero-cost stack unwinding through `resilient` exception blocks. ✅
+  - **Performance Tooling**: Benchmark suite for core abstractions. ✅
 
 ### Future Roadmap (2026–2028)
-- 📋 **[v1.3.0](docs/releases/v1.3.0.md)** — Pattern Matching, Enums, Generics, FFI Stability.
-- 📋 **[v1.4.0](docs/releases/v1.4.0.md)** — Async/Await Runtime, Generators, Networking (`std.net`), JSON.
-- 📋 **[v1.5.0](docs/releases/v1.5.0.md)** — Traits, Result/Option Types, Generational GC, Debugger (DAP).
-- 📋 **[v1.6.0](docs/releases/v1.6.0.md)** — ProX Studio Alpha, PRM Registry, Testing Framework, Macros.
-- 📋 **[v1.7.0](docs/releases/v1.7.0.md)** — WebAssembly Target, String Templates, Operator Overloading, Formatter.
-- 📋 **[v1.8.0](docs/releases/v1.8.0.md)** — Channels, Actors, Database Connectivity, LSP v2, Compile-Time Eval.
-- 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
+- 📋 **[v1.7.0](docs/releases/v1.7.0.md)** — ProX Studio Alpha, PRM Registry, Testing Framework, Macros.
+- 📋 **[v1.8.0](docs/releases/v1.8.0.md)** — WebAssembly Target, String Templates, Operator Overloading, Formatter.
+- 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Channels, Actors, Database Connectivity, LSP v2, Compile-Time Eval.
+- 📋 **[v1.9.5](docs/releases/v1.9.5.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
 - 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
 
-## 📝 Recent Changes (v1.5.0)
-- **Traits/Interfaces v2:** Composable behavioral contracts with default implementations. Generic bounds and constraints.
-- **Memory Management**: Integrated `mimalloc` memory allocator for optimized runtime performance.
-- **Dictionary Optimizations**: SwissTable-style Dictionary optimizations using `ctrl` bytes for linear probing.
+## 📝 Recent Changes (v1.6.0)
+
+- **IOP Core**: Fully implemented `intent`, `resolver`, and `satisfies` with native VM dispatch.
+- **Context-Aware Polymorphism**: Fully implemented `context`, `layer`, and `activate`.
+- **Autonomic Self-Healing (ASR)**: Added `resilient` exception recovery blocks without corrupting state.
+- **Performance Benchmarks**: New benchmark suite for dynamic dispatch paradigms.
 - **ASR Refinement**: Zero-cost stack unwinding for `resilient` blocks using `ExceptionHandlerTable`.
 - **LLVM Backend**: LLVM PassManager configured for O3 (Vectorization and Inlining) and Tail-Call Optimization (TCO).
 - See the full [CHANGELOG.md](CHANGELOG.md) for more details.
