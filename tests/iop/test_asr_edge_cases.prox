@@ -1,0 +1,53 @@
+// tests/test_asr_edge_cases.prox
+
+print("--- ASR Edge Cases Tests ---");
+
+// 1. Closure -> Exception
+func createClosure() {
+    let captured = "secret";
+    func closure() {
+        print(captured);
+        let zero = 0;
+        let x = 1 / zero;
+    }
+    return closure;
+}
+
+resilient {
+    let myClosure = createClosure();
+    myClosure();
+    print("FAIL: Closure exception not caught");
+}
+print("PASS: Closure exception caught.");
+
+// 2. Deep Call Stack
+func deep3() { let zero = 0; let x = 1 / zero; }
+func deep2() { deep3(); }
+func deep1() { deep2(); }
+
+resilient {
+    deep1();
+    print("FAIL: Deep exception not caught");
+}
+print("PASS: Deep call stack exception caught.");
+
+// 3. Exception inside context
+context TestContext { layer Dummy { } }
+
+resilient {
+    activate TestContext {
+        let zero = 0; let y = 1 / zero;
+        print("FAIL: Inside context exception not caught");
+    }
+}
+print("PASS: Context exception caught.");
+
+// 4. Repeated recovery
+resilient { let zero = 0; let z = 1 / zero; }
+resilient { let zero = 0; let z = 1 / zero; }
+resilient { let zero = 0; let z = 1 / zero; }
+resilient { let zero = 0; let z = 1 / zero; }
+resilient { let zero = 0; let z = 1 / zero; }
+print("PASS: Repeated recovery successful.");
+
+print("--- ASR Edge Cases Tests Complete ---");
