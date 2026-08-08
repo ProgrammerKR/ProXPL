@@ -1,92 +1,26 @@
 # ProXPL C Implementation Makefile
-# Complete build system for the C-based ProXPL interpreter
+# DEPRECATED: Use CMake for the primary build system.
+# This Makefile is retained for reference only and may not build successfully.
+# See BUILD_GUIDE.md or CMakeLists.txt for the canonical build instructions.
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wpedantic -std=c99 -O2 -I../include
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wpedantic -std=c99 -O2 -Iinclude
 LDFLAGS = -lm -lmimalloc
-TARGET = prox
-SRCDIR = .
-INCDIR = ../include
+TARGET = proxpl
+SRCDIR = src
+INCDIR = include
 OBJDIR = build/obj
 
-# All source files
-SOURCES = main.c \
-          utils/pxcf.c \
-          lexer/scanner.c \
-          parser/parser.c \
-          parser/ast.c \
-          parser/type_checker.c \
-          runtime/vm.c \
-          runtime/chunk.c \
-          runtime/compiler.c \
-          runtime/value.c \
-          runtime/object.c \
-          runtime/memory.c \
-          runtime/debug.c \
-          stdlib/stdlib_core.c \
-          stdlib/io_native.c \
-          stdlib/math_native.c \
-          stdlib/string_native.c \
-          stdlib/convert_native.c \
-          stdlib/system_native.c \
-          src/proxpl_api.c
-
-# Object files
-OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(SOURCES))
-
 # Default target
-all: $(TARGET)
+all: help
 
-# Create object directory structure
-$(OBJDIR):
-	@mkdir -p $(OBJDIR)
-	@mkdir -p $(OBJDIR)/lexer
-	@mkdir -p $(OBJDIR)/parser
-	@mkdir -p $(OBJDIR)/runtime
-	@mkdir -p $(OBJDIR)/stdlib
-	@mkdir -p $(OBJDIR)/src
-	@touch $(OBJDIR)/.stamp
-
-# Link the executable
-$(TARGET): $(OBJDIR) $(OBJDIR)/.stamp $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
-	@echo "Build complete: $(TARGET)"
-
-# Compile source files
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Clean build artifacts
-clean:
-	rm -rf $(OBJDIR) $(TARGET) $(TARGET).exe
-	@echo "Clean complete"
-
-# Rebuild from scratch
-rebuild: clean all
-
-# Run the interpreter (REPL mode)
-repl: $(TARGET)
-	./$(TARGET)
-
-# Run a test file
-test: $(TARGET)
-	@if [ -f ../examples/hello.prox ]; then \
-		./$(TARGET) ../examples/hello.prox; \
-	else \
-		echo "Error: ../examples/hello.prox not found. Please ensure examples are present."; \
-		exit 1; \
-	fi
-
-# Show help
 help:
-	@echo "ProXPL C Implementation - Makefile"
-	@echo "Targets:"
-	@echo "  all      - Build the interpreter (default)"
-	@echo "  clean    - Remove build artifacts"
-	@echo "  rebuild  - Clean and rebuild"
-	@echo "  repl     - Run in REPL mode"
-	@echo "  test     - Run test example"
-	@echo "  help     - Show this help"
+	@echo "ProXPL C Implementation - Makefile (DEPRECATED)"
+	@echo "Please use CMake instead:"
+	@echo "  mkdir build && cd build"
+	@echo "  cmake .. && make"
+	@echo ""
+	@echo "Or on Windows:"
+	@echo "  cmake -G 'Visual Studio 16 2019' .."
 
-.PHONY: all clean rebuild repl test help
+.PHONY: all help

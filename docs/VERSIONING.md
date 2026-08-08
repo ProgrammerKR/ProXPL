@@ -1,6 +1,6 @@
 # ProXPL Versioning and Release Guide
 
-**Current Version: 1.2.0**  
+**Current Version: 1.5.1**  
 **Release Date: January 2026**
 
 This document describes the versioning strategy, semantic versioning policy, and release procedures for ProXPL.

@@ -45,7 +45,7 @@ The severity of consequences depends on the nature and severity of the violation
 If you experience or witness unacceptable behavior:
 
 1. **Document**: Note what happened, when, and who was involved
-2. **Report**: Contact the maintainers at proxpl-conduct@example.com
+2. **Report**: Contact the maintainers at conduct@proxentix.com
 3. **Provide Context**: Include as much detail as helpful
 4. **Respect Privacy**: Your report will be kept confidential
 

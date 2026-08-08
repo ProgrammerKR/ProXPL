@@ -655,7 +655,7 @@ We value all contributions! Contributors will be:
 
 ## License
 
-By contributing to ProXPL, you agree that your contributions will be licensed under the MIT License.
+By contributing to ProXPL, you agree that your contributions will be licensed under the ProX Professional License (PPL).
 
 ---
 
