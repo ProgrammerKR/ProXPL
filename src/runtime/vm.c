@@ -106,6 +106,7 @@ void runtimeError(VM* pvm, const char* format, ...) {
               
               // Push error message as a string
               push(pvm, OBJ_VAL(copyString(message, strlen(message))));
+              longjmp(pvm->exceptionJump, 1);
               return;
           }
       }
@@ -343,6 +344,18 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
 /* Load local registers from the VM structure (call after returning from C functions) */
 #define LOAD_FRAME()  (frame = &pvm->frames[pvm->frameCount - 1], \
                        ip = frame->ip, stackTop = pvm->stackTop)
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4611)
+#endif
+  if (setjmp(pvm->exceptionJump) != 0) {
+      // Exception caught and unwound. Reload local frame registers.
+      LOAD_FRAME();
+  }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #ifdef __GNUC__
   #define DISPATCH() goto *dispatch_table[*ip++]
@@ -1028,6 +1041,31 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           frame->slots = stackTop - argCount - 1;
           ip = frame->ip;
           DISPATCH();
+      } else if (IS_INTENT(callee)) {
+          ObjIntent* intent = AS_INTENT(callee);
+          if (argCount != intent->paramCount) {
+              STORE_FRAME();
+              runtimeError(pvm, "Expected %d arguments for intent %s, but got %d.", intent->paramCount, intent->name->chars, argCount);
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          if (intent->resolverCount == 0) {
+              STORE_FRAME();
+              runtimeError(pvm, "Intent '%s' has no matching resolvers.", intent->name->chars);
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          if (pvm->frameCount == FRAMES_MAX) {
+              STORE_FRAME();
+              runtimeError(pvm, "Stack overflow.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          ObjClosure* closure = intent->resolvers[0];
+          frame->ip = ip;
+          frame = &pvm->frames[pvm->frameCount++];
+          frame->closure = closure;
+          frame->ip = closure->function->chunk.code;
+          frame->slots = stackTop - argCount - 1;
+          ip = frame->ip;
+          DISPATCH();
       } else {
           STORE_FRAME();
           runtimeError(pvm, "Can only call functions, classes, and foreign functions.");
@@ -1488,6 +1526,50 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   
   CASE_OP(OP_END_ACTIVATE) {
       if (pvm->activeContextCount > 0) pvm->activeContextCount--;
+      DISPATCH();
+  }
+  
+  CASE_OP(OP_INTENT) {
+      ObjString* name = READ_STRING();
+      uint32_t pCount = 0;
+      pCount |= ((uint32_t)*ip++);
+      pCount |= ((uint32_t)*ip++ << 8);
+      pCount |= ((uint32_t)*ip++ << 16);
+      pCount |= ((uint32_t)*ip++ << 24);
+      STORE_FRAME();
+      PUSH(OBJ_VAL(newIntent(name, (int)pCount)));
+      DISPATCH();
+  }
+  
+  CASE_OP(OP_RESOLVER) {
+      ObjString* name = READ_STRING();
+      uint32_t targetConst = 0;
+      targetConst |= ((uint32_t)*ip++);
+      targetConst |= ((uint32_t)*ip++ << 8);
+      targetConst |= ((uint32_t)*ip++ << 16);
+      targetConst |= ((uint32_t)*ip++ << 24);
+      
+      Value handlerVal = *(--stackTop);
+      STORE_FRAME();
+      
+      if (!IS_CLOSURE(handlerVal)) {
+          runtimeError(pvm, "Resolver handler must be a closure.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      
+      ObjClosure* handler = AS_CLOSURE(handlerVal);
+      ObjString* targetIntentName = AS_STRING(frame->closure->function->chunk.constants.values[targetConst]);
+      
+      Value intentVal;
+      if (tableGet(&pvm->globals, targetIntentName, &intentVal) && IS_INTENT(intentVal)) {
+          ObjIntent* intent = AS_INTENT(intentVal);
+          intentAddResolver(intent, handler);
+      } else {
+          runtimeError(pvm, "Target intent '%s' not found.", targetIntentName->chars);
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      
+      PUSH(OBJ_VAL(newResolver(name, (int)targetConst, handler)));
       DISPATCH();
   }
 
