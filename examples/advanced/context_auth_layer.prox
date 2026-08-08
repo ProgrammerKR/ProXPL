@@ -1,0 +1,23 @@
+// Context-Aware Polymorphism Authentication Simulation
+// Overrides database fetch behavior based on active authentication context.
+
+func fetch_record(id) {
+    return "Encrypted Record " + to_string(id);
+}
+
+layer AuthenticatedAdmin {
+    override func fetch_record(id) {
+        return "Decrypted Sensitive Record " + to_string(id);
+    }
+}
+
+func main() {
+    print("Default Context: " + fetch_record(42));
+    
+    activate AuthenticatedAdmin {
+        print("Admin Context: " + fetch_record(42));
+    }
+    
+    print("Back to Default: " + fetch_record(42));
+}
+main();
