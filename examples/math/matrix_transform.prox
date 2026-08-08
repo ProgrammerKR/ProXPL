@@ -1,0 +1,32 @@
+// Basic Matrix transformations using arrays
+
+func transpose(matrix) {
+    let rows = length(matrix);
+    let cols = length(matrix[0]);
+    
+    let result = [];
+    for (let i = 0; i < cols; i = i + 1) {
+        let new_row = [];
+        for (let j = 0; j < rows; j = j + 1) {
+            push(new_row, matrix[j][i]);
+        }
+        push(result, new_row);
+    }
+    return result;
+}
+
+func main() {
+    let mat = [
+        [1, 2, 3],
+        [4, 5, 6]
+    ];
+    
+    print("Original:");
+    print(mat);
+    
+    let transposed = transpose(mat);
+    
+    print("Transposed:");
+    print(transposed);
+}
+main();
