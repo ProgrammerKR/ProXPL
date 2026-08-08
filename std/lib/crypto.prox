@@ -107,6 +107,16 @@ class Crypto {
         }
         return 0;
     }
+    
+    static func _charFromCode(code) {
+        if (code < 0 || code > 255) return "";
+        if (code >= 0 && code <= 25) return substr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", code, 1);
+        if (code >= 26 && code <= 51) return substr("abcdefghijklmnopqrstuvwxyz", code - 26, 1);
+        if (code >= 52 && code <= 61) return substr("0123456789", code - 52, 1);
+        if (code == 62) return "+";
+        if (code == 63) return "/";
+        return "";
+    }
 }
 
 class Base64 {
@@ -158,8 +168,44 @@ class Base64 {
     }
     
     static func decode(encoded) {
-        // Simplified decode - would need full implementation
-        return "[Base64 decode not fully implemented]";
+        let s = to_string(encoded);
+        let result = "";
+        let i = 0;
+        
+        while (i < len(s)) {
+            let c1 = Crypto._base64Index(substr(s, i, 1));
+            i = i + 1;
+            let c2 = Crypto._base64Index(substr(s, i, 1));
+            i = i + 1;
+            let c3 = 0;
+            if (i < len(s) && substr(s, i, 1) != "=") {
+                c3 = Crypto._base64Index(substr(s, i, 1));
+            }
+            i = i + 1;
+            let c4 = 0;
+            if (i < len(s) && substr(s, i, 1) != "=") {
+                c4 = Crypto._base64Index(substr(s, i, 1));
+            }
+            i = i + 1;
+            
+            let byte1 = (c1 * 4) + floor(c2 / 16);
+            let byte2 = ((c2 % 16) * 16) + floor(c3 / 4);
+            let byte3 = ((c3 % 4) * 64) + c4;
+            
+            result = result + Crypto._charFromCode(byte1);
+            if (c3 != -1) result = result + Crypto._charFromCode(byte2);
+            if (c4 != -1) result = result + Crypto._charFromCode(byte3);
+        }
+        
+        return result;
+    }
+    
+    static func _base64Index(ch) {
+        let chars = Base64.CHARS;
+        for (let i = 0; i < len(chars); i = i + 1) {
+            if (substr(chars, i, 1) == ch) return i;
+        }
+        return -1;
     }
 }
 
@@ -181,26 +227,28 @@ class Hex {
     }
     
     static func decode(encoded) {
+        let s = to_string(encoded);
         let result = "";
         let i = 0;
         
-        while (i < len(encoded)) {
-            let high = Hex._hexValue(substr(encoded, i, 1));
+        while (i < len(s)) {
+            let high = Crypto._hexValue(substr(s, i, 1));
             i = i + 1;
-            let low = Hex._hexValue(substr(encoded, i, 1));
+            let low = Crypto._hexValue(substr(s, i, 1));
             i = i + 1;
             
-            // Would need character from code function
-            result = result + "[char]";
+            let code = high * 16 + low;
+            result = result + Crypto._charFromCode(code);
         }
         
         return result;
     }
     
     static func _hexValue(ch) {
-        for (let i = 0; i < len(Hex.CHARS); i = i + 1) {
-            if (substr(Hex.CHARS, i, 1) == ch) return i;
-        }
+        let c = substr(ch, 0, 1);
+        if (c >= "0" and c <= "9") return Crypto._charCode(c) - Crypto._charCode("0");
+        if (c >= "a" and c <= "f") return Crypto._charCode(c) - Crypto._charCode("a") + 10;
+        if (c >= "A" and c <= "F") return Crypto._charCode(c) - Crypto._charCode("A") + 10;
         return 0;
     }
 }

@@ -1,6 +1,8 @@
 // Enhanced Math Library for ProXPL
 // Provides comprehensive mathematical functions and constants
 
+use std.native.math;
+
 class Math {
     // Mathematical Constants
     static const PI = 3.14159265358979323846;
@@ -16,7 +18,7 @@ class Math {
     
     // Basic Math Functions
     static func abs(x) {
-        return abs(x);
+        return native.math.abs(x);
     }
     
     static func sign(x) {
@@ -26,29 +28,29 @@ class Math {
     }
     
     static func ceil(x) {
-        return ceil(x);
+        return native.math.ceil(x);
     }
     
     static func floor(x) {
-        return floor(x);
+        return native.math.floor(x);
     }
     
     static func round(x, decimals) {
         if (decimals == null) decimals = 0;
-        return round(x, decimals);
+        return native.math.round(x, decimals);
     }
     
     static func trunc(x) {
-        return floor(abs(x)) * Math.sign(x);
+        return native.math.floor(native.math.abs(x)) * Math.sign(x);
     }
     
     // Min/Max Functions
     static func max(a, b) {
-        return max(a, b);
+        return native.math.max(a, b);
     }
     
     static func min(a, b) {
-        return min(a, b);
+        return native.math.min(a, b);
     }
     
     static func clamp(value, minVal, maxVal) {
@@ -57,73 +59,73 @@ class Math {
     
     // Power and Root Functions
     static func pow(base, exponent) {
-        return pow(base, exponent);
+        return native.math.pow(base, exponent);
     }
     
     static func sqrt(x) {
-        return sqrt(x);
+        return native.math.sqrt(x);
     }
     
     static func cbrt(x) {
-        return pow(x, 1.0 / 3.0);
+        return native.math.pow(x, 1.0 / 3.0);
     }
     
     static func hypot(x, y) {
-        return sqrt(x * x + y * y);
+        return native.math.sqrt(x * x + y * y);
     }
     
     // Exponential and Logarithmic Functions
     static func exp(x) {
-        return exp(x);
+        return native.math.exp(x);
     }
     
     static func log(x, base) {
         if (base == null) base = Math.E;
-        return log(x, base);
+        return native.math.log(x, base);
     }
     
     static func log2(x) {
-        return log(x, 2);
+        return native.math.log(x, 2);
     }
     
     static func log10(x) {
-        return log(x, 10);
+        return native.math.log(x, 10);
     }
     
     static func ln(x) {
-        return log(x, Math.E);
+        return native.math.log(x, Math.E);
     }
     
     // Trigonometric Functions
     static func sin(x) {
-        return sin(x);
+        return native.math.sin(x);
     }
     
     static func cos(x) {
-        return cos(x);
+        return native.math.cos(x);
     }
     
     static func tan(x) {
-        return tan(x);
+        return native.math.tan(x);
     }
     
     static func asin(x) {
-        return asin(x);
+        return native.math.asin(x);
     }
     
     static func acos(x) {
-        return acos(x);
+        return native.math.acos(x);
     }
     
     static func atan(x) {
-        return atan(x);
+        return native.math.atan(x);
     }
     
     static func atan2(y, x) {
         // Approximate atan2 implementation
-        if (x > 0) return atan(y / x);
-        if (x < 0 and y >= 0) return atan(y / x) + Math.PI;
-        if (x < 0 and y < 0) return atan(y / x) - Math.PI;
+        if (x > 0) return native.math.atan(y / x);
+        if (x < 0 and y >= 0) return native.math.atan(y / x) + Math.PI;
+        if (x < 0 and y < 0) return native.math.atan(y / x) - Math.PI;
         if (x == 0 and y > 0) return Math.PI / 2;
         if (x == 0 and y < 0) return -Math.PI / 2;
         return 0; // x == 0 and y == 0
@@ -131,15 +133,15 @@ class Math {
     
     // Hyperbolic Functions
     static func sinh(x) {
-        return (exp(x) - exp(-x)) / 2;
+        return (native.math.exp(x) - native.math.exp(-x)) / 2;
     }
     
     static func cosh(x) {
-        return (exp(x) + exp(-x)) / 2;
+        return (native.math.exp(x) + native.math.exp(-x)) / 2;
     }
     
     static func tanh(x) {
-        return tanh(x);
+        return native.math.tanh(x);
     }
     
     // Angle Conversion
@@ -153,19 +155,19 @@ class Math {
     
     // Random Functions
     static func random() {
-        return random();
+        return native.math.random();
     }
     
     static func randomRange(minVal, maxVal) {
-        return minVal + (random() * (maxVal - minVal));
+        return minVal + (native.math.random() * (maxVal - minVal));
     }
     
     static func randint(minVal, maxVal) {
-        return randint(minVal, maxVal);
+        return native.math.randint(minVal, maxVal);
     }
     
     static func seed(value) {
-        seed(value);
+        native.math.seed(value);
     }
     
     // Statistical Functions
@@ -185,7 +187,7 @@ class Math {
     static func median(list) {
         if (len(list) == 0) return 0;
         // Note: This assumes list is sorted
-        let mid = floor(len(list) / 2);
+        let mid = native.math.floor(len(list) / 2);
         if (len(list) % 2 == 0) {
             return (list[mid - 1] + list[mid]) / 2;
         }
@@ -204,16 +206,16 @@ class Math {
     }
     
     static func stddev(list) {
-        return sqrt(Math.variance(list));
+        return native.math.sqrt(Math.variance(list));
     }
     
     // Machine Learning Activation Functions
     static func sigmoid(x) {
-        return sigmoid(x);
+        return native.math.sigmoid(x);
     }
     
     static func relu(x) {
-        return relu(x);
+        return native.math.relu(x);
     }
     
     static func leakyRelu(x, alpha) {
@@ -222,7 +224,7 @@ class Math {
     }
     
     static func softplus(x) {
-        return ln(1 + exp(x));
+        return native.math.ln(1 + native.math.exp(x));
     }
     
     // Utility Functions
@@ -247,7 +249,7 @@ class Math {
     }
     
     static func lcm(a, b) {
-        return abs(a * b) / Math.gcd(a, b);
+        return native.math.abs(a * b) / Math.gcd(a, b);
     }
     
     static func isPrime(n) {

@@ -1,25 +1,27 @@
 // Enhanced String Utilities Library for ProXPL
 // Provides comprehensive string manipulation functions
 
+use std.native.str;
+
 class StringUtils {
     // Case conversion
     static func upper(s) {
-        return upper(to_string(s));
+        return native.str.upper(to_string(s));
     }
     
     static func lower(s) {
-        return lower(to_string(s));
+        return native.str.lower(to_string(s));
     }
     
     static func capitalize(s) {
         let str = to_string(s);
         if (len(str) == 0) return str;
-        return upper(substr(str, 0, 1)) + lower(substr(str, 1));
+        return native.str.upper(native.str.substr(str, 0, 1)) + native.str.lower(native.str.substr(str, 1, len(str) - 1));
     }
     
     static func title(s) {
         let str = to_string(s);
-        let words = split(str, " ");
+        let words = native.str.split(str, " ");
         let result = "";
         for (let i = 0; i < len(words); i = i + 1) {
             if (i > 0) result = result + " ";
@@ -30,34 +32,34 @@ class StringUtils {
     
     // Whitespace operations
     static func trim(s) {
-        return trim(to_string(s));
+        return native.str.trim(to_string(s));
     }
     
     static func trimStart(s) {
         let str = to_string(s);
         let i = 0;
-        while (i < len(str) and (substr(str, i, 1) == " " or substr(str, i, 1) == "\t" or substr(str, i, 1) == "\n")) {
+        while (i < len(str) and (native.str.substr(str, i, 1) == " " or native.str.substr(str, i, 1) == "\t" or native.str.substr(str, i, 1) == "\n")) {
             i = i + 1;
         }
-        return substr(str, i);
+        return native.str.substr(str, i, len(str) - i);
     }
     
     static func trimEnd(s) {
         let str = to_string(s);
         let i = len(str) - 1;
-        while (i >= 0 and (substr(str, i, 1) == " " or substr(str, i, 1) == "\t" or substr(str, i, 1) == "\n")) {
+        while (i >= 0 and (native.str.substr(str, i, 1) == " " or native.str.substr(str, i, 1) == "\t" or native.str.substr(str, i, 1) == "\n")) {
             i = i - 1;
         }
-        return substr(str, 0, i + 1);
+        return native.str.substr(str, 0, i + 1);
     }
     
     // String operations
     static func split(s, delimiter) {
-        return split(to_string(s), to_string(delimiter));
+        return native.str.split(to_string(s), to_string(delimiter));
     }
     
     static func replace(s, old, new_val) {
-        return replace(to_string(s), to_string(old), to_string(new_val));
+        return native.str.replace(to_string(s), to_string(old), to_string(new_val));
     }
     
     static func replaceAll(s, old, new_val) {
@@ -65,37 +67,27 @@ class StringUtils {
         let oldStr = to_string(old);
         let newStr = to_string(new_val);
         
-        while (contains(str, oldStr)) {
-            str = replace(str, oldStr, newStr);
+        while (native.str.contains(str, oldStr)) {
+            str = native.str.replace(str, oldStr, newStr);
         }
         return str;
     }
     
     // Search operations
     static func contains(s, sub) {
-        return contains(to_string(s), to_string(sub));
+        return native.str.contains(to_string(s), to_string(sub));
     }
     
     static func startsWith(s, prefix) {
-        return startswith(to_string(s), to_string(prefix));
+        return native.str.startswith(to_string(s), to_string(prefix));
     }
     
     static func endsWith(s, suffix) {
-        return endswith(to_string(s), to_string(suffix));
+        return native.str.endswith(to_string(s), to_string(suffix));
     }
     
     static func indexOf(s, sub) {
-        let str = to_string(s);
-        let search = to_string(sub);
-        let slen = len(str);
-        let sublen = len(search);
-        
-        for (let i = 0; i <= slen - sublen; i = i + 1) {
-            if (substr(str, i, sublen) == search) {
-                return i;
-            }
-        }
-        return -1;
+        return native.str.index_of(to_string(s), to_string(sub));
     }
     
     static func lastIndexOf(s, sub) {
@@ -105,7 +97,7 @@ class StringUtils {
         let sublen = len(search);
         
         for (let i = slen - sublen; i >= 0; i = i - 1) {
-            if (substr(str, i, sublen) == search) {
+            if (native.str.substr(str, i, sublen) == search) {
                 return i;
             }
         }
@@ -115,19 +107,19 @@ class StringUtils {
     // Substring operations
     static func sub(s, start, length) {
         if (length == null) {
-            return substr(to_string(s), start);
+            return native.str.substr(to_string(s), start);
         }
-        return substr(to_string(s), start, length);
+        return native.str.substr(to_string(s), start, length);
     }
     
     static func left(s, n) {
-        return substr(to_string(s), 0, n);
+        return native.str.substr(to_string(s), 0, n);
     }
     
     static func right(s, n) {
         let str = to_string(s);
         let slen = len(str);
-        return substr(str, slen - n);
+        return native.str.substr(str, slen - n, n);
     }
     
     // String analysis
@@ -211,17 +203,7 @@ class StringUtils {
     
     // Utility
     static func charCode(c) {
-        // Placeholder - would need native support
-        // Returns approximate ASCII code
-        let ch = to_string(c);
-        if (ch == "0") return 48;
-        if (ch == "9") return 57;
-        if (ch == "A") return 65;
-        if (ch == "Z") return 90;
-        if (ch == "a") return 97;
-        if (ch == "z") return 122;
-        if (ch == " ") return 32;
-        return 0;
+        return char_code(to_string(c));
     }
     
     static func join(list, separator) {

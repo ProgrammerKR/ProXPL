@@ -41,9 +41,11 @@ class Stack {
 // Queue Implementation (FIFO)
 class Queue {
     var _items;
+    var _head;
     
     func init() {
         this._items = [];
+        this._head = 0;
     }
     
     func enqueue(item) {
@@ -53,31 +55,32 @@ class Queue {
     
     func dequeue() {
         if (this.isEmpty()) return null;
-        let item = this._items[0];
-        // Shift all elements left
-        let newItems = [];
-        for (let i = 1; i < len(this._items); i = i + 1) {
-            list_push(newItems, this._items[i]);
+        let item = this._items[this._head];
+        this._head = this._head + 1;
+        // Compact array when waste exceeds threshold
+        if (this._head > 1000 && this._head >= len(this._items) / 2) {
+            this._items = Collections.slice(this._items, this._head, len(this._items));
+            this._head = 0;
         }
-        this._items = newItems;
         return item;
     }
     
     func peek() {
         if (this.isEmpty()) return null;
-        return this._items[0];
+        return this._items[this._head];
     }
     
     func isEmpty() {
-        return len(this._items) == 0;
+        return this._head >= len(this._items);
     }
     
     func size() {
-        return len(this._items);
+        return len(this._items) - this._head;
     }
     
     func clear() {
         this._items = [];
+        this._head = 0;
         return this;
     }
 }
@@ -116,9 +119,12 @@ class Set {
     }
     
     func toList() {
+        let keys = std.native.collections.dictKeys(this._items);
         let result = [];
-        // Note: Dictionary iteration would be needed here
-        // For now, this is a placeholder
+        for (let i = 0; i < len(keys); i = i + 1) {
+            let key = keys[i];
+            list_push(result, this._items[key]);
+        }
         return result;
     }
 }
@@ -176,19 +182,9 @@ class Collections {
         return acc;
     }
     
-    // Sort list (simple bubble sort)
+    // Sort list (uses native qsort for O(n log n) performance)
     static func sort(list) {
-        let n = len(list);
-        for (let i = 0; i < n - 1; i = i + 1) {
-            for (let j = 0; j < n - i - 1; j = j + 1) {
-                if (list[j] > list[j + 1]) {
-                    let temp = list[j];
-                    list[j] = list[j + 1];
-                    list[j + 1] = temp;
-                }
-            }
-        }
-        return list;
+        return native.collections.sort(list);
     }
     
     // Get unique elements
@@ -236,6 +232,17 @@ class Collections {
     static func skip(list, n) {
         let result = [];
         for (let i = n; i < len(list); i = i + 1) {
+            list_push(result, list[i]);
+        }
+        return result;
+    }
+    
+    // Slice list from start index with length
+    static func slice(list, start, length) {
+        let result = [];
+        let end = start + length;
+        if (end > len(list)) end = len(list);
+        for (let i = start; i < end; i = i + 1) {
             list_push(result, list[i]);
         }
         return result;
