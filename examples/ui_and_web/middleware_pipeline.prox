@@ -1,0 +1,47 @@
+// Web Middleware Pipeline implementation
+
+class Request {
+    let url: string;
+    let auth: string;
+    
+    init(url) {
+        this.url = url;
+        this.auth = null;
+    }
+}
+
+func auth_middleware(req) {
+    if (req.url == "/admin") {
+        if (req.auth != "secret-token") {
+            throw "Unauthorized";
+        }
+    }
+    return true;
+}
+
+func logging_middleware(req) {
+    print("[LOG] Incoming request to " + req.url);
+    return true;
+}
+
+func main() {
+    let req = new Request("/admin");
+    
+    resilient {
+        logging_middleware(req);
+        auth_middleware(req);
+        print("Access Granted to " + req.url);
+    } recovery (e) {
+        print("403 Forbidden: " + e);
+    }
+    
+    req.auth = "secret-token";
+    resilient {
+        logging_middleware(req);
+        auth_middleware(req);
+        print("Access Granted to " + req.url);
+    } recovery (e) {
+        print("403 Forbidden: " + e);
+    }
+}
+main();
