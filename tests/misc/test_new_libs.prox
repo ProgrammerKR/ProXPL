@@ -1,0 +1,22 @@
+use std.native.path;
+use std.native.process;
+use std.native.buffer;
+
+println("Testing Path module...");
+println("  dirname: " + native.path.dirname("a/b/c.txt"));
+println("  basename: " + native.path.basename("a/b/c.txt"));
+println("  exists: " + to_string(native.path.exists("compile.bat")));
+
+println("Testing Process module...");
+println("  cwd: " + native.process.cwd());
+println("  pid: " + to_string(native.process.pid()));
+
+println("Testing Buffer module...");
+let b = native.buffer.alloc(10);
+native.buffer.write_byte(b, 72); // H
+native.buffer.write_byte(b, 101); // e
+native.buffer.write_byte(b, 108); // l
+native.buffer.write_byte(b, 108); // l
+native.buffer.write_byte(b, 111); // o
+println("  hex_dump: " + native.buffer.hex_dump(b));
+println("  to_string: " + native.buffer.to_string(b));
