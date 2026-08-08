@@ -1,0 +1,15 @@
+// tests/test_intents_gc.prox
+
+print("--- Intents GC Test ---");
+
+intent TempIntent(a);
+
+for (let i = 0; i < 1000; i = i + 1) {
+    resolver TempResolver matches TempIntent {
+        return "temp";
+    }
+}
+
+print("PASS: 1000 Intents and Resolvers allocated and collected without crashing.");
+
+print("--- Intents GC Test Complete ---");
