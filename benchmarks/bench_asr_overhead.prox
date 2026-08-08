@@ -1,0 +1,20 @@
+// benchmarks/bench_asr_overhead.prox
+let ITERATIONS = 1000000;
+
+print("--- Benchmarking ASR Resilient Block Overhead ---");
+
+let startTime = clock();
+
+for (let i = 0; i < ITERATIONS; i = i + 1) {
+    resilient {
+        let a = i * 2;
+    }
+}
+
+let endTime = clock();
+let duration = endTime - startTime;
+
+print("ASR overhead check completed for iterations: ");
+print(ITERATIONS);
+print("Time taken (seconds): ");
+print(duration);
