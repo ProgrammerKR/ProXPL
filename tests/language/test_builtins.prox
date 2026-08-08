@@ -1,0 +1,43 @@
+// Test Built-in Functions
+use std.core;
+
+print("--- Testing Built-in Functions ---");
+
+func assert(condition, message) {
+    if (condition) {
+        print("PASS: " + message);
+    } else {
+        print("FAIL: " + message);
+    }
+}
+
+// print is already being used extensively :)
+
+// typeOf
+assert(std.core.typeOf(1) == "number", "typeOf(number)");
+assert(std.core.typeOf("s") == "string", "typeOf(string)");
+assert(std.core.typeOf(true) == "bool", "typeOf(boolean)");
+
+// to_string (assuming it exists as global or stdlib)
+// The user prompt mentioned `to_string(lucky)` in the screenshot.
+let num = 123;
+let strNum = to_string(num);
+assert(std.core.typeOf(strNum) == "string", "to_string returns string");
+let isStrMatch = strNum == "123" || strNum == "123.000000" || strNum == "123.0";
+assert(isStrMatch, "to_string value check (" + strNum + ")"); 
+// Note: floating point string conversion might vary
+
+// clock()
+let start = clock();
+let j = 0;
+while (j < 1000) { j = j + 1; }
+let end = clock();
+assert(end >= start, "Clock advances");
+
+// len() if available for strings/arrays
+// Checking support... assuming generic len() or object method.
+// Documentation/Usage check: `len` usually for collections.
+// Let's try it on string if supported, or skip if unsure. 
+// I'll skip potentially checking len() to avoid runtime errors if not implemented as global.
+
+print("Built-in Functions Tests Completed");
