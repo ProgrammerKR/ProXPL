@@ -3,7 +3,7 @@
 
 #define MyAppName "ProXPL"
 #define MyAppVersion "1.5.0"
-#define MyAppPublisher "ProXentix"
+#define MyAppPublisher "ProXentix India Pvt. Ltd."
 #define MyAppURL "https://github.com/ProgrammerKR/ProXPL"
 #define MyAppExeName "proxpl.exe"
 
