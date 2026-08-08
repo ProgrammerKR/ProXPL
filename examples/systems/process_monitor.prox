@@ -1,0 +1,25 @@
+// Process Monitor Health Check Simulation
+
+intent CheckHealth(pid: int);
+
+resolver HealthyProcess(matches CheckHealth(pid)) {
+    if (pid % 2 == 0) {
+        return "UP";
+    }
+    throw "ProcessDownException";
+}
+
+func monitor_process(pid) {
+    resilient {
+        let status = CheckHealth(pid);
+        print("Process " + to_string(pid) + " is " + status);
+    } recovery (err) {
+        print("Process " + to_string(pid) + " requires restart. (" + err + ")");
+    }
+}
+
+func main() {
+    monitor_process(100);
+    monitor_process(101);
+}
+main();
