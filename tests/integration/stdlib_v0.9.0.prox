@@ -1,0 +1,80 @@
+// tests/stdlib_v0.9.0.prox
+// Verification script for ProXPL v0.9.0 features
+
+use std.native.gc;
+use std.native.time;
+use std.native.fs;
+
+func test_gc() {
+    print("Testing std.gc...");
+    
+    // Test gc.stats
+    let stats = gc.stats();
+    print("GC Stats: " + to_string(stats));
+    
+    // Test gc.collect
+    let freed = gc.collect();
+    print("GC Collected bytes: " + to_string(freed));
+    
+    // Stress (optional manual check)
+    // gc.stress(true);
+}
+
+func test_time() {
+    print("\nTesting std.time expansions...");
+    
+    let now = time.now();
+    print("Current timestamp: " + to_string(now));
+    
+    // Test strftime
+    let formatted = time.strftime("%Y-%m-%d %H:%M:%S", now);
+    print("Formatted date: " + formatted);
+    
+    // Test custom timestamp
+    // 2025-12-25 10:30:00
+    let ts = time.timestamp(2025, 12, 25, 10, 30, 0);
+    print("Christmas 2025 timestamp: " + to_string(ts));
+    let verify = time.strftime("%Y-%m-%d", ts);
+    print("Verify Christmas: " + verify);
+    if (verify == "2025-12-25") {
+        print("Timestamp OK");
+    } else {
+        print("Timestamp FAILED");
+    }
+}
+
+func test_fs() {
+    print("\nTesting std.fs expansions...");
+    
+    let test_file = "test_move_src.txt";
+    let dest_file = "test_move_dest.txt";
+    
+    fs.write_file(test_file, "move me");
+    
+    // Test abspath
+    let abs = fs.abspath(test_file);
+    print("Abs Path: " + abs);
+    
+    // Test move
+    let moved = fs.move(test_file, dest_file);
+    print("Moved: " + to_string(moved));
+    
+    if (fs.exists(dest_file) && !fs.exists(test_file)) {
+        print("Move OK");
+    } else {
+        print("Move FAILED");
+    }
+    
+    // Cleanup
+    fs.remove(dest_file);
+}
+
+func main() {
+    print("=== ProXPL v0.9.0 Feature Verification ===");
+    test_gc();
+    test_time();
+    test_fs();
+    print("\nALL CHECKS COMPLETED");
+}
+
+main();
