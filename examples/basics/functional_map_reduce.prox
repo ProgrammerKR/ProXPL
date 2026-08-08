@@ -1,0 +1,33 @@
+// Functional Programming Patterns (Map/Reduce)
+
+// Note: ProXPL v1.6 supports passing closures natively!
+
+func map(array, fn) {
+    let result = [];
+    for (let i = 0; i < length(array); i = i + 1) {
+        push(result, fn(array[i]));
+    }
+    return result;
+}
+
+func reduce(array, fn, initial) {
+    let accumulator = initial;
+    for (let i = 0; i < length(array); i = i + 1) {
+        accumulator = fn(accumulator, array[i]);
+    }
+    return accumulator;
+}
+
+func main() {
+    let numbers = [1, 2, 3, 4, 5];
+    
+    // Closure syntax
+    let doubled = map(numbers, func(x) { return x * 2; });
+    print("Doubled:");
+    print(doubled);
+    
+    let sum = reduce(numbers, func(acc, val) { return acc + val; }, 0);
+    print("Sum:");
+    print(to_string(sum));
+}
+main();
