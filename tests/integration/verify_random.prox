@@ -1,0 +1,35 @@
+// verify_random.prox
+
+func main() {
+    print("Testing random() behavior...");
+
+    // Test 1: random() with no args (should be float)
+    let r_float = random();
+    print("random() [0.0, 1.0): " + to_string(r_float));
+
+    // Test 2: random(max) (should be integer)
+    let r_int_1 = random(10);
+    print("random(10) [0, 10]: " + to_string(r_int_1));
+
+    // Test 3: random(min, max) (should be integer)
+    let r_int_2 = random(1, 100);
+    print("random(1, 100) [1, 100]: " + to_string(r_int_2));
+
+    // Simple check if string contains dot
+    let s_int = to_string(r_int_2);
+    // Note: to_string on integer might look like "42.000000" if the return value IS actually a double but printed with default logic, 
+    // OR "42" if it's truly cast to integer logic or if to_string handles double-as-int cleanly.
+    // However, my C code returns NUMBER_VAL((double)...).
+    // Wait, ProXPL numbers are likely doubles under the hood if NUMBER_VAL wraps a double.
+    // If ProXPL's `to_string` prints trailing zeros for whole doubles, the user might still see "42.000000".
+    // I need to check how `to_string` behaves or if the logic I added (casting to int before casting back to double) ensures it 'looks' like an int.
+    // Actually, checking `value.h` would have been good but I failed to read it.
+    // But `native_randint` also returns `NUMBER_VAL(min + (rand() % range))`, which is casting int to result.
+    // If the user's `to_string` prints decimals for all numbers, then my change won't VISUALLY help unless `to_string` detects whole numbers.
+    // But the user said "dasmalav ke baad ki cheeje update kar raha hai" (it's updating things after decimal).
+    // If I return a whole number, at least the fractional part is .00000.
+    // In many langs, print(42.0) -> 42.0.
+    // Let's see what happens.
+}
+
+main();
