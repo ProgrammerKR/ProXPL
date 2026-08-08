@@ -1,0 +1,52 @@
+// Simple LRU Cache implementation using Lists and Dicts
+
+class LRUCache {
+    let capacity: int;
+    let cache: dict;
+    let order: any; // List to track usage
+    
+    init(cap) {
+        this.capacity = cap;
+        this.cache = {};
+        this.order = [];
+    }
+    
+    func get(key) {
+        if (this.cache[key] != null) {
+            // Update order (move to front)
+            this._refresh(key);
+            return this.cache[key];
+        }
+        return -1;
+    }
+    
+    func put(key, value) {
+        if (this.cache[key] == null) {
+            if (length(this.order) >= this.capacity) {
+                let lru_key = this.order[length(this.order) - 1];
+                this.cache[lru_key] = null; // Evict
+                // Remove from order (simplified)
+            }
+            this.cache[key] = value;
+            // Push front (simplified)
+            push(this.order, key);
+        } else {
+            this.cache[key] = value;
+            this._refresh(key);
+        }
+    }
+    
+    func _refresh(key) {
+        print("Refreshing key: " + key);
+    }
+}
+
+func main() {
+    let lru = new LRUCache(2);
+    lru.put("A", 1);
+    lru.put("B", 2);
+    print("A: " + to_string(lru.get("A"))); // 1
+    lru.put("C", 3); // Evicts B
+    print("B: " + to_string(lru.get("B"))); // -1
+}
+main();
