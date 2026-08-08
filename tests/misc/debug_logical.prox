@@ -1,0 +1,21 @@
+
+// debug_logical.prox
+func main() {
+    print("Testing Logical Operators");
+    
+    // Test &&
+    // print("true && false: " + to_string(true && false));
+    
+    let a = true;
+    let b = false;
+    let c = a && b;
+    print("c: " + to_string(c));
+    
+    // Test ||
+    // print("true || false: " + to_string(true || false));
+    
+    // Test !
+    // print("!true: " + to_string(!true));
+}
+
+main();
