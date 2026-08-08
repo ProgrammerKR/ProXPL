@@ -66,10 +66,19 @@ static ChildSpec* find_child(Supervisor* sup, int task_id) {
 void registerTask(int taskId, ObjTask* task, int maxRetries) {
     if (!initialized) initSupervisor();
     
+    if (task == NULL) {
+        printf("[Supervisor] WARNING: Attempted to register NULL task for ID %d. Ignoring.\n", taskId);
+        return;
+    }
+    
     // In full impl, we'd specify which supervisor to attach to.
     // Default to Root.
     
     ChildSpec* child = malloc(sizeof(ChildSpec));
+    if (!child) {
+        fprintf(stderr, "[Supervisor] FATAL: Out of memory registering task %d\n", taskId);
+        return;
+    }
     child->id = taskId;
     child->task = task;
     child->max_retries = maxRetries;

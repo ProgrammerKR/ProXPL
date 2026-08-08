@@ -73,6 +73,7 @@ void trackSource(VM* vm, char* source);
 InterpretResult interpret(VM* vm, const char* source);
 InterpretResult interpretChunk(VM* vm, Chunk* chunk);
 InterpretResult interpretAST(VM* vm, StmtList* statements);
+bool verifyChunk(Chunk* chunk, const char* sourceName);
 void push(VM* vm, Value value);
 Value pop(VM* vm);
 Value peek(VM* vm, int distance);
