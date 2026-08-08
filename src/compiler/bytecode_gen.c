@@ -1215,6 +1215,67 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             break;
         }
 
+        case STMT_INTENT_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.intent_decl.name, strlen(stmt->as.intent_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            writeChunk(gen->chunk, OP_INTENT, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            
+            // Param count
+            int paramCount = stmt->as.intent_decl.params ? stmt->as.intent_decl.params->count : 0;
+            emitInt(gen, paramCount, stmt->line);
+            
+            if (gen->compiler->scopeDepth > 0) {
+                 addLocal(gen, stmt->as.intent_decl.name);
+            } else {
+                 writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            break;
+        }
+
+        case STMT_RESOLVER_DECL: {
+            Value nameVal = OBJ_VAL(copyString(stmt->as.resolver_decl.name, strlen(stmt->as.resolver_decl.name)));
+            int nameConst = addConstant(gen->chunk, nameVal);
+            
+            Value targetVal = OBJ_VAL(copyString(stmt->as.resolver_decl.targetIntent, strlen(stmt->as.resolver_decl.targetIntent)));
+            int targetConst = addConstant(gen->chunk, targetVal);
+            
+            // Generate Closure for Resolver Body
+            Compiler funcCompiler;
+            initCompiler(gen, &funcCompiler, COMP_FUNCTION);
+            
+            push(&vm, OBJ_VAL(funcCompiler.function));
+            funcCompiler.function->name = copyString(stmt->as.resolver_decl.name, strlen(stmt->as.resolver_decl.name));
+            pop(&vm);
+
+            beginScope(gen);
+            
+            if (stmt->as.resolver_decl.body) {
+                 for (int i=0; i < stmt->as.resolver_decl.body->count; i++) {
+                    genStmt(gen, stmt->as.resolver_decl.body->items[i]);
+                }
+            }
+            ObjFunction* function = endCompiler(gen, false);
+            Value funcVal = OBJ_VAL(function);
+            int funcConst = addConstant(gen->chunk, funcVal);
+            writeChunk(gen->chunk, OP_CLOSURE, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)funcConst, stmt->line);
+            
+            // Emit Resolver instruction
+            writeChunk(gen->chunk, OP_RESOLVER, stmt->line);
+            writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            emitInt(gen, targetConst, stmt->line); // Operand: targetIntent
+            
+            if (gen->compiler->scopeDepth > 0) {
+                 addLocal(gen, stmt->as.resolver_decl.name);
+            } else {
+                 writeChunk(gen->chunk, OP_DEFINE_GLOBAL, stmt->line);
+                 writeChunk(gen->chunk, (uint8_t)nameConst, stmt->line);
+            }
+            break;
+        }
+
         default: break;
     }
 }
