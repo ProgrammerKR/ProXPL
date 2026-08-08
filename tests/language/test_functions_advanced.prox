@@ -1,0 +1,35 @@
+// Test Advanced Functions
+use std.core;
+
+print("--- Testing Advanced Functions ---");
+
+func assert(condition, message) {
+    if (condition) {
+        print("PASS: " + message);
+    } else {
+        print("FAIL: " + message);
+    }
+}
+
+func add(a, b) {
+    return a + b;
+}
+
+func factorial(n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+func apply_fn(f, x, y) {
+    return f(x, y);
+}
+
+assert(add(5, 7) == 12, "Basic addition function");
+assert(factorial(5) == 120, "Recursive factorial function");
+assert(factorial(0) == 1, "Base case factorial");
+// Testing first-class functions if supported
+// assert(apply_fn(add, 3, 4) == 7, "First-class function passing");
+
+print("Advanced Functions Tests Completed");
