@@ -1,0 +1,24 @@
+// tests/test_contexts_layers.prox
+// Context-Aware Polymorphism Verification
+
+print("--- Context & Layers Test Start ---");
+
+context SecurityContext {
+    layer AdminPrivileges {
+        // Overrides or logic that executes only when AdminPrivileges is active
+    }
+    
+    layer UserPrivileges {
+    
+    }
+}
+
+print("Contexts and Layers Declared.");
+
+activate SecurityContext {
+    print("Running within SecurityContext!");
+}
+
+print("Outside Context.");
+
+print("--- Context & Layers Test End ---");
