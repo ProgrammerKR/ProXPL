@@ -1,0 +1,142 @@
+// Test file for enhanced libraries
+
+print("=== Testing Enhanced Collections Library ===");
+
+// Test Stack
+let stack = Stack();
+stack.push(1);
+stack.push(2);
+stack.push(3);
+print("Stack size: " + to_string(stack.size()));
+print("Stack peek: " + to_string(stack.peek()));
+print("Stack pop: " + to_string(stack.pop()));
+print("Stack size after pop: " + to_string(stack.size()));
+
+// Test Queue
+let queue = Queue();
+queue.enqueue("first");
+queue.enqueue("second");
+queue.enqueue("third");
+print("Queue size: " + to_string(queue.size()));
+print("Queue dequeue: " + queue.dequeue());
+print("Queue peek: " + queue.peek());
+
+// Test Collections utilities
+let numbers = [5, 2, 8, 1, 9, 3];
+print("Original: " + to_string(numbers));
+let reversed = Collections.reverse(numbers);
+print("Reversed: " + to_string(reversed));
+
+let doubled = Collections.map(numbers, func(x) { return x * 2; });
+print("Doubled: " + to_string(doubled));
+
+let evens = Collections.filter(numbers, func(x) { return x % 2 == 0; });
+print("Evens: " + to_string(evens));
+
+let sum = Collections.reduce(numbers, func(acc, x) { return acc + x; }, 0);
+print("Sum: " + to_string(sum));
+
+print("\n=== Testing Enhanced String Library ===");
+
+let text = "  Hello World  ";
+print("Original: '" + text + "'");
+print("Trimmed: '" + StringUtils.trim(text) + "'");
+print("Upper: '" + StringUtils.upper(text) + "'");
+print("Capitalized: '" + StringUtils.capitalize(text) + "'");
+
+let sentence = "the quick brown fox";
+print("Title case: " + StringUtils.title(sentence));
+
+print("Contains 'World': " + to_string(StringUtils.contains(text, "World")));
+print("Index of 'World': " + to_string(StringUtils.indexOf(text, "World")));
+
+let repeated = StringUtils.repeat("Ha", 3);
+print("Repeated: " + repeated);
+
+let padded = StringUtils.padStart("42", 5, "0");
+print("Padded: " + padded);
+
+print("\n=== Testing Enhanced Math Library ===");
+
+print("PI: " + to_string(Math.PI));
+print("E: " + to_string(Math.E));
+
+print("abs(-5): " + to_string(Math.abs(-5)));
+print("sign(-10): " + to_string(Math.sign(-10)));
+print("clamp(15, 0, 10): " + to_string(Math.clamp(15, 0, 10)));
+
+print("hypot(3, 4): " + to_string(Math.hypot(3, 4)));
+print("factorial(5): " + to_string(Math.factorial(5)));
+print("gcd(48, 18): " + to_string(Math.gcd(48, 18)));
+print("isPrime(17): " + to_string(Math.isPrime(17)));
+print("fibonacci(10): " + to_string(Math.fibonacci(10)));
+
+let data = [1, 2, 3, 4, 5];
+print("Mean of [1,2,3,4,5]: " + to_string(Math.mean(data)));
+print("Sum of [1,2,3,4,5]: " + to_string(Math.sum(data)));
+
+print("\n=== Testing DateTime Library ===");
+
+let now = DateTime.now();
+print("Current timestamp: " + to_string(now.getTimestamp()));
+print("Year: " + to_string(now.getYear()));
+print("Month: " + to_string(now.getMonth()));
+print("Day: " + to_string(now.getDay()));
+print("Hour: " + to_string(now.getHour()));
+
+print("Formatted: " + now.format("YYYY-MM-DD HH:mm:ss"));
+print("ISO String: " + now.toISOString());
+
+let future = now.addDays(7);
+print("7 days from now: " + future.toDateString());
+print("Diff in days: " + to_string(now.diffInDays(future)));
+
+let duration = Time.formatDuration(3665);
+print("Duration (3665s): " + duration);
+
+print("\n=== Testing Crypto Library ===");
+
+let message = "Hello, ProXPL!";
+print("Message: " + message);
+print("DJB2 hash: " + to_string(Crypto.hashDJB2(message)));
+print("SDBM hash: " + to_string(Crypto.hashSDBM(message)));
+print("FNV1a hash: " + to_string(Crypto.hashFNV1a(message)));
+print("Checksum: " + to_string(Crypto.checksum(message)));
+
+let uuid = UUID.v4();
+print("UUID v4: " + uuid);
+print("UUID valid: " + to_string(UUID.isValid(uuid)));
+
+let randomHex = Random.hex(16);
+print("Random hex (16): " + randomHex);
+
+let randomAlpha = Random.alphanumeric(10);
+print("Random alphanumeric (10): " + randomAlpha);
+
+print("\n=== Testing Pattern Matching ===");
+
+print("Is email 'test@example.com': " + to_string(Pattern.isEmail("test@example.com")));
+print("Is email 'invalid': " + to_string(Pattern.isEmail("invalid")));
+
+print("Is URL 'https://example.com': " + to_string(Pattern.isURL("https://example.com")));
+print("Is IPv4 '192.168.1.1': " + to_string(Pattern.isIPv4("192.168.1.1")));
+
+print("Is numeric '12345': " + to_string(Pattern.isNumeric("12345")));
+print("Is alpha 'Hello': " + to_string(Pattern.isAlpha("Hello")));
+
+let testStr = "Price is 99.99 dollars and 50 cents";
+let nums = Pattern.extractNumbers(testStr);
+print("Numbers in '" + testStr + "': " + to_string(nums));
+
+print("\n=== Testing Text Utils ===");
+
+let longText = "This is a very long text that needs to be truncated";
+print("Truncated: " + TextUtils.truncate(longText, 20, "..."));
+
+let slug = TextUtils.slugify("Hello World - This is a Test!");
+print("Slug: " + slug);
+
+let normalized = TextUtils.normalizeWhitespace("Hello    World   Test");
+print("Normalized: '" + normalized + "'");
+
+print("\n=== All Library Tests Complete ===");
