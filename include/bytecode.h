@@ -82,6 +82,8 @@ typedef enum {
   OP_INTERFACE, // Deprecated, keep for backward compatibility
   OP_TRAIT,
   OP_IMPLEMENT,
+  OP_INTENT,
+  OP_RESOLVER,
   OP_MAKE_FOREIGN,
   OP_MODULO,
   OP_BIT_AND,
