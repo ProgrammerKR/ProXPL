@@ -20,7 +20,9 @@ typedef enum {
     TYPE_STRING,
     TYPE_FUNCTION,
     TYPE_CLASS,
-    TYPE_INTERFACE
+    TYPE_INTERFACE,
+    TYPE_CONTEXT,
+    TYPE_LAYER
 } TypeKind;
 
 struct TypeInfo {
