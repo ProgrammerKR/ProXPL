@@ -1,0 +1,13 @@
+// tests/test_contexts_errors.prox
+
+print("--- Contexts Errors Test ---");
+
+resilient {
+    activate UnknownContext {
+        print("FAIL: Should not reach here.");
+    }
+}
+
+print("PASS: Handled unknown context error.");
+
+print("--- Contexts Errors Test Complete ---");
