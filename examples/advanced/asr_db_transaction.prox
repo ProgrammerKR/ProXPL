@@ -1,0 +1,24 @@
+// Autonomic Self-Healing (ASR) Database Transaction
+// Demonstrates safe unwinding using resilient blocks.
+
+func write_to_db(data) {
+    if (data == null) {
+        throw "NullDataException: Cannot write null to DB";
+    }
+    print("Writing " + data + " to database.");
+}
+
+func main() {
+    print("Starting transaction...");
+    
+    resilient {
+        write_to_db("User record 1");
+        write_to_db(null); // This will throw
+        write_to_db("User record 2"); // Will be skipped
+    } recovery (err) {
+        print("Transaction failed. Rolling back due to: " + err);
+    }
+    
+    print("System continues operating normally.");
+}
+main();
