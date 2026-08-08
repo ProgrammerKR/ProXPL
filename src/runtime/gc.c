@@ -250,13 +250,20 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
-        case OBJ_DICTIONARY: {
-            struct ObjDictionary* dict = (struct ObjDictionary*)object;
-            markTable(&dict->items);
+        case OBJ_INTENT: {
+            ObjIntent* intent = (ObjIntent*)object;
+            markObject((Obj*)intent->name);
+            for (int i = 0; i < intent->resolverCount; i++) {
+                markObject((Obj*)intent->resolvers[i]);
+            }
             break;
         }
-        case OBJ_TENSOR:
+        case OBJ_RESOLVER: {
+            ObjResolver* resolver = (ObjResolver*)object;
+            markObject((Obj*)resolver->name);
+            markObject((Obj*)resolver->handler);
             break;
+        }
         case OBJ_CONTEXT: {
             ObjContext* context = (ObjContext*)object;
             markObject((Obj*)context->name);
@@ -269,6 +276,14 @@ static void blackenObject(Obj* object) {
             markTable(&layer->methods);
             break;
         }
+        case OBJ_DICTIONARY: {
+            struct ObjDictionary* dict = (struct ObjDictionary*)object;
+            markTable(&dict->items);
+            break;
+        }
+        case OBJ_TENSOR:
+            break;
+
         default:
             break;
     }
@@ -384,6 +399,18 @@ static void freeObject(Obj* object) {
             ObjLayer* layer = (ObjLayer*)object;
             freeTable(&layer->methods);
             FREE(ObjLayer, object);
+            break;
+        }
+        case OBJ_INTENT: {
+            ObjIntent* intent = (ObjIntent*)object;
+            if (intent->resolvers) {
+                FREE_ARRAY(ObjClosure*, intent->resolvers, intent->resolverCapacity);
+            }
+            FREE(ObjIntent, object);
+            break;
+        }
+        case OBJ_RESOLVER: {
+            FREE(ObjResolver, object);
             break;
         }
         case OBJ_TENSOR: {
