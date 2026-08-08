@@ -1,0 +1,20 @@
+// Systems Programming: Log Rotator Simulation
+
+func rotate_logs(max_size) {
+    let current_size = random(0, 100);
+    
+    print("Checking log size... (" + to_string(current_size) + "MB)");
+    if (current_size > max_size) {
+        print("Rotating log file. Archiving old logs...");
+        return true;
+    }
+    print("Log size within limits.");
+    return false;
+}
+
+func main() {
+    for (let i = 0; i < 5; i = i + 1) {
+        rotate_logs(50);
+    }
+}
+main();
