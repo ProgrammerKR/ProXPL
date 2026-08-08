@@ -1,0 +1,21 @@
+// ProXPL Intent-Oriented Event Bus
+// Demonstrates decoupling components using intents.
+
+intent LogEvent(message: string, level: string);
+intent ProcessData(payload: dict);
+
+resolver HandleLog(matches LogEvent(m, l)) {
+    print("[" + to_upper(l) + "] " + m);
+}
+
+resolver HandleData(matches ProcessData(p)) {
+    LogEvent("Processing data for user: " + p["user"], "info");
+    // Complex processing here
+    LogEvent("Data processed successfully.", "success");
+}
+
+func main() {
+    print("Starting IOP Event Bus Simulation...");
+    ProcessData({"user": "admin", "action": "login"});
+}
+main();
