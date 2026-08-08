@@ -1,0 +1,38 @@
+use std.hash;
+
+// MD5 Test Vectors
+print("Testing MD5...");
+let md5_1 = std.hash.md5("abc");
+print("MD5('abc') = " + md5_1);
+if (md5_1 == "900150983cd24fb0d6963f7d28e17f72") {
+    print("PASS");
+} else {
+    print("FAIL. Expected: 900150983cd24fb0d6963f7d28e17f72");
+}
+
+let md5_2 = std.hash.md5("");
+print("MD5('') = " + md5_2);
+if (md5_2 == "d41d8cd98f00b204e9800998ecf8427e") {
+    print("PASS");
+} else {
+    print("FAIL. Expected: d41d8cd98f00b204e9800998ecf8427e");
+}
+
+
+// SHA256 Test Vectors
+print("\nTesting SHA256...");
+let sha256_1 = std.hash.sha256("abc");
+print("SHA256('abc') = " + sha256_1);
+if (sha256_1 == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad") {
+    print("PASS");
+} else {
+    print("FAIL. Expected: ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+}
+
+let sha256_2 = std.hash.sha256("");
+print("SHA256('') = " + sha256_2);
+if (sha256_2 == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855") {
+    print("PASS");
+} else {
+    print("FAIL. Expected: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+}
