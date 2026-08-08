@@ -1,0 +1,18 @@
+// simple_calc.prox
+func add(a, b) {
+    return a + b;
+}
+
+func main() {
+    print("--- Simple Calculator ---");
+    let x = 10;
+    let y = 5;
+    
+    print("X: " + to_string(x) + ", Y: " + to_string(y));
+    print("Add: " + to_string(add(x, y)));
+    print("Sub: " + to_string(x - y));
+    print("Mul: " + to_string(x * y));
+    print("Div: " + to_string(x / y));
+}
+
+main();
