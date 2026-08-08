@@ -69,6 +69,11 @@ static Value native_exec(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     
     const char* cmd = AS_CSTRING(args[0]);
+    if (!isSafeArg(cmd)) {
+        fprintf(stderr, "Security: OS.exec blocked potentially unsafe command.\n");
+        return NIL_VAL;
+    }
+    
     FILE* pipe = POPEN(cmd, "r");
     if (!pipe) return NIL_VAL;
     

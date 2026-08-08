@@ -427,6 +427,14 @@ static Value native_trim_right(int argCount, Value* args) {
     return OBJ_VAL(copyString(str, end + 1));
 }
 
+// charCode(str) - Get ASCII code of first character
+static Value native_char_code(int argCount, Value* args) {
+    if (argCount < 1 || !IS_STRING(args[0])) return NUMBER_VAL(0);
+    ObjString* str = AS_STRING(args[0]);
+    if (str->length == 0) return NUMBER_VAL(0);
+    return NUMBER_VAL((double)(unsigned char)str->chars[0]);
+}
+
 ObjModule* create_std_str_module() {
     ObjString* name = copyString("std.native.str", 14);
     push(&vm, OBJ_VAL(name));
@@ -450,6 +458,7 @@ ObjModule* create_std_str_module() {
     defineModuleFn(module, "index_of",           native_index_of);
     defineModuleFn(module, "trim_left",          native_trim_left);
     defineModuleFn(module, "trim_right",         native_trim_right);
+    defineModuleFn(module, "char_code",          native_char_code);
 
     pop(&vm);
     pop(&vm);
@@ -474,4 +483,5 @@ void register_string_globals(VM* pVM) {
     defineNative(pVM, "count_occurrences",native_count_occurrences);
     defineNative(pVM, "str_reverse",      native_str_reverse);
     defineNative(pVM, "index_of",         native_index_of);
+    defineNative(pVM, "char_code",        native_char_code);
 }

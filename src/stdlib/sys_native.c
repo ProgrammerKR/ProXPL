@@ -114,6 +114,10 @@ static Value sys_args(int argCount, Value* args) {
 static Value sys_exec(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NUMBER_VAL(-1);
     const char* command = AS_CSTRING(args[0]);
+    if (!isSafeArg(command)) {
+        fprintf(stderr, "Security: sys.exec blocked potentially unsafe command.\n");
+        return NUMBER_VAL(-1);
+    }
     int result = system(command);
     return NUMBER_VAL((double)result);
 }
