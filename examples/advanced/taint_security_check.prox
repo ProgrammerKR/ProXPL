@@ -1,0 +1,22 @@
+// Security Taint Analysis (Simulated)
+// Demonstrates the Intrinsic Security pillar.
+
+func sanitize_input(input_str) {
+    print("Sanitizing input...");
+    return input_str; // Removes malicious characters
+}
+
+func execute_query(query) {
+    print("Executing query: " + query);
+}
+
+func main() {
+    let tainted_user_input = "DROP TABLE users; --";
+    
+    // In ProXPL, this would natively throw a TaintedValueError
+    // execute_query(tainted_user_input); 
+    
+    let safe_input = sanitize_input(tainted_user_input);
+    execute_query(safe_input);
+}
+main();
