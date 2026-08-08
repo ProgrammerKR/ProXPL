@@ -1,3 +1,0 @@
-
-print("Quote: \"");
-print("Len: " + to_string(len("\"")));
