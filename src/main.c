@@ -162,21 +162,6 @@ static void runFile(const char *path) {
     tokens[tokenCount++] = token;
 
     if (token.type == TOKEN_ERROR) {
-      fprintf(stderr, "Error at line %d, column %d: %.*s\n", token.line, token.column, token.length,
-              token.start);
-      const char* lineStart = source;
-      int currentLine = 1;
-      while (currentLine < token.line && *lineStart != '\0') {
-          if (*lineStart == '\n') currentLine++;
-          lineStart++;
-      }
-      const char* lineEnd = lineStart;
-      while (*lineEnd != '\0' && *lineEnd != '\n') lineEnd++;
-      
-      fprintf(stderr, "%.*s\n", (int)(lineEnd - lineStart), lineStart);
-      for(int i=1; i < token.column; i++) fprintf(stderr, " ");
-      fprintf(stderr, "^\n");
-      
       scanError = true;
       break;
     }
@@ -445,6 +430,8 @@ static int dispatchPRM(int argc, const char* argv[]) {
 
 
 int main(int argc, const char *argv[]) {
+  printf("Starting ProXPL...\n");
+  fflush(stdout);
   // Try PRM dispatch first (handles prm.bat -> proxpl.exe delegation)
   if (dispatchPRM(argc, argv)) {
     return 0;
