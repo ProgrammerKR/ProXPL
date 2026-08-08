@@ -1,0 +1,22 @@
+// test_intents_contexts.prox
+print("Testing Contexts and Intents in ProXPL!");
+
+// Context-Aware Polymorphism test
+context MobileTheme {
+    layer LightMode {
+        // UI styles or logic
+    }
+}
+
+activate MobileTheme {
+    print("MobileTheme activated!");
+}
+
+// Intent-Oriented Programming test
+intent SendData(data);
+
+resolver NetworkSender matches SendData {
+    print("Resolved SendData intent!");
+}
+
+print("All declarations compiled successfully.");
