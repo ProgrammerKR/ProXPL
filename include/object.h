@@ -60,6 +60,18 @@
 #define IS_FOREIGN(value) isObjType(value, OBJ_FOREIGN)
 #define AS_FOREIGN(value) ((ObjForeign *)AS_OBJ(value))
 
+#define IS_INTENT(value) isObjType(value, OBJ_INTENT)
+#define AS_INTENT(value) ((ObjIntent *)AS_OBJ(value))
+
+#define IS_RESOLVER(value) isObjType(value, OBJ_RESOLVER)
+#define AS_RESOLVER(value) ((ObjResolver *)AS_OBJ(value))
+
+#define IS_CONTEXT(value) isObjType(value, OBJ_CONTEXT)
+#define AS_CONTEXT(value) ((ObjContext *)AS_OBJ(value))
+
+#define IS_LAYER(value) isObjType(value, OBJ_LAYER)
+#define AS_LAYER(value) ((ObjLayer *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
@@ -78,7 +90,9 @@ typedef enum {
   OBJ_INTERFACE,
   OBJ_TENSOR,
   OBJ_CONTEXT,
-  OBJ_LAYER
+  OBJ_LAYER,
+  OBJ_INTENT,
+  OBJ_RESOLVER
 } ObjType;
 
 struct Obj {
@@ -224,6 +238,22 @@ typedef struct ObjTensor {
 #define IS_TENSOR(value) isObjType(value, OBJ_TENSOR)
 #define AS_TENSOR(value) ((ObjTensor *)AS_OBJ(value))
 
+typedef struct {
+  Obj obj;
+  ObjString *name;
+  int paramCount;
+  struct ObjClosure **resolvers;
+  int resolverCount;
+  int resolverCapacity;
+} ObjIntent;
+
+typedef struct {
+  Obj obj;
+  ObjString *name;
+  int targetIntentId;
+  ObjClosure *handler;
+} ObjResolver;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -240,6 +270,10 @@ struct ObjClass *newClass(ObjString *name);
 struct ObjInterface *newInterface(ObjString *name);
 struct ObjInstance *newInstance(struct ObjClass *klass);
 struct ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
+
+ObjIntent *newIntent(ObjString *name, int paramCount);
+void intentAddResolver(ObjIntent* intent, ObjClosure* resolver);
+ObjResolver *newResolver(ObjString *name, int targetIntentId, ObjClosure *handler);
 struct ObjList *newList();
 struct ObjDictionary *newDictionary();
 ObjForeign *newForeign(ObjString* name, void* library, void* function);
@@ -247,6 +281,8 @@ struct ObjTask *newTask(void* hdl, ResumeFn resume);
 ObjTensor *newTensor(int dimCount, int *dims, double *data);
 ObjContext *newContext(ObjString *name);
 ObjLayer *newLayer(ObjString *name);
+ObjIntent *newIntent(ObjString *name, int paramCount);
+ObjResolver *newResolver(ObjString *name, int targetIntentId, ObjClosure *handler);
 void printObject(Value value);
 void appendToList(struct ObjList* list, Value value);
 
