@@ -1,0 +1,11 @@
+// Direct Call Benchmark
+
+func direct() { return 1; }
+
+let start = clock();
+for (let i = 0; i < 100000; i = i + 1) {
+    direct();
+}
+let end = clock();
+let diff = end - start;
+print("Time: " + to_string(diff) + " s");
