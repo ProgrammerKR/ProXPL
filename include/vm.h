@@ -11,6 +11,7 @@
 #include "value.h"
 #include "table.h" 
 #include "importer.h"
+#include <setjmp.h>
 
 #define FRAMES_MAX 1024
 #define STACK_MAX (FRAMES_MAX * 256)
@@ -57,6 +58,9 @@ struct VM {
   // COP State
   ObjContext* activeContextStack[64];
   int activeContextCount;
+  
+  // Exception handling
+  jmp_buf exceptionJump;
 };
 
 typedef enum {
