@@ -1,0 +1,9 @@
+print("Start");
+resilient {
+    print("Inside resilient block, about to crash...");
+    let a = 1 / 0; // Trigger Division by zero runtime error
+    print("This should not print");
+} recovery {
+    print("Recovered from error!");
+}
+print("End");
