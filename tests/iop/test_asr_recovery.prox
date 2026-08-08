@@ -1,0 +1,41 @@
+// tests/test_asr_recovery.prox
+// Validates basic recovery, nested recovery, cross-function recovery.
+
+print("--- ASR Recovery Tests ---");
+
+// 1. Basic Recovery
+resilient {
+    let zero = 0;
+    let a = 1 / zero; // Trigger div by zero
+    print("FAIL: Should not print");
+}
+print("PASS: Basic recovery successful.");
+
+// 2. Nested Resilient Blocks
+resilient {
+    resilient {
+        let zero = 0;
+        let b = 1 / zero;
+        print("FAIL: Inner block failed to jump");
+    }
+    print("PASS: Inner recovery successful.");
+    let zero2 = 0;
+    let c = 1 / zero2;
+    print("FAIL: Outer block failed to jump");
+}
+print("PASS: Outer recovery successful.");
+
+// 3. Cross-Function Exception Propagation
+func dangerousFunction() {
+    let zero = 0;
+    let x = 1 / zero;
+    print("FAIL: Function should have aborted");
+}
+
+resilient {
+    dangerousFunction();
+    print("FAIL: Resilient block did not catch function exception");
+}
+print("PASS: Cross-function recovery successful.");
+
+print("--- ASR Recovery Tests Complete ---");
