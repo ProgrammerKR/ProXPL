@@ -1,0 +1,22 @@
+// Statistical Math operations
+
+func calculate_mean(data) {
+    let sum = 0.0;
+    let n = length(data);
+    if (n == 0) return 0;
+    
+    for (let i = 0; i < n; i = i + 1) {
+        sum = sum + data[i];
+    }
+    return sum / n;
+}
+
+func main() {
+    let dataset = [12.5, 45.2, 33.8, 19.1, 7.6, 92.4];
+    
+    let mean = calculate_mean(dataset);
+    
+    print("Dataset elements: " + to_string(length(dataset)));
+    print("Mean Value: " + to_string(mean));
+}
+main();
