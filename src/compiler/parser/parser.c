@@ -23,6 +23,7 @@ static Stmt *typeAliasDecl(Parser *p);
 static Stmt *varDecl(Parser *p);
 static Stmt *intentDecl(Parser *p);
 static Stmt *resolverDecl(Parser *p);
+static Stmt *resilientStmt(Parser *p);
 static Stmt *contextDecl(Parser *p); 
 static Stmt *layerDecl(Parser *p);
 
@@ -837,6 +838,8 @@ static Stmt *statement(Parser *p) {
     return whileStmt(p);
   if (match(p, 1, TOKEN_SWITCH))
     return switchStmt(p);
+  if (match(p, 1, TOKEN_RESILIENT))
+    return resilientStmt(p);
   if (match(p, 1, TOKEN_TRY))
     return tryStmt(p);
   if (match(p, 1, TOKEN_RETURN))
@@ -1046,6 +1049,24 @@ static Stmt *printStmt(Parser *p) {
   Expr *value = expression(p);
   consume(p, TOKEN_SEMICOLON, "Expect ';' after value.");
   return createPrintStmt(value, previous(p).line, 0);
+}
+
+static Stmt *resilientStmt(Parser *p) {
+  Token keyword = previous(p);
+  
+  consume(p, TOKEN_LEFT_BRACE, "Expect '{' after 'resilient'.");
+  StmtList *body = block(p);
+  
+  StmtList *recoveryBody = NULL;
+  if (match(p, 1, TOKEN_RECOVERY)) {
+      consume(p, TOKEN_LEFT_BRACE, "Expect '{' after 'recovery'.");
+      recoveryBody = block(p);
+  }
+  
+  // Forward declare createResilientStmt since it's probably missing from the header
+  extern Stmt *createResilientStmt(StmtList *body, const char *strategy, int retryCount, StmtList *recoveryBody, int line, int column);
+  
+  return createResilientStmt(body, NULL, 0, recoveryBody, keyword.line, 0);
 }
 
 static Stmt *exprStmt(Parser *p) {
