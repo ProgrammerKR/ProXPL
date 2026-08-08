@@ -1,4 +1,5 @@
 #include "../include/optimizer.h"
+#include "../include/memory.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -90,7 +91,7 @@ static Expr* foldExpr(Expr* expr) {
             expr->as.grouping.expression = foldExpr(expr->as.grouping.expression);
             if (expr->as.grouping.expression->type == EXPR_LITERAL) {
                 Expr* inner = expr->as.grouping.expression;
-                free(expr);
+                FREE(Expr, expr);
                 return inner;
             }
             return expr;
