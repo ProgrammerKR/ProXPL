@@ -874,6 +874,38 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
             break;
         }
 
+        case STMT_CONTEXT_DECL: {
+            TypeInfo contextType = createType(TYPE_CONTEXT);
+            contextType.name = strdup(stmt->as.context_decl.name);
+            defineSymbol(checker, stmt->as.context_decl.name, contextType);
+            
+            beginScope(checker);
+            StmtList* layers = stmt->as.context_decl.layers;
+            if (layers) {
+                for(int i = 0; i < layers->count; i++) {
+                     checkStmt(checker, layers->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
+        }
+
+        case STMT_LAYER_DECL: {
+            TypeInfo layerType = createType(TYPE_LAYER);
+            layerType.name = strdup(stmt->as.layer_decl.name);
+            defineSymbol(checker, stmt->as.layer_decl.name, layerType);
+
+            beginScope(checker);
+            StmtList* methods = stmt->as.layer_decl.methods;
+            if (methods) {
+                for(int i = 0; i < methods->count; i++) {
+                     checkStmt(checker, methods->items[i]);
+                }
+            }
+            endScope(checker);
+            break;
+        }
+
         default:
             break;
     }
