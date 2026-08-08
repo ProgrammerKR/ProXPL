@@ -1,0 +1,26 @@
+// benchmarks/bench_intent_dispatch.prox
+let ITERATIONS = 100000;
+
+print("--- Benchmarking Intent Setup Overhead ---");
+let startTime = clock();
+
+intent MyAction(x);
+resolver HandleAction matches MyAction {
+    // empty handler
+}
+
+for (let i = 0; i < ITERATIONS; i = i + 1) {
+    // We are benchmarking the parsing and setup of intents in this file currently
+    intent DynamicIntent(y);
+    resolver DynamicResolver matches DynamicIntent {
+        let z = 1;
+    }
+}
+
+let endTime = clock();
+let duration = endTime - startTime;
+
+print("Setup completed for iterations: ");
+print(ITERATIONS);
+print("Time taken (seconds): ");
+print(duration);
