@@ -1,0 +1,29 @@
+// ffi_test.prox
+print "Testing FFI...";
+
+// Load standard C library
+// On Windows, it's usually msvcrt.dll or ucrtbase.dll
+// On Linux, it's libc.so.6
+// Assuming Windows for now based on user info.
+
+// Try loading 'puts' from msvcrt
+extern "msvcrt.dll" "puts" func c_puts(s);
+
+// Try loading 'abs'
+extern "msvcrt.dll" "abs" func c_abs(n);
+
+// Try loading 'pow' using full path if needed, or rely on system path
+// extern "libm.so.6" "pow" func c_pow(b, e); // Linux example
+
+print "Calling C puts:";
+c_puts("Hello from native C world!");
+
+print "Calling C abs(-10):";
+let res = c_abs(-10);
+print res;
+
+if (res == 10) {
+    print "FFI Success!";
+} else {
+    print "FFI Failure!";
+}
