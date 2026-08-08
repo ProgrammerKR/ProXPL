@@ -1,0 +1,30 @@
+// tests/test_intents_advanced.prox
+// Intent-Oriented Programming Verification
+
+print("--- Advanced Intents Test Start ---");
+
+intent ProcessPayment(amount);
+intent NotifyUser(message);
+
+resolver PaymentGateway matches ProcessPayment {
+    print("Processing payment");
+    return true;
+}
+
+resolver EmailService matches NotifyUser {
+    print("Sending email notification");
+    return "SENT";
+}
+
+print("Intent Definitions Registered.");
+
+// Full system execution: Calling intents
+let result1 = ProcessPayment(500);
+if (result1) {
+    print("Payment success returned.");
+}
+
+let result2 = NotifyUser("Payment successful");
+print("Notify status: " + result2);
+
+print("--- Advanced Intents Test End ---");
