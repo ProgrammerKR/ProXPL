@@ -1,0 +1,31 @@
+// Mock REST API Server routing using Intent-Oriented Programming
+
+intent RouteGet(path: string);
+intent RoutePost(path: string, body: dict);
+
+resolver GetUsers(matches RouteGet("/users")) {
+    return {"status": 200, "data": ["Alice", "Bob", "Charlie"]};
+}
+
+resolver PostUser(matches RoutePost("/users", body)) {
+    return {"status": 201, "message": "User created", "user": body["name"]};
+}
+
+resolver NotFound(matches RouteGet(path)) {
+    return {"status": 404, "message": "Route not found: " + path};
+}
+
+func main() {
+    print("Simulating GET /users...");
+    let get_res = RouteGet("/users");
+    print(get_res);
+    
+    print("Simulating POST /users...");
+    let post_res = RoutePost("/users", {"name": "Dave"});
+    print(post_res);
+    
+    print("Simulating GET /invalid...");
+    let 404_res = RouteGet("/invalid");
+    print(404_res);
+}
+main();
