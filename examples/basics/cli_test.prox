@@ -1,0 +1,13 @@
+// examples/cli_test.prox
+func main() {
+    print("CLI Test Script");
+    let x = 10;
+    let y = 20;
+    print("Sum: " + to_string(x + y));
+    
+    if (x < y) {
+        print("x is less than y");
+    }
+}
+
+main();
