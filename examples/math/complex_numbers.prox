@@ -1,0 +1,33 @@
+// Object-Oriented Complex Numbers
+
+class Complex {
+    let real: float;
+    let imag: float;
+    
+    init(r, i) {
+        this.real = r;
+        this.imag = i;
+    }
+    
+    func add(other) {
+        return new Complex(this.real + other.real, this.imag + other.imag);
+    }
+    
+    func to_string() {
+        if (this.imag >= 0) {
+            return to_string(this.real) + " + " + to_string(this.imag) + "i";
+        }
+        return to_string(this.real) + " - " + to_string(-this.imag) + "i";
+    }
+}
+
+func main() {
+    let a = new Complex(3.5, 2.0);
+    let b = new Complex(1.5, -4.0);
+    
+    let c = a.add(b);
+    print("Complex A: " + a.to_string());
+    print("Complex B: " + b.to_string());
+    print("Sum: " + c.to_string());
+}
+main();
