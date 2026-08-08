@@ -1,0 +1,25 @@
+// Simple Configuration Parser Simulator
+
+func parse_ini(content) {
+    print("Parsing INI configuration...");
+    let lines = split(content, "\n");
+    let config = {};
+    let current_section = "global";
+    
+    for (let i = 0; i < length(lines); i = i + 1) {
+        let line = lines[i];
+        // Extremely simplified parsing logic
+        if (line != "") {
+            config[line] = true;
+        }
+    }
+    return config;
+}
+
+func main() {
+    let raw = "host=localhost\nport=8080\ndebug=true";
+    let conf = parse_ini(raw);
+    print("Parsed Configuration keys:");
+    print(conf);
+}
+main();
