@@ -1,0 +1,21 @@
+// Traditional Error Handling in ProXPL
+
+func risky_function(should_fail) {
+    if (should_fail) {
+        throw "RuntimeError: Operation failed!";
+    }
+    return "Success!";
+}
+
+func main() {
+    print("Attempting risky operations...");
+    
+    resilient {
+        print(risky_function(false));
+        print(risky_function(true));
+        print("This will not be printed");
+    } recovery (e) {
+        print("Caught exception gracefully: " + e);
+    }
+}
+main();
