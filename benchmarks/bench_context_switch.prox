@@ -1,0 +1,24 @@
+// benchmarks/bench_context_switch.prox
+let ITERATIONS = 1000000;
+
+context BenchContext {
+    layer A { }
+}
+
+print("--- Benchmarking Context Switching ---");
+
+let startTime = clock();
+
+for (let i = 0; i < ITERATIONS; i = i + 1) {
+    activate BenchContext {
+        let a = i;
+    }
+}
+
+let endTime = clock();
+let duration = endTime - startTime;
+
+print("Context switching completed for iterations: ");
+print(ITERATIONS);
+print("Time taken (seconds): ");
+print(duration);
