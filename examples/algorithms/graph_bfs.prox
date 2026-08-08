@@ -1,0 +1,50 @@
+// Breadth-First Search on a Graph using Lists
+
+func bfs(graph, start) {
+    let visited = [];
+    let queue = [start];
+    push(visited, start);
+    
+    while (length(queue) > 0) {
+        let node = queue[0];
+        // Pop front
+        let new_q = [];
+        for (let i = 1; i < length(queue); i = i + 1) {
+            push(new_q, queue[i]);
+        }
+        queue = new_q;
+        
+        print("Visiting: " + node);
+        
+        let neighbors = graph[node];
+        if (neighbors != null) {
+            for (let i = 0; i < length(neighbors); i = i + 1) {
+                let n = neighbors[i];
+                let found = false;
+                for (let j = 0; j < length(visited); j = j + 1) {
+                    if (visited[j] == n) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    push(visited, n);
+                    push(queue, n);
+                }
+            }
+        }
+    }
+}
+
+func main() {
+    let graph = {
+        "A": ["B", "C"],
+        "B": ["D", "E"],
+        "C": ["F"],
+        "D": [],
+        "E": ["F"],
+        "F": []
+    };
+    
+    bfs(graph, "A");
+}
+main();
