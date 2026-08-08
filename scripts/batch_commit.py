@@ -1,5 +1,6 @@
 import subprocess
 import time
+import os
 
 def run_cmd(cmd):
     result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
@@ -7,10 +8,9 @@ def run_cmd(cmd):
 
 def main():
     print("Gathering files to commit...")
-    # Get all modified, deleted, and untracked files
     stdout, _, _ = run_cmd("git ls-files --modified --deleted --others --exclude-standard")
     
-    files = stdout.split("\\n")
+    files = stdout.split("\n")
     committed_count = 0
     
     for filepath in files:
@@ -19,36 +19,37 @@ def main():
             continue
             
         print(f"Committing: {filepath}")
+        run_cmd(f'git add "{filepath}"')
         
-        # Add the file (handles both modified and untracked)
-        # To handle deleted files properly, use git add -A <file> or just git add
-        run_cmd(f'git add -A "{filepath}"')
-        
-        # Check if there is anything staged for this file
         diff, _, _ = run_cmd("git diff --cached --name-only")
         if not diff:
             continue
             
-        msg = f"Update {filepath.split('/')[-1]}"
-        commit_out, commit_err, code = run_cmd(f'git commit -m "{msg}"')
+        msg = f"Add/Update {filepath.split('/')[-1]}"
+        out, err, code = run_cmd(f'git commit -m "{msg}"')
         
         if code == 0:
             committed_count += 1
+            print(f"Successfully committed {filepath}.")
+        else:
+            print(f"Failed to commit {filepath}: {err}")
             
-    print(f"Successfully committed {committed_count} files individually.")
+        # Avoid Windows file lock contention
+        time.sleep(0.1)
+            
+    print(f"Committed {committed_count} new files.")
     
     print("Pulling remote changes...")
     run_cmd("git pull origin main --rebase")
     
     print("Pushing...")
-    # Try multiple times if push fails due to lock
-    for attempt in range(5):
+    for attempt in range(3):
         out, err, code = run_cmd("git push origin main")
         if code == 0:
             print("Push successful!")
             return
         else:
-            print(f"Push failed (attempt {attempt + 1}). Retrying in 2 seconds...")
+            print(f"Push failed (attempt {attempt + 1}). Retrying...")
             time.sleep(2)
             run_cmd("git pull origin main --rebase")
             
