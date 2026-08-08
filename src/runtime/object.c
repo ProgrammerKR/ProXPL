@@ -176,6 +176,12 @@ void printObject(Value value) {
   case OBJ_LAYER:
     printf("<layer %s>", AS_LAYER(value)->name->chars);
     break;
+  case OBJ_INTENT:
+    printf("<intent %s>", AS_INTENT(value)->name->chars);
+    break;
+  case OBJ_RESOLVER:
+    printf("<resolver %s>", AS_RESOLVER(value)->name->chars);
+    break;
   }
 }
 
@@ -290,4 +296,31 @@ ObjLayer *newLayer(ObjString *name) {
   layer->name = name;
   initTable(&layer->methods);
   return layer;
+}
+
+ObjIntent *newIntent(ObjString *name, int paramCount) {
+  ObjIntent *intent = ALLOCATE_OBJ(ObjIntent, OBJ_INTENT);
+  intent->name = name;
+  intent->paramCount = paramCount;
+  intent->resolvers = NULL;
+  intent->resolverCount = 0;
+  intent->resolverCapacity = 0;
+  return intent;
+}
+
+void intentAddResolver(ObjIntent* intent, ObjClosure* resolver) {
+  if (intent->resolverCapacity < intent->resolverCount + 1) {
+    int oldCapacity = intent->resolverCapacity;
+    intent->resolverCapacity = GROW_CAPACITY(oldCapacity);
+    intent->resolvers = GROW_ARRAY(ObjClosure*, intent->resolvers, oldCapacity, intent->resolverCapacity);
+  }
+  intent->resolvers[intent->resolverCount++] = resolver;
+}
+
+ObjResolver *newResolver(ObjString *name, int targetIntentId, ObjClosure *handler) {
+  ObjResolver *resolver = ALLOCATE_OBJ(ObjResolver, OBJ_RESOLVER);
+  resolver->name = name;
+  resolver->targetIntentId = targetIntentId;
+  resolver->handler = handler;
+  return resolver;
 }
