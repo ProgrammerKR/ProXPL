@@ -1,0 +1,17 @@
+// String operations in ProXPL
+
+func main() {
+    let message = "ProXPL is elegant and fast";
+    print("Original: " + message);
+    
+    // Built-in functions
+    print("Upper: " + to_upper(message));
+    print("Lower: " + to_lower(message));
+    
+    let words = split(message, " ");
+    print("Word count: " + to_string(length(words)));
+    
+    let replaced = replace(message, "fast", "powerful");
+    print("Replaced: " + replaced);
+}
+main();
