@@ -1,0 +1,119 @@
+use UI;
+
+App PremiumWebDemo {
+    State visitorCount = 1240;
+    State isFeatureEnabled = true;
+
+    Action increment {
+        visitorCount = visitorCount + 1;
+    }
+
+    Main(style: PROX_THEME_MIDNIGHT + LAYOUT_COL + UTIL_H_SCREEN) {
+        
+        // --- Navigation ---
+        Nav(style: NAV_DARK) {
+            Container(style: FLEX_START + GAP_4) {
+                Icon(className: "fas fa-rocket", style: "color: " + COLOR_PRIMARY + "; " + TEXT_2XL);
+                Text(style: FONT_BOLD + "; " + TEXT_XL) { "ProXPL Premium" }
+            }
+            Container(style: FLEX_END + GAP_6) {
+                Link(href: "#", style: NAV_LINK) { "Features" }
+                Link(href: "#", style: NAV_LINK) { "Pricing" }
+                Button(style: BTN_BASE + BTN_PRIMARY + BTN_SM) { "Get Started" }
+            }
+        }
+
+        // --- Hero Section ---
+        Section(style: "flex-grow: 1; " + LAYOUT_CENTER + "; padding: 4rem; position: relative; overflow: hidden") {
+            
+            // Decorative background elements
+            Container(style: POS_ABSOLUTE + "; top: -10%; left: -10%; width: 40%; height: 60%; background: " + COLOR_PRIMARY + "; " + BLUR_LG + "; " + OPACITY_25 + "; border-radius: 50%") {}
+            Container(style: POS_ABSOLUTE + "; bottom: -10%; right: -10%; width: 50%; height: 70%; background: " + COLOR_PURPLE + "; " + BLUR_LG + "; " + OPACITY_25 + "; border-radius: 50%") {}
+
+            Container(style: "max-width: 800px; " + TEXT_CENTER + "; " + POS_RELATIVE + "; " + Z_BASE) {
+                Text(style: BADGE_PURPLE + "; " + ANIM_FADE_IN) { "New: Web Build v1.2" }
+                
+                H1(style: TEXT_6XL + "; " + FONT_BLACK + "; " + TRACKING_TIGHT + "; margin-top: 1.5rem; " + ANIM_SLIDE_UP) { 
+                    "Build Premium UIs in " + "ProXPL"
+                }
+
+                P(style: TEXT_LG + "; " + DARK_TEXT_MUTED + "; " + LEADING_NORMAL + "; margin-top: 2rem; " + ANIM_SLIDE_UP) {
+                    "The ultimate language for performance-first applications. Now with a robust UI standard library and seamless web deployment."
+                }
+
+                Container(style: LAYOUT_ROW + "; " + LAYOUT_CENTER + "; gap: 1.5rem; margin-top: 3rem; " + ANIM_SLIDE_UP) {
+                    Button(onClick: increment, style: BTN_BASE + BTN_PRIMARY + BTN_LG + "; " + SHADOW_BLUE) {
+                        "Increase Visitors"
+                    }
+                    Button(style: BTN_BASE + BTN_GLASS + BTN_LG) {
+                        Icon(className: "fas fa-play", style: "margin-right: 0.5rem");
+                        "Watch Demo"
+                    }
+                }
+            }
+        }
+
+        // --- Stats Section ---
+        Section(style: DARK_SURFACE + "; padding: 5rem 10%; " + LAYOUT_GRID + "; gap: 3rem") {
+            
+            Container(style: GLASS_CARD + "; " + ANIM_ZOOM_IN) {
+                Text(style: STAT_LABEL) { "Visitor Traffic" }
+                Text(style: STAT_VALUE + "; " + DARK_TEXT) { visitorCount }
+                Text(style: STAT_UP) { "↑ 12% today" }
+                Container(style: PROGRESS_WRAP + "; margin-top: 1rem") {
+                    Container(style: PROGRESS_FILL + "; width: 75%") {}
+                }
+            }
+
+            Container(style: GLASS_CARD + "; " + ANIM_ZOOM_IN + "; animation-delay: 0.1s") {
+                Text(style: STAT_LABEL) { "Server Load" }
+                Text(style: STAT_VALUE + "; " + DARK_TEXT) { "14%" }
+                Text(style: STAT_UP + "; color: " + COLOR_SUCCESS) { "Optimal" }
+                Container(style: PROGRESS_WRAP + "; margin-top: 1rem") {
+                    Container(style: PROGRESS_SUCCESS + "; width: 14%") {}
+                }
+            }
+
+            Container(style: GLASS_CARD + "; " + ANIM_ZOOM_IN + "; animation-delay: 0.2s") {
+                Text(style: STAT_LABEL) { "Deployment" }
+                Text(style: STAT_VALUE + "; " + DARK_TEXT) { "v3.2.1" }
+                Text(style: BADGE_HOT) { "LIVE" }
+            }
+        }
+
+        // --- Features Section ---
+        Section(style: "padding: 5rem 10%; background: #ffffff; color: " + COLOR_DARK) {
+            H2(style: TEXT_4XL + "; " + FONT_BOLD + "; " + TEXT_CENTER + "; margin-bottom: 4rem") { "Core Capabilities" }
+            
+            Container(style: LAYOUT_GRID + "; gap: 2.5rem") {
+                Container(style: CARD_BASE + "; " + CARD_HOVER) {
+                    Icon(className: "fas fa-code", style: TEXT_3XL + "; color: " + COLOR_PRIMARY + "; margin-bottom: 1rem");
+                    H3(style: TEXT_XL + "; " + FONT_BOLD) { "Modern Transpiler" }
+                    P(style: DARK_TEXT_MUTED + "; margin-top: 0.5rem") { "High-speed conversion from ProXPL AST to optimized Web components." }
+                }
+                Container(style: CARD_BASE + "; " + CARD_HOVER) {
+                    Icon(className: "fas fa-palette", style: TEXT_3XL + "; color: " + COLOR_PURPLE + "; margin-bottom: 1rem");
+                    H3(style: TEXT_XL + "; " + FONT_BOLD) { "Standard UI Kit" }
+                    P(style: DARK_TEXT_MUTED + "; margin-top: 0.5rem") { "Rich sets of pre-styled tokens for rapid professional development." }
+                }
+                Container(style: CARD_BASE + "; " + CARD_HOVER) {
+                    Icon(className: "fas fa-bolt", style: TEXT_3XL + "; color: " + COLOR_WARNING + "; margin-bottom: 1rem");
+                    H3(style: TEXT_XL + "; " + FONT_BOLD) { "Reactive State" }
+                    P(style: DARK_TEXT_MUTED + "; margin-top: 0.5rem") { "Built-in state management using lightweight Alpine.js engine." }
+                }
+            }
+        }
+
+        // --- Footer ---
+        Footer(style: DARK_SURFACE + "; padding: 4rem 10%; " + TEXT_CENTER + "; " + DARK_TEXT_MUTED) {
+            Container(style: FLEX_BETWEEN) {
+                Text { "© 2026 ProXentix India Pvt. Ltd. All rights reserved." }
+                Container(style: LAYOUT_ROW + "; gap: 2rem") {
+                    Link(href: "#") { Icon(className: "fab fa-github", style: TEXT_XL) }
+                    Link(href: "#") { Icon(className: "fab fa-twitter", style: TEXT_XL) }
+                    Link(href: "#") { Icon(className: "fab fa-discord", style: TEXT_XL) }
+                }
+            }
+        }
+    }
+}
