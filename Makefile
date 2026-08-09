@@ -2,7 +2,7 @@
 # Complete build system for the C-based ProXPL interpreter
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wpedantic -std=c99 -O2 -I../include
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wpedantic -std=c99 -O2 -I../include -Isrc/pxcf/include -Isrc/pxcf/src
 LDFLAGS = -lm -lmimalloc
 TARGET = prox
 SRCDIR = .
@@ -11,7 +11,12 @@ OBJDIR = build/obj
 
 # All source files
 SOURCES = main.c \
-          utils/pxcf.c \
+          src/pxcf/src/error.c \
+          src/pxcf/src/lexer.c \
+          src/pxcf/src/parser.c \
+          src/pxcf/src/pxcf.c \
+          src/pxcf/src/serializer.c \
+          src/pxcf/src/value.c \
           lexer/scanner.c \
           parser/parser.c \
           parser/ast.c \
@@ -45,6 +50,7 @@ $(OBJDIR):
 	@mkdir -p $(OBJDIR)/runtime
 	@mkdir -p $(OBJDIR)/stdlib
 	@mkdir -p $(OBJDIR)/src
+	@mkdir -p $(OBJDIR)/src/pxcf/src
 	@touch $(OBJDIR)/.stamp
 
 # Link the executable

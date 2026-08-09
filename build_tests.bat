@@ -3,7 +3,7 @@ if not exist build mkdir build
 if not exist build\obj mkdir build\obj
 
 clang -o build/bytecode_tests.exe ^
- -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
+ -Iinclude -Isrc -Isrc/pxcf/include -Isrc/pxcf/src -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  tests/bytecode_tests.c ^
  src/vm/bytecode.c ^
  src/vm/disasm.c ^
@@ -15,7 +15,12 @@ clang -o build/bytecode_tests.exe ^
  src/runtime/chunk.c ^
  src/compiler/parser/ast.c ^
  src/runtime/vm_helpers.c ^
- src/utils/pxcf.c
+ src/pxcf/src/error.c ^
+ src/pxcf/src/lexer.c ^
+ src/pxcf/src/parser.c ^
+ src/pxcf/src/pxcf.c ^
+ src/pxcf/src/serializer.c ^
+ src/pxcf/src/value.c
 
 if %errorlevel% equ 0 (
     move /y *.obj build\obj\ >nul 2>&1

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(ProXPL VERSION 1.6.0 LANGUAGES C CXX)
+project(ProXPL VERSION 1.6.1 LANGUAGES C CXX)
 
 # Enable C and C++
 enable_language(C CXX)
@@ -188,10 +188,29 @@ FetchContent_MakeAvailable(mimalloc)
 # --- Include Directories ---
 include_directories(include)
 include_directories(src)
+include_directories(src/pxcf/include)
+include_directories(src/pxcf/src)
 
 # List of all C/C++ source files for the library, excluding those with a 'main' function
 file(GLOB_RECURSE LIB_SOURCES "src/*.c")
 file(GLOB_RECURSE LIB_SOURCES_CPP "src/*.cpp")
+
+# If pxcf is cloned as a full repository, exclude its tests, cli, and examples from prox_core
+file(GLOB_RECURSE PXCF_UNWANTED_SOURCES 
+    "src/pxcf/tests/*.c" 
+    "src/pxcf/tests/*.cpp" 
+    "src/pxcf/cli/*.c" 
+    "src/pxcf/cli/*.cpp" 
+    "src/pxcf/examples/*.c"
+    "src/pxcf/examples/*.cpp"
+    "src/pxcf/bindings/*.c"
+    "src/pxcf/bindings/*.cpp"
+    "src/pxcf/integrations/*.c"
+    "src/pxcf/integrations/*.cpp"
+)
+if(PXCF_UNWANTED_SOURCES)
+    list(REMOVE_ITEM LIB_SOURCES ${PXCF_UNWANTED_SOURCES})
+endif()
 
 # Handle LLVM Backend Source: Only include if LLVM was found
 if(LLVM_FOUND)

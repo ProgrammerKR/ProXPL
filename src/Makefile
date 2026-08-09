@@ -2,7 +2,7 @@
 # Complete build system for the C-based ProXPL interpreter
 
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -O2 -I../include
+CFLAGS = -Wall -Wextra -std=c99 -O2 -I../include -Ipxcf/include -Ipxcf/src
 LDFLAGS = -lm
 TARGET = prox
 SRCDIR = .
@@ -60,7 +60,12 @@ SOURCES = main.c \
           stdlib/time_native.c \
           utils/error_report.c \
           utils/md5.c \
-          utils/pxcf.c \
+          pxcf/src/error.c \
+          pxcf/src/lexer.c \
+          pxcf/src/parser.c \
+          pxcf/src/pxcf.c \
+          pxcf/src/serializer.c \
+          pxcf/src/value.c \
           utils/sha256.c \
           utils/file_utils.c \
           vm/bytecode.c \
@@ -86,6 +91,7 @@ $(OBJDIR):
 	@mkdir -p $(OBJDIR)/runtime
 	@mkdir -p $(OBJDIR)/stdlib
 	@mkdir -p $(OBJDIR)/utils
+	@mkdir -p $(OBJDIR)/pxcf/src
 	@mkdir -p $(OBJDIR)/vm
 
 # Link the executable

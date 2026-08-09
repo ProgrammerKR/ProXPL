@@ -2,7 +2,7 @@
 if not exist build mkdir build
 if not exist build\obj mkdir build\obj
 
-clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
+clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/pxcf/include -Isrc/pxcf/src -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  src/main.c ^
  src/compiler/lexer/scanner.c ^
  src/compiler/parser/ast.c ^
@@ -29,7 +29,12 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -D_CRT
  src/runtime/vm_helpers.c ^
  src/utils/error_report.c ^
  src/utils/file_utils.c ^
- src/utils/pxcf.c ^
+ src/pxcf/src/error.c ^
+ src/pxcf/src/lexer.c ^
+ src/pxcf/src/parser.c ^
+ src/pxcf/src/pxcf.c ^
+ src/pxcf/src/serializer.c ^
+ src/pxcf/src/value.c ^
  src/stdlib/collections_native.c ^
  src/stdlib/convert_native.c ^
  src/stdlib/core_native.c ^

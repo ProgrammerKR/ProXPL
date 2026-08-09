@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.6.1-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -581,7 +581,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
   - **Keywords**: `class`, `new`, `this`, `extends`, `interface`. ✅
   - **Runtime**: Optimized VM with Object Support. ✅
 
-- **v1.6.0 (Current)**:
+- **v1.6.1 (Current)**:
   - **Intent-Oriented Programming**: Full VM support for `intent` and `resolver` dynamic dispatch. ✅
   - **Context-Aware Polymorphism**: Dynamic behavioral overrides via `context`, `layer`, and `activate`. ✅
   - **Autonomic Self-Healing (ASR)**: Zero-cost stack unwinding through `resilient` exception blocks. ✅
@@ -594,7 +594,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 - 📋 **[v1.9.5](docs/releases/v1.9.5.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
 - 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
 
-## 📝 Recent Changes (v1.6.0)
+## 📝 Recent Changes (v1.6.1)
 
 - **IOP Core**: Fully implemented `intent`, `resolver`, and `satisfies` with native VM dispatch.
 - **Context-Aware Polymorphism**: Fully implemented `context`, `layer`, and `activate`.
