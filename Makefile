@@ -29,6 +29,7 @@ SOURCES = main.c \
           runtime/memory.c \
           runtime/debug.c \
           stdlib/stdlib_core.c \
+          stdlib/pxcf_bridge.c \
           stdlib/io_native.c \
           stdlib/math_native.c \
           stdlib/string_native.c \

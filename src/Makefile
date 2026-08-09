@@ -54,6 +54,7 @@ SOURCES = main.c \
           stdlib/os_native.c \
           stdlib/reflect_native.c \
           stdlib/stdlib_core.c \
+          stdlib/pxcf_bridge.c \
           stdlib/string_native.c \
           stdlib/system_native.c \
           stdlib/sys_native.c \

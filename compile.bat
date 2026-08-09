@@ -51,6 +51,7 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/
  src/stdlib/buffer_native.c ^
  src/stdlib/reflect_native.c ^
  src/stdlib/stdlib_core.c ^
+ src/stdlib/pxcf_bridge.c ^
  src/stdlib/string_native.c ^
  src/stdlib/sys_native.c ^
  src/stdlib/system_native.c ^
