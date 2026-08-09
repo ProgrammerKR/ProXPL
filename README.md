@@ -475,43 +475,42 @@ graph LR
 
 ```text
 ProXPL/
-├── include/                  # Public header files
-│   ├── vm.h                  # Virtual machine interface
-│   ├── compiler.h            # Compiler interface
-│   ├── ast.h                 # AST node definitions
-│   ├── stdlib_native.h       # Standard library declarations
-│   └── gc.h                  # Garbage collector interface
-├── src/
-│   ├── main.c                # Entry point
-│   ├── lexer/                # Lexical analysis
-│   ├── parser/               # Syntax analysis
-│   ├── compiler/             # Code generation
-│   ├── runtime/              # Runtime system
-│   ├── stdlib/               # Standard library (native)
-│   ├── prm/                  # Package manager
-│   └── utils/                # Utilities
-├── lib/std/                  # Standard library (ProXPL)
-├── tools/
-│   ├── lsp/                  # Language Server Protocol
-│   ├── bench/                # Benchmarking tools
-│   └── prm_main.c            # PRM CLI entry
+├── assets/                   # Project assets (icons, logos)
+├── benchmarks/               # Performance benchmarking suite
+├── docs/                     # Comprehensive documentation
+│   ├── architecture/         # Architecture guides
+│   ├── pillars/              # Core paradigm specifications
+│   └── releases/             # Version release notes
 ├── examples/                 # Example programs
 │   ├── advanced/             # Advanced integrations
 │   ├── algorithms/           # Algorithm examples
 │   ├── basics/               # Basic scripts
 │   └── ui_and_web/           # UI and web frameworks
-├── tests/                    # Test suite
-│   ├── benchmarks/           # ProXPL script benchmarks
+├── extension/                # VS Code Extension source
+├── include/                  # Public C/C++ header files
+│   ├── ast.h                 # AST node definitions
+│   ├── compiler.h            # Compiler interface
+│   ├── gc.h                  # Garbage collector interface
+│   └── vm.h                  # Virtual machine interface
+├── runtime/                  # ASR (Autonomic Self-Healing) C++ runtime
+├── scripts/                  # Build and utility scripts
+├── src/                      # Compiler and VM source code
+│   ├── cli/                  # Command-line interface tools
+│   ├── compiler/             # Multi-phase compiler implementation
+│   ├── prm/                  # ProX Repository Manager
+│   ├── runtime/              # VM runtime execution core
+│   ├── stdlib/               # Native standard library functions
+│   └── vm/                   # Virtual machine and dispatch
+├── std/                      # ProXPL standard library modules
+├── tests/                    # Comprehensive test suite
+│   ├── benchmarks/           # Script benchmarks
 │   ├── integration/          # E2E integration tests
 │   ├── iop/                  # Intent, Context, and ASR tests
 │   ├── language/             # Core language feature tests
-│   ├── misc/                 # Scratch files
 │   └── vm/                   # C/C++ runtime unit tests
-├── docs/                     # Documentation
-│   ├── architecture/         # Architecture guides
-│   ├── maintenance/          # Code audits & backend fixes
-│   ├── pillars/              # Core paradigm specifications
-│   └── releases/             # Version release notes
+├── tools/                    # Development tools
+│   ├── bench/                # Benchmarking tools
+│   └── lsp/                  # Language Server Protocol
 ├── CMakeLists.txt            # Build configuration
 ├── Makefile                  # Alternative build system
 └── README.md                 # This file
