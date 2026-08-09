@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install LLVM (Ubuntu)
         if: matrix.os == 'ubuntu-latest'

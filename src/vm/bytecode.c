@@ -21,6 +21,7 @@
 
 /* --- Chunk and constant table helpers --- */
 
+#if 0
 static void *xrealloc(void *p, size_t s) {
     void *q = realloc(p, s);
     if (!q && s) {
@@ -29,6 +30,7 @@ static void *xrealloc(void *p, size_t s) {
     }
     return q;
 }
+#endif
 
 void chunk_init(Chunk *chunk) {
     initChunk(chunk);

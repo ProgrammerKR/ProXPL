@@ -41,6 +41,7 @@ static Value pop_value(VMState *vm) {
     return vm->stack[--vm->sp];
 }
 
+#if 0
 /* truthiness */
 static int is_truthy(Value v) {
     if (IS_NIL(v)) return 0;
@@ -56,6 +57,7 @@ static uint64_t read_uleb128_chunk(const Chunk *c, size_t *pos) {
 static int64_t read_sleb128_chunk(const Chunk *c, size_t *pos) {
     return read_sleb128_from(c->code + *pos, c->count - *pos, pos);
 }
+#endif
 
 /* Helper to get const by uleb idx within chunk */
 static Value get_const(const Chunk *c, uint64_t idx) {

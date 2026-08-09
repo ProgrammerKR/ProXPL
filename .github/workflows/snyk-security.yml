@@ -39,6 +39,8 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Set up Snyk CLI
         uses: snyk/actions/setup@master
 
