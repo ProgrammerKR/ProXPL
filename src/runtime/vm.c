@@ -422,6 +422,8 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
       [OP_INTERFACE] = &&DO_OP_INTERFACE,
       [OP_TRAIT] = &&DO_OP_TRAIT,
       [OP_IMPLEMENT] = &&DO_OP_IMPLEMENT,
+      [OP_INTENT] = &&DO_OP_INTENT,
+      [OP_RESOLVER] = &&DO_OP_RESOLVER,
       [OP_MAKE_FOREIGN] = &&DO_OP_MAKE_FOREIGN,
       [OP_MODULO] = &&DO_OP_MODULO,
       [OP_BIT_AND] = &&DO_OP_BIT_AND,
