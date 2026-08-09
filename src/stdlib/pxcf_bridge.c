@@ -8,9 +8,9 @@
 #include <string.h>
 
 #include "pxcf/pxcf.h"
-#include "../include/object.h"
-#include "../include/memory.h"
-#include "../include/vm.h"
+#include "object.h"
+#include "memory.h"
+#include "vm.h"
 
 // The global VM instance used by ProXPL
 extern VM vm;
