@@ -11,6 +11,14 @@
 #include "value.h"
 
 typedef enum {
+    IR_TYPE_UNKNOWN, // Fallback to NaN-Boxing
+    IR_TYPE_INT,     // Native i64
+    IR_TYPE_FLOAT,   // Native double
+    IR_TYPE_BOOL,    // Native i1
+    IR_TYPE_OBJ      // Heap allocated object
+} IRType;
+
+typedef enum {
     IR_OP_NOP,
     IR_OP_CONST,
     IR_OP_ADD,
@@ -56,6 +64,8 @@ typedef struct {
 struct IRInstruction {
     IROpcode opcode;
     int result; // Destination SSA register
+    IRType type; // Concrete type resolved during inference
+    bool escapes; // Set by Escape Analysis (false = stack allocatable)
     IROperand* operands;
     int operandCount;
     IRInstruction* next;
