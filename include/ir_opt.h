@@ -13,5 +13,7 @@
 void promoteMemoryToRegisters(IRFunction* func);
 void constantFold(IRFunction* func);
 void deadCodeElimination(IRFunction* func);
+void runTypeInferencePass(IRFunction* func);
+void runEscapeAnalysisPass(IRFunction* func);
 
 #endif // PROX_IR_OPT_H
