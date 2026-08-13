@@ -358,12 +358,58 @@ public:
                 ssaValues[instr->result] = v;
                 break;
             }
-            case IR_OP_ADD: {
+            case IR_OP_ADD:
+            case IR_OP_SUB:
+            case IR_OP_MUL:
+            case IR_OP_DIV: {
                 llvm::Value* L = getOperand(instr->operands[0]);
                 llvm::Value* R = getOperand(instr->operands[1]);
-                llvm::Function *AddFunc = ModuleOb->getFunction("prox_rt_add");
-                // if (L && R && AddFunc) 
-                ssaValues[instr->result] = Builder->CreateCall(AddFunc, {L, R}, "addtmp");
+                if (instr->type == IR_TYPE_INT || instr->type == IR_TYPE_FLOAT) {
+                    // Type Specialization: Native raw LLVM math
+                    llvm::Value* LF = Builder->CreateBitCast(L, Builder->getDoubleTy(), "l_cast");
+                    llvm::Value* RF = Builder->CreateBitCast(R, Builder->getDoubleTy(), "r_cast");
+                    llvm::Value* ResF = nullptr;
+                    if (instr->opcode == IR_OP_ADD) ResF = Builder->CreateFAdd(LF, RF, "fadd");
+                    else if (instr->opcode == IR_OP_SUB) ResF = Builder->CreateFSub(LF, RF, "fsub");
+                    else if (instr->opcode == IR_OP_MUL) ResF = Builder->CreateFMul(LF, RF, "fmul");
+                    else if (instr->opcode == IR_OP_DIV) ResF = Builder->CreateFDiv(LF, RF, "fdiv");
+                    ssaValues[instr->result] = Builder->CreateBitCast(ResF, Builder->getInt64Ty(), "res_cast");
+                } else {
+                    // NaN-Boxing fallback (Hybrid Mode)
+                    const char* fname = "prox_rt_add";
+                    if (instr->opcode == IR_OP_SUB) fname = "prox_rt_sub";
+                    else if (instr->opcode == IR_OP_MUL) fname = "prox_rt_mul";
+                    else if (instr->opcode == IR_OP_DIV) fname = "prox_rt_div";
+                    
+                    llvm::Function *OpFunc = ModuleOb->getFunction(fname);
+                    if (!OpFunc) {
+                        llvm::FunctionType* OpType = llvm::FunctionType::get(Builder->getInt64Ty(), {Builder->getInt64Ty(), Builder->getInt64Ty()}, false);
+                        OpFunc = llvm::Function::Create(OpType, llvm::Function::ExternalLinkage, fname, ModuleOb.get());
+                    }
+                    ssaValues[instr->result] = Builder->CreateCall(OpFunc, {L, R}, "optmp");
+                }
+                break;
+            }
+            case IR_OP_ALLOCA: {
+                if (!instr->escapes) {
+                    // Stack allocation (Escape Analysis proved it doesn't escape)
+                    llvm::Value* stackAlloc = Builder->CreateAlloca(Builder->getInt64Ty(), nullptr, "stack_obj");
+                    // We need to pack this pointer into a NaN-boxed Value (OBJ_VAL)
+                    // For simplicity in this LLVM prototype, we just bitcast the pointer to i64 and set the OBJ bits
+                    llvm::Value* ptrAsInt = Builder->CreatePtrToInt(stackAlloc, Builder->getInt64Ty());
+                    
+                    // SIGN_BIT | QNAN = 0xFFF8000000000000
+                    llvm::Value* objTag = llvm::ConstantInt::get(*Context, llvm::APInt(64, 0xFFF8000000000000, false));
+                    ssaValues[instr->result] = Builder->CreateOr(ptrAsInt, objTag, "boxed_stack_obj");
+                } else {
+                    // Heap allocation (Fallback)
+                    llvm::Function *AllocFunc = ModuleOb->getFunction("prox_rt_allocate");
+                    if (!AllocFunc) {
+                        llvm::FunctionType* AllocType = llvm::FunctionType::get(Builder->getInt64Ty(), {}, false);
+                        AllocFunc = llvm::Function::Create(AllocType, llvm::Function::ExternalLinkage, "prox_rt_allocate", ModuleOb.get());
+                    }
+                    ssaValues[instr->result] = Builder->CreateCall(AllocFunc, {}, "heap_obj");
+                }
                 break;
             }
             
