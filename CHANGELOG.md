@@ -2,6 +2,12 @@
 
 All notable changes to the ProXPL programming language will be documented in this file.
 
+## [1.6.2] - 2026-08-13
+### Changed
+- IR optimization and backend improvements to remove unnecessary object generation.
+- Reduced language binary size.
+
+
 ## [1.6.0] - 2026-08-08
 ### Added
 - **Intent-Oriented Programming**: Full bytecode generation and VM opcode dispatch for `intent` and `resolver` paradigms.
