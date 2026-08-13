@@ -71,6 +71,8 @@ IRInstruction* createIRInstruction(IROpcode opcode, int result) {
     IRInstruction* instr = (IRInstruction*)safe_malloc(sizeof(IRInstruction));
     instr->opcode = opcode;
     instr->result = result;
+    instr->type = IR_TYPE_UNKNOWN;
+    instr->escapes = true;
     instr->operands = NULL;
     instr->operandCount = 0;
     instr->next = NULL;
