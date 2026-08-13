@@ -425,3 +425,89 @@ void promoteMemoryToRegisters(IRFunction* func) {
     free(defs);
     free(allocas);
 }
+
+// ---------------------------------------------------------
+// Type Specialization & Inference Pass
+// ---------------------------------------------------------
+void runTypeInferencePass(IRFunction* func) {
+    if (!func || !func->blocks) return;
+    
+    // Very basic intra-block type inference (forward flow)
+    for (int i = 0; i < func->blockCount; i++) {
+        IRInstruction* instr = func->blocks[i]->first;
+        while (instr) {
+            // Assume default fallback
+            if (instr->type == IR_TYPE_UNKNOWN) {
+                // If it's a CONST, check its inner value type
+                if (instr->opcode == IR_OP_CONST) {
+                    if (instr->operandCount > 0) {
+                        Value v = instr->operands[0].as.constant;
+                        if (IS_NUMBER(v)) {
+                            // Determine if float or int (simplified heuristic)
+                            double d = AS_NUMBER(v);
+                            if (d == (int64_t)d) instr->type = IR_TYPE_INT;
+                            else instr->type = IR_TYPE_FLOAT;
+                        } else if (IS_BOOL(v)) {
+                            instr->type = IR_TYPE_BOOL;
+                        } else {
+                            instr->type = IR_TYPE_OBJ;
+                        }
+                    }
+                } 
+                else if (instr->opcode == IR_OP_ADD || instr->opcode == IR_OP_SUB || instr->opcode == IR_OP_MUL || instr->opcode == IR_OP_DIV) {
+                    // If this was a more complex compiler, we'd use reachingDefs or a use-def chain.
+                    // For now, if we can't statically prove it, leave as UNKNOWN (NaN-Box fallback).
+                }
+            }
+            instr = instr->next;
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// Escape Analysis Pass
+// ---------------------------------------------------------
+void runEscapeAnalysisPass(IRFunction* func) {
+    if (!func || !func->blocks) return;
+    
+    // Iterate through all allocations. If an allocated SSA register is returned,
+    // or passed into a foreign/opaque function call, it escapes.
+    for (int i = 0; i < func->blockCount; i++) {
+        IRInstruction* instr = func->blocks[i]->first;
+        while (instr) {
+            if (instr->opcode == IR_OP_ALLOCA) {
+                // Default: doesn't escape
+                instr->escapes = false;
+                
+                // Scan forward to see if this SSA val is returned
+                // (Very naive O(n^2) approach for demonstration of the ultrafast architecture)
+                int allocSsa = instr->result;
+                bool escapes = false;
+                
+                for (int j = i; j < func->blockCount; j++) {
+                    IRInstruction* runner = (j == i) ? instr->next : func->blocks[j]->first;
+                    while (runner) {
+                        if (runner->opcode == IR_OP_RETURN) {
+                            if (runner->operandCount > 0 && 
+                                runner->operands[0].type == OPERAND_VAL && 
+                                runner->operands[0].as.ssaVal == allocSsa) {
+                                escapes = true;
+                            }
+                        } else if (runner->opcode == IR_OP_STORE_VAR) {
+                            // Storing into a global or out-of-scope variable escapes
+                            // (Simplified: any store might escape if target is unknown)
+                            if (runner->operandCount > 1 && 
+                                runner->operands[1].type == OPERAND_VAL && 
+                                runner->operands[1].as.ssaVal == allocSsa) {
+                                escapes = true; // Conservative
+                            }
+                        }
+                        runner = runner->next;
+                    }
+                }
+                instr->escapes = escapes;
+            }
+            instr = instr->next;
+        }
+    }
+}
