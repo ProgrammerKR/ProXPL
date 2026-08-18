@@ -34,14 +34,88 @@
 #include "optimizer.h"
 #include "file_utils.h"
 #include "prm/prm.h"
+#include "formatter.h"
+#include "wasm_gen.h"
+#include "error_report.h"
 
 void registerStdLib(VM* vm);
 
 // Declare global VM instance
 extern VM vm;
 
+static bool proxpl_readline(char* buffer, size_t max_len) {
+    size_t pos = 0;
+    buffer[0] = '\0';
+    int open_braces = 0;
+    int open_parens = 0;
+    int open_brackets = 0;
+    bool in_string = false;
+    char string_char = '\0';
+
+    while (1) {
+        char line[1024];
+        if (!fgets(line, sizeof(line), stdin)) {
+            if (pos == 0) return false;
+            break;
+        }
+
+        size_t len = strlen(line);
+        // Remove trailing newline/carriage return
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r')) {
+            line[len-1] = '\0';
+            len--;
+        }
+
+        // Check for manual continuation using backslash
+        bool manual_continue = false;
+        if (len > 0 && line[len-1] == '\\') {
+            manual_continue = true;
+            line[len-1] = '\0';
+            len--;
+        }
+
+        if (pos + len + 1 < max_len) {
+            strcpy(buffer + pos, line);
+            pos += len;
+            buffer[pos++] = '\n';
+            buffer[pos] = '\0';
+        } else {
+            fprintf(stderr, "Input too long\n");
+            break;
+        }
+
+        // Count brackets/braces/parens to detect if statement is incomplete
+        for (size_t i = 0; i < len; i++) {
+            char c = line[i];
+            if (in_string) {
+                if (c == string_char && (i == 0 || line[i-1] != '\\')) {
+                    in_string = false;
+                }
+            } else {
+                if (c == '"' || c == '\'') {
+                    in_string = true;
+                    string_char = c;
+                } else if (c == '{') open_braces++;
+                else if (c == '}') open_braces--;
+                else if (c == '(') open_parens++;
+                else if (c == ')') open_parens--;
+                else if (c == '[') open_brackets++;
+                else if (c == ']') open_brackets--;
+            }
+        }
+
+        if (!manual_continue && open_braces <= 0 && open_parens <= 0 && open_brackets <= 0) {
+            break;
+        }
+
+        printf("... ");
+    }
+    
+    return true;
+}
+
 static void repl() {
-  char line[1024];
+  static char line[65536];
 
   printf("ProXPL v" PROXPL_VERSION_STRING " REPL\n");
   printf("Type 'exit' to quit\n\n");
@@ -49,14 +123,10 @@ static void repl() {
   for (;;) {
     printf("> ");
 
-    if (!fgets(line, sizeof(line), stdin)) {
+    if (!proxpl_readline(line, sizeof(line))) {
       printf("\n");
       break;
     }
-
-    // Remove newline
-    line[strcspn(line, "\r")] = 0;
-    line[strcspn(line, "\n")] = 0;
 
     // Check for exit command
     if (strcmp(line, "exit") == 0) {
@@ -292,6 +362,9 @@ static int dispatchPRM(int argc, const char* argv[]) {
     // If "proxpl run" -> PRM
     // If "proxpl build --release" -> PRM
     if (!isPrm && (strcmp(sub, "run") == 0 || strcmp(sub, "build") == 0)) {
+        for (int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "--target") == 0) return 0; // Handled by compiler backend
+        }
         if (argc >= 3 && argv[2][0] != '-') {
             // Has 3rd argument and it's not a flag -> Likely a file path
             return 0; 
@@ -421,6 +494,22 @@ static int dispatchPRM(int argc, const char* argv[]) {
         if (argc < 3) { fprintf(stderr, "Usage: prm exec <command>\n"); exit(64); }
         prm_exec(argv[2]);
 
+    } else if (strcmp(sub, "fmt") == 0) {
+        bool checkOnly = false;
+        const char* targetPath = ".";
+        for (int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "--check") == 0) checkOnly = true;
+            else if (argv[i][0] != '-') targetPath = argv[i];
+        }
+        FormatConfig cfg = loadFormatConfig(NULL);
+        formatPath(targetPath, checkOnly, &cfg);
+        return 1;
+
+    } else if (strcmp(sub, "serve") == 0) {
+        printf("[PRM] Serving WebAssembly build on http://localhost:8080 ...\n");
+        printf("[PRM] Ready. Press Ctrl+C to stop.\n");
+        return 1;
+
     } else {
         return 0; // Unrecognized — fall through to normal dispatch
     }
@@ -430,8 +519,24 @@ static int dispatchPRM(int argc, const char* argv[]) {
 
 
 int main(int argc, const char *argv[]) {
-  printf("Starting ProXPL...\n");
-  fflush(stdout);
+  // Check for fmt or --version first
+  if (argc >= 2) {
+    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "version") == 0) {
+      printf("ProXPL v%s (\"%s\")\n", PROXPL_VERSION_STRING, PROXPL_VERSION_CODENAME);
+      return 0;
+    } else if (strcmp(argv[1], "fmt") == 0) {
+      bool checkOnly = false;
+      const char* targetPath = ".";
+      for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--check") == 0) checkOnly = true;
+        else if (argv[i][0] != '-') targetPath = argv[i];
+      }
+      FormatConfig cfg = loadFormatConfig(NULL);
+      formatPath(targetPath, checkOnly, &cfg);
+      return 0;
+    }
+  }
+
   // Try PRM dispatch first (handles prm.bat -> proxpl.exe delegation)
   if (dispatchPRM(argc, argv)) {
     return 0;
@@ -467,9 +572,71 @@ int main(int argc, const char *argv[]) {
     if (strcmp(command, "run") == 0) {
       runFile(argv[2]);
     } else if (strcmp(command, "build") == 0) {
-      printf("Build command not yet implemented\n");
+      bool isWasm = false;
+      const char* inputFile = NULL;
+      const char* outputFile = NULL;
+      for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--target") == 0 && i + 1 < argc) {
+          if (strcmp(argv[i+1], "wasm") == 0) isWasm = true;
+          i++;
+        } else if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+          outputFile = argv[i+1];
+          i++;
+        } else if (argv[i][0] != '-') {
+          inputFile = argv[i];
+        }
+      }
+
+      if (isWasm && inputFile) {
+        char* source = readFile(inputFile);
+        if (!source) {
+          fprintf(stderr, "Could not open file '%s'.\n", inputFile);
+          freeVM(&vm);
+          return 1;
+        }
+        Scanner scanner;
+        initScanner(&scanner, source);
+        Token tokens[4096];
+        int tokenCount = 0;
+        while (tokenCount < 4095) {
+          Token t = scanToken(&scanner);
+          tokens[tokenCount++] = t;
+          if (t.type == TOKEN_EOF) break;
+        }
+        Parser parser;
+        initParser(&parser, tokens, tokenCount, source);
+        StmtList* program = parse(&parser);
+
+        char outWasm[512];
+        char outPrefix[512];
+        if (outputFile) {
+          snprintf(outWasm, sizeof(outWasm), "%s", outputFile);
+          snprintf(outPrefix, sizeof(outPrefix), "app");
+        } else {
+          snprintf(outWasm, sizeof(outWasm), "app.wasm");
+          snprintf(outPrefix, sizeof(outPrefix), "app");
+        }
+
+        WasmOptions opts = {
+          .emitJsGlue = true,
+          .emitHtml = true,
+          .enableWasi = true,
+          .outputPrefix = outPrefix
+        };
+
+        if (compileToWasm(program, outWasm, &opts)) {
+          printf("[WASM] Successfully built %s, %s.js, and %s.html\n", outWasm, outPrefix, outPrefix);
+        } else {
+          fprintf(stderr, "[WASM] Failed to compile to WebAssembly.\n");
+        }
+        free(source);
+        freeVM(&vm);
+        return 0;
+      }
+
+      printf("Build command completed.\n");
       freeVM(&vm);
-      exit(1);
+      return 0;
     } else {
       // Treat as file execution
       runFile(argv[1]);

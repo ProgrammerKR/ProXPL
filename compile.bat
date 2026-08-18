@@ -9,6 +9,9 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/
  src/compiler/parser/parser.c ^
  src/compiler/transpiler_ui.c ^
  src/compiler/bytecode_gen.c ^
+ src/compiler/escape_analysis.c ^
+ src/compiler/formatter.c ^
+ src/compiler/wasm_gen.c ^
  src/compiler/importer.c ^
  src/compiler/ir.c ^
  src/compiler/ir_gen.c ^
