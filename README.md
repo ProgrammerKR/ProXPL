@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.6.2-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![Version](https://img.shields.io/badge/version-1.6.3-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 
@@ -581,27 +581,29 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
   - **Keywords**: `class`, `new`, `this`, `extends`, `interface`. ✅
   - **Runtime**: Optimized VM with Object Support. ✅
 
-- **v1.6.2 (Current)**:
-  - **Intent-Oriented Programming**: Full VM support for `intent` and `resolver` dynamic dispatch. ✅
-  - **Context-Aware Polymorphism**: Dynamic behavioral overrides via `context`, `layer`, and `activate`. ✅
-  - **Autonomic Self-Healing (ASR)**: Zero-cost stack unwinding through `resilient` exception blocks. ✅
-  - **Performance Tooling**: Benchmark suite for core abstractions. ✅
+- **v1.6.3 (Current)**:
+  - **WebAssembly Target**: Full Wasm compilation target (`proxpl build --target wasm`) with JS glue code and `prm serve --wasm`. ✅
+  - **String Templates**: Backtick-delimited template literals (`` `Hello, ${name}!` ``) with `${expr}` interpolation. ✅
+  - **Operator Overloading**: Custom operator methods (`+ - * / % @ == != < > <= >= [] []= () - !`) with inheritance. ✅
+  - **Closures v2**: Escape analysis, zero-allocation stack execution, and loop variable capture safety. ✅
+  - **ProXPL Formatter**: Official `prox fmt` code formatter with `.proxfmt.pxcf` support. ✅
+  - **Enhanced Diagnostics**: Compiler error codes (`E0412`, `E0308`), caret indicators, and typo suggestions. ✅
 
 ### Future Roadmap (2026–2028)
 - 📋 **[v1.7.0](docs/releases/v1.7.0.md)** — ProX Studio Alpha, PRM Registry, Testing Framework, Macros.
-- 📋 **[v1.8.0](docs/releases/v1.8.0.md)** — WebAssembly Target, String Templates, Operator Overloading, Formatter.
-- 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Channels, Actors, Database Connectivity, LSP v2, Compile-Time Eval.
+- 📋 **[v1.8.0](docs/releases/v1.8.0.md)** — Channels, Actors, Distributed Runtime Scaling.
+- 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Database Connectivity, LSP v2, Compile-Time Eval.
 - 📋 **[v1.9.5](docs/releases/v1.9.5.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
 - 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
 
-## 📝 Recent Changes (v1.6.2)
+## 📝 Recent Changes (v1.6.3)
 
-- **IOP Core**: Fully implemented `intent`, `resolver`, and `satisfies` with native VM dispatch.
-- **Context-Aware Polymorphism**: Fully implemented `context`, `layer`, and `activate`.
-- **Autonomic Self-Healing (ASR)**: Added `resilient` exception recovery blocks without corrupting state.
-- **Performance Benchmarks**: New benchmark suite for dynamic dispatch paradigms.
-- **ASR Refinement**: Zero-cost stack unwinding for `resilient` blocks using `ExceptionHandlerTable`.
-- **LLVM Backend**: LLVM PassManager configured for O3 (Vectorization and Inlining) and Tail-Call Optimization (TCO).
+- **Wasm Target**: Production-grade WebAssembly backend with `std.web.dom`, `std.web.event`, `std.web.http`, `std.web.canvas`.
+- **Template Literals**: Added string interpolation and multiline string templates with backticks.
+- **Operator Overloading**: Added custom operator methods on user classes.
+- **Closures v2**: Implemented escape analysis and upvalue deduplication.
+- **Formatter**: Implemented `prox fmt` command.
+- **Diagnostics**: Added rich error codes, caret indicators, and fuzzy typo suggestions.
 - See the full [CHANGELOG.md](CHANGELOG.md) for more details.
 
 ## 🛠️ Contributing
