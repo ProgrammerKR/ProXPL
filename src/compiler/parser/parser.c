@@ -435,6 +435,99 @@ static Stmt *declaration(Parser *p) {
   return statement(p);
 }
 
+static Stmt *operatorDecl(Parser *p, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition) {
+  Token opToken = peek(p);
+  char opName[64] = "operator";
+  int line = opToken.line;
+
+  if (match(p, 1, TOKEN_PLUS)) {
+    strcat(opName, "+");
+  } else if (match(p, 1, TOKEN_MINUS)) {
+    strcat(opName, "-");
+  } else if (match(p, 1, TOKEN_STAR)) {
+    strcat(opName, "*");
+  } else if (match(p, 1, TOKEN_SLASH)) {
+    strcat(opName, "/");
+  } else if (match(p, 1, TOKEN_PERCENT)) {
+    strcat(opName, "%");
+  } else if (match(p, 1, TOKEN_AT)) {
+    strcat(opName, "@");
+  } else if (match(p, 1, TOKEN_EQUAL_EQUAL)) {
+    strcat(opName, "==");
+  } else if (match(p, 1, TOKEN_BANG_EQUAL)) {
+    strcat(opName, "!=");
+  } else if (match(p, 1, TOKEN_LESS_EQUAL)) {
+    strcat(opName, "<=");
+  } else if (match(p, 1, TOKEN_GREATER_EQUAL)) {
+    strcat(opName, ">=");
+  } else if (match(p, 1, TOKEN_LESS)) {
+    strcat(opName, "<");
+  } else if (match(p, 1, TOKEN_GREATER)) {
+    strcat(opName, ">");
+  } else if (match(p, 1, TOKEN_BANG)) {
+    strcat(opName, "!");
+  } else if (match(p, 1, TOKEN_LEFT_BRACKET)) {
+    consume(p, TOKEN_RIGHT_BRACKET, "Expect ']' after '[' in operator overloading.");
+    if (match(p, 1, TOKEN_EQUAL)) {
+      strcat(opName, "[]=");
+    } else {
+      strcat(opName, "[]");
+    }
+  } else if (match(p, 1, TOKEN_LEFT_PAREN)) {
+    consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after '(' in operator overloading.");
+    strcat(opName, "()");
+  } else {
+    parserError(p, "Invalid operator in operator overloading.");
+    return NULL;
+  }
+
+  consume(p, TOKEN_LEFT_PAREN, "Expect '(' after operator symbol.");
+
+  StringList *params = createStringList();
+  if (!check(p, TOKEN_RIGHT_PAREN)) {
+    do {
+      Token param = consume(p, TOKEN_IDENTIFIER, "Expect parameter name.");
+      char *paramName = tokenToString(param);
+      appendString(params, paramName);
+      free(paramName);
+      if (match(p, 1, TOKEN_COLON)) {
+        if (check(p, TOKEN_IDENTIFIER) || check(p, TOKEN_VOID)) {
+          advance(p);
+          if (match(p, 1, TOKEN_LESS)) {
+            while (!check(p, TOKEN_GREATER) && !isAtEnd(p)) advance(p);
+            match(p, 1, TOKEN_GREATER);
+          }
+        }
+      }
+    } while (match(p, 1, TOKEN_COMMA));
+  }
+
+  consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+  if (strcmp(opName, "operator-") == 0 && params->count == 0) {
+    strcpy(opName, "operator-unary");
+  }
+
+  if (match(p, 1, TOKEN_COLON)) {
+    if (check(p, TOKEN_IDENTIFIER) || check(p, TOKEN_VOID)) {
+      advance(p);
+      if (match(p, 1, TOKEN_LESS)) {
+        while (!check(p, TOKEN_GREATER) && !isAtEnd(p)) advance(p);
+        match(p, 1, TOKEN_GREATER);
+      }
+    }
+  }
+
+  StmtList *body = NULL;
+  if (isAbstract && match(p, 1, TOKEN_SEMICOLON)) {
+    // No body
+  } else {
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before body.");
+    body = block(p);
+  }
+
+  return createFuncDeclStmt(opName, params, body, false, access, isStatic, isAbstract, contextCondition, NULL, NULL, line, 0);
+}
+
 static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel access, bool isStatic, bool isAbstract, Expr *contextCondition) {
   (void)kind;
   Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");
@@ -473,10 +566,29 @@ static Stmt *funcDecl(Parser *p, const char *kind, bool isAsync, AccessLevel acc
       char *paramName = tokenToString(param);
       appendString(params, paramName);
       free(paramName);
+      if (match(p, 1, TOKEN_COLON)) {
+        if (check(p, TOKEN_IDENTIFIER) || check(p, TOKEN_VOID)) {
+          advance(p);
+          if (match(p, 1, TOKEN_LESS)) {
+            while (!check(p, TOKEN_GREATER) && !isAtEnd(p)) advance(p);
+            match(p, 1, TOKEN_GREATER);
+          }
+        }
+      }
     } while (match(p, 1, TOKEN_COMMA));
   }
 
   consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+
+  if (match(p, 1, TOKEN_COLON)) {
+    if (check(p, TOKEN_IDENTIFIER) || check(p, TOKEN_VOID)) {
+      advance(p);
+      if (match(p, 1, TOKEN_LESS)) {
+        while (!check(p, TOKEN_GREATER) && !isAtEnd(p)) advance(p);
+        match(p, 1, TOKEN_GREATER);
+      }
+    }
+  }
 
   StmtList *body = NULL;
   // If abstract or interface method, body is optional (expect semicolon)
@@ -543,6 +655,30 @@ static Stmt *classDecl(Parser *p) {
 
   StmtList *methods = createStmtList();
   while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+    // Check for class fields: let, const, var
+    if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR)) {
+      Token fieldToken = consume(p, TOKEN_IDENTIFIER, "Expect field name.");
+      char *fieldName = tokenToString(fieldToken);
+      if (match(p, 1, TOKEN_COLON)) {
+        if (check(p, TOKEN_IDENTIFIER)) {
+          advance(p);
+          if (match(p, 1, TOKEN_LESS)) {
+            while (!check(p, TOKEN_GREATER) && !isAtEnd(p)) advance(p);
+            match(p, 1, TOKEN_GREATER);
+          }
+        }
+      }
+      Expr *initializer = NULL;
+      if (match(p, 1, TOKEN_EQUAL)) {
+        initializer = expression(p);
+      }
+      match(p, 1, TOKEN_SEMICOLON);
+      Stmt *fieldStmt = createVarDeclStmt(fieldName, initializer, false, false, 0, fieldToken.line, 0);
+      appendStmt(methods, fieldStmt);
+      free(fieldName);
+      continue;
+    }
+
     // Check for @context decorator on methods
     Expr *contextCondition = NULL;
     if (match(p, 1, TOKEN_AT)) {
@@ -570,7 +706,14 @@ static Stmt *classDecl(Parser *p) {
     if (match(p, 1, TOKEN_ASYNC)) {
         isAsync = true;
     }
+
+    if (match(p, 1, TOKEN_OPERATOR)) {
+        Stmt *opMethod = operatorDecl(p, access, isStatic, isAbstract, contextCondition);
+        if (opMethod) appendStmt(methods, opMethod);
+        continue;
+    }
     
+    match(p, 1, TOKEN_FUNC); // optional func keyword
     Stmt *method = funcDecl(p, "method", isAsync, access, isStatic, isAbstract, contextCondition);
     appendStmt(methods, method);
   }
@@ -1412,6 +1555,109 @@ static Expr *primary(Parser *p) {
     return expr;
   }
 
+  if (match(p, 1, TOKEN_TEMPLATE_STRING)) {
+    Token token = previous(p);
+    const char *start = token.start + 1;
+    const char *end = token.start + token.length - 1;
+    ExprList *parts = createExprList();
+
+    const char *current = start;
+    char buffer[4096];
+    int bufLen = 0;
+
+    while (current < end) {
+      if (*current == '\\') {
+        if (current + 1 < end && *(current + 1) == '$' && current + 2 < end && *(current + 2) == '{') {
+          buffer[bufLen++] = '$';
+          buffer[bufLen++] = '{';
+          current += 3;
+          continue;
+        } else if (current + 1 < end && *(current + 1) == '`') {
+          buffer[bufLen++] = '`';
+          current += 2;
+          continue;
+        } else if (current + 1 < end && *(current + 1) == 'n') {
+          buffer[bufLen++] = '\n';
+          current += 2;
+          continue;
+        } else if (current + 1 < end && *(current + 1) == 't') {
+          buffer[bufLen++] = '\t';
+          current += 2;
+          continue;
+        } else if (current + 1 < end && *(current + 1) == 'r') {
+          buffer[bufLen++] = '\r';
+          current += 2;
+          continue;
+        } else if (current + 1 < end && *(current + 1) == '\\') {
+          buffer[bufLen++] = '\\';
+          current += 2;
+          continue;
+        }
+      }
+
+      if (*current == '$' && current + 1 < end && *(current + 1) == '{') {
+        if (bufLen > 0) {
+          buffer[bufLen] = '\0';
+          appendExpr(parts, createLiteralExpr(OBJ_VAL(copyString(buffer, bufLen)), token.line, 0));
+          bufLen = 0;
+        }
+        current += 2; // Skip ${
+
+        const char *exprStart = current;
+        int braces = 1;
+        bool inStr = false;
+        char strQuote = 0;
+        while (current < end && braces > 0) {
+          if (inStr) {
+            if (*current == strQuote && *(current - 1) != '\\') inStr = false;
+          } else {
+            if (*current == '"' || *current == '\'') { inStr = true; strQuote = *current; }
+            else if (*current == '{') braces++;
+            else if (*current == '}') {
+              braces--;
+              if (braces == 0) break;
+            }
+          }
+          current++;
+        }
+
+        int exprLen = (int)(current - exprStart);
+        char *exprCode = (char *)malloc(exprLen + 1);
+        memcpy(exprCode, exprStart, exprLen);
+        exprCode[exprLen] = '\0';
+
+        Scanner subScanner;
+        initScanner(&subScanner, exprCode);
+        Token subTokens[256];
+        int subCount = 0;
+        while (subCount < 255) {
+          Token t = scanToken(&subScanner);
+          subTokens[subCount++] = t;
+          if (t.type == TOKEN_EOF) break;
+        }
+        Parser subParser;
+        initParser(&subParser, subTokens, subCount, exprCode);
+        Expr *interpolatedExpr = expression(&subParser);
+        if (interpolatedExpr) {
+          appendExpr(parts, interpolatedExpr);
+        }
+        free(exprCode);
+
+        if (current < end && *current == '}') current++; // Skip closing }
+        continue;
+      }
+
+      buffer[bufLen++] = *current++;
+    }
+
+    if (bufLen > 0 || parts->count == 0) {
+      buffer[bufLen] = '\0';
+      appendExpr(parts, createLiteralExpr(OBJ_VAL(copyString(buffer, bufLen)), token.line, 0));
+    }
+
+    return createTemplateLiteralExpr(parts, token.line, token.column);
+  }
+
 
 
   if (match(p, 1, TOKEN_THIS)) {
@@ -1517,6 +1763,30 @@ static Expr *primary(Parser *p) {
     }
     consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
     return createDictionaryExpr(pairs, previous(p).line, 0);
+  }
+
+  if (match(p, 1, TOKEN_FUNC)) {
+    int line = previous(p).line;
+    consume(p, TOKEN_LEFT_PAREN, "Expect '(' after 'func'.");
+    StringList *parameters = createStringList();
+    if (!check(p, TOKEN_RIGHT_PAREN)) {
+      do {
+        Token paramTok = consume(p, TOKEN_IDENTIFIER, "Expect parameter name.");
+        char *paramName = tokenToString(paramTok);
+        appendString(parameters, paramName);
+        free(paramName);
+        if (match(p, 1, TOKEN_COLON)) {
+          advance(p);
+        }
+      } while (match(p, 1, TOKEN_COMMA));
+    }
+    consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    if (match(p, 1, TOKEN_COLON)) {
+      advance(p);
+    }
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    StmtList *body = block(p);
+    return createLambdaExpr(parameters, body, line, 0);
   }
 
   parserError(p, "Expect expression.");
