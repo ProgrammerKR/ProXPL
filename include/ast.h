@@ -46,7 +46,8 @@ typedef enum {
   EXPR_AWAIT, EXPR_THIS, EXPR_SUPER, EXPR_NEW,
   EXPR_SANITIZE,
   EXPR_CRYPTO, // Encrypt/Decrypt
-  EXPR_UNWRAP
+  EXPR_UNWRAP,
+  EXPR_TEMPLATE_LITERAL
 } ExprType;
 
 typedef enum {
@@ -148,6 +149,7 @@ typedef struct { int dummy; } ThisExpr;
 typedef struct { char *method; } SuperExpr; 
 typedef struct { Expr *clazz; ExprList *args; } NewExpr;
 typedef struct { Expr *expression; } UnwrapExpr;
+typedef struct { ExprList *parts; } TemplateLiteralExpr;
 
 struct Expr {
   ExprType type;
@@ -167,6 +169,7 @@ struct Expr {
     TernaryExpr ternary; LambdaExpr lambda; AwaitExpr await_expr;
     ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
     UnwrapExpr unwrap;
+    TemplateLiteralExpr template_literal;
   } as;
 };
 
@@ -280,6 +283,7 @@ Expr *createNewExpr(Expr *clazz, ExprList *args, int line, int column);
 Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
 Expr *createCryptoExpr(Expr *val, bool isEncrypt, int line, int column);
 Expr *createUnwrapExpr(Expr *expression, int line, int column);
+Expr *createTemplateLiteralExpr(ExprList *parts, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemporal, int ttl, int line, int column);
@@ -329,6 +333,7 @@ void appendExpr(ExprList *list, Expr *expr);
 
 // ...
 Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
+Expr *createLambdaExpr(StringList *params, StmtList *body, int line, int column);
 
 void freeExprList(ExprList *list);
 StmtList *createStmtList();
