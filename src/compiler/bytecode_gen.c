@@ -33,6 +33,11 @@ typedef struct Loop {
     int breakCapacity;
 } Loop;
 
+typedef struct {
+    uint8_t index;
+    bool isLocal;
+} Upvalue;
+
 typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
@@ -41,6 +46,8 @@ typedef struct Compiler {
     Local locals[256];
     int localCount;
     int scopeDepth;
+    
+    Upvalue upvalues[256];
     
     Loop* loop;
 } Compiler;
@@ -122,6 +129,43 @@ static int resolveLocal(BytecodeGen* gen, const char* name) {
             return i;
         }
     }
+    return -1;
+}
+
+static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal) {
+    int upvalueCount = compiler->function->upvalueCount;
+    // Deduplicate shared upvalues where safe
+    for (int i = 0; i < upvalueCount; i++) {
+        Upvalue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->isLocal == isLocal) {
+            return i;
+        }
+    }
+
+    if (upvalueCount == 256) {
+        fprintf(stderr, "Too many closure variables in function.\n");
+        return 0;
+    }
+
+    compiler->upvalues[upvalueCount].isLocal = isLocal;
+    compiler->upvalues[upvalueCount].index = index;
+    return compiler->function->upvalueCount++;
+}
+
+static int resolveUpvalue(Compiler* compiler, const char* name) {
+    if (compiler == NULL || compiler->enclosing == NULL) return -1;
+
+    for (int i = compiler->enclosing->localCount - 1; i >= 0; i--) {
+        if (strcmp(name, compiler->enclosing->locals[i].name) == 0) {
+            return addUpvalue(compiler, (uint8_t)i, true);
+        }
+    }
+
+    int upvalue = resolveUpvalue(compiler->enclosing, name);
+    if (upvalue != -1) {
+        return addUpvalue(compiler, (uint8_t)upvalue, false);
+    }
+
     return -1;
 }
 
@@ -281,6 +325,9 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
                     writeChunk(gen->chunk, OP_GET_LOCAL, expr->line);
                     writeChunk(gen->chunk, (uint8_t)arg, expr->line);
                 }
+            } else if ((arg = resolveUpvalue(gen->compiler, expr->as.variable.name)) != -1) {
+                writeChunk(gen->chunk, OP_GET_UPVALUE, expr->line);
+                writeChunk(gen->chunk, (uint8_t)arg, expr->line);
             } else {
                  Value nameVal = OBJ_VAL(copyString(expr->as.variable.name, strlen(expr->as.variable.name)));
                  int nameConst = addConstant(gen->chunk, nameVal);
@@ -291,20 +338,23 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
         }
         case EXPR_ASSIGN: {
             genExpr(gen, expr->as.assign.value);
-             int arg = resolveLocal(gen, expr->as.assign.name);
-             if (arg != -1) {
-                 if (arg <= 3) {
-                     writeChunk(gen->chunk, OP_SET_LOCAL_0 + arg, expr->line);
-                 } else {
-                     writeChunk(gen->chunk, OP_SET_LOCAL, expr->line);
-                     writeChunk(gen->chunk, (uint8_t)arg, expr->line);
-                 }
-             } else {
-                 Value nameVal = OBJ_VAL(copyString(expr->as.assign.name, strlen(expr->as.assign.name)));
-                 int nameConst = addConstant(gen->chunk, nameVal);
-                 writeChunk(gen->chunk, OP_SET_GLOBAL, expr->line);
-                 writeChunk(gen->chunk, (uint8_t)nameConst, expr->line);
-             }
+            int arg = resolveLocal(gen, expr->as.assign.name);
+            if (arg != -1) {
+                if (arg <= 3) {
+                    writeChunk(gen->chunk, OP_SET_LOCAL_0 + arg, expr->line);
+                } else {
+                    writeChunk(gen->chunk, OP_SET_LOCAL, expr->line);
+                    writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                }
+            } else if ((arg = resolveUpvalue(gen->compiler, expr->as.assign.name)) != -1) {
+                writeChunk(gen->chunk, OP_SET_UPVALUE, expr->line);
+                writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+            } else {
+                Value nameVal = OBJ_VAL(copyString(expr->as.assign.name, strlen(expr->as.assign.name)));
+                int nameConst = addConstant(gen->chunk, nameVal);
+                writeChunk(gen->chunk, OP_SET_GLOBAL, expr->line);
+                writeChunk(gen->chunk, (uint8_t)nameConst, expr->line);
+            }
             break;
         }
         case EXPR_CALL: {
@@ -472,6 +522,20 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
              writeChunk(gen->chunk, OP_UNWRAP, expr->line);
              break;
         }
+        case EXPR_TEMPLATE_LITERAL: {
+            ExprList *parts = expr->as.template_literal.parts;
+            if (!parts || parts->count == 0) {
+                Value emptyStr = OBJ_VAL(copyString("", 0));
+                emitConstant(gen, emptyStr, expr->line);
+            } else {
+                genExpr(gen, parts->items[0]);
+                for (int i = 1; i < parts->count; i++) {
+                    genExpr(gen, parts->items[i]);
+                    writeChunk(gen->chunk, OP_ADD, expr->line);
+                }
+            }
+            break;
+        }
         case EXPR_LAMBDA: {
             Compiler funcCompiler;
             initCompiler(gen, &funcCompiler, COMP_FUNCTION);
@@ -492,6 +556,10 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             int funcConst = addConstant(gen->chunk, funcVal);
             writeChunk(gen->chunk, OP_CLOSURE, expr->line);
             writeChunk(gen->chunk, (uint8_t)funcConst, expr->line);
+            for (int i = 0; i < function->upvalueCount; i++) {
+                writeChunk(gen->chunk, funcCompiler.upvalues[i].isLocal ? 1 : 0, expr->line);
+                writeChunk(gen->chunk, funcCompiler.upvalues[i].index, expr->line);
+            }
             break;
         }
         case EXPR_THIS: {
@@ -596,6 +664,10 @@ static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     int funcConst = addConstant(gen->chunk, funcVal);
     writeChunk(gen->chunk, OP_CLOSURE, stmt->line);
     writeChunk(gen->chunk, (uint8_t)funcConst, stmt->line);
+    for (int i = 0; i < function->upvalueCount; i++) {
+        writeChunk(gen->chunk, funcCompiler.upvalues[i].isLocal ? 1 : 0, stmt->line);
+        writeChunk(gen->chunk, funcCompiler.upvalues[i].index, stmt->line);
+    }
     
     if (defineVar) {
         if (gen->compiler->scopeDepth > 0) {
