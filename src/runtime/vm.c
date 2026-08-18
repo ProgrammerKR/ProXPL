@@ -312,9 +312,44 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
     return false;
 }
 
+static inline bool checkInstanceOperator(VM* pvm, Value receiver, const char* opName) {
+    if (!IS_INSTANCE(receiver)) return false;
+    ObjInstance* instance = AS_INSTANCE(receiver);
+    ObjString* opStr = copyString(opName, (int)strlen(opName));
+    Value method;
+    return tableGet(&instance->klass->methods, opStr, &method);
+}
+
+static Value valueToObjString(Value val) {
+    if (IS_STRING(val)) return val;
+    if (IS_BOOL(val)) {
+        return AS_BOOL(val) ? OBJ_VAL(copyString("true", 4)) : OBJ_VAL(copyString("false", 5));
+    }
+    if (IS_NIL(val)) {
+        return OBJ_VAL(copyString("null", 4));
+    }
+    if (IS_NUMBER(val)) {
+        char buffer[64];
+        double num = AS_NUMBER(val);
+        if (num == (int64_t)num) {
+            snprintf(buffer, sizeof(buffer), "%lld", (long long)num);
+        } else {
+            snprintf(buffer, sizeof(buffer), "%.14g", num);
+        }
+        return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+    }
+    if (IS_INSTANCE(val)) {
+        ObjInstance* inst = AS_INSTANCE(val);
+        char buffer[128];
+        snprintf(buffer, sizeof(buffer), "<instance %s>", inst->klass->name ? inst->klass->name->chars : "Object");
+        return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+    }
+    return OBJ_VAL(copyString("<object>", 8));
+}
+
 // Helper functions moved to vm_helpers.c to avoid duplication
 
-static InterpretResult run(VM* pvm) {
+static InterpretResult run(VM* pvm) {
   CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
   
   /* REGISTER CACHING: Keep the most accessed pointers in local variables.
@@ -570,6 +605,15 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           } else {
               PUSH(NULL_VAL); 
           }
+      } else if (IS_INSTANCE(targetVal) && checkInstanceOperator(pvm, targetVal, "operator[]")) {
+          PUSH(targetVal);
+          PUSH(indexVal);
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator[]", 10);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           runtimeError(pvm, "Can only index lists and dictionaries.");
@@ -609,6 +653,13 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           tableSet(&dict->items, AS_STRING(indexVal), value);
           stackTop -= 3;
           PUSH(value);
+      } else if (IS_INSTANCE(targetVal) && checkInstanceOperator(pvm, targetVal, "operator[]=")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator[]=", 11);
+          if (!invoke(opStr, 2, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           runtimeError(pvm, "Can only index lists and dictionaries.");
@@ -775,42 +826,70 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_EQUAL) {
-      Value b = *(--stackTop);
-      Value a = *(--stackTop);
-      if (IS_NUMBER(a) && IS_NUMBER(b)) {
-          // IEEE 754 semantics: NaN != NaN
-          PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
-      } else if (IS_STRING(a) && IS_STRING(b)) {
-          ObjString* s1 = AS_STRING(a);
-          ObjString* s2 = AS_STRING(b);
-          PUSH(BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
+      Value b = stackTop[-1];
+      Value a = stackTop[-2];
+      if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator==")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator==", 10);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
-          PUSH(BOOL_VAL(a == b));
+          stackTop -= 2;
+          if (IS_NUMBER(a) && IS_NUMBER(b)) {
+              // IEEE 754 semantics: NaN != NaN
+              PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
+          } else if (IS_STRING(a) && IS_STRING(b)) {
+              ObjString* s1 = AS_STRING(a);
+              ObjString* s2 = AS_STRING(b);
+              PUSH(BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
+          } else {
+              PUSH(BOOL_VAL(a == b));
+          }
       }
       DISPATCH();
   }
   
   CASE_OP(OP_GREATER) {
-      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
-        STORE_FRAME();
-        runtimeError(pvm, "Operands must be numbers.");
-        return INTERPRET_RUNTIME_ERROR;
+      Value b = stackTop[-1];
+      Value a = stackTop[-2];
+      if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator>")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator>", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
+      } else if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          stackTop -= 2;
+          PUSH(BOOL_VAL(AS_NUMBER(a) > AS_NUMBER(b)));
+      } else {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
       }
-      double b = AS_NUMBER(*(--stackTop));
-      double a = AS_NUMBER(*(--stackTop));
-      PUSH(BOOL_VAL(a > b));
       DISPATCH();
   }
   
   CASE_OP(OP_LESS) {
-      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
-        STORE_FRAME();
-        runtimeError(pvm, "Operands must be numbers.");
-        return INTERPRET_RUNTIME_ERROR;
+      Value b = stackTop[-1];
+      Value a = stackTop[-2];
+      if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator<")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator<", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
+      } else if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          stackTop -= 2;
+          PUSH(BOOL_VAL(AS_NUMBER(a) < AS_NUMBER(b)));
+      } else {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
       }
-      double b = AS_NUMBER(*(--stackTop));
-      double a = AS_NUMBER(*(--stackTop));
-      PUSH(BOOL_VAL(a < b));
       DISPATCH();
   }
   
@@ -819,73 +898,20 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           double b = AS_NUMBER(*(--stackTop));
           double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a + b));
+      } else if (IS_INSTANCE(stackTop[-2]) && checkInstanceOperator(pvm, stackTop[-2], "operator+")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator+", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else if (IS_TENSOR(stackTop[-1]) || IS_TENSOR(stackTop[-2])) {
           STORE_FRAME();
           if (performTensorArithmetic(pvm, '+')) { LOAD_FRAME(); DISPATCH(); }
-      } else if (IS_STRING(stackTop[-1]) && IS_STRING(stackTop[-2])) {
+      } else if (IS_STRING(stackTop[-2]) || IS_STRING(stackTop[-1])) {
           STORE_FRAME();
-          concatenate(pvm);
-          LOAD_FRAME();
-      } else if (IS_NUMBER(stackTop[-1]) && IS_STRING(stackTop[-2])) {
-          STORE_FRAME();
-          Value numVal = stackTop[-1];
-          char buffer[64];
-          double num = AS_NUMBER(numVal);
-          if (num == (int64_t)num) {
-              int64_t n = (int64_t)num;
-              char* ptr = buffer + sizeof(buffer) - 1;
-              *ptr = '\0';
-              bool isNeg = n < 0;
-              if (isNeg) n = -n;
-              if (n == 0) {
-                  *--ptr = '0';
-              } else {
-                  while (n > 0) {
-                      *--ptr = '0' + (n % 10);
-                      n /= 10;
-                  }
-                  if (isNeg) *--ptr = '-';
-              }
-              PUSH(OBJ_VAL(copyString(ptr, (int)(buffer + sizeof(buffer) - 1 - ptr))));
-          } else {
-              snprintf(buffer, sizeof(buffer), "%.14g", num);
-              PUSH(OBJ_VAL(copyString(buffer, (int)strlen(buffer))));
-          }
-          stackTop[-2] = stackTop[-1];
-          stackTop--;
-          STORE_FRAME();
-          concatenate(pvm);
-          LOAD_FRAME();
-      } else if (IS_STRING(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
-          STORE_FRAME();
-          Value numVal = stackTop[-2];
-          char buffer[64];
-          double num = AS_NUMBER(numVal);
-          Value newA;
-          if (num == (int64_t)num) {
-              int64_t n = (int64_t)num;
-              char* ptr = buffer + sizeof(buffer) - 1;
-              *ptr = '\0';
-              bool isNeg = n < 0;
-              if (isNeg) n = -n;
-              if (n == 0) {
-                  *--ptr = '0';
-              } else {
-                  while (n > 0) {
-                      *--ptr = '0' + (n % 10);
-                      n /= 10;
-                  }
-                  if (isNeg) *--ptr = '-';
-              }
-              newA = OBJ_VAL(copyString(ptr, (int)(buffer + sizeof(buffer) - 1 - ptr)));
-          } else {
-              snprintf(buffer, sizeof(buffer), "%.14g", num);
-              newA = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
-          }
-          PUSH(newA);
-          stackTop[-3] = stackTop[-1];
-          stackTop--;
-          STORE_FRAME();
+          stackTop[-2] = valueToObjString(stackTop[-2]);
+          stackTop[-1] = valueToObjString(stackTop[-1]);
           concatenate(pvm);
           LOAD_FRAME();
       } else {
@@ -901,6 +927,13 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           double b = AS_NUMBER(*(--stackTop));
           double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a - b));
+      } else if (IS_INSTANCE(stackTop[-2]) && checkInstanceOperator(pvm, stackTop[-2], "operator-")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator-", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           if (performTensorArithmetic(pvm, '-')) { LOAD_FRAME(); DISPATCH(); }
@@ -915,6 +948,13 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           double b = AS_NUMBER(*(--stackTop));
           double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a * b));
+      } else if (IS_INSTANCE(stackTop[-2]) && checkInstanceOperator(pvm, stackTop[-2], "operator*")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator*", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           if (performTensorArithmetic(pvm, '*')) { LOAD_FRAME(); DISPATCH(); }
@@ -934,6 +974,13 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           }
           double a = AS_NUMBER(*(--stackTop));
           PUSH(NUMBER_VAL(a / b));
+      } else if (IS_INSTANCE(stackTop[-2]) && checkInstanceOperator(pvm, stackTop[-2], "operator/")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator/", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           if (performTensorArithmetic(pvm, '/')) { LOAD_FRAME(); DISPATCH(); }
@@ -944,18 +991,48 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_NOT) {
-      Value val = *(--stackTop);
-      PUSH(BOOL_VAL(isFalsey(val)));
+      if (IS_INSTANCE(stackTop[-1]) && checkInstanceOperator(pvm, stackTop[-1], "operator!")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator!", 9);
+          if (!invoke(opStr, 0, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
+      } else {
+          Value val = *(--stackTop);
+          PUSH(BOOL_VAL(isFalsey(val)));
+      }
       DISPATCH();
   }
   
   CASE_OP(OP_NEGATE) {
-      if (!IS_NUMBER(stackTop[-1])) {
-        STORE_FRAME();
-        runtimeError(pvm, "Operand must be a number.");
-        return INTERPRET_RUNTIME_ERROR;
+      if (IS_NUMBER(stackTop[-1])) {
+          stackTop[-1] = NUMBER_VAL(-AS_NUMBER(stackTop[-1]));
+      } else if (IS_INSTANCE(stackTop[-1])) {
+          if (checkInstanceOperator(pvm, stackTop[-1], "operator-unary")) {
+              STORE_FRAME();
+              ObjString* opStr = copyString("operator-unary", 14);
+              if (!invoke(opStr, 0, pvm)) {
+                  return INTERPRET_RUNTIME_ERROR;
+              }
+              LOAD_FRAME();
+          } else if (checkInstanceOperator(pvm, stackTop[-1], "operator-")) {
+              STORE_FRAME();
+              ObjString* opStr = copyString("operator-", 9);
+              if (!invoke(opStr, 0, pvm)) {
+                  return INTERPRET_RUNTIME_ERROR;
+              }
+              LOAD_FRAME();
+          } else {
+              STORE_FRAME();
+              runtimeError(pvm, "Operand must be a number or implement operator-.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+      } else {
+          STORE_FRAME();
+          runtimeError(pvm, "Operand must be a number.");
+          return INTERPRET_RUNTIME_ERROR;
       }
-      stackTop[-1] = NUMBER_VAL(-AS_NUMBER(stackTop[-1]));
       DISPATCH();
   }
   
@@ -1067,6 +1144,14 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
           frame->ip = closure->function->chunk.code;
           frame->slots = stackTop - argCount - 1;
           ip = frame->ip;
+          DISPATCH();
+      } else if (IS_INSTANCE(callee) && checkInstanceOperator(pvm, callee, "operator()")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator()", 10);
+          if (!invoke(opStr, argCount, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
           DISPATCH();
       } else {
           STORE_FRAME();
@@ -1235,19 +1320,27 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   }
   
   CASE_OP(OP_MODULO) {
-      if (!IS_NUMBER(stackTop[-1]) || !IS_NUMBER(stackTop[-2])) {
-        STORE_FRAME();
-        runtimeError(pvm, "Operands must be numbers.");
-        return INTERPRET_RUNTIME_ERROR;
-      }
-      double b = AS_NUMBER(*(--stackTop));
-      if (b == 0) {
+      if (IS_NUMBER(stackTop[-1]) && IS_NUMBER(stackTop[-2])) {
+          double b = AS_NUMBER(*(--stackTop));
+          if (b == 0) {
+              STORE_FRAME();
+              runtimeError(pvm, "Modulo by zero.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          double a = AS_NUMBER(*(--stackTop));
+          PUSH(NUMBER_VAL(fmod(a, b)));
+      } else if (IS_INSTANCE(stackTop[-2]) && checkInstanceOperator(pvm, stackTop[-2], "operator%")) {
           STORE_FRAME();
-          runtimeError(pvm, "Modulo by zero.");
+          ObjString* opStr = copyString("operator%", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
+      } else {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
           return INTERPRET_RUNTIME_ERROR;
       }
-      double a = AS_NUMBER(*(--stackTop));
-      PUSH(NUMBER_VAL(fmod(a, b)));
       DISPATCH();
   }
   
@@ -1335,6 +1428,15 @@ static bool resolveContextualMethod(VM* pvm, ObjString* name, Value* result) {
   CASE_OP(OP_MAT_MUL) {
       Value bVal = stackTop[-1];
       Value aVal = stackTop[-2];
+      if (IS_INSTANCE(aVal) && checkInstanceOperator(pvm, aVal, "operator@")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator@", 9);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
+          DISPATCH();
+      }
       if (!IS_TENSOR(aVal) || !IS_TENSOR(bVal)) {
           STORE_FRAME();
           runtimeError(pvm, "Operands for '@' must be Tensors.");
