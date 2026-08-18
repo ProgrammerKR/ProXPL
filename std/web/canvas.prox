@@ -1,0 +1,9 @@
+// std.web.canvas - ProXPL v1.6.3
+class Canvas {
+    static func drawRect(canvasId: string, x: number, y: number, width: number, height: number, color: string) {
+        print(`[Canvas] #${canvasId} fillRect(${x}, ${y}, ${width}, ${height}) [${color}]`);
+    }
+    static func drawText(canvasId: string, text: string, x: number, y: number, color: string) {
+        print(`[Canvas] #${canvasId} fillText('${text}', ${x}, ${y}) [${color}]`);
+    }
+}

@@ -1,0 +1,12 @@
+// std.web.dom - ProXPL v1.6.3
+class DOM {
+    static func getElementById(id: string) {
+        return id;
+    }
+    static func setText(id: string, text: string) {
+        print(`[DOM] Updating #${id}: ${text}`);
+    }
+    static func setInnerHTML(id: string, html: string) {
+        print(`[DOM] InnerHTML #${id}: ${html}`);
+    }
+}

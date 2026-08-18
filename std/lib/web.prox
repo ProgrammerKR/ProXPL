@@ -1,0 +1,55 @@
+// --------------------------------------------------
+//   Project: ProX Programming Language (ProXPL)
+//   Module:  std.web
+//   Version: 1.6.3 (Wasm World)
+// --------------------------------------------------
+
+class DOM {
+    static func getElementById(id: string) {
+        return id;
+    }
+
+    static func setText(id: string, text: string) {
+        print(`[DOM] Updating #${id}: ${text}`);
+    }
+
+    static func setInnerHTML(id: string, html: string) {
+        print(`[DOM] InnerHTML #${id}: ${html}`);
+    }
+
+    static func createElement(tag: string) {
+        return `<${tag}></${tag}>`;
+    }
+}
+
+class Event {
+    static func addListener(elementId: string, eventType: string, handler: func) {
+        print(`[Event] Added '${eventType}' listener on #${elementId}`);
+    }
+
+    static func dispatch(elementId: string, eventType: string) {
+        print(`[Event] Dispatched '${eventType}' to #${elementId}`);
+    }
+}
+
+class HTTP {
+    static func fetch(url: string) {
+        print(`[HTTP] Fetching ${url}`);
+        return `{"status": 200, "url": "${url}"}`;
+    }
+
+    static func post(url: string, body: string) {
+        print(`[HTTP] POST ${url} with body: ${body}`);
+        return `{"status": 201, "url": "${url}"}`;
+    }
+}
+
+class Canvas {
+    static func drawRect(canvasId: string, x: number, y: number, width: number, height: number, color: string) {
+        print(`[Canvas] #${canvasId} fillRect(${x}, ${y}, ${width}, ${height}) [${color}]`);
+    }
+
+    static func drawText(canvasId: string, text: string, x: number, y: number, color: string) {
+        print(`[Canvas] #${canvasId} fillText('${text}', ${x}, ${y}) [${color}]`);
+    }
+}

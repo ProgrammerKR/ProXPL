@@ -1,0 +1,9 @@
+// std.web.event - ProXPL v1.6.3
+class Event {
+    static func addListener(elementId: string, eventType: string, handler: func) {
+        print(`[Event] Added '${eventType}' listener on #${elementId}`);
+    }
+    static func dispatch(elementId: string, eventType: string) {
+        print(`[Event] Dispatched '${eventType}' to #${elementId}`);
+    }
+}

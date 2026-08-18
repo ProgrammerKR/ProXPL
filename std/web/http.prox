@@ -1,0 +1,11 @@
+// std.web.http - ProXPL v1.6.3
+class HTTP {
+    static func fetch(url: string) {
+        print(`[HTTP] Fetching ${url}`);
+        return `{"status": 200, "url": "${url}"}`;
+    }
+    static func post(url: string, body: string) {
+        print(`[HTTP] POST ${url} with body: ${body}`);
+        return `{"status": 201, "url": "${url}"}`;
+    }
+}
