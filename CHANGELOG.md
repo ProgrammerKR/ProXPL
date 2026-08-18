@@ -2,6 +2,21 @@
 
 All notable changes to the ProXPL programming language will be documented in this file.
 
+## [1.6.3] - 2027-04-15
+### Added
+- **WebAssembly Target**: Full WebAssembly (.wasm) compiler backend with JS glue code generation and `prm serve --wasm`.
+- **Standard Web Libraries**: Added `std.web.dom`, `std.web.event`, `std.web.http`, and `std.web.canvas`.
+- **String Templates**: Backtick-delimited template literals (`` `Hello, ${name}!` ``) with expression interpolation, multiline templates, and `\${` escaping.
+- **Operator Overloading**: Support for `+ - * / % @ == != < > <= >= [] []= () - !` methods in user classes with inheritance.
+- **Closures v2 & Escape Analysis**: Detection of non-escaping closures for zero-heap stack execution, upvalue deduplication, and loop variable capture safety.
+- **Code Formatter (`prox fmt`)**: Official syntax-aware code formatter supporting `.proxfmt.pxcf` configurations and `--check` mode.
+- **Enhanced Diagnostics**: Structured error codes (`E0412`, `E0308`), caret pointers, snippets, and Levenshtein typo suggestions (`Did you mean 'name'?`).
+
+### Changed
+- Backtick (`` ` ``) is now reserved for string template literals.
+- `operator` is now a reserved keyword.
+- Project version bumped to 1.6.3 ("Wasm World") across all build configurations and manifests.
+
 ## [1.6.2] - 2026-08-13
 ### Changed
 - IR optimization and backend improvements to remove unnecessary object generation.
