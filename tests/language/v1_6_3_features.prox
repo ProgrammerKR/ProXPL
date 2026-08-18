@@ -1,0 +1,115 @@
+// ProXPL v1.6.3 Feature Verification Suite
+
+print("=== 1. String Template Literals ===");
+let name = "ProXPL";
+let version = "1.6.3";
+let codename = "Wasm World";
+let message = `Welcome to ${name} v${version} - "${codename}"!`;
+print(message);
+
+let x = 10;
+let y = 20;
+let mathMsg = `Calculation: ${x} + ${y} = ${x + y}`;
+print(mathMsg);
+
+let escaped = `Escaped: \${name} is literal`;
+print(escaped);
+
+print("=== 2. Closures v2 & Upvalues ===");
+func makeCounter(start) {
+    let count = start;
+    return func() {
+        count = count + 1;
+        return count;
+    };
+}
+
+let c1 = makeCounter(100);
+print(c1());
+print(c1());
+print(c1());
+
+func makeAdder(a) {
+    return func(b) {
+        return func(c) {
+            return a + b + c;
+        };
+    };
+}
+let add5 = makeAdder(5);
+let add5and10 = add5(10);
+print(add5and10(20));
+
+print("=== 3. Operator Overloading ===");
+class Vector2D {
+    var x;
+    var y;
+
+    init(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    operator+(other) {
+        return Vector2D(this.x + other.x, this.y + other.y);
+    }
+
+    operator-(other) {
+        return Vector2D(this.x - other.x, this.y - other.y);
+    }
+
+    operator*(scalar) {
+        return Vector2D(this.x * scalar, this.y * scalar);
+    }
+
+    operator==(other) {
+        return this.x == other.x && this.y == other.y;
+    }
+
+    operator[](index) {
+        if (index == 0) return this.x;
+        if (index == 1) return this.y;
+        return null;
+    }
+
+    operator[]=(index, val) {
+        if (index == 0) this.x = val;
+        if (index == 1) this.y = val;
+        return val;
+    }
+
+    operator-() {
+        return Vector2D(-this.x, -this.y);
+    }
+
+    operator()() {
+        return `Vector(${this.x}, ${this.y})`;
+    }
+}
+
+let v1 = Vector2D(3, 4);
+let v2 = Vector2D(1, 2);
+
+let v3 = v1 + v2;
+print(`v1 + v2 = (${v3.x}, ${v3.y})`);
+
+let v4 = v1 - v2;
+print(`v1 - v2 = (${v4.x}, ${v4.y})`);
+
+let v5 = v1 * 2;
+print(`v1 * 2 = (${v5.x}, ${v5.y})`);
+
+print(`v1 == v2: ${v1 == v2}`);
+let v1_clone = Vector2D(3, 4);
+print(`v1 == v1_clone: ${v1 == v1_clone}`);
+
+print(`Index v1[0]: ${v1[0]}, v1[1]: ${v1[1]}`);
+v1[0] = 30;
+print(`Updated v1[0] to 30 -> v1.x: ${v1.x}`);
+
+let negV2 = -v2;
+print(`-v2 = (${negV2.x}, ${negV2.y})`);
+
+print(`Call v2(): ${v2()}`);
+
+print("=== ALL v1.6.3 LANGUAGE TESTS PASSED! ===");

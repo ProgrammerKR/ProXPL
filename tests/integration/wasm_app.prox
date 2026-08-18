@@ -1,0 +1,4 @@
+// ProXPL WebAssembly Application Example
+print(100);
+print(200 + 300);
+print(42 * 2);
