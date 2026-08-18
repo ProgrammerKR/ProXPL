@@ -380,6 +380,15 @@ Expr *createUnwrapExpr(Expr *expression, int line, int column) {
   return expr;
 }
 
+Expr *createTemplateLiteralExpr(ExprList *parts, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_TEMPLATE_LITERAL;
+  expr->line = line;
+  expr->column = column;
+  expr->as.template_literal.parts = parts;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -886,6 +895,9 @@ void freeExpr(Expr *expr) {
     break;
   case EXPR_UNWRAP:
     freeExpr(expr->as.unwrap.expression);
+    break;
+  case EXPR_TEMPLATE_LITERAL:
+    if (expr->as.template_literal.parts) freeExprList(expr->as.template_literal.parts);
     break;
   }
 
