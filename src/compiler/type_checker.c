@@ -236,8 +236,8 @@ static TypeInfo checkBinary(TypeChecker* checker, Expr* expr) {
     if (strcmp(op, "<") == 0 || strcmp(op, ">") == 0 || 
         strcmp(op, "<=") == 0 || strcmp(op, ">=") == 0) {
         
-        if (l.kind == TYPE_INT || l.kind == TYPE_FLOAT) {
-            if (r.kind == TYPE_INT || r.kind == TYPE_FLOAT) {
+        if (l.kind == TYPE_INT || l.kind == TYPE_FLOAT || l.kind == TYPE_UNKNOWN || l.kind == TYPE_CLASS) {
+            if (r.kind == TYPE_INT || r.kind == TYPE_FLOAT || r.kind == TYPE_UNKNOWN || r.kind == TYPE_CLASS) {
                 TypeInfo result = createType(TYPE_BOOL);
                 // Comparisons on tainted data produce tainted bool
                 result.isTainted = l.isTainted || r.isTainted;
@@ -274,16 +274,16 @@ static TypeInfo checkUnary(TypeChecker* checker, Expr* expr) {
     const char* op = expr->as.unary.operator;
 
     if (strcmp(op, "!") == 0) {
-        if (r.kind != TYPE_BOOL && r.kind != TYPE_UNKNOWN) {
+        if (r.kind != TYPE_BOOL && r.kind != TYPE_UNKNOWN && r.kind != TYPE_CLASS) {
             error(checker, expr->line, "Example error: '!' requires boolean operand.");
         }
         return createType(TYPE_BOOL);
     }
     if (strcmp(op, "-") == 0) {
-        if (r.kind != TYPE_INT && r.kind != TYPE_FLOAT && r.kind != TYPE_UNKNOWN) {
+        if (r.kind != TYPE_INT && r.kind != TYPE_FLOAT && r.kind != TYPE_UNKNOWN && r.kind != TYPE_CLASS) {
             error(checker, expr->line, "Negation requires numeric operand.");
         }
-        return r; // Returns same type (Int or Float)
+        return r; // Returns same type (Int, Float, Class or Unknown)
     }
     return createType(TYPE_UNKNOWN);
 }
@@ -464,6 +464,21 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
              break;
         }
 
+        case EXPR_LAMBDA: {
+            result = createType(TYPE_FUNCTION);
+            break;
+        }
+
+        case EXPR_TEMPLATE_LITERAL: {
+            result = createType(TYPE_STRING);
+            if (expr->as.template_literal.parts) {
+                for (int i = 0; i < expr->as.template_literal.parts->count; i++) {
+                    TypeInfo partType = checkExpr(checker, expr->as.template_literal.parts->items[i]);
+                    result.isTainted = result.isTainted || partType.isTainted;
+                }
+            }
+            break;
+        }
 
         default:
             // Relaxed for others
