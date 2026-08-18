@@ -142,6 +142,35 @@ static Token string(Scanner *scanner) {
   return makeToken(scanner, TOKEN_STRING);
 }
 
+static Token templateString(Scanner *scanner) {
+  while (!isAtEnd(scanner)) {
+    if (peek(scanner) == '`') break;
+
+    if (peek(scanner) == '\\') {
+      advance(scanner); // Consume backslash
+      if (isAtEnd(scanner)) break;
+      if (peek(scanner) == '\n') {
+        scanner->line++;
+        scanner->currentColumn = 1;
+      }
+      advance(scanner);
+      continue;
+    }
+
+    if (peek(scanner) == '\n') {
+      scanner->line++;
+      scanner->currentColumn = 1;
+    }
+    advance(scanner);
+  }
+
+  if (isAtEnd(scanner))
+    return errorToken(scanner, "Unterminated template string.");
+
+  advance(scanner); // Closing backtick
+  return makeToken(scanner, TOKEN_TEMPLATE_STRING);
+}
+
 static Token number(Scanner *scanner) {
   while (isDigit(peek(scanner)))
     advance(scanner);
@@ -444,7 +473,14 @@ static PxTokenType identifierType(Scanner *scanner) {
     }
     break;
   case 'N': return checkKeyword(scanner, 1, 2, "av", TOKEN_UI_NAV);
-  case 'o': return checkKeyword(scanner, 1, 1, "r", TOKEN_OR);
+  case 'o':
+    if (scanner->current - scanner->start > 1) {
+      switch (scanner->start[1]) {
+      case 'r': return checkKeyword(scanner, 2, 0, "", TOKEN_OR);
+      case 'p': return checkKeyword(scanner, 2, 6, "erator", TOKEN_OPERATOR);
+      }
+    }
+    return TOKEN_IDENTIFIER;
   case 'O': return checkKeyword(scanner, 1, 5, "ption", TOKEN_UI_OPTION);
   case 'M': return checkKeyword(scanner, 1, 3, "ain", TOKEN_UI_MAIN);
   case 'p':
@@ -753,6 +789,8 @@ Token scanToken(Scanner *scanner) {
                                : makeToken(scanner, TOKEN_CARET);
   case '"':
     return string(scanner);
+  case '`':
+    return templateString(scanner);
   case '@':
     return makeToken(scanner, TOKEN_AT);
   }
