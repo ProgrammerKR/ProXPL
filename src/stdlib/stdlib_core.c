@@ -33,6 +33,8 @@ extern ObjModule* create_std_gc_module();
 extern ObjModule* create_std_buffer_module();
 extern ObjModule* create_std_process_module();
 extern ObjModule* create_std_path_module();
+extern ObjModule* create_std_db_module();
+extern ObjModule* create_std_encoding_module();
 
 // Legacy
 extern void register_math_natives(VM* vm);
@@ -183,6 +185,14 @@ void registerStdLib(VM* pVM) {
     registerModule(pVM, "std.native.path", pathMod);
     registerModule(pVM, "std.path", pathMod);
 
+    ObjModule* dbMod = create_std_db_module();
+    registerModule(pVM, "std.native.db", dbMod);
+    registerModule(pVM, "std.db", dbMod);
+
+    ObjModule* encodingMod = create_std_encoding_module();
+    registerModule(pVM, "std.native.encoding", encodingMod);
+    registerModule(pVM, "std.encoding", encodingMod);
+
     registerModule(pVM, "std.core", create_std_core_module());
     
     ObjModule* uiMod = create_empty_module(pVM, "UI");
@@ -265,6 +275,28 @@ void registerStdLib(VM* pVM) {
         ObjString* field = copyString("core", 4);
         push(pVM, OBJ_VAL(field));
         tableSet(&stdMod->exports, field, coreVal);
+        pop(pVM);
+    }
+    pop(pVM);
+
+    Value dbVal;
+    ObjString* dbKey = copyString("std.native.db", 13);
+    push(pVM, OBJ_VAL(dbKey));
+    if (tableGet(&pVM->importer.modules, dbKey, &dbVal)) {
+        ObjString* field = copyString("db", 2);
+        push(pVM, OBJ_VAL(field));
+        tableSet(&stdMod->exports, field, dbVal);
+        pop(pVM);
+    }
+    pop(pVM);
+
+    Value encVal;
+    ObjString* encKey = copyString("std.native.encoding", 19);
+    push(pVM, OBJ_VAL(encKey));
+    if (tableGet(&pVM->importer.modules, encKey, &encVal)) {
+        ObjString* field = copyString("encoding", 8);
+        push(pVM, OBJ_VAL(field));
+        tableSet(&stdMod->exports, field, encVal);
         pop(pVM);
     }
     pop(pVM);
