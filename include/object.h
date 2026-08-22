@@ -72,6 +72,12 @@
 #define IS_LAYER(value) isObjType(value, OBJ_LAYER)
 #define AS_LAYER(value) ((ObjLayer *)AS_OBJ(value))
 
+#define IS_ACTOR(value) isObjType(value, OBJ_ACTOR)
+#define AS_ACTOR(value) ((ObjActor *)AS_OBJ(value))
+
+#define IS_CHANNEL(value) isObjType(value, OBJ_CHANNEL)
+#define AS_CHANNEL(value) ((ObjChannel *)AS_OBJ(value))
+
 typedef enum {
   OBJ_STRING,
   OBJ_FUNCTION,
@@ -92,7 +98,10 @@ typedef enum {
   OBJ_CONTEXT,
   OBJ_LAYER,
   OBJ_INTENT,
-  OBJ_RESOLVER
+  OBJ_RESOLVER,
+  
+  OBJ_ACTOR,
+  OBJ_CHANNEL
 } ObjType;
 
 struct Obj {
@@ -254,6 +263,35 @@ typedef struct {
   ObjClosure *handler;
 } ObjResolver;
 
+typedef struct ObjMessage {
+  Value payload;
+  Value sender;
+  struct ObjMessage *next;
+} ObjMessage;
+
+typedef struct ObjActor {
+  Obj obj;
+  ObjString *name;
+  Table fields;
+  ObjMessage *mailboxHead;
+  ObjMessage *mailboxTail;
+  int mailboxCount;
+  bool isProcessing;
+  void *supervisor; 
+} ObjActor;
+
+typedef struct ObjChannel {
+  Obj obj;
+  int capacity;
+  int count;
+  Value *buffer;
+  int head;
+  int tail;
+  bool isClosed;
+  struct ObjTask *waitingReceivers;
+  struct ObjTask *waitingSenders;
+} ObjChannel;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -283,6 +321,10 @@ ObjContext *newContext(ObjString *name);
 ObjLayer *newLayer(ObjString *name);
 ObjIntent *newIntent(ObjString *name, int paramCount);
 ObjResolver *newResolver(ObjString *name, int targetIntentId, ObjClosure *handler);
+
+ObjActor *newActor(ObjString *name);
+ObjChannel *newChannel(int capacity);
+
 void printObject(Value value);
 void appendToList(struct ObjList* list, Value value);
 
