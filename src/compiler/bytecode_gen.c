@@ -10,6 +10,8 @@
 #include "../../include/vm.h"
 #include <stddef.h> 
 
+extern Value evaluateComptime(StmtList* statements);
+
 // --- Compiler & Scope Types ---
 
 typedef struct {
@@ -586,7 +588,7 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
              }
              break;
         }
-        case EXPR_NEW: {
+         case EXPR_NEW: {
              // stack: Class, Args...
              genExpr(gen, expr->as.new_expr.clazz);
              
@@ -601,17 +603,21 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
              // We have OP_CALL. Can we use it?
              // If Class is a callable (it is), OP_CALL works!
              // VM `callValue` handles `OBJ_CLASS` -> creates instance -> calls init.
-             // So we assume `new Foo()` is same as `Foo()` call semantics plus safety?
-             // Original Parser parse `new` to EXPR_NEW. 
-             // We can map this to OP_CALL for now if VM handles it.
-             // But typical difference: `new` ensures instance creation involved.
-             // ProXPL: `class Foo {} let f = Foo();` or `let f = new Foo();`?
-             // Assuming we WANT `new` keyword usage.
-             // Let's rely on standard OP_CALL logic where Class is callable.
              writeChunk(gen->chunk, OP_CALL, expr->line);
              writeChunk(gen->chunk, (uint8_t)argCount, expr->line);
              break;
-        }
+         }
+         case EXPR_COMPTIME: {
+             Value result = evaluateComptime(expr->as.comptime_expr.body);
+             int constIdx = addConstant(gen->chunk, result);
+             writeChunk(gen->chunk, OP_CONSTANT, expr->line);
+             writeChunk(gen->chunk, (uint8_t)constIdx, expr->line);
+             break;
+         }
+         case EXPR_ACTOR_SEND:
+         case EXPR_ACTOR_REQUEST:
+            // Stubs for future opcode implementations
+            break;
         default: break; 
     }
 }
@@ -1348,6 +1354,11 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             break;
         }
 
+        case STMT_ACTOR_DECL:
+        case STMT_RECEIVE:
+            // Stubs for future opcode implementations
+            break;
+            
         default: break;
     }
 }
