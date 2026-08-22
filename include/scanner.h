@@ -169,6 +169,13 @@ typedef enum {
   TOKEN_TYPE_KW,
   TOKEN_TRAIT,
 
+  // Concurrency Core Keywords
+  TOKEN_ACTOR,
+  TOKEN_RECEIVE,
+  TOKEN_COMPTIME,
+  TOKEN_TASK,
+  TOKEN_CHANNEL,
+
   // UI/Frontend Keywords
   TOKEN_UI_APP,
   TOKEN_UI_WINDOW,
