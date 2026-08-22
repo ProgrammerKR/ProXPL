@@ -1,0 +1,10 @@
+// std/lib/encoding.prox
+use std.native.encoding;
+
+func jsonEncode(data: any) -> string {
+    return encoding.jsonEncode(data);
+}
+
+func jsonDecode(data: string) -> any {
+    return encoding.jsonDecode(data);
+}
