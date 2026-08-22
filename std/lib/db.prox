@@ -1,0 +1,10 @@
+// std/lib/db.prox
+use std.native.db;
+
+func connect(connectionString: string) -> int {
+    return db.connect(connectionString);
+}
+
+func query(queryString: string) -> any {
+    return db.query(queryString);
+}
