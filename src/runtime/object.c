@@ -182,6 +182,12 @@ void printObject(Value value) {
   case OBJ_RESOLVER:
     printf("<resolver %s>", AS_RESOLVER(value)->name->chars);
     break;
+  case OBJ_ACTOR:
+    printf("<actor %s>", AS_ACTOR(value)->name->chars);
+    break;
+  case OBJ_CHANNEL:
+    printf("<channel>");
+    break;
   }
 }
 
@@ -323,4 +329,34 @@ ObjResolver *newResolver(ObjString *name, int targetIntentId, ObjClosure *handle
   resolver->targetIntentId = targetIntentId;
   resolver->handler = handler;
   return resolver;
+}
+
+ObjActor *newActor(ObjString *name) {
+  ObjActor *actor = ALLOCATE_OBJ(ObjActor, OBJ_ACTOR);
+  actor->name = name;
+  initTable(&actor->fields);
+  actor->mailboxHead = NULL;
+  actor->mailboxTail = NULL;
+  actor->mailboxCount = 0;
+  actor->isProcessing = false;
+  actor->supervisor = NULL;
+  return actor;
+}
+
+ObjChannel *newChannel(int capacity) {
+  ObjChannel *channel = ALLOCATE_OBJ(ObjChannel, OBJ_CHANNEL);
+  channel->capacity = capacity;
+  channel->count = 0;
+  if (capacity > 0) {
+      channel->buffer = ALLOCATE(Value, capacity);
+      for (int i=0; i<capacity; i++) channel->buffer[i] = NULL_VAL;
+  } else {
+      channel->buffer = NULL;
+  }
+  channel->head = 0;
+  channel->tail = 0;
+  channel->isClosed = false;
+  channel->waitingReceivers = NULL;
+  channel->waitingSenders = NULL;
+  return channel;
 }
