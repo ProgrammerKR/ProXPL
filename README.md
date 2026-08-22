@@ -591,7 +591,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
 
 ### Future Roadmap (2026–2028)
 - 📋 **[v1.7.0](docs/releases/v1.7.0.md)** — ProX Studio Alpha, PRM Registry, Testing Framework, Macros.
-- 📋 **[v1.8.0](docs/releases/v1.8.0.md)** — Channels, Actors, Distributed Runtime Scaling.
+- 📋 **[v1.6.4](docs/releases/v1.6.4.md)** — Channels, Actors, Distributed Runtime Scaling.
 - 📋 **[v1.9.0](docs/releases/v1.9.0.md)** — Database Connectivity, LSP v2, Compile-Time Eval.
 - 📋 **[v1.9.5](docs/releases/v1.9.5.md)** — Cross-Compilation, Embedded API, Security Hardening, API Freeze.
 - 🚀 **[v2.0.0](docs/releases/v2.0.0.md)** — Self-Hosting Compiler, JIT Compiler, Effect System, Production Stable.
