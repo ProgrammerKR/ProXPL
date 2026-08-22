@@ -47,7 +47,11 @@ typedef enum {
   EXPR_SANITIZE,
   EXPR_CRYPTO, // Encrypt/Decrypt
   EXPR_UNWRAP,
-  EXPR_TEMPLATE_LITERAL
+  EXPR_TEMPLATE_LITERAL,
+
+  EXPR_COMPTIME,
+  EXPR_ACTOR_SEND,
+  EXPR_ACTOR_REQUEST
 } ExprType;
 
 typedef enum {
@@ -81,7 +85,10 @@ typedef enum {
   STMT_UI_ACTION,
 
   STMT_TYPE_ALIAS,
-  STMT_TRAIT_DECL
+  STMT_TRAIT_DECL,
+
+  STMT_ACTOR_DECL,
+  STMT_RECEIVE
 } StmtType;
 
 // --- List Structures ---
@@ -150,6 +157,9 @@ typedef struct { char *method; } SuperExpr;
 typedef struct { Expr *clazz; ExprList *args; } NewExpr;
 typedef struct { Expr *expression; } UnwrapExpr;
 typedef struct { ExprList *parts; } TemplateLiteralExpr;
+typedef struct { StmtList *body; } ComptimeExpr;
+typedef struct { Expr *receiver; Expr *message; } ActorSendExpr;
+typedef struct { Expr *receiver; Expr *message; } ActorRequestExpr;
 
 struct Expr {
   ExprType type;
@@ -170,6 +180,9 @@ struct Expr {
     ThisExpr this_expr; SuperExpr super_expr; NewExpr new_expr;
     UnwrapExpr unwrap;
     TemplateLiteralExpr template_literal;
+    ComptimeExpr comptime_expr;
+    ActorSendExpr actor_send;
+    ActorRequestExpr actor_request;
   } as;
 };
 
@@ -221,6 +234,9 @@ typedef struct { char *name; StmtList *body; } UIActionStmt;
 typedef struct { char *name; TypeInfo targetType; } TypeAliasDeclStmt;
 typedef struct { char *name; StmtList *methods; } TraitDeclStmt;
 
+typedef struct { char *name; StmtList *fields; StmtList *receives; } ActorDeclStmt;
+typedef struct { char *messageType; char *messageVar; StmtList *body; TypeInfo returnType; } ReceiveStmt;
+
 struct Stmt {
   StmtType type;
   int line;
@@ -256,6 +272,8 @@ struct Stmt {
     UIActionStmt ui_action;
     TypeAliasDeclStmt type_alias;
     TraitDeclStmt trait_decl;
+    ActorDeclStmt actor_decl;
+    ReceiveStmt receive_stmt;
   } as;
 };
 
@@ -284,6 +302,9 @@ Expr *createSanitizeExpr(Expr *value, int line, int column); // Added prototype
 Expr *createCryptoExpr(Expr *val, bool isEncrypt, int line, int column);
 Expr *createUnwrapExpr(Expr *expression, int line, int column);
 Expr *createTemplateLiteralExpr(ExprList *parts, int line, int column);
+Expr *createComptimeExpr(StmtList *body, int line, int column);
+Expr *createActorSendExpr(Expr *receiver, Expr *message, int line, int column);
+Expr *createActorRequestExpr(Expr *receiver, Expr *message, int line, int column);
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column);
 Stmt *createVarDeclStmt(const char *name, Expr *init, bool is_const, bool isTemporal, int ttl, int line, int column);
@@ -327,6 +348,9 @@ Stmt *createUIActionStmt(const char *name, StmtList *body, int line, int column)
 
 Stmt *createTypeAliasDeclStmt(const char *name, TypeInfo targetType, int line, int column);
 Stmt *createTraitDeclStmt(const char *name, StmtList *methods, int line, int column);
+
+Stmt *createActorDeclStmt(const char *name, StmtList *fields, StmtList *receives, int line, int column);
+Stmt *createReceiveStmt(const char *messageType, const char *messageVar, StmtList *body, TypeInfo returnType, int line, int column);
 
 ExprList *createExprList();
 void appendExpr(ExprList *list, Expr *expr);
