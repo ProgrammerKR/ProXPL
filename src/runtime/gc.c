@@ -282,6 +282,27 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_TENSOR:
             break;
+        case OBJ_ACTOR: {
+            ObjActor* actor = (ObjActor*)object;
+            markObject((Obj*)actor->name);
+            markTable(&actor->fields);
+            ObjMessage *msg = actor->mailboxHead;
+            while(msg != NULL) {
+                markValue(msg->payload);
+                markValue(msg->sender);
+                msg = msg->next;
+            }
+            break;
+        }
+        case OBJ_CHANNEL: {
+            ObjChannel* channel = (ObjChannel*)object;
+            if (channel->buffer) {
+                for (int i=0; i<channel->capacity; i++) {
+                    markValue(channel->buffer[i]);
+                }
+            }
+            break;
+        }
 
         default:
             break;
@@ -421,6 +442,26 @@ static void freeObject(Obj* object) {
         }
         case OBJ_TASK: {
             FREE(struct ObjTask, object);
+            break;
+        }
+        case OBJ_ACTOR: {
+            ObjActor* actor = (ObjActor*)object;
+            freeTable(&actor->fields);
+            ObjMessage *msg = actor->mailboxHead;
+            while(msg != NULL) {
+                ObjMessage *next = msg->next;
+                FREE(ObjMessage, msg);
+                msg = next;
+            }
+            FREE(ObjActor, object);
+            break;
+        }
+        case OBJ_CHANNEL: {
+            ObjChannel* channel = (ObjChannel*)object;
+            if (channel->buffer) {
+                FREE_ARRAY(Value, channel->buffer, channel->capacity);
+            }
+            FREE(ObjChannel, object);
             break;
         }
         default:
