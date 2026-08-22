@@ -230,3 +230,127 @@ Value prox_rt_run_and_wait(Value taskVal) {
     }
     return task->result;
 }
+
+// ----------------------------------------------------------------------------
+// CHANNELS (Concurrency Core)
+// ----------------------------------------------------------------------------
+
+void channel_send(ObjChannel* channel, Value value) {
+    if (channel->isClosed) {
+        fprintf(stderr, "Runtime Panic: Send on closed channel.\n");
+        exit(1);
+    }
+    
+    if (channel->capacity > 0) {
+        // Basic busy-wait if full (for stub purposes)
+        while (channel->count == channel->capacity) {
+            if (currentTask) scheduler_enqueue(currentTask);
+            return; // Yield back, caller must retry
+        }
+        
+        channel->buffer[channel->tail] = value;
+        channel->tail = (channel->tail + 1) % channel->capacity;
+        channel->count++;
+        
+        // Wake receiver
+        if (channel->waitingReceivers) {
+            ObjTask* t = channel->waitingReceivers;
+            channel->waitingReceivers = t->next;
+            t->next = NULL;
+            scheduler_enqueue(t);
+        }
+    }
+}
+
+Value channel_receive(ObjChannel* channel) {
+    if (channel->count == 0) {
+        if (channel->isClosed) return NULL_VAL; // Channel closed and empty
+        
+        // Park current task
+        if (currentTask) {
+            currentTask->next = channel->waitingReceivers;
+            channel->waitingReceivers = currentTask;
+            // Caller (LLVM) should yield
+        }
+        return NULL_VAL; // Indicate pending
+    }
+    
+    Value val = channel->buffer[channel->head];
+    channel->head = (channel->head + 1) % channel->capacity;
+    channel->count--;
+    
+    // Wake sender
+    if (channel->waitingSenders) {
+        ObjTask* t = channel->waitingSenders;
+        channel->waitingSenders = t->next;
+        t->next = NULL;
+        scheduler_enqueue(t);
+    }
+    return val;
+}
+
+void channel_close(ObjChannel* channel) {
+    channel->isClosed = true;
+    // Wake all receivers
+    while (channel->waitingReceivers) {
+        ObjTask* t = channel->waitingReceivers;
+        channel->waitingReceivers = t->next;
+        t->next = NULL;
+        scheduler_enqueue(t);
+    }
+    // Wake all senders (they will panic on send)
+    while (channel->waitingSenders) {
+        ObjTask* t = channel->waitingSenders;
+        channel->waitingSenders = t->next;
+        t->next = NULL;
+        scheduler_enqueue(t);
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ACTORS (Concurrency Core)
+// ----------------------------------------------------------------------------
+
+void actor_send(ObjActor* actor, Value payload) {
+    ObjMessage* msg = (ObjMessage*)malloc(sizeof(ObjMessage));
+    msg->payload = payload;
+    msg->sender = currentTask ? OBJ_VAL(currentTask) : NULL_VAL;
+    msg->next = NULL;
+    
+    // Simplistic queue logic without locks (assumes single threaded stub or atomic queue in future)
+    if (actor->mailboxTail == NULL) {
+        actor->mailboxHead = msg;
+        actor->mailboxTail = msg;
+    } else {
+        actor->mailboxTail->next = msg;
+        actor->mailboxTail = msg;
+    }
+    actor->mailboxCount++;
+    
+    // If actor is not processing, schedule it.
+    // In ProXPL, an Actor might be a Task itself or scheduled differently.
+    // We'll enqueue a task representing the actor's receive loop if it's idle.
+    if (!actor->isProcessing) {
+        actor->isProcessing = true;
+        // The runtime should spawn or wake up the actor's processing task here.
+    }
+}
+
+Value actor_receive(ObjActor* actor) {
+    if (actor->mailboxHead == NULL) {
+        actor->isProcessing = false;
+        return NULL_VAL;
+    }
+    
+    ObjMessage* msg = actor->mailboxHead;
+    actor->mailboxHead = msg->next;
+    if (actor->mailboxHead == NULL) {
+        actor->mailboxTail = NULL;
+    }
+    actor->mailboxCount--;
+    
+    Value payload = msg->payload;
+    free(msg);
+    return payload;
+}
+
