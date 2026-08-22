@@ -151,7 +151,31 @@ void notifyPanic(int taskId, const char *message) {
 
 // Compatibility shim for existing calls
 void registerResilientBlock(int id, const char *strategyStr, int retryCount) {
-    // Map old API to new task registration
-    // We assume ID maps to a task somehow or creates a dummy task wrapper
     registerTask(id, NULL, retryCount);
 }
+
+// ----------------------------------------------------------------------------
+// ACTOR SUPERVISION
+// ----------------------------------------------------------------------------
+
+void registerActor(ObjActor* actor, int maxRetries) {
+    if (!initialized) initSupervisor();
+    printf("[Supervisor] Monitoring Actor '%s' (Retries: %d)\n", actor->name->chars, maxRetries);
+    actor->supervisor = &rootSupervisor;
+}
+
+void notifyActorPanic(ObjActor* actor, const char *message) {
+    if (!initialized) initSupervisor();
+    printf("[Supervisor] ALERT: Actor '%s' Panicked! Msg: %s\n", actor->name->chars, message);
+    
+    // Simple One-For-One restart for actors: clear state, reset mailbox.
+    printf("[Supervisor] RESTARTING Actor '%s' (State Reset)\n", actor->name->chars);
+    
+    // In a full implementation, we'd save/restore initial field state.
+    // For now, just clear mailbox to prevent poison pill loops.
+    actor->mailboxHead = NULL;
+    actor->mailboxTail = NULL;
+    actor->mailboxCount = 0;
+    actor->isProcessing = false;
+}
+
