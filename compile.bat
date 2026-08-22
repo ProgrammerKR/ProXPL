@@ -11,6 +11,7 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/
  src/compiler/bytecode_gen.c ^
  src/compiler/escape_analysis.c ^
  src/compiler/formatter.c ^
+ src/compiler/comptime.c ^
  src/compiler/wasm_gen.c ^
  src/compiler/importer.c ^
  src/compiler/ir.c ^
@@ -40,6 +41,8 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/
  src/pxcf/src/value.c ^
  src/stdlib/collections_native.c ^
  src/stdlib/convert_native.c ^
+ src/stdlib/db_native.c ^
+ src/stdlib/encoding_native.c ^
  src/stdlib/core_native.c ^
  src/stdlib/fs_native.c ^
  src/stdlib/gc_native.c ^
