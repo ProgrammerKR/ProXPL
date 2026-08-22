@@ -389,6 +389,35 @@ Expr *createTemplateLiteralExpr(ExprList *parts, int line, int column) {
   return expr;
 }
 
+Expr *createComptimeExpr(StmtList *body, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_COMPTIME;
+  expr->line = line;
+  expr->column = column;
+  expr->as.comptime_expr.body = body;
+  return expr;
+}
+
+Expr *createActorSendExpr(Expr *receiver, Expr *message, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_ACTOR_SEND;
+  expr->line = line;
+  expr->column = column;
+  expr->as.actor_send.receiver = receiver;
+  expr->as.actor_send.message = message;
+  return expr;
+}
+
+Expr *createActorRequestExpr(Expr *receiver, Expr *message, int line, int column) {
+  Expr *expr = ALLOCATE(Expr, 1);
+  expr->type = EXPR_ACTOR_REQUEST;
+  expr->line = line;
+  expr->column = column;
+  expr->as.actor_request.receiver = receiver;
+  expr->as.actor_request.message = message;
+  return expr;
+}
+
 // --- Statement Creation Functions ---
 
 Stmt *createExpressionStmt(Expr *expression, int line, int column) {
@@ -431,6 +460,29 @@ Stmt *createTraitDeclStmt(const char *name, StmtList *methods, int line, int col
   stmt->column = column;
   stmt->as.trait_decl.name = strdup(name);
   stmt->as.trait_decl.methods = methods;
+  return stmt;
+}
+
+Stmt *createActorDeclStmt(const char *name, StmtList *fields, StmtList *receives, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_ACTOR_DECL;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.actor_decl.name = strdup(name);
+  stmt->as.actor_decl.fields = fields;
+  stmt->as.actor_decl.receives = receives;
+  return stmt;
+}
+
+Stmt *createReceiveStmt(const char *messageType, const char *messageVar, StmtList *body, TypeInfo returnType, int line, int column) {
+  Stmt *stmt = ALLOCATE(Stmt, 1);
+  stmt->type = STMT_RECEIVE;
+  stmt->line = line;
+  stmt->column = column;
+  stmt->as.receive_stmt.messageType = strdup(messageType);
+  stmt->as.receive_stmt.messageVar = messageVar ? strdup(messageVar) : NULL;
+  stmt->as.receive_stmt.body = body;
+  stmt->as.receive_stmt.returnType = returnType;
   return stmt;
 }
 
@@ -899,6 +951,17 @@ void freeExpr(Expr *expr) {
   case EXPR_TEMPLATE_LITERAL:
     if (expr->as.template_literal.parts) freeExprList(expr->as.template_literal.parts);
     break;
+  case EXPR_COMPTIME:
+    if (expr->as.comptime_expr.body) freeStmtList(expr->as.comptime_expr.body);
+    break;
+  case EXPR_ACTOR_SEND:
+    freeExpr(expr->as.actor_send.receiver);
+    freeExpr(expr->as.actor_send.message);
+    break;
+  case EXPR_ACTOR_REQUEST:
+    freeExpr(expr->as.actor_request.receiver);
+    freeExpr(expr->as.actor_request.message);
+    break;
   }
 
   FREE(Expr, expr);
@@ -916,6 +979,17 @@ void freeStmt(Stmt *stmt) {
   case STMT_TRAIT_DECL:
     free(stmt->as.trait_decl.name);
     freeStmtList(stmt->as.trait_decl.methods);
+    break;
+  case STMT_ACTOR_DECL:
+    free(stmt->as.actor_decl.name);
+    if(stmt->as.actor_decl.fields) freeStmtList(stmt->as.actor_decl.fields);
+    if(stmt->as.actor_decl.receives) freeStmtList(stmt->as.actor_decl.receives);
+    break;
+  case STMT_RECEIVE:
+    free(stmt->as.receive_stmt.messageType);
+    if(stmt->as.receive_stmt.messageVar) free(stmt->as.receive_stmt.messageVar);
+    if(stmt->as.receive_stmt.body) freeStmtList(stmt->as.receive_stmt.body);
+    if(stmt->as.receive_stmt.returnType.name) free(stmt->as.receive_stmt.returnType.name);
     break;
   case STMT_EXPRESSION:
     freeExpr(stmt->as.expression.expression);
