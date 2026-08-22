@@ -98,7 +98,8 @@ connection.onCompletion(
 			'switch', 'case', 'default', 'print', 'var', 'let', 'const', 'true', 'false', 'null', 'use', 'export', 'import',
 			'prox', 'loop', 'from', 'as', 'try', 'catch', 'finally', 'throw', 'async', 'await', 'defer',
 			'resilient', 'recovery', 'verify', 'identity', 'train', 'predict',
-			'context', 'layer', 'App', 'State', 'Action', 'tensor', 'intent', 'resolver', 'model', 'type', 'trait'
+			'context', 'layer', 'App', 'State', 'Action', 'tensor', 'intent', 'resolver', 'model', 'type', 'trait',
+			'actor', 'receive', 'comptime', 'task', 'channel'
 		];
 		const builtins = [
 			'len', 'str', 'clock', 'input', 'void', 'int', 'float', 'string', 'bool', 'any',
@@ -169,6 +170,7 @@ connection.onDefinition(
 		// func <word> or class <word>
 		const funcRegex = new RegExp(`func\\s+${word}\\s*\\(`, 'g');
 		const classRegex = new RegExp(`class\\s+${word}\\s*\\{`, 'g');
+		const actorRegex = new RegExp(`actor\\s+${word}\\s*\\{`, 'g');
 
 		let defMatch;
 		// Check functions
@@ -183,6 +185,16 @@ connection.onDefinition(
 		}
 		// Check classes
 		while ((defMatch = classRegex.exec(text)) !== null) {
+			return Location.create(
+				params.textDocument.uri,
+				{
+					start: document.positionAt(defMatch.index),
+					end: document.positionAt(defMatch.index + defMatch[0].length)
+				}
+			);
+		}
+		// Check actors
+		while ((defMatch = actorRegex.exec(text)) !== null) {
 			return Location.create(
 				params.textDocument.uri,
 				{
