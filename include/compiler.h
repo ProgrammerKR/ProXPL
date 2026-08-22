@@ -40,6 +40,8 @@ ObjFunction* compile(const char *source);
 #include "ast.h"
 bool generateBytecode(StmtList* statements, ObjFunction* function);
 
+Value evaluateComptime(StmtList* statements);
+
 void markCompilerRoots();
 
 #endif
