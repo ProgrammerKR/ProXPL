@@ -26,6 +26,8 @@ static Stmt *resolverDecl(Parser *p);
 static Stmt *resilientStmt(Parser *p);
 static Stmt *contextDecl(Parser *p); 
 static Stmt *layerDecl(Parser *p);
+static Stmt *actorDecl(Parser *p);
+static Stmt *receiveStmt(Parser *p);
 
 static Stmt *policyDecl(Parser *p);
 static Stmt *nodeDecl(Parser *p); // Forward
@@ -60,6 +62,7 @@ static StmtList *block(Parser *p);
 
 static Expr *expression(Parser *p);
 static Expr *assignment(Parser *p);
+static Expr *actorMessaging(Parser *p);
 static Expr *ternary(Parser *p);
 static Expr *orExpr(Parser *p);
 static Expr *andExpr(Parser *p);
@@ -399,6 +402,8 @@ static Stmt *declaration(Parser *p) {
     return useDecl(p);
   if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR))
     return varDecl(p);
+  if (match(p, 1, TOKEN_ACTOR))
+    return actorDecl(p);
   if (match(p, 1, TOKEN_TYPE_KW))
     return typeAliasDecl(p);
   if (match(p, 1, TOKEN_INTENT))
@@ -797,6 +802,50 @@ static Stmt *typeAliasDecl(Parser *p) {
     return stmt;
 }
 
+static Stmt *actorDecl(Parser *p) {
+    Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect actor name.");
+    char *name = tokenToString(nameToken);
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    
+    StmtList *fields = createStmtList();
+    StmtList *receives = createStmtList();
+    
+    while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+        if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR)) {
+            Token fieldToken = consume(p, TOKEN_IDENTIFIER, "Expect field name.");
+            char *fieldName = tokenToString(fieldToken);
+            if (match(p, 1, TOKEN_COLON)) {
+                if (check(p, TOKEN_IDENTIFIER)) {
+                    advance(p);
+                    if (match(p, 1, TOKEN_LESS)) {
+                        while (!check(p, TOKEN_GREATER) && !isAtEnd(p)) advance(p);
+                        match(p, 1, TOKEN_GREATER);
+                    }
+                }
+            }
+            Expr *initializer = NULL;
+            if (match(p, 1, TOKEN_EQUAL)) {
+                initializer = expression(p);
+            }
+            match(p, 1, TOKEN_SEMICOLON);
+            Stmt *fieldStmt = createVarDeclStmt(fieldName, initializer, false, false, 0, fieldToken.line, 0);
+            appendStmt(fields, fieldStmt);
+            free(fieldName);
+        } else if (match(p, 1, TOKEN_RECEIVE)) {
+            appendStmt(receives, receiveStmt(p));
+        } else {
+            parserError(p, "Expect field or receive block inside actor.");
+            advance(p);
+        }
+    }
+    
+    consume(p, TOKEN_RIGHT_BRACE, "Expect '}'.");
+    Stmt *stmt = createActorDeclStmt(name, fields, receives, nameToken.line, 0);
+    free(name);
+    return stmt;
+}
+
 static Stmt *varDecl(Parser *p) {
   bool is_const = (previous(p).type == TOKEN_CONST);
   
@@ -991,6 +1040,8 @@ static Stmt *statement(Parser *p) {
     return breakStmt(p);
   if (match(p, 1, TOKEN_CONTINUE))
     return continueStmt(p);
+  if (match(p, 1, TOKEN_RECEIVE))
+    return receiveStmt(p);
   if (match(p, 1, TOKEN_PRINT))
     return printStmt(p);
   if (match(p, 1, TOKEN_LEFT_BRACE)) {
@@ -1174,6 +1225,51 @@ static Stmt *continueStmt(Parser *p) {
   return createContinueStmt(keyword.line, 0);
 }
 
+static Stmt *receiveStmt(Parser *p) {
+    Token keyword = previous(p);
+    
+    char *msgType = NULL;
+    char *msgVar = NULL;
+    TypeInfo returnType = {TYPE_UNKNOWN, NULL, NULL, NULL, 0, false, NULL};
+    
+    if (match(p, 1, TOKEN_LEFT_PAREN)) {
+        // syntax: receive(msg: any)
+        Token varToken = consume(p, TOKEN_IDENTIFIER, "Expect message variable name.");
+        msgVar = tokenToString(varToken);
+        if (match(p, 1, TOKEN_COLON)) {
+            Token typeTok = consume(p, TOKEN_IDENTIFIER, "Expect message type.");
+            msgType = tokenToString(typeTok);
+        } else {
+            msgType = strdup("any");
+        }
+        consume(p, TOKEN_RIGHT_PAREN, "Expect ')' after receive arguments.");
+        
+        if (match(p, 1, TOKEN_ARROW) || match(p, 1, TOKEN_COLON)) {
+            Token typeTok = consume(p, TOKEN_IDENTIFIER, "Expect return type.");
+            returnType.name = tokenToString(typeTok);
+            returnType.kind = TYPE_UNKNOWN; 
+        }
+    } else {
+        // syntax: receive Increment { ... } or receive GetCount: int { ... }
+        Token msgTypeToken = consume(p, TOKEN_IDENTIFIER, "Expect message type.");
+        msgType = tokenToString(msgTypeToken);
+        
+        if (match(p, 1, TOKEN_COLON)) {
+            Token typeTok = consume(p, TOKEN_IDENTIFIER, "Expect return type.");
+            returnType.name = tokenToString(typeTok);
+            returnType.kind = TYPE_UNKNOWN; 
+        }
+    }
+    
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{'.");
+    StmtList *body = block(p);
+    
+    Stmt *stmt = createReceiveStmt(msgType, msgVar, body, returnType, keyword.line, 0);
+    free(msgType);
+    if(msgVar) free(msgVar);
+    return stmt;
+}
+
 static StmtList *block(Parser *p) {
   StmtList *statements = createStmtList();
 
@@ -1223,7 +1319,7 @@ static Stmt *exprStmt(Parser *p) {
 static Expr *expression(Parser *p) { return assignment(p); }
 
 static Expr *assignment(Parser *p) {
-  Expr *expr = ternary(p);
+  Expr *expr = actorMessaging(p);
 
   if (match(p, 3, TOKEN_EQUAL, TOKEN_PLUS_EQUAL, TOKEN_MINUS_EQUAL)) {
     Token equals = previous(p);
@@ -1243,15 +1339,26 @@ static Expr *assignment(Parser *p) {
   return expr;
 }
 
+static Expr *actorMessaging(Parser *p) {
+  Expr *expr = ternary(p);
+  if (match(p, 1, TOKEN_BANG)) {
+    Token op = previous(p);
+    Expr *message = ternary(p);
+    expr = createActorSendExpr(expr, message, op.line, 0);
+  }
+  return expr;
+}
+
 static Expr *ternary(Parser *p) {
   Expr *expr = orExpr(p);
 
   if (match(p, 1, TOKEN_QUESTION)) {
-    Expr *trueBranch = expression(p);
-    consume(p, TOKEN_COLON, "Expect ':'.");
-    Expr *falseBranch = expression(p);
-    return createTernaryExpr(expr, trueBranch, falseBranch, previous(p).line,
-                             0);
+    Expr *thenBranch = expression(p);
+    if (!match(p, 1, TOKEN_COLON)) {
+        return createActorRequestExpr(expr, thenBranch, expr->line, expr->column);
+    }
+    Expr *elseBranch = ternary(p);
+    return createTernaryExpr(expr, thenBranch, elseBranch, expr->line, expr->column);
   }
 
   return expr;
@@ -1506,6 +1613,12 @@ static Expr *call(Parser *p) {
 }
 
 static Expr *primary(Parser *p) {
+  if (match(p, 1, TOKEN_COMPTIME)) {
+    consume(p, TOKEN_LEFT_BRACE, "Expect '{' after 'comptime'.");
+    StmtList *body = block(p);
+    return createComptimeExpr(body, previous(p).line, 0);
+  }
+
   if (match(p, 1, TOKEN_SANITIZE)) {
     consume(p, TOKEN_LEFT_PAREN, "Expect '(' after sanitize.");
     Expr *val = expression(p);
