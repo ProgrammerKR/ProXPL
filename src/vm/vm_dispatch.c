@@ -254,8 +254,6 @@ static int vm_execute_simple(const Chunk *chunk) {
 #endif
 
     } /* for */
-
-    return 0;
 }
 
 /* Expose a simple test-runner function */

@@ -116,7 +116,6 @@ static Value native_memory_usage(int argCount, Value* args) {
 static Value native_process_exit(int argCount, Value* args) {
     int code = (argCount >= 1 && IS_NUMBER(args[0])) ? (int)AS_NUMBER(args[0]) : 0;
     exit(code);
-    return NIL_VAL; // unreachable
 }
 
 ObjModule* create_std_process_module() {

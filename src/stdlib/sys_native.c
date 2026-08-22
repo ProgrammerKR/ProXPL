@@ -68,7 +68,6 @@ static Value sys_exit(int argCount, Value* args) {
         code = (int)AS_NUMBER(args[0]);
     }
     exit(code);
-    return NIL_VAL; // Unreachable
 }
 
 // env(key) -> String or Null
