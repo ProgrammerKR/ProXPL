@@ -199,7 +199,7 @@ void prm_install(const char* packageName) {
             char* pxcfContent = readFile(pxcfPath);
             bool isFallback = false;
             if (!pxcfContent) {
-                pxcfContent = _strdup(packageUrl);
+                pxcfContent = strdup(packageUrl);
                 isFallback = true;
             }
             

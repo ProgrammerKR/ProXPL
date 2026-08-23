@@ -1,6 +1,7 @@
 #include "../include/escape_analysis.h"
 #include <string.h>
 
+#if 0
 static bool exprContainsVar(Expr* expr, const char* varName) {
     if (!expr) return false;
     switch (expr->type) {
@@ -55,6 +56,7 @@ static bool exprContainsVar(Expr* expr, const char* varName) {
             return false;
     }
 }
+#endif
 
 EscapeState analyzeClosureEscape(Stmt* funcDecl) {
     if (!funcDecl || funcDecl->type != STMT_FUNC_DECL) return ESCAPE_NONE;
