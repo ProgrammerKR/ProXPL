@@ -21,8 +21,8 @@
 /* forward declares from implementation files */
 int example_write_hello(const char *path);
 int example_create_hello_blob(uint8_t **out_buf, size_t *out_len);
-int read_chunk_from_file(const char *path, Chunk *out);
-int write_chunk_to_file(const char *path, const Chunk *chunk);
+int proxpl_read_chunk_from_file(const char *path, Chunk *out);
+int proxpl_write_chunk_to_file(const char *path, const Chunk *chunk);
 void disasm_chunk(const Chunk *chunk);
 int vm_run_chunk_simple(const Chunk *chunk);
 
@@ -41,7 +41,7 @@ int main(void) {
 
     /* Read it back */
     Chunk c;
-    if (read_chunk_from_file(outpath, &c) != 0) {
+    if (proxpl_read_chunk_from_file(outpath, &c) != 0) {
         fprintf(stderr,"Failed to read chunk back\n");
         return 1;
     }
@@ -70,7 +70,7 @@ int main(void) {
         if (f) { fwrite(buf,1,buflen,f); fclose(f); printf("Wrote blob to %s\n", tmp); }
         free(buf);
         Chunk c2;
-        if (read_chunk_from_file(tmp, &c2) == 0) {
+        if (proxpl_read_chunk_from_file(tmp, &c2) == 0) {
             printf("Disassembling blob chunk:\n");
             disasm_chunk(&c2);
             printf("Running blob chunk:\n");

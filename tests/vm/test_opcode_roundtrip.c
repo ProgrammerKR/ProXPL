@@ -15,6 +15,7 @@
 #include <assert.h>
 #include "bytecode.h"
 #include "vm.h"
+#include "../include/proxpl_api.h"
 
 #include "../include/value.h"
 #include "../include/object.h"
@@ -45,14 +46,14 @@ int main(void) {
     emit_opcode(&c, OP_ADD);
     emit_opcode(&c, OP_HALT);
 
-    if (write_chunk_to_file(tmp, &c) != 0) {
+    if (proxpl_write_chunk_to_file(tmp, &c) != 0) {
         fprintf(stderr, "Failed to write chunk to %s\n", tmp);
         freeChunk(&c);
         return 2;
     }
 
     Chunk out;
-    if (read_chunk_from_file(tmp, &out) != 0) {
+    if (proxpl_read_chunk_from_file(tmp, &out) != 0) {
         fprintf(stderr, "Failed to read chunk back\n");
         freeChunk(&c);
         return 3;
