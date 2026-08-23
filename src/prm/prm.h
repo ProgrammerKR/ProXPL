@@ -29,14 +29,25 @@ void prm_init(const char* name);
 // Parse prox.toml from the current directory
 bool prm_load_manifest(Manifest* manifest);
 
+typedef struct {
+    bool releaseMode;
+    bool debugMode;
+    bool profileMode;
+    bool traceMode;
+    bool sanitizeMode;
+} BuildOptions;
+
 // Build the project
-void prm_build(const Manifest* manifest, bool releaseMode);
+void prm_build(const Manifest* manifest, BuildOptions options);
 
 // Build the project for web (UI App)
 void prm_build_web(const Manifest* manifest, const char* outputDir);
 
 // Run the project
 void prm_run(const Manifest* manifest);
+
+// Inspect the project/file
+void prm_inspect(const Manifest* manifest, const char* file, const char* format);
 
 // --- Expanded Commands ---
 
