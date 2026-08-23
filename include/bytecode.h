@@ -126,9 +126,16 @@ int addConstant(Chunk *chunk, Value value);
 Value consttable_get(const Chunk *chunk, size_t idx);
 void addExceptionHandler(Chunk *chunk, size_t start, size_t end, size_t handler);
 
+typedef struct {
+    uint32_t magic;
+    uint16_t version;
+    uint8_t endianness;
+    uint8_t reserved;
+} PXBC_Header;
+
 // File serialization
-int write_chunk_to_file(const char *path, const Chunk *chunk);
-int read_chunk_from_file(const char *path, Chunk *out);
+int dumpPXBC(const char *path, const Chunk *chunk);
+int loadPXBC(const char *path, Chunk *out);
 
 // LEB128 Utilities
 uint64_t read_uleb128_from(const uint8_t *buf, size_t buf_len, size_t *out_read);
