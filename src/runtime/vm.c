@@ -53,6 +53,15 @@ void initVM(VM *pvm) {
 }
 
 void freeVM(VM *pvm) {
+  if (pvm->metrics.profileMode) {
+      printf("\n--- ProXPL VM Profile ---\n");
+      printf("Instructions Executed : %zu\n", pvm->metrics.instructionsExecuted);
+      printf("Function Calls        : %zu\n", pvm->metrics.functionCalls);
+      printf("GC Cycles             : %zu\n", pvm->metrics.gcCycles);
+      printf("Total GC Pause        : %.6f seconds\n", pvm->metrics.totalGCPause);
+      printf("-------------------------\n");
+  }
+
   freeTable(&pvm->globals);
   freeTable(&pvm->strings);
   freeImporter(&pvm->importer);
@@ -393,7 +402,7 @@ static InterpretResult run(VM* pvm) {
 #endif
 
 #ifdef __GNUC__
-  #define DISPATCH() goto *dispatch_table[*ip++]
+  #define DISPATCH() do { if (pvm->metrics.profileMode) pvm->metrics.instructionsExecuted++; goto *dispatch_table[*ip++]; } while(0)
   
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Woverride-init"
@@ -477,12 +486,14 @@ static InterpretResult run(VM* pvm) {
   };
   #pragma GCC diagnostic pop
 
+  if (pvm->metrics.profileMode) pvm->metrics.instructionsExecuted++;
   DISPATCH();
   #define CASE_OP(name) DO_##name:
 #else
   #define DISPATCH() break
   #define CASE_OP(name) case name:
   for (;;) {
+    if (pvm->metrics.profileMode) pvm->metrics.instructionsExecuted++;
     uint8_t instruction = READ_BYTE();
     switch (instruction) {
 #endif
@@ -1212,6 +1223,7 @@ static InterpretResult run(VM* pvm) {
   
   CASE_OP(OP_RETURN) {
       Value result = *(--stackTop);
+      closeUpvalues(pvm, frame->slots);
       pvm->frameCount--;
       if (pvm->frameCount == 0) {
         pvm->stackTop = stackTop;
