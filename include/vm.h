@@ -61,6 +61,16 @@ struct VM {
   
   // Exception handling
   jmp_buf exceptionJump;
+  
+  // Observability / Metrics
+  struct {
+      size_t instructionsExecuted;
+      size_t functionCalls;
+      size_t peakMemory;
+      size_t gcCycles;
+      double totalGCPause;
+      bool profileMode;
+  } metrics;
 };
 
 typedef enum {
