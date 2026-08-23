@@ -398,6 +398,22 @@ static int dispatchPRM(int argc, const char* argv[]) {
         if (argc < 4) { fprintf(stderr, "Usage: prm create <template> <name>\n"); exit(64); }
         prm_create(argv[2], argv[3]);
 
+    } else if (strcmp(sub, "inspect") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: prm inspect <file> [format]\n");
+            exit(1);
+        }
+        const char* file = argv[2];
+        const char* format = NULL;
+        for (int i = 3; i < argc; i++) {
+            if (strncmp(argv[i], "--", 2) == 0) {
+                format = argv[i];
+                break;
+            }
+        }
+        Manifest m = {0}; // Dummy manifest
+        prm_inspect(&m, file, format);
+
     } else if (strcmp(sub, "run") == 0 || strcmp(sub, "build") == 0 ||
                strcmp(sub, "test") == 0 || strcmp(sub, "watch") == 0) {
         // Unified manifest loading
@@ -424,8 +440,15 @@ static int dispatchPRM(int argc, const char* argv[]) {
                 }
                 prm_build_web(&m, outDir);
             } else {
-                int releaseMode = (argc >= 3 && strcmp(argv[2], "--release") == 0);
-                prm_build(&m, releaseMode);
+                BuildOptions opts = {0};
+                for (int i = 2; i < argc; i++) {
+                    if (strcmp(argv[i], "--release") == 0) opts.releaseMode = true;
+                    if (strcmp(argv[i], "--debug") == 0) opts.debugMode = true;
+                    if (strcmp(argv[i], "--profile") == 0) opts.profileMode = true;
+                    if (strcmp(argv[i], "--trace") == 0) opts.traceMode = true;
+                    if (strcmp(argv[i], "--sanitize") == 0) opts.sanitizeMode = true;
+                }
+                prm_build(&m, opts);
             }
 
         } else if (strcmp(sub, "test") == 0) {
@@ -537,21 +560,25 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  // Try PRM dispatch first (handles prm.bat -> proxpl.exe delegation)
-  if (dispatchPRM(argc, argv)) {
-    return 0;
-  }
-
   // Initialize VM
   initVM(&vm);
 
   // Register standard library
   registerStdLib(&vm);
+
+  // Try PRM dispatch first (handles prm.bat -> proxpl.exe delegation)
+  if (dispatchPRM(argc, argv)) {
+    freeVM(&vm);
+    return 0;
+  }
   
   // Populate CLI args
   vm.cliArgs = newList();
   push(&vm, OBJ_VAL(vm.cliArgs)); // Protect from GC
   for(int i=0; i < argc; i++) {
+      if (strcmp(argv[i], "--profile") == 0) {
+          vm.metrics.profileMode = true;
+      }
       ObjString* arg = copyString(argv[i], (int)strlen(argv[i]));
       push(&vm, OBJ_VAL(arg));
       appendToList(vm.cliArgs, OBJ_VAL(arg));
@@ -571,6 +598,86 @@ int main(int argc, const char *argv[]) {
 
     if (strcmp(command, "run") == 0) {
       runFile(argv[2]);
+    } else if (strcmp(command, "inspect") == 0) {
+      if (argc < 3) {
+          fprintf(stderr, "Usage: proxpl inspect <file> [format]\n");
+          return 1;
+      }
+      const char* format = (argc >= 4) ? argv[3] : "--ast";
+      printf("[Inspector] Starting inspection of %s with %s...\n", argv[2], format);
+      
+      char* source = readFile(argv[2]);
+      if (!source) {
+          fprintf(stderr, "Could not open file '%s'.\n", argv[2]);
+          return 1;
+      }
+      
+      Scanner scanner;
+      initScanner(&scanner, source);
+      Token tokens[4096];
+      int tokenCount = 0;
+      while (tokenCount < 4095) {
+          Token t = scanToken(&scanner);
+          tokens[tokenCount++] = t;
+          if (t.type == TOKEN_EOF) break;
+      }
+      
+      Parser parser;
+      initParser(&parser, tokens, tokenCount, source);
+      StmtList* program = parse(&parser);
+      
+      if (!program) {
+          fprintf(stderr, "[Inspector] Parsing failed.\n");
+          free(source);
+          return 1;
+      }
+      
+      if (strcmp(format, "--ast") == 0 || strcmp(format, "--typed-ast") == 0) {
+          printf("[Inspector] AST Dump:\n");
+          // AST printing goes here when printStmtList is implemented
+          printf("<AST representation of %d statements>\n", program->count);
+      } else if (strcmp(format, "--ir") == 0 || strcmp(format, "--optimized-ir") == 0) {
+          printf("[Inspector] IR Dump:\n");
+          printf("<IR representation>\n");
+      } else if (strcmp(format, "--bytecode") == 0) {
+          printf("[Inspector] Bytecode Dump:\n");
+          fflush(stdout);
+          
+          initVM(&vm);
+          registerStdLib(&vm);
+          
+          printf("[Inspector] VM Initialized.\n");
+          fflush(stdout);
+          
+          ObjFunction* function = newFunction();
+          push(&vm, OBJ_VAL(function));
+          
+          printf("[Inspector] Generating bytecode...\n");
+          fflush(stdout);
+          
+          if (generateBytecode(program, function)) {
+              printf("[Inspector] Bytecode generated successfully. Disassembling...\n");
+              fflush(stdout);
+              disassembleChunk(&function->chunk, "script");
+          } else {
+              printf("[Inspector] Failed to generate bytecode.\n");
+              fflush(stdout);
+          }
+          
+          pop(&vm);
+          freeVM(&vm);
+          printf("[Inspector] Bytecode dump complete.\n");
+          fflush(stdout);
+      } else if (strcmp(format, "--llvm") == 0) {
+          printf("[Inspector] LLVM IR Dump functionality will go here.\n");
+      } else {
+          fprintf(stderr, "[Inspector] Unknown format: %s\n", format);
+      }
+      
+      freeStmtList(program);
+      free(source);
+      return 0;
+      
     } else if (strcmp(command, "build") == 0) {
       bool isWasm = false;
       const char* inputFile = NULL;
