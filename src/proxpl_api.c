@@ -49,17 +49,11 @@ InterpretResult proxpl_interpret_file(VM *pvm, const char *path) {
     return result;
 }
 
-// These functions are STUBBED because bytecode.c was deleted.
-// You must re-implement binary serialization later if you need it.
 int proxpl_write_chunk_to_file(const char *path, const Chunk *chunk) {
-    (void)path; (void)chunk;
-    fprintf(stderr, "Feature 'write_chunk_to_file' is temporarily disabled.\n");
-    return -1;
+    return dumpPXBC(path, chunk);
 }
 
 int proxpl_read_chunk_from_file(const char *path, Chunk *out) {
-    (void)path; (void)out;
-    fprintf(stderr, "Feature 'read_chunk_from_file' is temporarily disabled.\n");
-    return -1;
+    return loadPXBC(path, out);
 }
 
