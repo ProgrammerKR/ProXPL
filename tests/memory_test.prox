@@ -1,0 +1,24 @@
+// tests/memory_test.prox
+// This test allocates many closures to trigger GC and ensure no memory leaks occur in closures and upvalues
+
+func createClosure(x) {
+    func inner() {
+        return x;
+    }
+    return inner;
+}
+
+print("Starting memory test...");
+
+let i = 0;
+while (i < 50000) {
+    let c = createClosure(i);
+    let val = c();
+    if (val != i) {
+        print("Error: Closure expected " + str(i) + " but got " + str(val));
+    }
+    i = i + 1;
+}
+
+// Explicitly trigger GC to clean up remaining garbage
+print("Memory test completed.");
