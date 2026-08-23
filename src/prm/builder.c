@@ -8,10 +8,21 @@
 
 #ifdef _WIN32
 #include <process.h>
+#include <direct.h>
 #else
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #endif
+#include <sys/stat.h>
+
+#include "compiler.h"
+#include "optimizer.h"
+#include "bytecode.h"
+#include "vm.h"
+#include "object.h"
+
+extern VM vm;
 
 // Helper to read file content for parsing
 static char* read_file_prm(const char* path) {
@@ -26,6 +37,12 @@ static char* read_file_prm(const char* path) {
     buffer[read] = '\0';
     fclose(file);
     return buffer;
+}
+
+static long get_mtime(const char* path) {
+    struct stat st;
+    if (stat(path, &st) == 0) return st.st_mtime;
+    return 0;
 }
 
 // Invoke the ProXPL interpreter/compiler
@@ -76,15 +93,122 @@ static void invoke_compiler(const char* file, bool run) {
     }
 }
 
-void prm_build(const Manifest* manifest, bool releaseMode) {
-    (void)releaseMode;
+void prm_build(const Manifest* manifest, BuildOptions options) {
     printf("[PRM] Building project: %s v%s\n", manifest->name, manifest->version);
+    
+    if (options.releaseMode) printf("[PRM] Mode: Release\n");
+    if (options.debugMode) printf("[PRM] Mode: Debug\n");
+    if (options.profileMode) printf("[PRM] Mode: Profile\n");
+    if (options.traceMode) printf("[PRM] Mode: Trace\n");
+    if (options.sanitizeMode) printf("[PRM] Mode: Sanitize\n");
     
     prm_init_cache();
     prm_save_lockfile(manifest);
-    // In the future, check if build is needed
     
-    invoke_compiler(manifest->entryPoint, false);
+    const char* targetDir = ".proxpl/cache";
+#ifdef _WIN32
+    _mkdir(".proxpl");
+    _mkdir(targetDir);
+#else
+    mkdir(".proxpl", 0777);
+    mkdir(targetDir, 0777);
+#endif
+    
+    char cacheFile[512];
+    const char* ep = manifest->entryPoint;
+    const char* lastSlash = strrchr(ep, '/');
+    if (!lastSlash) lastSlash = strrchr(ep, '\\');
+    const char* basename = lastSlash ? lastSlash + 1 : ep;
+    snprintf(cacheFile, sizeof(cacheFile), "%s/%s.pxbc", targetDir, basename);
+
+    long src_mtime = get_mtime(manifest->entryPoint);
+    long cache_mtime = get_mtime(cacheFile);
+
+    if (cache_mtime > 0 && cache_mtime >= src_mtime) {
+        printf("[PRM] [Cache Hit] Loading compiled bytecode from %s\n", cacheFile);
+        Chunk chunk;
+        if (loadPXBC(cacheFile, &chunk) == 0) {
+            ObjFunction* function = newFunction();
+            function->chunk = chunk;
+            push(&vm, OBJ_VAL(function));
+            interpretChunk(&vm, &function->chunk);
+            pop(&vm);
+            return;
+        } else {
+            printf("[PRM] [Cache Miss] Failed to load cache, recompiling...\n");
+        }
+    } else {
+        printf("[PRM] [Cache Miss] Source modified or unbuilt, recompiling %s...\n", manifest->entryPoint);
+    }
+    
+    char* source = read_file_prm(manifest->entryPoint);
+    if (!source) {
+        fprintf(stderr, "[PRM] Error: Could not read entry point '%s'\n", manifest->entryPoint);
+        return;
+    }
+
+    Scanner scanner;
+    initScanner(&scanner, source);
+    Token tokens[4096];
+    int tokenCount = 0;
+    while (1) {
+        Token t = scanToken(&scanner);
+        tokens[tokenCount++] = t;
+        if (t.type == TOKEN_EOF || tokenCount >= 4096) break;
+    }
+
+    Parser parser;
+    initParser(&parser, tokens, tokenCount, source);
+    StmtList* statements = parse(&parser);
+    if (!statements) { free(source); return; }
+    
+    optimizeAST(statements);
+    
+    ObjFunction* function = newFunction();
+    push(&vm, OBJ_VAL(function));
+    if (!generateBytecode(statements, function)) {
+        pop(&vm); freeStmtList(statements); free(source); return;
+    }
+    pop(&vm);
+    
+    printf("[PRM] Caching compiled artifact to %s\n", cacheFile);
+    dumpPXBC(cacheFile, &function->chunk);
+    
+    push(&vm, OBJ_VAL(function));
+    interpretChunk(&vm, &function->chunk);
+    pop(&vm);
+    
+    freeStmtList(statements);
+    free(source);
+}
+
+void prm_inspect(const Manifest* manifest, const char* file, const char* format) {
+    const char* target = file ? file : manifest->entryPoint;
+    printf("[PRM] Inspecting %s (Format: %s)\n", target, format ? format : "default");
+    
+    char command[MAX_PATH_LEN + 64];
+    const char* exe = "proxpl";
+    snprintf(command, sizeof(command), "%s inspect \"%s\" %s", exe, target, format ? format : "");
+    
+    printf("[PRM] Executing: %s\n", command);
+    int code = -1;
+    #ifdef _WIN32
+    code = _spawnlp(_P_WAIT, exe, exe, "inspect", target, format, NULL);
+    #else
+    pid_t pid = fork();
+    if (pid == 0) {
+        execlp(exe, exe, "inspect", target, format, (char*)NULL);
+        exit(1);
+    } else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) code = WEXITSTATUS(status);
+    }
+    #endif
+    
+    if (code != 0) {
+        printf("[PRM] Inspect process exited with code %d\n", code);
+    }
 }
 
 void prm_build_web(const Manifest* manifest, const char* outputDir) {
