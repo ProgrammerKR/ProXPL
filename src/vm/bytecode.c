@@ -182,17 +182,22 @@ static uint32_t read_u32_le(FILE *f) {
     return (uint32_t)b[0] | ((uint32_t)b[1]<<8) | ((uint32_t)b[2]<<16) | ((uint32_t)b[3]<<24);
 }
 
-int write_chunk_to_file(const char *path, const Chunk *chunk) {
+int dumpPXBC(const char *path, const Chunk *chunk) {
     FILE *f = fopen(path,"wb");
     if (!f) return -1;
-    fwrite("PROX",1,4,f);
-    uint16_t ver = 1;
-    uint8_t verbuf[2] = { ver & 0xFF, (ver>>8)&0xFF };
-    fwrite(verbuf,1,2,f);
-    uint8_t endianness = 1;
-    fwrite(&endianness,1,1,f);
-    uint8_t reserved = 0;
-    fwrite(&reserved,1,1,f);
+    
+    PXBC_Header header;
+    header.magic = 0x50584243; // "PXBC"
+    header.version = 1;
+    header.endianness = 1;
+    header.reserved = 0;
+    
+    // Write header bytes explicitly to avoid struct padding issues
+    write_u32_le(f, header.magic);
+    uint8_t verbuf[2] = { header.version & 0xFF, (header.version >> 8) & 0xFF };
+    fwrite(verbuf, 1, 2, f);
+    fwrite(&header.endianness, 1, 1, f);
+    fwrite(&header.reserved, 1, 1, f);
     write_u32_le(f, (uint32_t)chunk->count);
     if (chunk->count) fwrite(chunk->code,1,chunk->count,f);
     /* constants */
@@ -246,20 +251,22 @@ int write_chunk_to_file(const char *path, const Chunk *chunk) {
     return 0;
 }
 
-int read_chunk_from_file(const char *path, Chunk *out) {
+int loadPXBC(const char *path, Chunk *out) {
     FILE *f = fopen(path,"rb");
     if (!f) return -1;
-    char magic[4];
-    if (fread(magic,1,4,f) != 4) { fclose(f); return -1; }
-    if (memcmp(magic,"PROX",4) != 0) { fclose(f); return -1; }
+    
+    PXBC_Header header;
+    header.magic = read_u32_le(f);
+    
     uint8_t verbuf[2];
     if (fread(verbuf,1,2,f) != 2) { fclose(f); return -1; }
-    uint16_t ver = verbuf[0] | (verbuf[1]<<8);
-    (void)ver;
-    uint8_t endianness;
-    if (fread(&endianness,1,1,f) != 1) { fclose(f); return -1; }
-    uint8_t reserved;
-    if (fread(&reserved,1,1,f) != 1) { fclose(f); return -1; }
+    header.version = verbuf[0] | (verbuf[1]<<8);
+    
+    if (fread(&header.endianness,1,1,f) != 1) { fclose(f); return -1; }
+    if (fread(&header.reserved,1,1,f) != 1) { fclose(f); return -1; }
+    
+    if (header.magic != 0x50584243) { fclose(f); return -1; } // "PXBC"
+    
     uint32_t code_len = read_u32_le(f);
     chunk_init(out);
     if (code_len) {
@@ -358,7 +365,7 @@ int example_write_hello(const char *path) {
     emit_u8(&c, 1);
     emit_opcode(&c, OP_HALT);
 
-    int rc = write_chunk_to_file(path, &c);
+    int rc = dumpPXBC(path, &c);
     chunk_free(&c);
     return rc;
 }
