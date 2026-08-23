@@ -85,6 +85,8 @@ bool call(ObjClosure *closure, int argCount, VM *pVM) {
     return false;
   }
 
+  if (pVM->metrics.profileMode) pVM->metrics.functionCalls++;
+
   CallFrame *frame = &pVM->frames[pVM->frameCount++];
   frame->closure = closure;
   frame->ip = closure->function->chunk.code;
