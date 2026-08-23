@@ -98,7 +98,8 @@ int main(int argc, char** argv) {
             }
         } else {
             Manifest m;
-            if (prm_load_manifest(&m)) prm_build(&m, false);
+            BuildOptions opts = {0};
+            if (prm_load_manifest(&m)) prm_build(&m, opts);
             else return 1;
         }
     }
