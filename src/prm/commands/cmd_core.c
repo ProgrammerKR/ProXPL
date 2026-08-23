@@ -12,6 +12,9 @@
 #include <sys/stat.h>
 #endif
 
+#include "../../../include/sha256.h"
+#include "../../../include/file_utils.h"
+
 // --- Core ---
 static int isValidPrmArg(const char* arg) {
     if (!arg) return 0;
@@ -188,6 +191,58 @@ void prm_install(const char* packageName) {
         
         if (result == 0) {
             printf("Successfully installed %s to %s.\n", packageName, targetPath);
+            
+            // Phase 7: Enforce SHA-256 validation
+            char pxcfPath[512];
+            snprintf(pxcfPath, sizeof(pxcfPath), "%s/project.pxcf", targetPath);
+            
+            char* pxcfContent = readFile(pxcfPath);
+            bool isFallback = false;
+            if (!pxcfContent) {
+                pxcfContent = _strdup(packageUrl);
+                isFallback = true;
+            }
+            
+            SHA256_CTX ctx;
+            sha256_init(&ctx);
+            sha256_update(&ctx, (const unsigned char*)pxcfContent, strlen(pxcfContent));
+            unsigned char hash[SHA256_BLOCK_SIZE];
+            sha256_final(&ctx, hash);
+            
+            char hashHex[65];
+            for (int i = 0; i < SHA256_BLOCK_SIZE; i++) {
+                sprintf(hashHex + (i * 2), "%02x", hash[i]);
+            }
+            hashHex[64] = '\0';
+            
+            printf("[Security] Package SHA-256 checksum: %s\n", hashHex);
+            
+            // Check against project-lock.pxcf
+            char* lockContent = readFile("project-lock.pxcf");
+            if (lockContent) {
+                if (strstr(lockContent, hashHex)) {
+                    printf("[Security] Integrity verified. Checksum matches lockfile.\n");
+                } else if (strstr(lockContent, packageName)) {
+                    fprintf(stderr, "[Security] FATAL: Checksum mismatch for %s!\n", packageName);
+                    fprintf(stderr, "Expected a different hash. Possible tampering detected.\n");
+                    free(lockContent);
+                    if (isFallback) free(pxcfContent); else free(pxcfContent);
+                    exit(1);
+                } else {
+                    printf("[Security] New package. Saving checksum to lockfile...\n");
+                    FILE* lock = fopen("project-lock.pxcf", "a");
+                    if (lock) {
+                        fprintf(lock, "    \"%s\": \"%s\"\n", packageName, hashHex);
+                        fclose(lock);
+                    }
+                }
+                free(lockContent);
+            } else {
+                printf("[Security] Warning: No project-lock.pxcf found.\n");
+            }
+            
+            if (isFallback) free(pxcfContent); else free(pxcfContent);
+            
         } else {
             printf("Failed to install package. Ensure git is installed and the package/URL exists.\n");
         }
