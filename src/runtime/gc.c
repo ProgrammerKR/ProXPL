@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 #include "../include/gc.h"
 #include "../include/object.h"
 #include "../include/compiler.h"
@@ -496,11 +497,20 @@ static void sweep() {
 void collectGarbage(VM* vm_ptr) {
     if (vm_ptr != &vm) { 
     }
+    
+    if (vm.metrics.profileMode) {
+        vm.metrics.gcCycles++;
+    }
 
 #ifdef DEBUG_LOG_GC
     printf("-- gc begin\n");
-    size_t before = vm.bytesAllocated;
 #endif
+    size_t before = vm.bytesAllocated;
+
+#ifdef _WIN32
+    // Basic cross-platform timing could be added here; using a simple clock() for now
+#endif
+    clock_t start_time = clock();
 
     markRoots();
     traceReferences();
@@ -512,6 +522,11 @@ void collectGarbage(VM* vm_ptr) {
     // reset_nursery(); // Dangerous without evacuation
     
     vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
+
+    if (vm.metrics.profileMode) {
+        clock_t end_time = clock();
+        vm.metrics.totalGCPause += (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    }
 
 #ifdef DEBUG_LOG_GC
     printf("-- gc end\n");
