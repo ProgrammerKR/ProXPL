@@ -31,6 +31,7 @@ clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/
  src/runtime/value.c ^
  src/runtime/vm.c ^
  src/runtime/vm_helpers.c ^
+ src/vm/bytecode.c ^
  src/utils/error_report.c ^
  src/utils/file_utils.c ^
  src/pxcf/src/error.c ^
