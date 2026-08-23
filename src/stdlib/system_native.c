@@ -18,6 +18,7 @@
 #include "vm.h"
 #include "value.h"
 #include "object.h"
+#include "gc.h"
 
 #ifdef _WIN32
   #include <windows.h>
@@ -137,6 +138,14 @@ static Value native_sleep(int argCount, Value* args) {
     return NIL_VAL;
 }
 
+// gc() - Explicitly trigger garbage collection
+static Value native_gc(int argCount, Value* args) {
+    (void)argCount; (void)args;
+    extern VM vm;
+    collectGarbage(&vm);
+    return NIL_VAL;
+}
+
 // Register all system functions with the VM
 void register_system_natives(VM* pVM) {
     defineNative(pVM, "exit", native_exit);
@@ -146,5 +155,6 @@ void register_system_natives(VM* pVM) {
     defineNative(pVM, "exec", native_exec);
     defineNative(pVM, "time", native_time);
     defineNative(pVM, "sleep", native_sleep);
+    defineNative(pVM, "gc", native_gc);
 }
 
