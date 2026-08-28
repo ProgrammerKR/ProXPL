@@ -18,17 +18,17 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            artifact_name: proxpl-linux
+            artifact_name: proxpl-linux-x86_64
             binary_path: build/proxpl
-            asset_name: proxpl-linux
+            is_unix: true
           - os: windows-latest
-            artifact_name: proxpl-windows
+            artifact_name: proxpl-windows-x86_64
             binary_path: build\Release\proxpl.exe
-            asset_name: proxpl-windows.exe
+            is_unix: false
           - os: macos-latest
-            artifact_name: proxpl-macos
+            artifact_name: proxpl-macos-arm64
             binary_path: build/proxpl
-            asset_name: proxpl-macos
+            is_unix: true
 
     steps:
       - name: Checkout Code
@@ -109,25 +109,61 @@ jobs:
           ISCC setup.iss
           Get-ChildItem -Path build
 
-      - name: Rename Binary
+      - name: Extract Version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          else
+            echo "VERSION=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Run Smoke Tests
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-             if [ -f "build/Release/proxpl.exe" ]; then
-               cp "build/Release/proxpl.exe" ${{ matrix.asset_name }}
-             else
-               cp "build/proxpl.exe" ${{ matrix.asset_name }}
-             fi
+            BIN_PATH="build/Release/proxpl.exe"
+            if [ ! -f "$BIN_PATH" ]; then BIN_PATH="build/proxpl.exe"; fi
+            $BIN_PATH --version
           else
-             mv "${{ matrix.binary_path }}" ${{ matrix.asset_name }}
+            chmod +x "${{ matrix.binary_path }}"
+            ${{ matrix.binary_path }} --version
           fi
+
+      - name: Package Artifact (Unix)
+        if: matrix.is_unix
+        shell: bash
+        run: |
+          ARCHIVE="proxpl-${VERSION}-${{ matrix.artifact_name }}.tar.gz"
+          mkdir -p release_pkg
+          cp "${{ matrix.binary_path }}" release_pkg/proxpl
+          cp LICENSE README.md release_pkg/ 2>/dev/null || true
+          tar -czvf "$ARCHIVE" -C release_pkg .
+          sha256sum "$ARCHIVE" > "${ARCHIVE}.sha256"
+          echo "ASSET_NAME=$ARCHIVE" >> $GITHUB_ENV
+
+      - name: Package Artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $Archive = "proxpl-${env:VERSION}-${{ matrix.artifact_name }}.zip"
+          New-Item -ItemType Directory -Force -Path release_pkg
+          $BinPath = if (Test-Path "build/Release/proxpl.exe") { "build/Release/proxpl.exe" } else { "build/proxpl.exe" }
+          Copy-Item $BinPath -Destination release_pkg/
+          if (Test-Path LICENSE) { Copy-Item LICENSE -Destination release_pkg/ }
+          if (Test-Path README.md) { Copy-Item README.md -Destination release_pkg/ }
+          Compress-Archive -Path release_pkg/* -DestinationPath $Archive
+          $Hash = (Get-FileHash $Archive -Algorithm SHA256).Hash.ToLower()
+          "$Hash  $Archive" | Out-File -FilePath "${Archive}.sha256" -Encoding ASCII
+          echo "ASSET_NAME=$Archive" >> $env:GITHUB_ENV
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
+          name: ${{ matrix.artifact_name }}
           path: |
-            ${{ matrix.asset_name }}
+            ${{ env.ASSET_NAME }}
+            ${{ env.ASSET_NAME }}.sha256
             build/ProXPL_Installer_*.exe
 
   release:
@@ -138,34 +174,33 @@ jobs:
       - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
-          name: proxpl-windows.exe
-      
-      - name: Download Windows Installer
-        uses: actions/download-artifact@v4
-        with:
-          name: proxpl-windows.exe
+          name: proxpl-windows-x86_64
           path: .
-          pattern: ProXPL_Installer_*.exe
           merge-multiple: true
           
       - name: Download Linux Artifact
         uses: actions/download-artifact@v4
         with:
-          name: proxpl-linux
+          name: proxpl-linux-x86_64
+          path: .
+          merge-multiple: true
 
       - name: Download macOS Artifact
         uses: actions/download-artifact@v4
         with:
-          name: proxpl-macos
+          name: proxpl-macos-arm64
+          path: .
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            proxpl-windows.exe
+            *.tar.gz
+            *.tar.gz.sha256
+            *.zip
+            *.zip.sha256
             ProXPL_Installer_*.exe
-            proxpl-linux
-            proxpl-macos
           generate_release_notes: true
           draft: false
           prerelease: false
