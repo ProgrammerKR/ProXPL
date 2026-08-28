@@ -502,6 +502,7 @@ Stmt *createFuncDeclStmt(const char *name, StringList *params, StmtList *body,
   stmt->as.func_decl.contextCondition = contextCondition;
   stmt->as.func_decl.genericParams = genericParams;
   stmt->as.func_decl.genericBounds = genericBounds;
+  stmt->as.func_decl.returnType = (TypeInfo){TYPE_UNKNOWN, NULL, NULL, NULL, 0, false, NULL};
   return stmt;
 }
 
