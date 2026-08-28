@@ -303,7 +303,16 @@ static void freeObject(Obj* object) {
         case OBJ_CLASS: {
             struct ObjClass* klass = (struct ObjClass*)object;
             freeTable(&klass->methods);
+            if (klass->interfaces != NULL) {
+                FREE_ARRAY(Value, klass->interfaces, klass->interfaceCount);
+            }
             FREE(struct ObjClass, object);
+            break;
+        }
+        case OBJ_INTERFACE: {
+            ObjInterface* interface = (ObjInterface*)object;
+            freeTable(&interface->methods);
+            FREE(ObjInterface, object);
             break;
         }
         case OBJ_INSTANCE: {
