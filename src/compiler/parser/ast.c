@@ -1000,14 +1000,19 @@ void freeStmt(Stmt *stmt) {
     break;
   case STMT_FUNC_DECL:
     free(stmt->as.func_decl.name);
-    freeStringList(stmt->as.func_decl.params);
-    freeStmtList(stmt->as.func_decl.body);
+    if (stmt->as.func_decl.params) freeStringList(stmt->as.func_decl.params);
+    if (stmt->as.func_decl.body) freeStmtList(stmt->as.func_decl.body);
+    if (stmt->as.func_decl.contextCondition) freeExpr(stmt->as.func_decl.contextCondition);
+    if (stmt->as.func_decl.genericParams) freeStringList(stmt->as.func_decl.genericParams);
+    if (stmt->as.func_decl.genericBounds) freeStringList(stmt->as.func_decl.genericBounds);
     break;
   case STMT_CLASS_DECL:
     free(stmt->as.class_decl.name);
     if (stmt->as.class_decl.superclass) freeExpr(stmt->as.class_decl.superclass);
-    freeStringList(stmt->as.class_decl.interfaces);
-    freeStmtList(stmt->as.class_decl.methods);
+    if (stmt->as.class_decl.interfaces) freeStringList(stmt->as.class_decl.interfaces);
+    if (stmt->as.class_decl.methods) freeStmtList(stmt->as.class_decl.methods);
+    if (stmt->as.class_decl.genericParams) freeStringList(stmt->as.class_decl.genericParams);
+    if (stmt->as.class_decl.genericBounds) freeStringList(stmt->as.class_decl.genericBounds);
     break;
   case STMT_INTERFACE_DECL:
     free(stmt->as.interface_decl.name);
