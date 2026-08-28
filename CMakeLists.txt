@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
-project(ProXPL VERSION 1.6.3 LANGUAGES C CXX)
+
+# --- Version Extraction ---
+file(READ "include/prox/version.h" VER_HEADER)
+string(REGEX MATCH "#define PROXPL_VERSION_MAJOR ([0-9]+)" _ ${VER_HEADER})
+set(VER_MAJOR ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define PROXPL_VERSION_MINOR ([0-9]+)" _ ${VER_HEADER})
+set(VER_MINOR ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define PROXPL_VERSION_PATCH ([0-9]+)" _ ${VER_HEADER})
+set(VER_PATCH ${CMAKE_MATCH_1})
+
+project(ProXPL VERSION ${VER_MAJOR}.${VER_MINOR}.${VER_PATCH} LANGUAGES C CXX)
 
 # Enable C and C++
 enable_language(C CXX)
@@ -15,8 +25,9 @@ endif()
 if (MSVC)
   add_compile_options(/W4 /wd4244 /wd4245 /wd4267 /wd4100 /wd4200)
 else()
-  add_compile_options(-Wall -Wextra -Wno-sign-compare -Wno-unused-variable -Wno-unused-parameter)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
 
 # --- Build Configuration ---
 option(PROX_STATIC_BUILD "Build as a single static executable" ON)
@@ -254,7 +265,7 @@ target_link_libraries(prox_core PUBLIC mimalloc-static)
 
 # Aggressive optimizations for GCC/Clang in Release mode
 if(NOT MSVC)
-    target_compile_options(prox_core PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
+    target_compile_options(prox_core PRIVATE $<$<CONFIG:Release>:-O3 -flto>)
     if(NOT APPLE)
         target_link_options(prox_core PUBLIC $<$<CONFIG:Release>:-flto>)
     endif()
@@ -298,6 +309,24 @@ endif()
 # --- Optional components ---
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_BENCH "Build benchmarks" OFF)
+option(PROXPL_ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(PROXPL_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(PROXPL_ENABLE_LSAN "Enable LeakSanitizer" OFF)
+
+if(PROXPL_ENABLE_ASAN)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
+endif()
+
+if(PROXPL_ENABLE_UBSAN)
+    add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=undefined)
+endif()
+
+if(PROXPL_ENABLE_LSAN)
+    add_compile_options(-fsanitize=leak -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=leak)
+endif()
 
 if (BUILD_TESTS)
   enable_testing()

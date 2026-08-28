@@ -16,3 +16,14 @@ add_executable(test_opcode_values vm/test_opcode_values.c)
 target_link_libraries(test_opcode_values PRIVATE prox_core)
 target_include_directories(test_opcode_values PRIVATE ${CMAKE_SOURCE_DIR}/include)
 add_test(NAME OpcodeValues COMMAND test_opcode_values)
+
+# --- Language Tests ---
+file(GLOB_RECURSE PROX_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/language/*.prox")
+foreach(TEST_FILE ${PROX_TESTS})
+    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+    
+    # We want the test to run using the built proxpl executable
+    # proxpl target is built in the parent directory
+    add_test(NAME "Lang_${TEST_NAME}" 
+             COMMAND proxpl ${TEST_FILE})
+endforeach()
