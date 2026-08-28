@@ -7,12 +7,9 @@
 #ifndef PROX_COMMON_H
 #define PROX_COMMON_H
 
-#define PROXPL_VERSION_MAJOR 1
-#define PROXPL_VERSION_MINOR 6
-#define PROXPL_VERSION_PATCH 3
-#define PROXPL_VERSION_STRING "1.6.3"
+#include "prox/version.h"
+
 #define PROXPL_VERSION_CODENAME "Wasm World"
-#define PROXPL_VERSION_PRERELEASE ""
 
 #include <stdbool.h>
 #include <stddef.h>
