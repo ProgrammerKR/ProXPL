@@ -13,11 +13,8 @@
 
 static TypeInfo createType(TypeKind kind) {
     TypeInfo t;
+    memset(&t, 0, sizeof(TypeInfo));
     t.kind = kind;
-    t.name = NULL;
-    t.returnType = NULL;
-    t.paramTypes = NULL;
-    t.paramCount = 0;
     return t;
 }
 
@@ -598,7 +595,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
         case STMT_CLASS_DECL: {
             TypeInfo classType = createType(TYPE_CLASS);
             if (stmt->as.class_decl.name) {
-                classType.name = strdup(stmt->as.class_decl.name);
+                classType.name = stmt->as.class_decl.name;
                 classType.methods = stmt->as.class_decl.methods;
                 defineSymbol(checker, stmt->as.class_decl.name, classType);
             }
@@ -675,7 +672,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
         case STMT_TRAIT_DECL: {
             TypeInfo traitType = createType(TYPE_INTERFACE); // Treat Trait as Interface for now
             if (stmt->as.trait_decl.name) {
-                traitType.name = strdup(stmt->as.trait_decl.name);
+                traitType.name = stmt->as.trait_decl.name;
                 traitType.methods = stmt->as.trait_decl.methods;
                 defineSymbol(checker, stmt->as.trait_decl.name, traitType);
             }
@@ -814,14 +811,14 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
 
         case STMT_NODE_DECL: {
             TypeInfo nodeType = createType(TYPE_CLASS); // Treat as class
-            nodeType.name = strdup(stmt->as.node_decl.name);
+            nodeType.name = stmt->as.node_decl.name;
             defineSymbol(checker, stmt->as.node_decl.name, nodeType);
             break;
         }
 
         case STMT_DISTRIBUTED_DECL: {
             TypeInfo distType = createType(TYPE_CLASS); // Treat as struct/class
-            distType.name = strdup(stmt->as.distributed_decl.name);
+            distType.name = stmt->as.distributed_decl.name;
             
             defineSymbol(checker, stmt->as.distributed_decl.name, distType);
             
@@ -839,7 +836,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
 
         case STMT_MODEL_DECL: {
             TypeInfo modelType = createType(TYPE_CLASS); // Treat as class
-            modelType.name = strdup(stmt->as.model_decl.name);
+            modelType.name = stmt->as.model_decl.name;
             defineSymbol(checker, stmt->as.model_decl.name, modelType);
             
             beginScope(checker);
@@ -891,7 +888,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
 
         case STMT_CONTEXT_DECL: {
             TypeInfo contextType = createType(TYPE_CONTEXT);
-            contextType.name = strdup(stmt->as.context_decl.name);
+            contextType.name = stmt->as.context_decl.name;
             defineSymbol(checker, stmt->as.context_decl.name, contextType);
             
             beginScope(checker);
@@ -907,7 +904,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
 
         case STMT_LAYER_DECL: {
             TypeInfo layerType = createType(TYPE_LAYER);
-            layerType.name = strdup(stmt->as.layer_decl.name);
+            layerType.name = stmt->as.layer_decl.name;
             defineSymbol(checker, stmt->as.layer_decl.name, layerType);
 
             beginScope(checker);
