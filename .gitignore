@@ -19,6 +19,7 @@
 *.pdb
 *.ilk
 build/
+build_msvc/
 cmake-build-debug/
 cmake-build-release/
 bin/
