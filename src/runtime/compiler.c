@@ -14,6 +14,9 @@
 #include "../include/object.h"
 #include "../include/error_report.h"
 #include "../include/gc.h"
+#include "../include/vm.h"
+
+extern VM vm;
 
 #ifdef DEBUG_PRINT_CODE
 #include "../include/debug.h"
@@ -117,7 +120,9 @@ static void emitReturn() {
 }
 
 static uint8_t makeConstant(Value value) {
+  push(&vm, value);
   int constant = addConstant(currentChunk(), value);
+  pop(&vm);
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
     return 0;
