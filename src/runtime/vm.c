@@ -1269,10 +1269,12 @@ static InterpretResult run(VM* pvm) {
       STORE_FRAME();
       Value moduleVal;
       if (!tableGet(&pvm->importer.modules, name, &moduleVal)) {
-          runtimeError(pvm, "Could not find module '%s'.", name->chars);
-          return INTERPRET_RUNTIME_ERROR;
+          void* modPtr = NULL;
+          if (!loadModule(&pvm->importer, name->chars, &modPtr)) {
+              runtimeError(pvm, "Could not find module '%s'.", name->chars);
+              return INTERPRET_RUNTIME_ERROR;
+          }
       }
-      PUSH(moduleVal);
       DISPATCH();
   }
   
