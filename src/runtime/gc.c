@@ -21,65 +21,6 @@
 
 #define GC_HEAP_GROW_FACTOR 2
 
-// ----------------------------------------------------------------------------
-// GENERATIONAL GC: NURSERY (YOUNG GENERATION)
-// ----------------------------------------------------------------------------
-#define NURSERY_SIZE (2 * 1024 * 1024) // 2MB
-
-typedef struct {
-    uint8_t* start;
-    uint8_t* end;
-    uint8_t* current;
-} Nursery;
-
-static Nursery nursery;
-static bool nursery_initialized = false;
-
-void initNursery() {
-    nursery.start = (uint8_t*)malloc(NURSERY_SIZE);
-    if (!nursery.start) {
-        fprintf(stderr, "Fatal: Could not allocate GC Nursery.\n");
-        exit(1);
-    }
-    nursery.end = nursery.start + NURSERY_SIZE;
-    nursery.current = nursery.start;
-    nursery_initialized = true;
-}
-
-static bool is_in_nursery(void* ptr) {
-    if (!nursery_initialized || !ptr) return false;
-    return (uint8_t*)ptr >= nursery.start && (uint8_t*)ptr < nursery.end;
-}
-
-static void* nursery_alloc(size_t size) {
-    // Align size to 16 bytes for safe SIMD/AVX and pointer alignment
-    size = (size + 15) & ~15;
-    
-    if (nursery.current + size > nursery.end) {
-        return NULL; // Nursery full
-    }
-    void* result = nursery.current;
-    nursery.current += size;
-    return result;
-}
-
-#if 0
-static void reset_nursery() {
-    // In a real generational GC, we would evacuate survivors here.
-    // For this MVP, we treat Nursery as a "scratchpad" that gets fully collected
-    // or promoted. Implementing full copying GC requires pointer updates.
-    // Fallback strategy: If nursery full, trigger Full GC?
-    // Current strategy: Reset pointer. Dangerous if live objects exist!
-    // SAFE MODE: Don't reset unless we know everything is dead.
-    // So for now, we just fill it up and then fall back to malloc.
-    // This gives fast start-up speed (google scale req).
-    
-    // nursery.current = nursery.start; 
-}
-#endif
-
-// ----------------------------------------------------------------------------
-
 // Access the global VM instance
 extern VM vm;
 
@@ -89,14 +30,19 @@ void initGC(VM* pvm) {
     pvm->grayStack = NULL;
     pvm->bytesAllocated = 0;
     pvm->nextGC = 1024 * 1024;
-    
-    initNursery();
 }
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
-    // Stats
-    if (newSize > oldSize) vm.bytesAllocated += newSize - oldSize;
-    else vm.bytesAllocated -= oldSize - newSize; // Approximate for nursery
+    if (newSize > oldSize) {
+        vm.bytesAllocated += (newSize - oldSize);
+    } else {
+        size_t diff = oldSize - newSize;
+        if (vm.bytesAllocated >= diff) {
+            vm.bytesAllocated -= diff;
+        } else {
+            vm.bytesAllocated = 0;
+        }
+    }
     
     if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
@@ -109,46 +55,15 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 
     if (newSize == 0) {
         if (pointer == NULL) return NULL;
-        if (is_in_nursery(pointer)) {
-            // No-op free for nursery objects (bulk freed/reset)
-            return NULL;
-        }
         free(pointer);
         return NULL;
     }
 
-    // Allocation
-    if (oldSize == 0) {
-        // Try Nursery for small objects (e.g., < 256 bytes)
-        // Only if it's a fresh allocation
-        if (newSize < 256) {
-            void* mem = nursery_alloc(newSize);
-            if (mem) return mem;
-            // Fallthrough to malloc if full
-        }
-    } else {
-        // Reallocation
-        if (is_in_nursery(pointer)) {
-            // Moving out of nursery (Promote to Heap)
-            void* newMem = malloc(newSize);
-            if (!newMem) exit(1);
-            // Copy old data
-            // We don't know exact valid size to copy if oldSize is loose, 
-            // but reallocate api passes oldSize.
-            size_t copySize = oldSize < newSize ? oldSize : newSize;
-            // memcpy(newMem, pointer, copySize); // Need string.h
-            // We can't include string.h easily without messy diff? 
-            // We can iterate.
-             uint8_t* src = (uint8_t*)pointer;
-             uint8_t* dst = (uint8_t*)newMem;
-             for (size_t i = 0; i < copySize; i++) dst[i] = src[i];
-            
-            return newMem;
-        }
-    }
-
     void* result = realloc(pointer, newSize);
-    if (result == NULL) exit(1);
+    if (result == NULL) {
+        fprintf(stderr, "Fatal: Out of memory.\n");
+        exit(1);
+    }
     return result;
 }
 
@@ -338,7 +253,6 @@ static void traceReferences() {
 }
 
 static void freeObject(Obj* object) {
-    if (is_in_nursery(object)) return; // Don't free nursery objects individually
 
 #ifdef DEBUG_LOG_GC
     printf("%p free ", (void*)object);
@@ -348,7 +262,8 @@ static void freeObject(Obj* object) {
 
     switch (object->type) {
         case OBJ_STRING: {
-            FREE(ObjString, object);
+            ObjString* string = (ObjString*)object;
+            reallocate(object, sizeof(ObjString) + string->length + 1, 0);
             break;
         }
         case OBJ_FUNCTION: {
@@ -376,7 +291,9 @@ static void freeObject(Obj* object) {
         }
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
-            FREE_ARRAY(ObjUpvalue*, closure->upvalues, closure->upvalueCount);
+            if (closure->upvalues != NULL && closure->upvalueCount > 0) {
+                FREE_ARRAY(ObjUpvalue*, closure->upvalues, closure->upvalueCount);
+            }
             FREE(ObjClosure, object);
             break;
         }
@@ -519,8 +436,6 @@ void collectGarbage(VM* vm_ptr) {
     
     sweep();
     
-    // reset_nursery(); // Dangerous without evacuation
-    
     vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
 
     if (vm.metrics.profileMode) {
@@ -546,8 +461,4 @@ void freeObjects(VM* vm_ptr) {
     
     free(vm.grayStack);
     vm.grayStack = NULL;
-    
-    if (nursery_initialized) {
-        free(nursery.start);
-    }
 }
