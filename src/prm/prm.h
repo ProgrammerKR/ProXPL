@@ -9,6 +9,7 @@
 #define PROX_PRM_H
 
 #include <stdbool.h>
+#include "../../include/common.h"
 
 // Max lengths
 #define MAX_PATH_LEN 1024
