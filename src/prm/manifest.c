@@ -55,9 +55,12 @@ bool prm_load_manifest(Manifest* manifest) {
     if (!file) return false;
     
     // Defaults
-    strcpy(manifest->entryPoint, "src/main.prox");
-    strcpy(manifest->version, "0.1.0");
-    strcpy(manifest->name, "untitled");
+    strncpy(manifest->entryPoint, "src/main.prox", sizeof(manifest->entryPoint) - 1);
+    manifest->entryPoint[sizeof(manifest->entryPoint) - 1] = '\0';
+    strncpy(manifest->version, "0.1.0", sizeof(manifest->version) - 1);
+    manifest->version[sizeof(manifest->version) - 1] = '\0';
+    strncpy(manifest->name, "untitled", sizeof(manifest->name) - 1);
+    manifest->name[sizeof(manifest->name) - 1] = '\0';
     
     char line[512];
     while (fgets(line, sizeof(line), file)) {
@@ -131,8 +134,10 @@ void prm_init(const char* name) {
     // Initialize storage (lockfile and cache)
     prm_init_cache();
     Manifest dummy;
-    strcpy(dummy.name, name);
-    strcpy(dummy.version, "0.1.0");
+    strncpy(dummy.name, name, sizeof(dummy.name) - 1);
+    dummy.name[sizeof(dummy.name) - 1] = '\0';
+    strncpy(dummy.version, "0.1.0", sizeof(dummy.version) - 1);
+    dummy.version[sizeof(dummy.version) - 1] = '\0';
     prm_save_lockfile(&dummy);
 
     printf("Created new project: %s\n", name);
