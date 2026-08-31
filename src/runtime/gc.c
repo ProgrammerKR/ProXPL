@@ -144,6 +144,21 @@ static void blackenObject(Obj* object) {
             struct ObjClass* klass = (struct ObjClass*)object;
             markObject((Obj*)klass->name);
             markTable(&klass->methods);
+            for (int i = 0; i < klass->interfaceCount; i++) {
+                markValue(klass->interfaces[i]);
+            }
+            break;
+        }
+        case OBJ_INTERFACE: {
+            ObjInterface* interface = (ObjInterface*)object;
+            markObject((Obj*)interface->name);
+            markTable(&interface->methods);
+            break;
+        }
+        case OBJ_TASK: {
+            struct ObjTask* task = (struct ObjTask*)object;
+            markValue(task->result);
+            if (task->next != NULL) markObject((Obj*)task->next);
             break;
         }
         case OBJ_INSTANCE: {
@@ -213,10 +228,13 @@ static void blackenObject(Obj* object) {
         case OBJ_CHANNEL: {
             ObjChannel* channel = (ObjChannel*)object;
             if (channel->buffer) {
-                for (int i=0; i<channel->capacity; i++) {
-                    markValue(channel->buffer[i]);
+                for (int i = 0; i < channel->count; i++) {
+                    int idx = (channel->head + i) % channel->capacity;
+                    markValue(channel->buffer[idx]);
                 }
             }
+            if (channel->waitingReceivers != NULL) markObject((Obj*)channel->waitingReceivers);
+            if (channel->waitingSenders != NULL) markObject((Obj*)channel->waitingSenders);
             break;
         }
 
@@ -280,6 +298,17 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_FOREIGN: {
+            ObjForeign* foreign = (ObjForeign*)object;
+            if (foreign->name != NULL && strcmp(foreign->name->chars, "Buffer") == 0 && foreign->library != NULL) {
+                typedef struct {
+                    uint8_t* data;
+                    int size;
+                    int capacity;
+                } ProxBufHeader;
+                ProxBufHeader* b = (ProxBufHeader*)foreign->library;
+                if (b->data) free(b->data);
+                free(b);
+            }
             FREE(ObjForeign, object);
             break;
         }
