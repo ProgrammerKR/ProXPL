@@ -522,15 +522,17 @@ ProXPL/
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
-- **[Language Specification](docs/language-spec.md)**: A detailed guide to ProXPL grammar, keywords, operators, data types, and core semantics.
-- **[Standard Library Reference](docs/stdlib/)**: Detailed documentation for all built-in functions and modules.
-- **[Architecture Guide](docs/architecture/)**: A deep dive into the compiler design and Virtual Machine (VM) internals.
-- **[Core Pillars](docs/pillars/)**: Detailed specifications for ProXPL's 10 paradigm pillars, including Intents, Contexts, and ASR.
-- **[IR Specification](docs/ir-spec/)**: Documentation for the SSA (Static Single Assignment) intermediate representation.
-- **[Build Guide](docs/BUILD_GUIDE.md)**: Platform-specific instructions for building ProXPL from source.
-- **[Coding Standards](CODING_STANDARD.md)**: Code style guidelines and contribution workflow.
-- **[Benchmarks](BENCHMARKS.md)**: Performance metrics, comparisons, and optimization notes.
-- **[Ecosystem Design](docs/architecture/ECOSYSTEM_DESIGN.md)**: Overview of the Standard Library and PRM (ProX Package Manager) architecture.
+- **[Documentation Hub](docs/README.md)**: Main entry point for all documentation.
+- **[Getting Started](docs/getting-started/README.md)**: Installation, quickstart, and tutorials.
+- **[Language Specification](docs/language/README.md)**: Grammar, syntax, and semantics.
+- **[Standard Library Reference](docs/standard-library/README.md)**: Detailed documentation for 75+ built-in functions.
+- **[Compiler Architecture](docs/compiler/README.md)**: Multi-phase compiler design, IR, and bytecode.
+- **[Runtime & VM](docs/runtime/README.md)**: Stack-based VM, NaN-boxing, and garbage collection.
+- **[Tooling & VS Code](docs/tooling/README.md)**: CLI tools, LSP, formatter, and editor integration.
+- **[Package Manager (PRM)](docs/packages/README.md)**: ProX Repository Manager and registry.
+- **[Design & Paradigms](docs/design/README.md)**: Multi-paradigm architecture and operational pillars.
+- **[Release Notes](docs/releases/)**: Version history and upgrade guides.
+- **[Contributing Guide](docs/contributing/README.md)**: Guidelines, standards, and testing.
 
 ---
 
