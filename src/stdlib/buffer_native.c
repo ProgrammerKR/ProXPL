@@ -75,8 +75,11 @@ static Value native_buf_write_byte(int argCount, Value* args) {
     ProxBuffer* b = (ProxBuffer*)AS_FOREIGN(args[0])->library;
     uint8_t byte = (uint8_t)((int)AS_NUMBER(args[1]) & 0xFF);
     if (b->size >= b->capacity) {
-        b->capacity *= 2;
-        b->data = (uint8_t*)realloc(b->data, b->capacity);
+        int newCap = b->capacity * 2;
+        uint8_t* newData = (uint8_t*)realloc(b->data, newCap);
+        if (!newData) return NIL_VAL;
+        b->data = newData;
+        b->capacity = newCap;
     }
     b->data[b->size++] = byte;
     return NIL_VAL;
@@ -104,9 +107,15 @@ static Value native_buf_write_str(int argCount, Value* args) {
     ProxBuffer* b  = (ProxBuffer*)AS_FOREIGN(args[0])->library;
     ObjString*  s  = AS_STRING(args[1]);
     int needed = b->size + s->length;
-    while (b->capacity < needed) {
-        b->capacity *= 2;
-        b->data = (uint8_t*)realloc(b->data, b->capacity);
+    int newCap = b->capacity;
+    while (newCap < needed) {
+        newCap *= 2;
+    }
+    if (newCap > b->capacity) {
+        uint8_t* newData = (uint8_t*)realloc(b->data, newCap);
+        if (!newData) return NIL_VAL;
+        b->data = newData;
+        b->capacity = newCap;
     }
     memcpy(b->data + b->size, s->chars, s->length);
     b->size += s->length;
@@ -126,9 +135,10 @@ static Value native_buf_hex_dump(int argCount, Value* args) {
     ProxBuffer* b = (ProxBuffer*)AS_FOREIGN(args[0])->library;
     if (b->size == 0) return OBJ_VAL(copyString("", 0));
 
-    // Each byte: "XX " = 3 chars, last has no space
-    int outLen = b->size * 3;
+    // Each byte: "XX " = 3 chars, last has no space -> size * 3 - 1
+    int outLen = b->size * 3 - 1;
     char* out = (char*)malloc(outLen + 1);
+    if (!out) return OBJ_VAL(copyString("", 0));
     for (int i = 0; i < b->size; i++) {
         sprintf(out + i * 3, "%02x", b->data[i]);
         if (i < b->size - 1) out[i * 3 + 2] = ' ';
