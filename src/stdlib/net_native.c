@@ -46,9 +46,12 @@ static Value native_tcp_listener(int argCount, Value* args) {
     if (argCount < 1 || !IS_STRING(args[0])) return NIL_VAL;
     const char* addr = AS_CSTRING(args[0]);
     printf("[Net] Binding TCP Listener to %s (fd: %d)\n", addr, socket_counter);
-    // Return a dummy "Listener" object (using Foreign/Native for now or just an ID)
-    // We'll reuse ObjForeign to hold the handle.
-    return OBJ_VAL(newForeign(copyString("TCPListener", 11), (void*)(intptr_t)socket_counter++, NULL));
+    // Protect the newly created string from GC before passing to newForeign
+    ObjString* tag = copyString("TCPListener", 11);
+    push(&vm, OBJ_VAL(tag));
+    ObjForeign* foreign = newForeign(tag, (void*)(intptr_t)socket_counter++, NULL);
+    pop(&vm);
+    return OBJ_VAL(foreign);
 }
 
 // net.accept(listener) -> Task<Socket>
@@ -62,9 +65,12 @@ static Value native_accept(int argCount, Value* args) {
     // 4. (Later) Scheduler wakes up Task when connection arrives.
     
     printf("[Net] Async Accept... (Simulated Immediate Success)\n");
-    
-    // Mock new connection
-    ObjForeign* conn = newForeign(copyString("TCPSocket", 9), (void*)(intptr_t)socket_counter++, NULL);
+
+    // Mock new connection - protect the string before passing to newForeign
+    ObjString* tag = copyString("TCPSocket", 9);
+    push(&vm, OBJ_VAL(tag));
+    ObjForeign* conn = newForeign(tag, (void*)(intptr_t)socket_counter++, NULL);
+    pop(&vm);
     
     // We return a "Task" that is already completed for MDV/Stub purposes
     // Or we should allow the VM to construct a Task wrapping this value?
