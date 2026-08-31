@@ -63,7 +63,12 @@ static Value fs_read_file(int argCount, Value* args) {
     if (!file) return NIL_VAL;
     
     fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
+#ifdef _WIN32
+    long long fileSizeLL = _ftelli64(file);
+    size_t fileSize = (fileSizeLL > 0) ? (size_t)fileSizeLL : 0;
+#else
+    size_t fileSize = (size_t)ftell(file);
+#endif
     rewind(file);
     
     char* buffer = (char*)malloc(fileSize + 1);
