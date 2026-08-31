@@ -79,8 +79,8 @@ static int find_char_simd(const char* str, int len, char target) {
     }
     return -1;
 #else
-    // Pure scalar
-    const char* ptr = strchr(str, target);
+    // Pure scalar - use memchr instead of strchr to handle embedded null bytes
+    const char* ptr = (const char*)memchr(str, target, len);
     return ptr ? (int)(ptr - str) : -1;
 #endif
 }
