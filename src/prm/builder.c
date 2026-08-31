@@ -152,32 +152,34 @@ void prm_build(const Manifest* manifest, BuildOptions options) {
     Token tokens[4096];
     int tokenCount = 0;
     while (1) {
+        if (tokenCount >= 4096) {
+            fprintf(stderr, "[PRM] Error: Source file exceeds maximum token limit (4096).\n");
+            break;
+        }
         Token t = scanToken(&scanner);
         tokens[tokenCount++] = t;
-        if (t.type == TOKEN_EOF || tokenCount >= 4096) break;
+        if (t.type == TOKEN_EOF) break;
     }
 
     Parser parser;
     initParser(&parser, tokens, tokenCount, source);
     StmtList* statements = parse(&parser);
     if (!statements) { free(source); return; }
-    
+
     optimizeAST(statements);
-    
+
     ObjFunction* function = newFunction();
     push(&vm, OBJ_VAL(function));
     if (!generateBytecode(statements, function)) {
         pop(&vm); freeStmtList(statements); free(source); return;
     }
-    pop(&vm);
-    
+
     printf("[PRM] Caching compiled artifact to %s\n", cacheFile);
     dumpPXBC(cacheFile, &function->chunk);
-    
-    push(&vm, OBJ_VAL(function));
+
     interpretChunk(&vm, &function->chunk);
     pop(&vm);
-    
+
     freeStmtList(statements);
     free(source);
 }
@@ -227,9 +229,13 @@ void prm_build_web(const Manifest* manifest, const char* outputDir) {
     Token tokens[4096];
     int tokenCount = 0;
     for (;;) {
+        if (tokenCount >= 4096) {
+            fprintf(stderr, "[PRM] Error: Source file exceeds maximum token limit (4096).\n");
+            break;
+        }
         Token token = scanToken(&scanner);
         tokens[tokenCount++] = token;
-        if (token.type == TOKEN_EOF || tokenCount >= 4096) break;
+        if (token.type == TOKEN_EOF) break;
     }
 
     Parser parser;
