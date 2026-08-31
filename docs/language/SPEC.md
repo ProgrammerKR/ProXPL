@@ -1,6 +1,6 @@
 # ProXPL Language Specification
 
-**Version:** 1.6.3
+**Version:** 1.6.4
 **Status:** Stable
 
 Complete grammar, syntax, and semantics of ProXPL.

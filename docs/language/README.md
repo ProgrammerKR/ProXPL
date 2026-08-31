@@ -14,5 +14,5 @@ Complete language guides, specifications, and references.
 
 ---
 
-**Status**: Stable (v1.6.3, spec updated)
+**Status**: Stable (v1.6.4, spec updated)
 **Note**: See `docs/IMPLEMENTATION_STATUS.md` for feature implementation details.

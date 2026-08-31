@@ -9,7 +9,7 @@
 
 #include "prox/version.h"
 
-#define PROXPL_VERSION_CODENAME "Wasm World"
+#define PROXPL_VERSION_CODENAME "Concurrency Core"
 
 #include <stdbool.h>
 #include <stddef.h>

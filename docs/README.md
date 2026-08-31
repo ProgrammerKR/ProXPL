@@ -89,4 +89,4 @@ For detailed navigation, see:
 ---
 
 *Last Updated: August 2026*
-*ProXPL v1.6.3 - "Wasm World"*
+*ProXPL v1.6.4 - "Concurrency Core"*

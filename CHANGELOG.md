@@ -2,6 +2,19 @@
 
 All notable changes to the ProXPL programming language will be documented in this file.
 
+## [1.6.4] - 2027-07-20
+### Added
+- **Channels & Structured Concurrency**: First-class asynchronous communication channels with `task.group`, `task.spawn`, and cooperative cancellation.
+- **Actor Model**: Lightweight message-passing actor concurrency model with `actor`, `receive`, `!`, and `?` operators.
+- **Database Connectivity (`std.db`)**: Universal database driver interface with connection pooling and support for SQLite, PostgreSQL, MySQL, and Redis.
+- **Serialization (`std.encoding`)**: Standardized serialization modules for JSON, TOML, CSV, and Base64.
+- **LSP v2**: Semantic highlighting, find references, rename symbol, inlay hints, and code actions in the Language Server.
+- **Compile-Time Evaluation (`comptime`)**: Compile-time constant expressions and compile-time function execution.
+
+### Changed
+- Project version bumped to 1.6.4 ("Concurrency Core") across all build configurations and manifests.
+- Keywords `actor`, `receive`, and `comptime` are now reserved.
+
 ## [1.6.3] - 2027-04-15
 ### Added
 - **WebAssembly Target**: Full WebAssembly (.wasm) compiler backend with JS glue code generation and `prm serve --wasm`.
