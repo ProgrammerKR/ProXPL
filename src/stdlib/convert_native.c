@@ -65,20 +65,9 @@ static Value native_to_string(int argCount, Value* args) {
         double num = AS_NUMBER(args[0]);
         if (num == (int64_t)num) {
             int64_t n = (int64_t)num;
-            char* ptr = buffer + sizeof(buffer) - 1;
-            *ptr = '\0';
-            bool isNeg = n < 0;
-            if (isNeg) n = -n;
-            if (n == 0) {
-                *--ptr = '0';
-            } else {
-                while (n > 0) {
-                    *--ptr = '0' + (n % 10);
-                    n /= 10;
-                }
-                if (isNeg) *--ptr = '-';
-            }
-            return OBJ_VAL(copyString(ptr, (int)(buffer + sizeof(buffer) - 1 - ptr)));
+            // Use snprintf to safely handle all integer values including INT64_MIN
+            snprintf(buffer, sizeof(buffer), "%lld", (long long)n);
+            return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
         } else {
             snprintf(buffer, sizeof(buffer), "%.15g", num);
         }
