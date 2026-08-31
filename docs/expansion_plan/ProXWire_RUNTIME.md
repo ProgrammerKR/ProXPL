@@ -26,7 +26,7 @@ Example (lowering sketch)
 -------------------------
 // High-level route
 @intent(domain:"user", action:"create", accepts:"application/json")
-async fn create_user(req: Sanitized[UserCreate], ctx: Context) -> JSON { ... }
+async func create_user(req: Sanitized[UserCreate], ctx: Context): JSON { ... }
 
 // Compiler output (sketch):
 // 1) Register intent signature and sanitizer at module init
@@ -34,7 +34,7 @@ prox.net.shield.register_sanitizer("user:create:application/json", compiled_pipe
 ProXWire.Router.register_handler("user:create:application/json", &create_user_wrapper)
 
 // 2) Wrapper ensures typed call
-fn create_user_wrapper(raw_req, ctx) {
+func create_user_wrapper(raw_req, ctx) {
   let sanitized = prox.net.shield.auto_sanitize(raw_req.tainted, "user:create:application/json")
   if sanitized.is_err() { return Response(400) }
   return create_user(sanitized.unwrap(), ctx)

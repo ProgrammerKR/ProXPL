@@ -19,7 +19,7 @@ Core primitives
 Example (pseudo-ProXPL)
 
 @intent(domain:"user", action:"create", accepts:"application/json")
-async fn create_user(req: Sanitized[UserCreate], ctx: Context) -> JSON {
+async func create_user(req: Sanitized[UserCreate], ctx: Context): JSON {
   // ctx.priority_hint influences scheduler lane
   let u = await users.create(req)
   return JSON(u)

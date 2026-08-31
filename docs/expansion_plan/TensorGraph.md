@@ -11,7 +11,7 @@ Scene -> Tensor Builder -> Physics Kernel (tensorized ops) -> Collision Layer (b
 
 Example pseudocode (ProXPL)
 
-fn physics_step(state: TensorState, dt: Float) -> TensorState {
+func physics_step(state: TensorState, dt: Float): TensorState {
   let forces = compute_forces(state)           // tensorized
   let accel = forces / state.mass
   state.vel += accel * dt
