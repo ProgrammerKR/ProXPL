@@ -274,7 +274,7 @@ project(ProXPL
 
 ### Querying Version at Runtime
 
-```c
+```proxpl
 func main() {
     print("ProXPL " + version());  // Outputs: "ProXPL 0.1.0"
 }
