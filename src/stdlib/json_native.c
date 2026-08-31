@@ -39,10 +39,10 @@ static Value native_json_parse(int argCount, Value* args) {
 // stringify(val) -> String
 static Value native_json_stringify(int argCount, Value* args) {
     if (argCount < 1) return OBJ_VAL(copyString("", 0));
-    
+
     // Basic implementation for primitives
     Value v = args[0];
-    if (IS_NULL(v)) return OBJ_VAL(copyString("null", 4));
+    if (IS_NULL(v) || IS_NIL(v)) return OBJ_VAL(copyString("null", 4));
     if (IS_BOOL(v)) {
         return AS_BOOL(v) ? OBJ_VAL(copyString("true", 4)) : OBJ_VAL(copyString("false", 5));
     }
@@ -52,16 +52,29 @@ static Value native_json_stringify(int argCount, Value* args) {
         return OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
     }
     if (IS_STRING(v)) {
-        // TODO: Escape string
         ObjString* s = AS_STRING(v);
-        // Simple wrap in quotes for now
-        int len = s->length + 2;
-        char* buffer = (char*)malloc(len + 1);
-        buffer[0] = '"';
-        memcpy(buffer + 1, s->chars, s->length);
-        buffer[len-1] = '"';
-        buffer[len] = '\0';
-        Value res = OBJ_VAL(takeString(buffer, len));
+        int maxLen = s->length * 2 + 3;
+        char* buffer = (char*)malloc(maxLen);
+        if (!buffer) return NIL_VAL;
+        int pos = 0;
+        buffer[pos++] = '"';
+        for (int i = 0; i < s->length; i++) {
+            char c = s->chars[i];
+            switch (c) {
+                case '"':  buffer[pos++] = '\\'; buffer[pos++] = '"'; break;
+                case '\\': buffer[pos++] = '\\'; buffer[pos++] = '\\'; break;
+                case '\b': buffer[pos++] = '\\'; buffer[pos++] = 'b'; break;
+                case '\f': buffer[pos++] = '\\'; buffer[pos++] = 'f'; break;
+                case '\n': buffer[pos++] = '\\'; buffer[pos++] = 'n'; break;
+                case '\r': buffer[pos++] = '\\'; buffer[pos++] = 'r'; break;
+                case '\t': buffer[pos++] = '\\'; buffer[pos++] = 't'; break;
+                default:   buffer[pos++] = c; break;
+            }
+        }
+        buffer[pos++] = '"';
+        buffer[pos] = '\0';
+        Value res = OBJ_VAL(copyString(buffer, pos));
+        free(buffer);
         return res;
     }
 
