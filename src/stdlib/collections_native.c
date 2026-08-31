@@ -170,7 +170,7 @@ static Value native_col_range(int argCount, Value* args) {
     } else {
         return NIL_VAL;
     }
-    if (step == 0) step = 1;
+    if (step == 0) return NIL_VAL; // Error: zero step
 
     ObjList* result = newList();
     push(&vm, OBJ_VAL(result));
