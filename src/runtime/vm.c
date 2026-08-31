@@ -211,9 +211,10 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b->data[i]; break;
             case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b->data[i]; break;
             case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b->data[i]; break;
-            case '/': 
+            case '/':
                 for (int i = 0; i < a->size; i++) {
                     if (b->data[i] == 0) {
+                        pop(pvm); // res
                         runtimeError(pvm, "Tensor division by zero.");
                         return true;
                     }
@@ -241,8 +242,9 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] + b; break;
             case '-': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] - b; break;
             case '*': for (int i = 0; i < a->size; i++) res->data[i] = a->data[i] * b; break;
-            case '/': 
+            case '/':
                 if (b == 0) {
+                    pop(pvm); // res
                     runtimeError(pvm, "Division by zero.");
                     return true;
                 }
@@ -266,13 +268,14 @@ static bool performTensorArithmetic(VM* pvm, char op) {
             case '+': for (int i = 0; i < b->size; i++) res->data[i] = a + b->data[i]; break;
             case '-': for (int i = 0; i < b->size; i++) res->data[i] = a - b->data[i]; break;
             case '*': for (int i = 0; i < b->size; i++) res->data[i] = a * b->data[i]; break;
-            case '/': 
+            case '/':
                 for (int i = 0; i < b->size; i++) {
                     if (b->data[i] == 0) {
+                        pop(pvm); // res
                         runtimeError(pvm, "Division by zero.");
                         return true;
                     }
-                    res->data[i] = a / b->data[i]; 
+                    res->data[i] = a / b->data[i];
                 }
                 break;
         }
