@@ -998,6 +998,17 @@ void freeStmt(Stmt *stmt) {
   case STMT_VAR_DECL:
     free(stmt->as.var_decl.name);
     freeExpr(stmt->as.var_decl.initializer);
+    if (stmt->as.var_decl.type.name) free(stmt->as.var_decl.type.name);
+    if (stmt->as.var_decl.type.returnType != NULL) {
+        if (stmt->as.var_decl.type.returnType->name) free(stmt->as.var_decl.type.returnType->name);
+        free(stmt->as.var_decl.type.returnType);
+    }
+    if (stmt->as.var_decl.type.paramTypes) {
+        for (int i = 0; i < stmt->as.var_decl.type.paramCount; i++) {
+            if (stmt->as.var_decl.type.paramTypes[i].name) free(stmt->as.var_decl.type.paramTypes[i].name);
+        }
+        free(stmt->as.var_decl.type.paramTypes);
+    }
     break;
   case STMT_FUNC_DECL:
     free(stmt->as.func_decl.name);
@@ -1006,6 +1017,17 @@ void freeStmt(Stmt *stmt) {
     if (stmt->as.func_decl.contextCondition) freeExpr(stmt->as.func_decl.contextCondition);
     if (stmt->as.func_decl.genericParams) freeStringList(stmt->as.func_decl.genericParams);
     if (stmt->as.func_decl.genericBounds) freeStringList(stmt->as.func_decl.genericBounds);
+    if (stmt->as.func_decl.returnType.name) free(stmt->as.func_decl.returnType.name);
+    if (stmt->as.func_decl.returnType.returnType != NULL) {
+        if (stmt->as.func_decl.returnType.returnType->name) free(stmt->as.func_decl.returnType.returnType->name);
+        free(stmt->as.func_decl.returnType.returnType);
+    }
+    if (stmt->as.func_decl.returnType.paramTypes) {
+        for (int i = 0; i < stmt->as.func_decl.returnType.paramCount; i++) {
+            if (stmt->as.func_decl.returnType.paramTypes[i].name) free(stmt->as.func_decl.returnType.paramTypes[i].name);
+        }
+        free(stmt->as.func_decl.returnType.paramTypes);
+    }
     break;
   case STMT_CLASS_DECL:
     free(stmt->as.class_decl.name);
