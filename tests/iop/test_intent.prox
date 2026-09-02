@@ -1,6 +1,6 @@
 // Test Intent-Oriented Programming (IOP) Syntax
 
-intent verify_identity(user) -> bool;
+intent verify_identity(user);
 
 resolver OIDC matches verify_identity {
     print("Resolving verification for: " + user);
