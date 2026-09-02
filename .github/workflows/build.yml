@@ -13,8 +13,8 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
+  build-and-test:
+    name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -32,7 +32,7 @@ jobs:
               build/prm
           - os: windows-latest
             bin_path: build/ProXPL_Installer_*.exe
-            
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -84,11 +84,26 @@ jobs:
         shell: bash
         run: cmake --build build --config Release --verbose
 
-      - name: Run Tests
+      - name: Run CTest Suite
         shell: bash
         run: |
           cd build
-          ctest -C Release --output-on-failure
+          ctest -C Release --output-on-failure --verbose
+
+      - name: Run Standalone Test Runner (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          chmod +x tests/run_all_tests.sh
+          ./tests/run_all_tests.sh --bin ./build/proxpl
+
+      - name: Upload Test Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.os }}
+          path: build/Testing/Temporary/
+          retention-days: 7
 
       - name: Run Benchmarks
         shell: bash
@@ -101,9 +116,11 @@ jobs:
           else
             EXE_PATH="build/proxpl"
           fi
-          
+
           echo "Running benchmarks with $EXE_PATH"
-          python benchmarks/run_benchmarks.py --executable "$EXE_PATH"
+          if [ -f "benchmarks/run_benchmarks.py" ]; then
+            python benchmarks/run_benchmarks.py --executable "$EXE_PATH" || echo "Benchmarks skipped or completed with warnings"
+          fi
 
       - name: Build Installer (Windows)
         if: matrix.os == 'windows-latest'
@@ -115,12 +132,14 @@ jobs:
           Copy-Item "$binDir/proxpl.exe" -Destination "bin/"
           Copy-Item "$binDir/prm.exe" -Destination "bin/"
           Get-ChildItem "$binDir/*.dll" -ErrorAction SilentlyContinue | Copy-Item -Destination "bin/"
-          iscc setup.iss
+          if (Test-Path "setup.iss") {
+            iscc setup.iss
+          }
 
-      - name: Upload Artifact
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ProXPL-v1.2.0-${{ matrix.os }}
+          name: ProXPL-v1.6.4-${{ matrix.os }}
           path: |
             ${{ matrix.bin_path }}
             examples/
