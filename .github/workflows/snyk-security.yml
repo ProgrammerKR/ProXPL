@@ -38,7 +38,7 @@ jobs:
       # This is where you will need to introduce the Snyk API token created with your Snyk account
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Initialize submodules
         run: git submodule update --init --recursive
