@@ -1,0 +1,130 @@
+{
+  "$schema": "https://proxpl.in/schemas/registry-v1.json",
+  "registry": "ProXPL Official Package Registry",
+  "version": "1.0.0",
+  "updatedAt": "2026-09-02T20:00:00Z",
+  "packages": {
+    "http-server": {
+      "name": "http-server",
+      "description": "High-performance HTTP/1.1 and WebSocket server library for ProXPL",
+      "author": "ProXentix Team <packages@proxpl.in>",
+      "license": "MIT",
+      "repository": "https://github.com/ProgrammerKR/prox-http-server",
+      "homepage": "https://proxpl.in/packages/http-server",
+      "keywords": ["http", "server", "web", "network", "api"],
+      "latest": "1.3.0",
+      "versions": {
+        "1.3.0": {
+          "version": "1.3.0",
+          "tarball": "https://github.com/ProgrammerKR/prox-http-server/archive/refs/tags/v1.3.0.tar.gz",
+          "checksum": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "entryPoint": "src/index.prox",
+          "dependencies": {
+            "json": "^1.1.0"
+          },
+          "engine": ">=1.5.0"
+        }
+      }
+    },
+    "json": {
+      "name": "json",
+      "description": "Fast JSON parser, serializer, and JSON Schema validator",
+      "author": "ProXentix Team <packages@proxpl.in>",
+      "license": "MIT",
+      "repository": "https://github.com/ProgrammerKR/prox-json",
+      "homepage": "https://proxpl.in/packages/json",
+      "keywords": ["json", "serialization", "parser", "schema"],
+      "latest": "1.1.0",
+      "versions": {
+        "1.1.0": {
+          "version": "1.1.0",
+          "tarball": "https://github.com/ProgrammerKR/prox-json/archive/refs/tags/v1.1.0.tar.gz",
+          "checksum": "sha256:f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+          "entryPoint": "src/json.prox",
+          "dependencies": {},
+          "engine": ">=1.0.0"
+        }
+      }
+    },
+    "math-extra": {
+      "name": "math-extra",
+      "description": "Extended mathematical utilities, linear algebra, FFT, and statistics for ProXPL",
+      "author": "ProXentix Math Group <math@proxpl.in>",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/ProgrammerKR/prox-math-extra",
+      "homepage": "https://proxpl.in/packages/math-extra",
+      "keywords": ["math", "linear-algebra", "fft", "statistics", "calculus"],
+      "latest": "0.9.5",
+      "versions": {
+        "0.9.5": {
+          "version": "0.9.5",
+          "tarball": "https://github.com/ProgrammerKR/prox-math-extra/archive/refs/tags/v0.9.5.tar.gz",
+          "checksum": "sha256:5b80a4e8d2e8b2b64b1f486241b7145b2bb50242279b9bfa5f643e99e4f04c64",
+          "entryPoint": "src/math_extra.prox",
+          "dependencies": {},
+          "engine": ">=1.2.0"
+        }
+      }
+    },
+    "sqlite": {
+      "name": "sqlite",
+      "description": "Native SQLite database driver with connection pooling and type-safe query builder",
+      "author": "ProXentix Team <packages@proxpl.in>",
+      "license": "MIT",
+      "repository": "https://github.com/ProgrammerKR/prox-sqlite",
+      "homepage": "https://proxpl.in/packages/sqlite",
+      "keywords": ["sqlite", "database", "sql", "orm", "storage"],
+      "latest": "1.0.2",
+      "versions": {
+        "1.0.2": {
+          "version": "1.0.2",
+          "tarball": "https://github.com/ProgrammerKR/prox-sqlite/archive/refs/tags/v1.0.2.tar.gz",
+          "checksum": "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+          "entryPoint": "src/sqlite.prox",
+          "dependencies": {},
+          "engine": ">=1.6.0"
+        }
+      }
+    },
+    "actor-kit": {
+      "name": "actor-kit",
+      "description": "Actor system patterns: Supervision trees, router pools, and event buses for ProXPL",
+      "author": "ProXentix Concurrency Team <concurrency@proxpl.in>",
+      "license": "MIT",
+      "repository": "https://github.com/ProgrammerKR/prox-actor-kit",
+      "homepage": "https://proxpl.in/packages/actor-kit",
+      "keywords": ["actors", "concurrency", "supervision", "mailbox", "distributed"],
+      "latest": "0.8.0",
+      "versions": {
+        "0.8.0": {
+          "version": "0.8.0",
+          "tarball": "https://github.com/ProgrammerKR/prox-actor-kit/archive/refs/tags/v0.8.0.tar.gz",
+          "checksum": "sha256:739e4a3b1a8d9b23bfa7e4a1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
+          "entryPoint": "src/actor_kit.prox",
+          "dependencies": {},
+          "engine": ">=1.6.4"
+        }
+      }
+    },
+    "cli-colors": {
+      "name": "cli-colors",
+      "description": "ANSI terminal color formatting, spinners, progress bars, and table formatting",
+      "author": "ProXentix Team <packages@proxpl.in>",
+      "license": "MIT",
+      "repository": "https://github.com/ProgrammerKR/prox-cli-colors",
+      "homepage": "https://proxpl.in/packages/cli-colors",
+      "keywords": ["cli", "terminal", "colors", "ansi", "formatting"],
+      "latest": "1.0.0",
+      "versions": {
+        "1.0.0": {
+          "version": "1.0.0",
+          "tarball": "https://github.com/ProgrammerKR/prox-cli-colors/archive/refs/tags/v1.0.0.tar.gz",
+          "checksum": "sha256:d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+          "entryPoint": "src/colors.prox",
+          "dependencies": {},
+          "engine": ">=0.9.0"
+        }
+      }
+    }
+  }
+}
