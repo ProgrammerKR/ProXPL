@@ -4,7 +4,6 @@ intent verify_identity(user);
 
 resolver OIDC matches verify_identity {
     print("Resolving verification for: " + user);
-    return true;
 }
 
 func main() {
