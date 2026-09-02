@@ -41,38 +41,51 @@ ProXPL is implemented entirely in **C/C++** with zero runtime dependencies, maki
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features & Implementation Status
 
-| Feature | Description |
-|---------|-------------|
-| 🔤 **Modern Syntax** | JavaScript-like syntax with curly braces, familiar control flow, and clean function definitions |
-| 🎨 **ProXPL Icons** | **1100+ File Icons** support via the official extension (Material Icon Theme integration) |
-| ⚡ **Fast Execution** | Custom stack-based VM executing optimized bytecode with LLVM AOT compilation support |
-| 📦 **Rich Standard Library** | **75+ native functions** for I/O, mathematics, string manipulation, collections, and system tasks |
-| 🛡️ **Static Type System** | Compile-time type checking with type inference reduces runtime errors |
-| 🧩 **Module System** | Robust `use` keyword for importing standard libraries, packages, and local files |
-| 🔧 **PRM Package Manager** | Integrated **ProX Repository Manager** for dependency management and project scaffolding |
-| 🏗️ **Multi-Phase Compiler** | Lexer → Parser (AST) → Type Checker → IR Optimizer → Bytecode/LLVM |
-| ⏩ **Async/Await** | Native asynchronous programming with LLVM Coroutines support |
-| 🔄 **Multi-Paradigm** | Native support for **Object-Oriented**, **Intent-Oriented**, and **Context-Oriented** programming |
-| 🔍 **Developer Tools** | CLI with watch mode, LSP for IDE integration, comprehensive error reporting |
-| 🎯 **Memory Safety** | Built-in garbage collector with mark-and-sweep algorithm |
-| 🌐 **Cross-Platform** | First-class support for Windows, Linux, and macOS |
+| Feature | Category | Status | Notes |
+|---------|----------|--------|-------|
+| 🔤 **Modern Syntax** | Core Language | ✅ **Production** | JavaScript-like syntax with curly braces, familiar control flow |
+| 🛡️ **Static Type System** | Core Language | ✅ **Production** | Compile-time type checking with intelligent type inference |
+| ⚡ **Stack-Based VM** | Runtime | ✅ **Production** | Custom bytecode interpreter executing 100+ optimized opcodes |
+| 🎯 **Mark-Sweep GC** | Runtime | ✅ **Production** | Automatic memory management with NaN-boxing & tricolor marking |
+| 📦 **Rich Standard Library** | Standard Library | ✅ **Production** | **75+ native functions** (I/O, fs, math, strings, json, crypto, time) |
+| 🧩 **Module System** | Compiler | ✅ **Production** | Robust `use` keyword for standard libraries, packages, and local files |
+| 🔄 **Object-Oriented (OOP)** | Paradigm | ✅ **Production** | Classes, single inheritance, `this`, `super`, methods, fields |
+| 🎯 **Intent-Oriented (IOP)** | Paradigm | ✅ **Production** | Native `intent` declarations with dynamic `resolver` dispatch |
+| 🎭 **Context-Aware (COP)** | Paradigm | ✅ **Production** | Dynamic execution layers (`context`, `layer`, `activate`) |
+| 🛡️ **Self-Healing (ASR)** | Reliability | ✅ **Production** | Exception handling & automatic recovery (`resilient`, `recovery`) |
+| 🔢 **Tensor Math** | AI/Math | ✅ **Production** | Native multi-dimensional tensors with `@` matrix multiplication |
+| 📝 **String Templates** | Syntax | ✅ **Production** | Backtick template literals (`` `Hello, ${name}!` ``) |
+| ➕ **Operator Overloading** | Core Language | ✅ **Production** | Custom class operators (`+ - * / % @ == != < > [] ()`) |
+| 🌐 **WebAssembly Target** | Compiler | ✅ **Production** | Full Wasm compilation target (`proxpl build --target wasm`) |
+| 🔧 **Code Formatter** | Tooling | ✅ **Production** | Official `prox fmt` formatter with `.proxfmt.pxcf` config |
+| 🧪 **Automated Test Suite** | Tooling | ✅ **Production** | CTest integration + `tests/run_all_tests.sh` (51+ test suites) |
+| 🔀 **Channels & Actors** | Concurrency | 🟡 **Beta** | Mailboxes, actor message passing (`!`, `?`), task groups |
+| ⚡ **LLVM AOT Backend** | Compiler | 🟡 **Beta** | LLVM IR generation implemented; standalone native linking in progress |
+| 🔒 **Taint Security Analysis** | Security | 🟡 **Beta** | Compile-time taint tracking; runtime enforcement in progress |
+| 📦 **PRM Package Manager** | Tooling | 🟡 **Beta** | Local package management works; central registry scheduled for v1.7.0 |
+| 🔍 **Language Server (LSP)** | Tooling | 🔵 **Planned** | Basic keyword completion exists; full LSP v2 in active development |
+| ⏳ **Chrono-Native Logic** | Paradigm | 🔵 **Planned** | Syntax parsed (`temporal`, `decay`); runtime planned for v1.9.0 |
+| 🌌 **Quantum-Ready Syntax** | Paradigm | 🔵 **Planned** | Frontend AST syntax placeholder for future QASM integration |
+| 🎮 **GPU Acceleration** | Hardware | 🔵 **Planned** | CPU tensor math active; OpenCL/CUDA kernel dispatch in design |
 
-## 🏛️ The 10 Operational Pillars (v1.3.0)
+> 📊 **Full transparency report**: See [FEATURE_STATUS.md](FEATURE_STATUS.md) for the complete audit of all language features and compiler components.
 
-ProXPL introduces 10 revolutionary concepts that redefine modern systems programming:
+## 🏛️ The 10 Operational Pillars
 
-1.  **[Intent-Oriented Programming](docs/pillars/01_intent_oriented.md)**: Define *what* you want (`intent`), not just *how* to do it (`resolver`).
-2.  **[Context-Aware Polymorphism](docs/pillars/02_context_aware.md)**: Adapt function behavior dynamically based on execution context (`context`, `layer`, `activate`).
-3.  **[Autonomic Self-Healing (ASR)](docs/pillars/03_asr.md)**: Built-in failure recovery with `resilient` and `recovery` blocks.
-4.  **[Intrinsic Security](docs/pillars/04_intrinsic_security.md)**: Taint analysis and `sanitize()` primitives baked into the type system.
-5.  **[Chrono-Native Logic](docs/pillars/05_chrono_native.md)**: Data with expiration dates (`temporal`, `decay after`).
-6.  **[Event-Driven Concurrency](docs/pillars/06_distributed_primitives.md)**: Distributed nodes and types (`distributed`, `node`) as first-class citizens.
-7.  **[AI-Native Integration](docs/pillars/07_ai_native.md)**: Define, train, and run ML models (`model`, `train`, `predict`) natively.
-8.  **[Quantum-Ready Syntax](docs/pillars/08_quantum_ready.md)**: Future-proof syntax for quantum operations (`quantum`, `superpose`, `entangle`).
-9.  **[Hardware-Accelerated Math](docs/pillars/09_hardware_math.md)**: GPU kernel offloading (`gpu`, `kernel`) and tensor math.
-10. **[Zero-Trust Security](docs/pillars/10_zero_trust.md)**: Mandatory identity verification blocks (`verify identity`) and crypto primitives.
+ProXPL defines 10 core concepts that shape its design philosophy. Here is their current implementation reality:
+
+1.  **[Intent-Oriented Programming](docs/pillars/01_intent_oriented.md)** `✅ Production`: Define *what* you want (`intent`), not just *how* to do it (`resolver`).
+2.  **[Context-Aware Polymorphism](docs/pillars/02_context_aware.md)** `✅ Production`: Adapt function behavior dynamically based on execution context (`context`, `layer`, `activate`).
+3.  **[Autonomic Self-Healing (ASR)](docs/pillars/03_asr.md)** `✅ Production`: Built-in failure recovery with `resilient` and `recovery` blocks.
+4.  **[Intrinsic Security](docs/pillars/04_intrinsic_security.md)** `🟡 Beta`: Compile-time taint analysis and `sanitize()` primitives.
+5.  **[Chrono-Native Logic](docs/pillars/05_chrono_native.md)** `🔵 Planned`: Data with expiration dates (`temporal`, `decay after`) — syntax parsed, runtime in v1.9.0.
+6.  **[Event-Driven Concurrency](docs/pillars/06_distributed_primitives.md)** `🟡 Beta`: Channels, actors (`actor`, `receive`), and task groups.
+7.  **[AI-Native Integration](docs/pillars/07_ai_native.md)** `🟡 Beta`: Tensor operations (`@`) production-ready; high-level model training syntax in planning.
+8.  **[Quantum-Ready Syntax](docs/pillars/08_quantum_ready.md)** `🔵 Planned`: Forward-compatible syntax (`quantum`, `superpose`, `entangle`) for future quantum toolchains.
+9.  **[Hardware-Accelerated Math](docs/pillars/09_hardware_math.md)** `🔵 Planned`: Tensor engine active on CPU; GPU offloading kernel dispatch in design.
+10. **[Zero-Trust Security](docs/pillars/10_zero_trust.md)** `🔵 Planned`: Built-in crypto primitives functional in stdlib; language-level identity blocks planned.
 
 ---
 
