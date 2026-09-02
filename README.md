@@ -8,7 +8,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ProXPL CI](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml/badge.svg)](https://github.com/ProgrammerKR/ProXPL/actions/workflows/build.yml)
+[![Tests](https://img.shields.io/badge/tests-51%20suites-blue.svg)](tests/run_all_tests.sh)
 [![Version](https://img.shields.io/badge/version-1.6.4-green.svg)](https://github.com/ProgrammerKR/ProXPL/releases)
+[![PRM Registry](https://img.shields.io/badge/PRM-Registry%20v1.0-orange.svg)](registry/REGISTRY_SPEC.md)
 [![Platform](https://img.shields.io/badge/platform-win%20%7C%20linux%20%7C%20macos-lightgrey.svg)]()
 
 

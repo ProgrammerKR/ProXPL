@@ -1,0 +1,49 @@
+# ProXPL Project EditorConfig
+# http://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C / C++ Source and Header files
+[*.{c,h,cpp,hpp,cc,cxx}]
+indent_style = space
+indent_size = 4
+
+# ProXPL Source, Definition, and Config files
+[*.{prox,pxpl,pxcf}]
+indent_style = space
+indent_size = 4
+
+# CMake Build Files
+[{CMakeLists.txt,*.cmake}]
+indent_style = space
+indent_size = 4
+
+# JavaScript and TypeScript
+[*.{js,ts,jsx,tsx,mjs,cjs}]
+indent_style = space
+indent_size = 2
+
+# JSON and Configuration
+[*.{json,toml,yaml,yml}]
+indent_style = space
+indent_size = 2
+
+# Shell scripts and batch files
+[*.{sh,bash,ps1}]
+indent_style = space
+indent_size = 4
+
+# Markdown documentation
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Makefile
+[{Makefile,*.mk}]
+indent_style = tab
