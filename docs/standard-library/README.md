@@ -4,7 +4,8 @@ Built-in native modules and function references.
 
 ## Contents
 
-- [Standard Library Reference](REFERENCE.md) - Complete function reference across all modules
+- [Complete API Reference](API_REFERENCE.md) - Comprehensive API documentation for all 75+ standard library functions
+- [Standard Library Reference](REFERENCE.md) - Module index and functional classifications
 - [Implementation Details](STDLIB.md) - Native C implementation bindings
 - [Garbage Collector Interface](GC.md) - GC operations and lifecycle
 - [Validation Guide](VALIDATION.md) - Standard library test suite
