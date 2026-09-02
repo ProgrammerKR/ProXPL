@@ -172,21 +172,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: proxpl-windows-x86_64
           path: .
           merge-multiple: true
           
       - name: Download Linux Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: proxpl-linux-x86_64
           path: .
           merge-multiple: true
 
       - name: Download macOS Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: proxpl-macos-arm64
           path: .
