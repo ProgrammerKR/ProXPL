@@ -1,4 +1,10 @@
 // Test file for enhanced libraries
+use std.lib.collections;
+use std.lib.str;
+use std.lib.math;
+use std.lib.datetime;
+use std.lib.crypto;
+use std.lib.regex;
 
 print("=== Testing Enhanced Collections Library ===");
 

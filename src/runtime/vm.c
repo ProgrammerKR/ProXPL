@@ -1277,7 +1277,21 @@ static InterpretResult run(VM* pvm) {
               runtimeError(pvm, "Could not find module '%s'.", name->chars);
               return INTERPRET_RUNTIME_ERROR;
           }
+          // After load, module should now be in the import table
+          if (!tableGet(&pvm->importer.modules, name, &moduleVal)) {
+              moduleVal = NIL_VAL;
+          }
       }
+      // Bind module to a variable named after the last path segment
+      // e.g., std.native.fs -> fs, std.native.path -> path
+      char* lastSegment = strrchr(name->chars, '.');
+      if (lastSegment) {
+          lastSegment++;
+      } else {
+          lastSegment = name->chars;
+      }
+      ObjString* bindName = copyString(lastSegment, (int)strlen(lastSegment));
+      tableSet(&pvm->globals, bindName, moduleVal);
       DISPATCH();
   }
   

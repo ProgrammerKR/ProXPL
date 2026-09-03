@@ -417,12 +417,13 @@ static TypeInfo checkExpr(TypeChecker* checker, Expr* expr) {
             // Array/Matrix indexing returns tainted values (IFC)
             checkExpr(checker, expr->as.index.target);
             TypeInfo index = checkExpr(checker, expr->as.index.index);
-            
-            // Index should be numeric
-            if (index.kind != TYPE_INT && index.kind != TYPE_FLOAT && index.kind != TYPE_UNKNOWN) {
-                error(checker, expr->line, "Array index must be a number.");
+
+            // Index should be numeric or string (for dictionary-like access)
+            if (index.kind != TYPE_INT && index.kind != TYPE_FLOAT &&
+                index.kind != TYPE_STRING && index.kind != TYPE_UNKNOWN) {
+                error(checker, expr->line, "Array index must be a number or string.");
             }
-            
+
             // For arrays/lists, we don't have element type info, so return UNKNOWN
             // The key point is marking it as TAINTED
             result = createType(TYPE_UNKNOWN);

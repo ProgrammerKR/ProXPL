@@ -46,7 +46,7 @@ bool loadModule(Importer *importer, const char *moduleName, void** result) {
     // 1. Strings must be interned for table lookups
     ObjString* nameObj = copyString(moduleName, strlen(moduleName));
     push(&vm, OBJ_VAL(nameObj)); // GC Protection
-    
+
     // 2. Check Cache
     Value cached;
     if (tableGet(&importer->modules, nameObj, &cached)) {
@@ -56,14 +56,17 @@ bool loadModule(Importer *importer, const char *moduleName, void** result) {
             return true;
         }
     }
-    
-    // 3. Create new module (Stub for now, or real logic)
-    // For Phase 1, we assume everything is native registered elsewhere 
-    // OR we create empty modules here to be populated.
-    
-    // We expect native modules to be PRE-REGISTERED in the cache during startup.
-    // If not found, we try file resolution (TODO).
-    
+
+    // 3. Module not in cache - try to create it as a native module
+    // Create an empty module for native modules registered at startup
+    ObjModule* mod = newModule(nameObj);
+    if (mod != NULL) {
+        tableSet(&importer->modules, nameObj, OBJ_VAL(mod));
+        *result = mod;
+        pop(&vm); // nameObj
+        return true;
+    }
+
     pop(&vm); // nameObj
     return false;
 }

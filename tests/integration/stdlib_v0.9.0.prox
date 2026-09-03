@@ -34,9 +34,9 @@ func test_time() {
     // 2025-12-25 10:30:00
     let ts = time.timestamp(2025, 12, 25, 10, 30, 0);
     print("Christmas 2025 timestamp: " + to_string(ts));
-    let verify = time.strftime("%Y-%m-%d", ts);
-    print("Verify Christmas: " + verify);
-    if (verify == "2025-12-25") {
+    let verifiedDate = time.strftime("%Y-%m-%d", ts);
+    print("Verify Christmas: " + verifiedDate);
+    if (verifiedDate == "2025-12-25") {
         print("Timestamp OK");
     } else {
         print("Timestamp FAILED");

@@ -935,10 +935,21 @@ static Stmt *useDecl(Parser *p) {
 
 static Stmt *externDecl(Parser *p) {
     Token libToken = consume(p, TOKEN_STRING, "Expect library path string.");
-    char *libPath = tokenToString(libToken);
-    
+    // Strip surrounding quotes: token.start points to first char, token.length includes both quotes
+    int libLen = libToken.length - 2;  // exclude the 2 quote characters
+    char *libPath = (char *)malloc(libLen + 1);
+    if (libLen > 0) {
+        memcpy(libPath, libToken.start + 1, libLen);  // skip opening quote
+    }
+    libPath[libLen] = '\0';
+
     Token symToken = consume(p, TOKEN_STRING, "Expect symbol name string.");
-    char *symName = tokenToString(symToken);
+    int symLen = symToken.length - 2;
+    char *symName = (char *)malloc(symLen + 1);
+    if (symLen > 0) {
+        memcpy(symName, symToken.start + 1, symLen);  // skip opening quote
+    }
+    symName[symLen] = '\0';
     
     consume(p, TOKEN_FUNC, "Expect 'func' after extern strings.");
     Token nameToken = consume(p, TOKEN_IDENTIFIER, "Expect function name.");

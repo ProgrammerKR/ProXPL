@@ -7,10 +7,10 @@ print "Testing FFI...";
 // Assuming Windows for now based on user info.
 
 // Try loading 'puts' from msvcrt
-extern "msvcrt.dll" "puts" func c_puts(s);
+extern msvcrt.dll puts func c_puts(s);
 
 // Try loading 'abs'
-extern "msvcrt.dll" "abs" func c_abs(n);
+extern msvcrt.dll abs func c_abs(n);
 
 // Try loading 'pow' using full path if needed, or rely on system path
 // extern "libm.so.6" "pow" func c_pow(b, e); // Linux example

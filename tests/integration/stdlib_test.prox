@@ -18,11 +18,11 @@ std.io.print("Hello from std.io.print!");
 // Test std.fs
 print("Testing std.fs...");
 let testFile = "test_output.txt";
-std.fs.writeFile(testFile, "Hello File System!");
+std.fs.write_file(testFile, "Hello File System!");
 
 if (std.fs.exists(testFile)) {
     print("File created successfully.");
-    let content = std.fs.readFile(testFile);
+    let content = std.fs.read_file(testFile);
     print("File content: " + content);
     std.core.assert(content == "Hello File System!", "File content mismatch");
 } else {
