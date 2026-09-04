@@ -147,3 +147,4 @@ dist_*/
 # Preprocessed / Build Artifacts
 # ============================================
 preprocessed_vm.c
+build_asan/
