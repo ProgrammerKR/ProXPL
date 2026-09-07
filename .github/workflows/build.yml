@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload Test Logs on Failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs-${{ matrix.os }}
           path: build/Testing/Temporary/
@@ -137,7 +137,7 @@ jobs:
           }
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ProXPL-v1.6.4-${{ matrix.os }}
           path: |
