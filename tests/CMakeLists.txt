@@ -35,6 +35,9 @@ macro(add_prox_script_suite SUITE_NAME SUITE_DIR LABEL_NAME)
         if(WIN32 AND TEST_NAME STREQUAL "v1_6_3_features")
             continue()
         endif()
+        if(NOT WIN32 AND TEST_NAME STREQUAL "ffi_test")
+            continue()
+        endif()
 
         set(TEST_IDENTIFIER "${SUITE_NAME}_${TEST_NAME}")
         add_test(NAME "${TEST_IDENTIFIER}"

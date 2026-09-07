@@ -1,0 +1,1 @@
+func main() { print("hello main"); } main(); print("hello end");

@@ -132,8 +132,10 @@ static void blackenObject(Obj* object) {
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
             markObject((Obj*)closure->function);
-            for (int i = 0; i < closure->upvalueCount; i++) {
-                markObject((Obj*)closure->upvalues[i]);
+            if (closure->upvalues != NULL) {
+                for (int i = 0; i < closure->upvalueCount; i++) {
+                    markObject((Obj*)closure->upvalues[i]);
+                }
             }
             break;
         }
@@ -497,6 +499,8 @@ void freeObjects(VM* vm_ptr) {
         object = next;
     }
     
+    vm.objects = NULL;
+    vm.bytesAllocated = 0;
     free(vm.grayStack);
     vm.grayStack = NULL;
 }

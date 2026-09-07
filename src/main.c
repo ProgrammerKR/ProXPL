@@ -251,8 +251,10 @@ static void runFile(const char *path) {
   initParser(&parser, tokens, tokenCount, source);
   StmtList *statements = parse(&parser);
 
-  if (statements == NULL || statements->count == 0) {
-    fprintf(stderr, "Parse error\n");
+  if (parser.hadError || statements == NULL || statements->count == 0) {
+    if (!parser.hadError) {
+      fprintf(stderr, "Parse error\n");
+    }
     if (statements != NULL) freeStmtList(statements);
     trackSource(&vm, source);
     freeVM(&vm);

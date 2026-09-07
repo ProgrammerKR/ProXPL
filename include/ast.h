@@ -188,7 +188,7 @@ struct Expr {
 
 // --- Statement Data Structures ---
 typedef struct { Expr *expression; } ExpressionStmt;
-typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; bool isTemporal; int ttl; } VarDeclStmt;
+typedef struct { char *name; Expr *initializer; TypeInfo type; bool is_const; bool isTemporal; int ttl; bool isStatic; } VarDeclStmt;
 typedef struct { char *name; StringList *params; StmtList *body; TypeInfo returnType; bool isAsync; AccessLevel access; bool isStatic; bool isAbstract; Expr *contextCondition; StringList *genericParams; StringList *genericBounds; } FuncDeclStmt;
 typedef struct { char *name; Expr *superclass; StringList *interfaces; StmtList *methods; StringList *genericParams; StringList *genericBounds; } ClassDeclStmt;
 typedef struct { char *name; StmtList *methods; } InterfaceDeclStmt;

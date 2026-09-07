@@ -9,7 +9,7 @@ class Worker {
         this.id = 0;
     }
 
-    func receive(msg) {
+    func handle(msg) {
         print("Worker received: " + to_string(msg));
     }
 }

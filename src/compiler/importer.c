@@ -57,7 +57,30 @@ bool loadModule(Importer *importer, const char *moduleName, void** result) {
         }
     }
 
-    // 3. Module not in cache - try to create it as a native module
+    // 3. Check for .prox file in search paths
+    char pathBuf[512];
+    char relPath[256];
+    strncpy(relPath, moduleName, 255);
+    relPath[255] = '\0';
+    for (int i = 0; relPath[i]; i++) {
+        if (relPath[i] == '.') relPath[i] = '/';
+    }
+    strcat(relPath, ".prox");
+
+    for (int i = 0; i < importer->pathCount; i++) {
+        snprintf(pathBuf, sizeof(pathBuf), "%s/%s", importer->searchPaths[i], relPath);
+        FILE* file = fopen(pathBuf, "r");
+        if (file) {
+            fclose(file);
+            ObjString* pathStr = copyString(pathBuf, strlen(pathBuf));
+            tableSet(&importer->modules, nameObj, OBJ_VAL(pathStr));
+            *result = pathStr;
+            pop(&vm); // nameObj
+            return true;
+        }
+    }
+
+    // 4. Module not in cache or disk - try to create it as a native module
     // Create an empty module for native modules registered at startup
     ObjModule* mod = newModule(nameObj);
     if (mod != NULL) {

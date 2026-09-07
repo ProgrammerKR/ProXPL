@@ -22,6 +22,7 @@
 #include "../include/vm.h"
 #include "../include/error_report.h"
 #include "../include/ffi_bridge.h"
+#include "../include/file_utils.h"
 
 
 VM vm;
@@ -361,7 +362,7 @@ static Value valueToObjString(Value val) {
 
 // Helper functions moved to vm_helpers.c to avoid duplication
 
-static InterpretResult run(VM* pvm) {
+static InterpretResult runEx(VM* pvm, int targetFrameCount) {
   CallFrame* frame = &pvm->frames[pvm->frameCount - 1];
   
   /* REGISTER CACHING: Keep the most accessed pointers in local variables.
@@ -805,6 +806,16 @@ static InterpretResult run(VM* pvm) {
           STORE_FRAME();
           runtimeError(pvm, "Undefined property '%s' in module '%s'.", name->chars, module->name->chars);
           return INTERPRET_RUNTIME_ERROR;
+      } else if (IS_CLASS(target)) {
+          ObjClass* klass = AS_CLASS(target);
+          Value value;
+          if (tableGet(&klass->methods, name, &value)) {
+              stackTop[-1] = value;
+              DISPATCH();
+          }
+          STORE_FRAME();
+          runtimeError(pvm, "Undefined static property '%s' in class '%s'.", name->chars, klass->name->chars);
+          return INTERPRET_RUNTIME_ERROR;
       } else {
           STORE_FRAME();
           runtimeError(pvm, "Only instances and modules have properties.");
@@ -815,16 +826,23 @@ static InterpretResult run(VM* pvm) {
   
   CASE_OP(OP_SET_PROPERTY) {
       ObjString* name = READ_STRING();
-      if (!IS_INSTANCE(stackTop[-2])) {
+      if (IS_INSTANCE(stackTop[-2])) {
+          ObjInstance* instance = AS_INSTANCE(stackTop[-2]);
+          tableSet(&instance->fields, name, stackTop[-1]);
+          Value value = stackTop[-1];
+          stackTop -= 2;
+          PUSH(value);
+      } else if (IS_CLASS(stackTop[-2])) {
+          ObjClass* klass = AS_CLASS(stackTop[-2]);
+          tableSet(&klass->methods, name, stackTop[-1]);
+          Value value = stackTop[-1];
+          stackTop -= 2;
+          PUSH(value);
+      } else {
         STORE_FRAME();
-        runtimeError(pvm, "Only instances have fields.");
+        runtimeError(pvm, "Only instances and classes have fields.");
         return INTERPRET_RUNTIME_ERROR;
       }
-      ObjInstance* instance = AS_INSTANCE(stackTop[-2]);
-      tableSet(&instance->fields, name, stackTop[-1]);
-      Value value = stackTop[-1];
-      stackTop -= 2;
-      PUSH(value);
       DISPATCH();
   }
   
@@ -1228,7 +1246,7 @@ static InterpretResult run(VM* pvm) {
       Value result = *(--stackTop);
       closeUpvalues(pvm, frame->slots);
       pvm->frameCount--;
-      if (pvm->frameCount == 0) {
+      if (pvm->frameCount == targetFrameCount) {
         pvm->stackTop = stackTop;
         return INTERPRET_OK;
       }
@@ -1282,6 +1300,48 @@ static InterpretResult run(VM* pvm) {
               moduleVal = NIL_VAL;
           }
       }
+      
+      // If module is a string, it means it's a file path we need to run
+      if (IS_STRING(moduleVal)) {
+          ObjString* pathStr = AS_STRING(moduleVal);
+          char* source = readFile(pathStr->chars);
+          if (source == NULL) {
+              runtimeError(pvm, "Could not read module file '%s'.", pathStr->chars);
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          trackSource(pvm, source);
+          
+          ObjFunction* function = compile(source);
+          if (function == NULL) {
+              runtimeError(pvm, "Compile error in module '%s'.", pathStr->chars);
+              return INTERPRET_COMPILE_ERROR;
+          }
+          
+          push(pvm, OBJ_VAL(function));
+          ObjClosure* closure = newClosure(function);
+          pop(pvm);
+          push(pvm, OBJ_VAL(closure));
+          
+          CallFrame* moduleFrame = &pvm->frames[pvm->frameCount++];
+          moduleFrame->closure = closure;
+          moduleFrame->ip = function->chunk.code;
+          moduleFrame->slots = pvm->stackTop - 1;
+          
+          int tFrameCount = pvm->frameCount - 1;
+          InterpretResult res = runEx(pvm, tFrameCount);
+          if (res != INTERPRET_OK) {
+              return res;
+          }
+          
+          // Pop closure
+          pop(pvm);
+          
+          // Check if module exported itself
+          if (!tableGet(&pvm->importer.modules, name, &moduleVal)) {
+              moduleVal = NIL_VAL;
+          }
+      }
+      
       // Bind module to a variable named after the last path segment
       // e.g., std.native.fs -> fs, std.native.path -> path
       char* lastSegment = strrchr(name->chars, '.');
@@ -1292,6 +1352,7 @@ static InterpretResult run(VM* pvm) {
       }
       ObjString* bindName = copyString(lastSegment, (int)strlen(lastSegment));
       tableSet(&pvm->globals, bindName, moduleVal);
+      LOAD_FRAME();
       DISPATCH();
   }
   
@@ -1600,7 +1661,7 @@ static InterpretResult run(VM* pvm) {
                   closeUpvalues(pvm, frame->slots);
                   Value result = *(--stackTop);
                   pvm->frameCount--;
-                  if (pvm->frameCount == 0) {
+                  if (pvm->frameCount == targetFrameCount) {
                     pvm->stackTop = stackTop;
                     return INTERPRET_OK;
                   }
@@ -1772,7 +1833,7 @@ InterpretResult interpretAST(VM* pvm, StmtList* statements) {
   frame->slots = pvm->stack;
 
   // printf("DEBUG: Starting execution...\n");
-  InterpretResult result = run(pvm);
+  InterpretResult result = runEx(pvm, 0);
   // printf("DEBUG: Execution finished with result: %d\n", result);
 
   return result;
@@ -1793,7 +1854,7 @@ InterpretResult interpret(VM* pvm, const char* source) {
   frame->ip = function->chunk.code;
   frame->slots = pvm->stack;
 
-  InterpretResult result = run(pvm);
+  InterpretResult result = runEx(pvm, 0);
 
   return result;
 }
@@ -1833,7 +1894,7 @@ InterpretResult interpretChunk(VM* pvm, Chunk* chunk) {
     size_t oldNextGC = pvm->nextGC;
     pvm->nextGC = (size_t)-1;
     
-    InterpretResult result = run(pvm);
+    InterpretResult result = runEx(pvm, 0);
     
     // Restore GC
     pvm->nextGC = oldNextGC;

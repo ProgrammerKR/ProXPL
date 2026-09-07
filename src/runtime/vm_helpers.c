@@ -144,8 +144,12 @@ bool invokeFromClass(struct ObjClass *klass, ObjString *name,
 bool invoke(ObjString *name, int argCount, VM *pVM) {
   Value receiver = peek(pVM, argCount);
 
+  if (IS_CLASS(receiver)) {
+      return invokeFromClass(AS_CLASS(receiver), name, argCount, pVM);
+  }
+
   if (!IS_INSTANCE(receiver)) {
-    runtimeError(pVM, "Only instances have methods.");
+    runtimeError(pVM, "Only instances and classes have methods.");
     return false;
   }
 

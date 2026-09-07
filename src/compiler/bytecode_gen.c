@@ -1166,14 +1166,27 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 }
                 
                 for (int i=0; i < stmt->as.class_decl.methods->count; i++) {
-                     // Pass false to not define local/global var, just leave closure on stack
-                     genFunction(gen, stmt->as.class_decl.methods->items[i], false);
-                     
                      Stmt* methodStmt = stmt->as.class_decl.methods->items[i];
+                     if (methodStmt->type == STMT_VAR_DECL) {
+                         if (methodStmt->as.var_decl.isStatic && methodStmt->as.var_decl.initializer) {
+                              writeChunk(gen->chunk, OP_DUP, methodStmt->line);
+                              genExpr(gen, methodStmt->as.var_decl.initializer);
+                              Value fNameVal = OBJ_VAL(copyString(methodStmt->as.var_decl.name, strlen(methodStmt->as.var_decl.name)));
+                              int fNameConst = addConstant(gen->chunk, fNameVal);
+                              writeChunk(gen->chunk, OP_SET_PROPERTY, methodStmt->line);
+                              writeChunk(gen->chunk, (uint8_t)fNameConst, methodStmt->line);
+                              writeChunk(gen->chunk, OP_POP, methodStmt->line); // pop the returned value of SET_PROPERTY
+                         }
+                         continue;
+                     }
+                     
+                     // Pass false to not define local/global var, just leave closure on stack
+                     genFunction(gen, methodStmt, false);
+                     
                      Value mNameVal = OBJ_VAL(copyString(methodStmt->as.func_decl.name, strlen(methodStmt->as.func_decl.name)));
                      int mNameConst = addConstant(gen->chunk, mNameVal);
-                     writeChunk(gen->chunk, OP_METHOD, stmt->line);
-                     writeChunk(gen->chunk, (uint8_t)mNameConst, stmt->line);
+                     writeChunk(gen->chunk, OP_METHOD, methodStmt->line);
+                     writeChunk(gen->chunk, (uint8_t)mNameConst, methodStmt->line);
                 }
                 writeChunk(gen->chunk, OP_POP, stmt->line); // Pop class
             }

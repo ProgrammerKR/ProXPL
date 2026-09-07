@@ -202,23 +202,25 @@ struct ObjTask *newTask(void* hdl, ResumeFn resume) {
 }
 
 ObjClosure *newClosure(ObjFunction *function) {
-  // Allocate closure first so it's tracked by GC during upvalues allocation
   ObjClosure *closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
   closure->function = function;
   closure->upvalues = NULL;
-  closure->upvalueCount = function->upvalueCount;
+  closure->upvalueCount = 0;
   
-  // Protect closure from GC during array allocation
-  extern VM vm;
-  push(&vm, OBJ_VAL(closure));
+  if (function->upvalueCount > 0) {
+    // Protect closure from GC during array allocation
+    extern VM vm;
+    push(&vm, OBJ_VAL(closure));
 
-  ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
-  for (int i = 0; i < function->upvalueCount; i++) {
-    upvalues[i] = NULL;
+    ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
+    for (int i = 0; i < function->upvalueCount; i++) {
+      upvalues[i] = NULL;
+    }
+    
+    closure->upvalues = upvalues;
+    closure->upvalueCount = function->upvalueCount;
+    pop(&vm); // Unprotect
   }
-  
-  closure->upvalues = upvalues;
-  pop(&vm); // Unprotect
 
   return closure;
 }

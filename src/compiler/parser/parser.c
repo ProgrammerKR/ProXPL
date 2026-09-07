@@ -660,6 +660,26 @@ static Stmt *classDecl(Parser *p) {
 
   StmtList *methods = createStmtList();
   while (!check(p, TOKEN_RIGHT_BRACE) && !isAtEnd(p)) {
+    // Check for @context decorator
+    Expr *contextCondition = NULL;
+    if (match(p, 1, TOKEN_AT)) {
+         if (match(p, 1, TOKEN_CONTEXT)) {
+            consume(p, TOKEN_LEFT_PAREN, "Expect '('.");
+            contextCondition = expression(p);
+            consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
+         } else {
+             parserError(p, "Unknown decorator.");
+         }
+    }
+
+    AccessLevel access = ACCESS_PUBLIC;
+    if (match(p, 1, TOKEN_PUBLIC)) access = ACCESS_PUBLIC;
+    else if (match(p, 1, TOKEN_PRIVATE)) access = ACCESS_PRIVATE;
+    else if (match(p, 1, TOKEN_PROTECTED)) access = ACCESS_PROTECTED;
+    
+    bool isStatic = false;
+    if (match(p, 1, TOKEN_STATIC)) isStatic = true;
+
     // Check for class fields: let, const, var
     if (match(p, 3, TOKEN_LET, TOKEN_CONST, TOKEN_VAR)) {
       Token fieldToken = consume(p, TOKEN_IDENTIFIER, "Expect field name.");
@@ -678,32 +698,18 @@ static Stmt *classDecl(Parser *p) {
         initializer = expression(p);
       }
       match(p, 1, TOKEN_SEMICOLON);
+      // Pass isStatic to createVarDeclStmt? Wait, createVarDeclStmt has (name, initializer, isConst, isTemporal, ttl, line, col). 
+      // How do I represent static fields? The plan says: "STMT_CLASS_DECL... If a static field has an initializer, emit bytecode to set the property on the class".
+      // But we need to add isStatic to VarDeclStmt AST node? Let's check AST.h if it exists. 
+      // Actually, if I look at `parser.c` line 681: `Stmt *fieldStmt = createVarDeclStmt(fieldName, initializer, false, false, 0, fieldToken.line, 0);`
+      // Where does isStatic go? Let me just modify createVarDeclStmt call to add isStatic if I can, but I don't have its definition here. Let's just set `fieldStmt->as.var_decl.isStatic = isStatic;` after creation!
       Stmt *fieldStmt = createVarDeclStmt(fieldName, initializer, false, false, 0, fieldToken.line, 0);
+      fieldStmt->as.var_decl.isStatic = isStatic;
       appendStmt(methods, fieldStmt);
       free(fieldName);
       continue;
     }
 
-    // Check for @context decorator on methods
-    Expr *contextCondition = NULL;
-    if (match(p, 1, TOKEN_AT)) {
-         if (match(p, 1, TOKEN_CONTEXT)) {
-            consume(p, TOKEN_LEFT_PAREN, "Expect '('.");
-            contextCondition = expression(p);
-            consume(p, TOKEN_RIGHT_PAREN, "Expect ')'.");
-         } else {
-             parserError(p, "Unknown decorator on method.");
-         }
-    }
-
-    AccessLevel access = ACCESS_PUBLIC;
-    if (match(p, 1, TOKEN_PUBLIC)) access = ACCESS_PUBLIC;
-    else if (match(p, 1, TOKEN_PRIVATE)) access = ACCESS_PRIVATE;
-    else if (match(p, 1, TOKEN_PROTECTED)) access = ACCESS_PROTECTED;
-    
-    bool isStatic = false;
-    if (match(p, 1, TOKEN_STATIC)) isStatic = true;
-    
     bool isAbstract = false;
     if (match(p, 1, TOKEN_ABSTRACT)) isAbstract = true;
 

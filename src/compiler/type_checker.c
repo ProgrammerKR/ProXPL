@@ -151,7 +151,7 @@ static TypeInfo lookupSymbol(TypeChecker* checker, const char* name) {
     while (scope) {
         Symbol* sym = scope->table[idx];
         while (sym) {
-            if (strcmp(sym->name, name) == 0) return sym->type;
+            if (strcmp(sym->name, name) == 0) return duplicateType(sym->type);
             sym = sym->next;
         }
         scope = scope->parent;
