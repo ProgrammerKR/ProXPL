@@ -57,7 +57,21 @@ static Value native_len(int argCount, Value* args) {
          return NUMBER_VAL((double)AS_LIST(args[0])->count);
     }
     if (IS_DICTIONARY(args[0])) return NUMBER_VAL((double)AS_DICTIONARY(args[0])->items.count);
+    if (IS_TENSOR(args[0])) return NUMBER_VAL((double)AS_TENSOR(args[0])->dims[0]);
     return NUMBER_VAL(0);
+}
+
+static Value native_keys(int argCount, Value* args) {
+    if (argCount < 1 || !IS_DICTIONARY(args[0])) return NIL_VAL;
+    ObjDictionary* dict = AS_DICTIONARY(args[0]);
+    ObjList* list = newList();
+    for (int i = 0; i < dict->items.capacity; i++) {
+        Entry* entry = &dict->items.entries[i];
+        if (entry->key != NULL) {
+            appendToList(list, OBJ_VAL(entry->key));
+        }
+    }
+    return OBJ_VAL(list);
 }
 
 static ObjModule* create_empty_module(VM* pVM, const char* name) {
@@ -307,6 +321,7 @@ void registerStdLib(VM* pVM) {
 
     defineNative(pVM, "clock", native_clock);
     defineNative(pVM, "len", native_len);
+    defineNative(pVM, "keys", native_keys);
     defineNative(pVM, "list_push", native_push);
     defineNative(pVM, "push", native_push); 
     defineNative(pVM, "limit_pop", native_pop); 

@@ -42,6 +42,13 @@ void writeChunk(Chunk *chunk, u8 byte, int line) {
 }
 
 int addConstant(Chunk *chunk, Value value) {
+  // Deduplicate: if an identical constant already exists, reuse its index.
+  // This is critical because many opcodes use 8-bit constant indices (max 256).
+  // With NaN-boxing, Value is uint64_t; string interning guarantees same string
+  // text maps to the same ObjString pointer, so bit equality is reliable.
+  for (int i = 0; i < chunk->constants.count; i++) {
+    if (chunk->constants.values[i] == value) return i;
+  }
   writeValueArray(&chunk->constants, value);
   return chunk->constants.count - 1;
 }

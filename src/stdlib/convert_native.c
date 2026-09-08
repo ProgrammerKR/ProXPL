@@ -169,6 +169,7 @@ static Value native_char_at(int argCount, Value* args) {
 void register_convert_natives(VM* pVM) {
     defineNative(pVM, "to_int", native_to_int);
     defineNative(pVM, "to_float", native_to_float);
+    defineNative(pVM, "to_number", native_to_float); // Alias for to_float
     defineNative(pVM, "to_string", native_to_string);
     defineNative(pVM, "to_bool", native_to_bool);
     defineNative(pVM, "to_hex", native_to_hex);

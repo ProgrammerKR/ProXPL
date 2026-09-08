@@ -23,6 +23,9 @@
 #include "../include/error_report.h"
 #include "../include/ffi_bridge.h"
 #include "../include/file_utils.h"
+#include "../include/scanner.h"
+#include "../include/parser.h"
+#include "../include/optimizer.h"
 
 
 VM vm;
@@ -413,6 +416,7 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
   static void* dispatch_table[256] = {
       [0 ... 255] = &&trap,
       [OP_CONSTANT] = &&DO_OP_CONSTANT,
+      [OP_CONSTANT_LONG] = &&DO_OP_CONSTANT_LONG,
       [OP_NOP] = &&DO_OP_NOP,
       [OP_NIL] = &&DO_OP_NIL,
       [OP_TRUE] = &&DO_OP_TRUE,
@@ -504,6 +508,13 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
 
   CASE_OP(OP_CONSTANT) {
       PUSH(READ_CONSTANT());
+      DISPATCH();
+  }
+  
+  CASE_OP(OP_CONSTANT_LONG) {
+      uint32_t index = ip[0] | (ip[1] << 8) | (ip[2] << 16);
+      ip += 3;
+      PUSH(frame->closure->function->chunk.constants.values[index]);
       DISPATCH();
   }
   
@@ -619,6 +630,30 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
               PUSH(val);
           } else {
               PUSH(NULL_VAL); 
+          }
+      } else if (IS_TENSOR(targetVal)) {
+          if (!IS_NUMBER(indexVal)) {
+              STORE_FRAME();
+              runtimeError(pvm, "Tensor index must be a number.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          ObjTensor* t = AS_TENSOR(targetVal);
+          int index = (int)AS_NUMBER(indexVal);
+          if (index < 0 || index >= t->dims[0]) {
+              STORE_FRAME();
+              runtimeError(pvm, "Tensor index out of bounds.");
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          if (t->dimCount == 1) {
+              PUSH(NUMBER_VAL(t->data[index]));
+          } else {
+              int newDimCount = t->dimCount - 1;
+              int* newDims = &t->dims[1];
+              int subSize = 1;
+              for(int i = 0; i < newDimCount; i++) subSize *= newDims[i];
+              double* newData = &t->data[index * subSize];
+              ObjTensor* subTensor = newTensor(newDimCount, newDims, newData);
+              PUSH(OBJ_VAL(subTensor));
           }
       } else if (IS_INSTANCE(targetVal) && checkInstanceOperator(pvm, targetVal, "operator[]")) {
           PUSH(targetVal);
@@ -1311,11 +1346,64 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
           }
           trackSource(pvm, source);
           
-          ObjFunction* function = compile(source);
-          if (function == NULL) {
+          // --- New multi-pass pipeline (matches runFile) ---
+          // Step 1: Tokenize
+          Scanner modScanner;
+          initScanner(&modScanner, source);
+          int modTokenCap = 8192;
+          Token* modTokens = (Token*)malloc(sizeof(Token) * modTokenCap);
+          if (!modTokens) {
+              runtimeError(pvm, "Out of memory tokenizing module '%s'.", pathStr->chars);
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          int modTokenCount = 0;
+          bool modScanError = false;
+          for (;;) {
+              Token t = scanToken(&modScanner);
+              if (modTokenCount >= modTokenCap) {
+                  modTokenCap *= 2;
+                  Token* newBuf = (Token*)realloc(modTokens, sizeof(Token) * modTokenCap);
+                  if (!newBuf) {
+                      free(modTokens);
+                      runtimeError(pvm, "Out of memory tokenizing module '%s'.", pathStr->chars);
+                      return INTERPRET_RUNTIME_ERROR;
+                  }
+                  modTokens = newBuf;
+              }
+              modTokens[modTokenCount++] = t;
+              if (t.type == TOKEN_ERROR) { modScanError = true; break; }
+              if (t.type == TOKEN_EOF) break;
+          }
+          if (modScanError) {
+              free(modTokens);
+              runtimeError(pvm, "Scan error in module '%s'.", pathStr->chars);
+              return INTERPRET_COMPILE_ERROR;
+          }
+
+          // Step 2: Parse
+          Parser modParser;
+          initParser(&modParser, modTokens, modTokenCount, source);
+          StmtList* modStmts = parse(&modParser);
+          if (modParser.hadError || modStmts == NULL || modStmts->count == 0) {
+              if (modStmts) freeStmtList(modStmts);
+              free(modTokens);
+              runtimeError(pvm, "Parse error in module '%s'.", pathStr->chars);
+              return INTERPRET_COMPILE_ERROR;
+          }
+
+          // Step 3: Optimize AST
+          optimizeAST(modStmts);
+
+          // Step 4: Generate bytecode
+          ObjFunction* function = newFunction();
+          if (!generateBytecode(modStmts, function)) {
+              freeStmtList(modStmts);
+              free(modTokens);
               runtimeError(pvm, "Compile error in module '%s'.", pathStr->chars);
               return INTERPRET_COMPILE_ERROR;
           }
+          freeStmtList(modStmts);
+          free(modTokens);
           
           push(pvm, OBJ_VAL(function));
           ObjClosure* closure = newClosure(function);
