@@ -145,7 +145,10 @@ void parserError(Parser *parser, const char *message) {
 static void synchronize(Parser *p) {
   p->panicMode = false;
 
+  advance(p);
+
   while (!isAtEnd(p)) {
+
     if (previous(p).type == TOKEN_SEMICOLON) return;
 
     switch (peek(p).type) {
@@ -344,17 +347,21 @@ StmtList *parse(Parser *parser) {
   StmtList *statements = createStmtList();
 
   while (!isAtEnd(parser)) {
+    int prevCurrent = parser->current;
     Stmt *decl = declaration(parser);
-    if (decl) {
-      appendStmt(statements, decl);
-    } else if (parser->panicMode) {
+    if (parser->panicMode) {
       synchronize(parser);
-      // Removed 'decl' but no need to free as it's null.
+    } else if (decl) {
+      appendStmt(statements, decl);
+    }
+    if (parser->current == prevCurrent && !isAtEnd(parser)) {
+      advance(parser);
     }
   }
 
   return statements;
 }
+
 
 // === Declarations ===
 
