@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Initialize submodules
         run: git submodule update --init --recursive
@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload Test Logs on Failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs-${{ matrix.os }}
           path: build/Testing/Temporary/
@@ -137,7 +137,7 @@ jobs:
           }
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ProXPL-v1.6.4-${{ matrix.os }}
           path: |

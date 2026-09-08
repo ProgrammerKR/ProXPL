@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Initialize submodules
         run: git submodule update --init --recursive
@@ -158,7 +158,7 @@ jobs:
           echo "ASSET_NAME=$Archive" >> $env:GITHUB_ENV
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
@@ -172,21 +172,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Windows Artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: proxpl-windows-x86_64
           path: .
           merge-multiple: true
           
       - name: Download Linux Artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: proxpl-linux-x86_64
           path: .
           merge-multiple: true
 
       - name: Download macOS Artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: proxpl-macos-arm64
           path: .

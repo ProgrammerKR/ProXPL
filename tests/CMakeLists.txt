@@ -41,11 +41,12 @@ macro(add_prox_script_suite SUITE_NAME SUITE_DIR LABEL_NAME)
 
         set(TEST_IDENTIFIER "${SUITE_NAME}_${TEST_NAME}")
         add_test(NAME "${TEST_IDENTIFIER}"
-                 COMMAND proxpl "${TEST_FILE}")
+                 COMMAND $<TARGET_FILE:proxpl> "${TEST_FILE}")
         set_tests_properties("${TEST_IDENTIFIER}" PROPERTIES
             LABELS "${LABEL_NAME};script"
             TIMEOUT 10
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            ENVIRONMENT "PATH=$<TARGET_FILE_DIR:proxpl>;$ENV{PATH}"
         )
     endforeach()
 endmacro()
@@ -71,10 +72,11 @@ foreach(TEST_FILE ${ROOT_PROX_TESTS})
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
     set(TEST_IDENTIFIER "Root_${TEST_NAME}")
     add_test(NAME "${TEST_IDENTIFIER}"
-             COMMAND proxpl "${TEST_FILE}")
+             COMMAND $<TARGET_FILE:proxpl> "${TEST_FILE}")
     set_tests_properties("${TEST_IDENTIFIER}" PROPERTIES
         LABELS "root;script"
         TIMEOUT 10
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        ENVIRONMENT "PATH=$<TARGET_FILE_DIR:proxpl>;$ENV{PATH}"
     )
 endforeach()
