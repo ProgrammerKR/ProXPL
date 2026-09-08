@@ -46,10 +46,18 @@ ObjForeign* loadForeign(ObjString* libraryPath, ObjString* symbolName) {
     symbol = (void*)GetProcAddress((HMODULE)handle, symName);
 #else
     if (libName) {
-        handle = dlopen(libName, RTLD_LAZY | RTLD_GLOBAL);
+        if (strcmp(libName, "msvcrt.dll") == 0) {
+            handle = dlopen("libc.so.6", RTLD_LAZY | RTLD_GLOBAL);
+            if (!handle) handle = dlopen("libc.so", RTLD_LAZY | RTLD_GLOBAL);
+            if (!handle) handle = dlopen("libSystem.B.dylib", RTLD_LAZY | RTLD_GLOBAL);
+            if (!handle) handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
+        } else {
+            handle = dlopen(libName, RTLD_LAZY | RTLD_GLOBAL);
+        }
     } else {
         handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
     }
+
 
     if (!handle) {
         return NULL;
