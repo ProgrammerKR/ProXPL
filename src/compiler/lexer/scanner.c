@@ -462,12 +462,8 @@ static PxTokenType identifierType(Scanner *scanner) {
     if (scanner->current - scanner->start > 1) {
       switch (scanner->start[1]) {
       case 'a':
-          if (scanner->current - scanner->start > 2) {
-             if (scanner->start[2] == 't' && scanner->current - scanner->start > 3 && scanner->start[3] == 'r')
-                 return checkKeyword(scanner, 4, 2, "ix", TOKEN_MATRIX);
-             return checkKeyword(scanner, 2, 3, "tch", TOKEN_MATCH);
-          }
-          break;
+          return checkKeyword(scanner, 2, 3, "tch", TOKEN_MATCH);
+
       case 'o': return checkKeyword(scanner, 2, 3, "del", TOKEN_MODEL);
       case 'u':
           if (scanner->current - scanner->start > 2 && scanner->start[2] == 't')
