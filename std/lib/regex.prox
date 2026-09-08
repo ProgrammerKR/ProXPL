@@ -347,7 +347,7 @@ class TextUtils {
         if (len2 == 0) return len1;
         
         // Simplified implementation for small strings
-        let matrix = [];
+        let dp = [];
         
         for (let i = 0; i <= len1; i = i + 1) {
             let row = [];
@@ -360,21 +360,25 @@ class TextUtils {
                     list_push(row, 0);
                 }
             }
-            list_push(matrix, row);
+            list_push(dp, row);
         }
         
         for (let i = 1; i <= len1; i = i + 1) {
             for (let j = 1; j <= len2; j = j + 1) {
                 let cost = substr(s1, i - 1, 1) == substr(s2, j - 1, 1) ? 0 : 1;
                 
-                let deletion = matrix[i - 1][j] + 1;
-                let insertion = matrix[i][j - 1] + 1;
-                let substitution = matrix[i - 1][j - 1] + cost;
+                let deletion = dp[i - 1][j] + 1;
+                let insertion = dp[i][j - 1] + 1;
+                let substitution = dp[i - 1][j - 1] + cost;
                 
-                matrix[i][j] = min(deletion, min(insertion, substitution));
+                let min_val = deletion;
+                if (insertion < min_val) min_val = insertion;
+                if (substitution < min_val) min_val = substitution;
+                
+                dp[i][j] = min_val;
             }
         }
         
-        return matrix[len1][len2];
+        return dp[len1][len2];
     }
 }
