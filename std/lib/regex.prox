@@ -15,7 +15,7 @@ class Regex {
         return contains(to_string(str), this.pattern);
     }
     
-    func match(str) {
+    func matchPattern(str) {
         let s = to_string(str);
         let matches = [];
         

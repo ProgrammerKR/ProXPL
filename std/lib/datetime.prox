@@ -268,7 +268,7 @@ class Time {
         return clock();
     }
     
-    static func measure(callback) {
+    static func measureTime(callback) {
         let start = clock();
         callback();
         return clock() - start;

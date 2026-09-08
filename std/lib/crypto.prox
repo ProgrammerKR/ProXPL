@@ -57,7 +57,7 @@ class Crypto {
     
     // CRC32-like checksum
     static func crc32(str) {
-        let crc = 0xFFFFFFFF;
+        let crc = 4294967295;
         let s = to_string(str);
         
         for (let i = 0; i < len(s); i = i + 1) {
@@ -66,14 +66,14 @@ class Crypto {
             
             for (let j = 0; j < 8; j = j + 1) {
                 if (crc % 2 == 1) {
-                    crc = (crc / 2) ^ 0xEDB88320;
+                    crc = (crc / 2) ^ 3988292384;
                 } else {
                     crc = crc / 2;
                 }
             }
         }
         
-        return crc ^ 0xFFFFFFFF;
+        return crc ^ 4294967295;
     }
     
     // Helper function to get approximate character code

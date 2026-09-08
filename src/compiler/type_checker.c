@@ -580,8 +580,7 @@ static void checkStmt(TypeChecker* checker, Stmt* stmt) {
                  }
              }
              
-             checkStmt(checker, (Stmt*)stmt->as.func_decl.body); // Cast BlockStmt* to Stmt*? No, BlockStmt is a union member. 
-             // StmtList* is what body is
+
              StmtList* body = stmt->as.func_decl.body;
              if (body) {
                  for(int i=0; i<body->count; i++) {

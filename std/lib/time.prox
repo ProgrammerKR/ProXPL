@@ -13,7 +13,7 @@ class Time {
         return native.time.clock();
     }
     
-    static func measure(callback) {
+    static func measureTime(callback) {
         let start = native.time.clock();
         callback();
         return native.time.clock() - start;
