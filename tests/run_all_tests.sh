@@ -140,6 +140,13 @@ run_prox_test() {
         return 0
     fi
 
+    if [[ "${test_name}" == "ffi_test.prox" ]] && [[ "${OSTYPE:-}" != "msys"* && "${OSTYPE:-}" != "win32"* && "${OSTYPE:-}" != "cygwin"* ]]; then
+        echo -e "  [${YELLOW}SKIP${NC}] ${category_name}/${test_name} (Windows-only FFI test)"
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        return 0
+    fi
+
+
     local output=""
     local exit_code=0
 
