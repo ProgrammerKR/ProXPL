@@ -334,4 +334,6 @@ void registerStdLib(VM* pVM) {
     register_math_globals(pVM);
     register_string_globals(pVM);
     register_io_globals(pVM);
+    register_system_natives(pVM);
 }
+
