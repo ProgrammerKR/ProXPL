@@ -95,6 +95,13 @@ typedef enum {
   OP_MAT_MUL, // @ operator
   OP_MAKE_TENSOR,
   OP_UNWRAP,
+  OP_LESS_EQUAL,
+  OP_GREATER_EQUAL,
+  OP_NOT_EQUAL,
+  OP_POP_JUMP_IF_FALSE,
+  OP_CALL_SELF,
+  OP_INC_LOCAL,
+  OP_DEC_LOCAL,
   OP_HALT = 0xFF
 } OpCode;
 

@@ -1,26 +1,80 @@
 @echo off
 if not exist build mkdir build
 if not exist build\obj mkdir build\obj
+if not exist temp mkdir temp
+set "TEMP=%~dp0temp"
+set "TMP=%~dp0temp"
 
 clang -o build/bytecode_tests.exe ^
  -Iinclude -Isrc -Isrc/pxcf/include -Isrc/pxcf/src -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
- tests/bytecode_tests.c ^
+ tests/vm/bytecode_tests.c ^
+ src/compiler/lexer/scanner.c ^
+ src/compiler/parser/ast.c ^
+ src/compiler/parser/parser.c ^
+ src/compiler/transpiler_ui.c ^
+ src/compiler/bytecode_gen.c ^
+ src/compiler/escape_analysis.c ^
+ src/compiler/formatter.c ^
+ src/compiler/comptime.c ^
+ src/compiler/wasm_gen.c ^
+ src/compiler/importer.c ^
+ src/compiler/ir.c ^
+ src/compiler/ir_gen.c ^
+ src/compiler/ir_opt.c ^
+ src/compiler/optimizer.c ^
+ src/compiler/type_checker.c ^
+ src/runtime/chunk.c ^
+ src/runtime/compiler.c ^
+ src/runtime/debug.c ^
+ src/runtime/ffi_bridge.c ^
+ src/runtime/gc.c ^
+ src/runtime/memory.c ^
+ src/runtime/object.c ^
+ src/runtime/scheduler.c ^
+ src/runtime/table.c ^
+ src/runtime/value.c ^
+ src/runtime/vm.c ^
+ src/runtime/vm_helpers.c ^
  src/vm/bytecode.c ^
  src/vm/disasm.c ^
  src/vm/vm_dispatch.c ^
- src/runtime/value.c ^
- src/runtime/object.c ^
- src/runtime/memory.c ^
- src/runtime/table.c ^
- src/runtime/chunk.c ^
- src/compiler/parser/ast.c ^
- src/runtime/vm_helpers.c ^
+ src/utils/error_report.c ^
+ src/utils/file_utils.c ^
  src/pxcf/src/error.c ^
  src/pxcf/src/lexer.c ^
  src/pxcf/src/parser.c ^
  src/pxcf/src/pxcf.c ^
  src/pxcf/src/serializer.c ^
- src/pxcf/src/value.c
+ src/pxcf/src/value.c ^
+ src/stdlib/collections_native.c ^
+ src/stdlib/convert_native.c ^
+ src/stdlib/db_native.c ^
+ src/stdlib/encoding_native.c ^
+ src/stdlib/core_native.c ^
+ src/stdlib/fs_native.c ^
+ src/stdlib/gc_native.c ^
+ src/stdlib/hash_native.c ^
+ src/stdlib/io_native.c ^
+ src/stdlib/json_native.c ^
+ src/stdlib/math_native.c ^
+ src/stdlib/net_native.c ^
+ src/stdlib/os_native.c ^
+ src/stdlib/path_native.c ^
+ src/stdlib/process_native.c ^
+ src/stdlib/buffer_native.c ^
+ src/stdlib/reflect_native.c ^
+ src/stdlib/stdlib_core.c ^
+ src/stdlib/pxcf_bridge.c ^
+ src/stdlib/string_native.c ^
+ src/stdlib/sys_native.c ^
+ src/stdlib/system_native.c ^
+ src/stdlib/time_native.c ^
+ src/utils/md5.c ^
+ src/utils/sha256.c ^
+ src/prm/manifest.c ^
+ src/prm/builder.c ^
+ src/prm/commands/cmd_core.c ^
+ src/proxpl_api.c
 
 if %errorlevel% equ 0 (
     move /y *.obj build\obj\ >nul 2>&1

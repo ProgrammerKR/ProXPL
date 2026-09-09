@@ -1,8 +1,11 @@
 @echo off
 if not exist build mkdir build
 if not exist build\obj mkdir build\obj
+if not exist temp mkdir temp
+set "TEMP=%~dp0temp"
+set "TMP=%~dp0temp"
 
-clang -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/pxcf/include -Isrc/pxcf/src -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
+clang -O3 -o build/proxpl.exe -static -fms-runtime-lib=static -Iinclude -Isrc -Isrc/pxcf/include -Isrc/pxcf/src -D_CRT_SECURE_NO_WARNINGS -DPROX_STATIC ^
  src/main.c ^
  src/compiler/lexer/scanner.c ^
  src/compiler/parser/ast.c ^

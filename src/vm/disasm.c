@@ -227,6 +227,27 @@ void disasm_chunk(const Chunk *chunk) {
             case OP_MAKE_TENSOR:
                 offset = simple_instruction("OP_MAKE_TENSOR", offset);
                 break;
+            case OP_LESS_EQUAL:
+                offset = simple_instruction("OP_LESS_EQUAL", offset);
+                break;
+            case OP_GREATER_EQUAL:
+                offset = simple_instruction("OP_GREATER_EQUAL", offset);
+                break;
+            case OP_NOT_EQUAL:
+                offset = simple_instruction("OP_NOT_EQUAL", offset);
+                break;
+            case OP_POP_JUMP_IF_FALSE:
+                offset = jump_instruction("OP_POP_JUMP_IF_FALSE", 1, chunk, offset);
+                break;
+            case OP_CALL_SELF:
+                offset = byte_instruction("OP_CALL_SELF", chunk, offset);
+                break;
+            case OP_INC_LOCAL:
+                offset = byte_instruction("OP_INC_LOCAL", chunk, offset);
+                break;
+            case OP_DEC_LOCAL:
+                offset = byte_instruction("OP_DEC_LOCAL", chunk, offset);
+                break;
             case OP_HALT:
                 offset = simple_instruction("OP_HALT", offset);
                 break;

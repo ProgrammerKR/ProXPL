@@ -150,13 +150,13 @@ run_prox_test() {
     local output=""
     local exit_code=0
 
-    # Run test with 10-second timeout
+    # Run test with 10-second timeout (providing newline to stdin so interactive input() does not hang)
     set +e
     if command -v timeout &>/dev/null; then
-        output="$(timeout 10s "${PROXPL_BIN}" "${test_file}" 2>&1)"
+        output="$(printf "\n" | timeout 10s "${PROXPL_BIN}" "${test_file}" 2>&1)"
         exit_code=$?
     else
-        output="$("${PROXPL_BIN}" "${test_file}" 2>&1)"
+        output="$(printf "\n" | "${PROXPL_BIN}" "${test_file}" 2>&1)"
         exit_code=$?
     fi
     set -e

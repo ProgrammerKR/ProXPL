@@ -490,7 +490,14 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
       [OP_CONTEXT] = &&DO_OP_CONTEXT,
       [OP_LAYER] = &&DO_OP_LAYER,
       [OP_ACTIVATE] = &&DO_OP_ACTIVATE,
-      [OP_END_ACTIVATE] = &&DO_OP_END_ACTIVATE
+      [OP_END_ACTIVATE] = &&DO_OP_END_ACTIVATE,
+      [OP_LESS_EQUAL] = &&DO_OP_LESS_EQUAL,
+      [OP_GREATER_EQUAL] = &&DO_OP_GREATER_EQUAL,
+      [OP_NOT_EQUAL] = &&DO_OP_NOT_EQUAL,
+      [OP_POP_JUMP_IF_FALSE] = &&DO_OP_POP_JUMP_IF_FALSE,
+      [OP_CALL_SELF] = &&DO_OP_CALL_SELF,
+      [OP_INC_LOCAL] = &&DO_OP_INC_LOCAL,
+      [OP_DEC_LOCAL] = &&DO_OP_DEC_LOCAL
   };
   #pragma GCC diagnostic pop
 
@@ -740,6 +747,30 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
   CASE_OP(OP_SET_LOCAL_2) { frame->slots[2] = stackTop[-1]; DISPATCH(); }
   CASE_OP(OP_SET_LOCAL_3) { frame->slots[3] = stackTop[-1]; DISPATCH(); }
 
+  CASE_OP(OP_INC_LOCAL) {
+      uint8_t slot = READ_BYTE();
+      if (!IS_NUMBER(frame->slots[slot])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operand must be a number.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      frame->slots[slot] = NUMBER_VAL(AS_NUMBER(frame->slots[slot]) + 1.0);
+      PUSH(frame->slots[slot]);
+      DISPATCH();
+  }
+
+  CASE_OP(OP_DEC_LOCAL) {
+      uint8_t slot = READ_BYTE();
+      if (!IS_NUMBER(frame->slots[slot])) {
+          STORE_FRAME();
+          runtimeError(pvm, "Operand must be a number.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      frame->slots[slot] = NUMBER_VAL(AS_NUMBER(frame->slots[slot]) - 1.0);
+      PUSH(frame->slots[slot]);
+      DISPATCH();
+  }
+
   
   CASE_OP(OP_GET_GLOBAL) {
       ObjString* name = READ_STRING();
@@ -895,7 +926,10 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
   CASE_OP(OP_EQUAL) {
       Value b = stackTop[-1];
       Value a = stackTop[-2];
-      if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator==")) {
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          stackTop -= 2;
+          PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
+      } else if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator==")) {
           STORE_FRAME();
           ObjString* opStr = copyString("operator==", 10);
           if (!invoke(opStr, 1, pvm)) {
@@ -904,10 +938,7 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
           LOAD_FRAME();
       } else {
           stackTop -= 2;
-          if (IS_NUMBER(a) && IS_NUMBER(b)) {
-              // IEEE 754 semantics: NaN != NaN
-              PUSH(BOOL_VAL(AS_NUMBER(a) == AS_NUMBER(b)));
-          } else if (IS_STRING(a) && IS_STRING(b)) {
+          if (IS_STRING(a) && IS_STRING(b)) {
               ObjString* s1 = AS_STRING(a);
               ObjString* s2 = AS_STRING(b);
               PUSH(BOOL_VAL(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0)));
@@ -917,20 +948,67 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
       }
       DISPATCH();
   }
+
+  CASE_OP(OP_NOT_EQUAL) {
+      Value b = stackTop[-1];
+      Value a = stackTop[-2];
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          stackTop -= 2;
+          PUSH(BOOL_VAL(AS_NUMBER(a) != AS_NUMBER(b)));
+      } else if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator!=")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator!=", 10);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
+      } else {
+          stackTop -= 2;
+          if (IS_STRING(a) && IS_STRING(b)) {
+              ObjString* s1 = AS_STRING(a);
+              ObjString* s2 = AS_STRING(b);
+              PUSH(BOOL_VAL(!(s1 == s2 || (s1->length == s2->length && memcmp(s1->chars, s2->chars, s1->length) == 0))));
+          } else {
+              PUSH(BOOL_VAL(a != b));
+          }
+      }
+      DISPATCH();
+  }
   
   CASE_OP(OP_GREATER) {
       Value b = stackTop[-1];
       Value a = stackTop[-2];
-      if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator>")) {
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          stackTop -= 2;
+          PUSH(BOOL_VAL(AS_NUMBER(a) > AS_NUMBER(b)));
+      } else if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator>")) {
           STORE_FRAME();
           ObjString* opStr = copyString("operator>", 9);
           if (!invoke(opStr, 1, pvm)) {
               return INTERPRET_RUNTIME_ERROR;
           }
           LOAD_FRAME();
-      } else if (IS_NUMBER(a) && IS_NUMBER(b)) {
+      } else {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      DISPATCH();
+  }
+
+  CASE_OP(OP_GREATER_EQUAL) {
+      Value b = stackTop[-1];
+      Value a = stackTop[-2];
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
           stackTop -= 2;
-          PUSH(BOOL_VAL(AS_NUMBER(a) > AS_NUMBER(b)));
+          PUSH(BOOL_VAL(AS_NUMBER(a) >= AS_NUMBER(b)));
+      } else if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator>=")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator>=", 10);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           runtimeError(pvm, "Operands must be numbers.");
@@ -942,16 +1020,37 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
   CASE_OP(OP_LESS) {
       Value b = stackTop[-1];
       Value a = stackTop[-2];
-      if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator<")) {
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
+          stackTop -= 2;
+          PUSH(BOOL_VAL(AS_NUMBER(a) < AS_NUMBER(b)));
+      } else if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator<")) {
           STORE_FRAME();
           ObjString* opStr = copyString("operator<", 9);
           if (!invoke(opStr, 1, pvm)) {
               return INTERPRET_RUNTIME_ERROR;
           }
           LOAD_FRAME();
-      } else if (IS_NUMBER(a) && IS_NUMBER(b)) {
+      } else {
+          STORE_FRAME();
+          runtimeError(pvm, "Operands must be numbers.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      DISPATCH();
+  }
+
+  CASE_OP(OP_LESS_EQUAL) {
+      Value b = stackTop[-1];
+      Value a = stackTop[-2];
+      if (IS_NUMBER(a) && IS_NUMBER(b)) {
           stackTop -= 2;
-          PUSH(BOOL_VAL(AS_NUMBER(a) < AS_NUMBER(b)));
+          PUSH(BOOL_VAL(AS_NUMBER(a) <= AS_NUMBER(b)));
+      } else if (IS_INSTANCE(a) && checkInstanceOperator(pvm, a, "operator<=")) {
+          STORE_FRAME();
+          ObjString* opStr = copyString("operator<=", 10);
+          if (!invoke(opStr, 1, pvm)) {
+              return INTERPRET_RUNTIME_ERROR;
+          }
+          LOAD_FRAME();
       } else {
           STORE_FRAME();
           runtimeError(pvm, "Operands must be numbers.");
@@ -1123,10 +1222,39 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
       if (isFalsey(stackTop[-1])) ip += offset;
       DISPATCH();
   }
+
+  CASE_OP(OP_POP_JUMP_IF_FALSE) {
+      uint16_t offset = READ_SHORT();
+      Value cond = *(--stackTop);
+      if (isFalsey(cond)) ip += offset;
+      DISPATCH();
+  }
   
   CASE_OP(OP_LOOP) {
       uint16_t offset = READ_SHORT();
       ip -= offset;
+      DISPATCH();
+  }
+
+  CASE_OP(OP_CALL_SELF) {
+      int argCount = READ_BYTE();
+      ObjClosure* closure = frame->closure;
+      if (argCount != closure->function->arity) {
+          STORE_FRAME();
+          runtimeError(pvm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      if (pvm->frameCount == FRAMES_MAX) {
+          STORE_FRAME();
+          runtimeError(pvm, "Stack overflow.");
+          return INTERPRET_RUNTIME_ERROR;
+      }
+      frame->ip = ip;
+      frame = &pvm->frames[pvm->frameCount++];
+      frame->closure = closure;
+      frame->ip = closure->function->chunk.code;
+      frame->slots = stackTop - argCount - 1;
+      ip = frame->ip;
       DISPATCH();
   }
   
@@ -1271,15 +1399,19 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
   }
   
   CASE_OP(OP_CLOSE_UPVALUE) {
-      STORE_FRAME();
-      closeUpvalues(pvm, stackTop - 1);
+      if (pvm->openUpvalues != NULL) {
+          STORE_FRAME();
+          closeUpvalues(pvm, stackTop - 1);
+      }
       stackTop--;
       DISPATCH();
   }
   
   CASE_OP(OP_RETURN) {
       Value result = *(--stackTop);
-      closeUpvalues(pvm, frame->slots);
+      if (pvm->openUpvalues != NULL) {
+          closeUpvalues(pvm, frame->slots);
+      }
       pvm->frameCount--;
       if (pvm->frameCount == targetFrameCount) {
         pvm->stackTop = stackTop;
@@ -1508,7 +1640,17 @@ static InterpretResult runEx(VM* pvm, int targetFrameCount) {
               return INTERPRET_RUNTIME_ERROR;
           }
           double a = AS_NUMBER(*(--stackTop));
-          PUSH(NUMBER_VAL(fmod(a, b)));
+          int64_t ia = (int64_t)a;
+          int64_t ib = (int64_t)b;
+          if ((double)ia == a && (double)ib == b) {
+              if (ib == -1) {
+                  PUSH(NUMBER_VAL(0.0));
+              } else {
+                  PUSH(NUMBER_VAL((double)(ia % ib)));
+              }
+          } else {
+              PUSH(NUMBER_VAL(fmod(a, b)));
+          }
       } else if (IS_INSTANCE(stackTop[-2]) && checkInstanceOperator(pvm, stackTop[-2], "operator%")) {
           STORE_FRAME();
           ObjString* opStr = copyString("operator%", 9);

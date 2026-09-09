@@ -45,6 +45,8 @@ typedef struct Compiler {
     ObjFunction* function;
     CompFunctionType type;
 
+    bool isMethod;
+
     Local locals[256];
     int localCount;
     int scopeDepth;
@@ -73,6 +75,7 @@ static void initCompiler(BytecodeGen* gen, Compiler* compiler, CompFunctionType 
     compiler->enclosing = gen->compiler;
     compiler->function = NULL;
     compiler->type = type;
+    compiler->isMethod = false;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
     
@@ -290,28 +293,19 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             else if (strcmp(expr->as.binary.operator, "-") == 0) writeChunk(gen->chunk, OP_SUBTRACT, expr->line);
             else if (strcmp(expr->as.binary.operator, "*") == 0) writeChunk(gen->chunk, OP_MULTIPLY, expr->line);
             else if (strcmp(expr->as.binary.operator, "/") == 0) writeChunk(gen->chunk, OP_DIVIDE, expr->line);
-             else if (strcmp(expr->as.binary.operator, "==") == 0) writeChunk(gen->chunk, OP_EQUAL, expr->line);
-             else if (strcmp(expr->as.binary.operator, "!=") == 0) {
-                 writeChunk(gen->chunk, OP_EQUAL, expr->line);
-                 writeChunk(gen->chunk, OP_NOT, expr->line);
-             }
-             else if (strcmp(expr->as.binary.operator, "<") == 0) writeChunk(gen->chunk, OP_LESS, expr->line);
-             else if (strcmp(expr->as.binary.operator, "<=") == 0) {
-                 writeChunk(gen->chunk, OP_GREATER, expr->line);
-                 writeChunk(gen->chunk, OP_NOT, expr->line);
-             }
-             else if (strcmp(expr->as.binary.operator, ">") == 0) writeChunk(gen->chunk, OP_GREATER, expr->line);
-             else if (strcmp(expr->as.binary.operator, ">=") == 0) {
-                 writeChunk(gen->chunk, OP_LESS, expr->line);
-                 writeChunk(gen->chunk, OP_NOT, expr->line);
-             }
-             else if (strcmp(expr->as.binary.operator, "%") == 0) writeChunk(gen->chunk, OP_MODULO, expr->line);
-             else if (strcmp(expr->as.binary.operator, "&") == 0) writeChunk(gen->chunk, OP_BIT_AND, expr->line);
-             else if (strcmp(expr->as.binary.operator, "|") == 0) writeChunk(gen->chunk, OP_BIT_OR, expr->line);
-             else if (strcmp(expr->as.binary.operator, "^") == 0) writeChunk(gen->chunk, OP_BIT_XOR, expr->line);
-             else if (strcmp(expr->as.binary.operator, "<<") == 0) writeChunk(gen->chunk, OP_LEFT_SHIFT, expr->line);
-             else if (strcmp(expr->as.binary.operator, ">>") == 0) writeChunk(gen->chunk, OP_RIGHT_SHIFT, expr->line);
-             else if (strcmp(expr->as.binary.operator, "@") == 0) writeChunk(gen->chunk, OP_MAT_MUL, expr->line);
+            else if (strcmp(expr->as.binary.operator, "==") == 0) writeChunk(gen->chunk, OP_EQUAL, expr->line);
+            else if (strcmp(expr->as.binary.operator, "!=") == 0) writeChunk(gen->chunk, OP_NOT_EQUAL, expr->line);
+            else if (strcmp(expr->as.binary.operator, "<") == 0) writeChunk(gen->chunk, OP_LESS, expr->line);
+            else if (strcmp(expr->as.binary.operator, "<=") == 0) writeChunk(gen->chunk, OP_LESS_EQUAL, expr->line);
+            else if (strcmp(expr->as.binary.operator, ">") == 0) writeChunk(gen->chunk, OP_GREATER, expr->line);
+            else if (strcmp(expr->as.binary.operator, ">=") == 0) writeChunk(gen->chunk, OP_GREATER_EQUAL, expr->line);
+            else if (strcmp(expr->as.binary.operator, "%") == 0) writeChunk(gen->chunk, OP_MODULO, expr->line);
+            else if (strcmp(expr->as.binary.operator, "&") == 0) writeChunk(gen->chunk, OP_BIT_AND, expr->line);
+            else if (strcmp(expr->as.binary.operator, "|") == 0) writeChunk(gen->chunk, OP_BIT_OR, expr->line);
+            else if (strcmp(expr->as.binary.operator, "^") == 0) writeChunk(gen->chunk, OP_BIT_XOR, expr->line);
+            else if (strcmp(expr->as.binary.operator, "<<") == 0) writeChunk(gen->chunk, OP_LEFT_SHIFT, expr->line);
+            else if (strcmp(expr->as.binary.operator, ">>") == 0) writeChunk(gen->chunk, OP_RIGHT_SHIFT, expr->line);
+            else if (strcmp(expr->as.binary.operator, "@") == 0) writeChunk(gen->chunk, OP_MAT_MUL, expr->line);
             break;
         }
         case EXPR_GROUPING: {
@@ -339,8 +333,26 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             break;
         }
         case EXPR_ASSIGN: {
-            genExpr(gen, expr->as.assign.value);
             int arg = resolveLocal(gen, expr->as.assign.name);
+            if (arg != -1 && expr->as.assign.value->type == EXPR_BINARY) {
+                Expr* bin = expr->as.assign.value;
+                if (bin->as.binary.left->type == EXPR_VARIABLE &&
+                    strcmp(bin->as.binary.left->as.variable.name, expr->as.assign.name) == 0 &&
+                    bin->as.binary.right->type == EXPR_LITERAL &&
+                    IS_NUMBER(bin->as.binary.right->as.literal.value) &&
+                    AS_NUMBER(bin->as.binary.right->as.literal.value) == 1.0) {
+                    if (strcmp(bin->as.binary.operator, "+") == 0) {
+                        writeChunk(gen->chunk, OP_INC_LOCAL, expr->line);
+                        writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                        break;
+                    } else if (strcmp(bin->as.binary.operator, "-") == 0) {
+                        writeChunk(gen->chunk, OP_DEC_LOCAL, expr->line);
+                        writeChunk(gen->chunk, (uint8_t)arg, expr->line);
+                        break;
+                    }
+                }
+            }
+            genExpr(gen, expr->as.assign.value);
             if (arg != -1) {
                 if (arg <= 3) {
                     writeChunk(gen->chunk, OP_SET_LOCAL_0 + arg, expr->line);
@@ -360,7 +372,20 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
             break;
         }
         case EXPR_CALL: {
-            genExpr(gen, expr->as.call.callee);
+            bool isSelfCall = false;
+            if (gen->compiler->type == COMP_FUNCTION &&
+                !gen->compiler->isMethod &&
+                expr->as.call.callee->type == EXPR_VARIABLE &&
+                gen->compiler->function->name != NULL &&
+                strcmp(expr->as.call.callee->as.variable.name, gen->compiler->function->name->chars) == 0 &&
+                resolveLocal(gen, expr->as.call.callee->as.variable.name) == -1) {
+                isSelfCall = true;
+            }
+            if (isSelfCall) {
+                writeChunk(gen->chunk, OP_GET_LOCAL_0, expr->line);
+            } else {
+                genExpr(gen, expr->as.call.callee);
+            }
             int argCount = 0;
             if (expr->as.call.arguments) {
                 argCount = expr->as.call.arguments->count;
@@ -368,7 +393,11 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
                     genExpr(gen, expr->as.call.arguments->items[i]);
                 }
             }
-            writeChunk(gen->chunk, OP_CALL, expr->line);
+            if (isSelfCall) {
+                writeChunk(gen->chunk, OP_CALL_SELF, expr->line);
+            } else {
+                writeChunk(gen->chunk, OP_CALL, expr->line);
+            }
             writeChunk(gen->chunk, (uint8_t)argCount, expr->line);
             break;
         }
@@ -626,6 +655,7 @@ static void genExpr(BytecodeGen* gen, Expr* expr) {
 static void genFunction(BytecodeGen* gen, Stmt* stmt, bool defineVar) {
     Compiler funcCompiler;
     initCompiler(gen, &funcCompiler, COMP_FUNCTION);
+    funcCompiler.isMethod = !defineVar;
     
     // Set function properties from AST
     funcCompiler.function->access = stmt->as.func_decl.access;
@@ -802,10 +832,9 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
         }
         case STMT_IF: {
             genExpr(gen, stmt->as.if_stmt.condition);
-            writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
+            writeChunk(gen->chunk, OP_POP_JUMP_IF_FALSE, stmt->line);
             writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
             int thenJump = gen->chunk->count - 2;
-            writeChunk(gen->chunk, OP_POP, stmt->line);
             
             genStmt(gen, stmt->as.if_stmt.then_branch);
             
@@ -817,7 +846,6 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             gen->chunk->code[thenJump] = (patchThen >> 8) & 0xff;
             gen->chunk->code[thenJump+1] = patchThen & 0xff;
             
-            writeChunk(gen->chunk, OP_POP, stmt->line);
             if (stmt->as.if_stmt.else_branch) genStmt(gen, stmt->as.if_stmt.else_branch);
             
             int patchElse = gen->chunk->count - elseJump - 2;
@@ -842,10 +870,9 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             
             genExpr(gen, stmt->as.while_stmt.condition);
             
-            writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
+            writeChunk(gen->chunk, OP_POP_JUMP_IF_FALSE, stmt->line);
             writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
             int exitJump = gen->chunk->count - 2;
-            writeChunk(gen->chunk, OP_POP, stmt->line);
             
             genStmt(gen, stmt->as.while_stmt.body);
             
@@ -858,8 +885,6 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             int patchExit = gen->chunk->count - exitJump - 2;
             gen->chunk->code[exitJump] = (patchExit >> 8) & 0xff;
             gen->chunk->code[exitJump+1] = patchExit & 0xff;
-            
-            writeChunk(gen->chunk, OP_POP, stmt->line);
             
             // Patch breaks
             for (int i = 0; i < loop.breakCount; i++) {
@@ -884,10 +909,9 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
             int exitJump = -1;
             if (stmt->as.for_stmt.condition) {
                 genExpr(gen, stmt->as.for_stmt.condition);
-                writeChunk(gen->chunk, OP_JUMP_IF_FALSE, stmt->line);
+                writeChunk(gen->chunk, OP_POP_JUMP_IF_FALSE, stmt->line);
                 writeChunk(gen->chunk, 0xff, 0); writeChunk(gen->chunk, 0xff, 0);
                 exitJump = gen->chunk->count - 2;
-                writeChunk(gen->chunk, OP_POP, stmt->line); // Pop condition
             }
 
             int incrementStart = loopStart;
@@ -935,7 +959,6 @@ static void genStmt(BytecodeGen* gen, Stmt* stmt) {
                 int patchExit = gen->chunk->count - exitJump - 2;
                 gen->chunk->code[exitJump] = (patchExit >> 8) & 0xff;
                 gen->chunk->code[exitJump+1] = patchExit & 0xff;
-                writeChunk(gen->chunk, OP_POP, stmt->line);
             }
             
             // Patch breaks
